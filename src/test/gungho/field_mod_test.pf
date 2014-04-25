@@ -6,7 +6,7 @@
 !-------------------------------------------------------------------------------
 !
 !-------------------------------------------------------------------------------
-module field_modTest
+module field_mod_test
   implicit none 
 
 contains
@@ -31,29 +31,21 @@ contains
     num_unique_dofs = 100
     num_layers=50
 
-    write(*,*) "test field_mod: calling function_space constructor"
-    
     func_space = function_space_type( &
          num_cells=num_cells, num_dofs=num_dofs, num_unique_dofs=num_unique_dofs, &
          dim_space = 1, dim_space_p1 = 3, ngp  = 3)
 
-    write(*,*) "test field_mod: calling gaussian_quadrature constructor"    
     gq = gaussian_quadrature_type()
 
     f_field = field_type(vector_space=func_space,gq=gq,num_layers=num_layers)
 
-    
     ! test the procedures of the type
-    write(*,*) "test field_mod:get_ncell()"
     testncell = f_field%get_ncell()
-    @assertEqual(testncell,num_cells)
+    @assertEqual( num_cells, testncell )
 
-    write(*,*) "test field_mod:get_nlayers()"
     testnlayers = f_field%get_nlayers()
-    @assertEqual(testnlayers,num_layers)
-    
-    write(*,*) "--------------------------------"
+    @assertEqual( num_layers, testnlayers )
 
   end subroutine test_field
 
-end module field_modTest
+end module field_mod_test

@@ -34,13 +34,11 @@ $(OBJ_DIR)/%.mod: $(OBJ_DIR)/%.o
 
 $(OBJ_DIR)/%.o: %.F90 | $(OBJ_DIR)
 	@echo "Compile $<"
-	@$(FC95) $(F95FLAGS) \
-	         $(F95_MOD_DESTINATION_ARG) -I $(OBJ_DIR) \
-	         -c -o $@ $<
+	$(FC) $(FFLAGS) $(F_MOD_DESTINATION_ARG) -I $(OBJ_DIR) -c -o $@ $<
 
 $(OBJ_DIR)/$(EXE): $($(shell echo $(EXE) | tr a-z A-Z)_OBJS)
 	@echo "Linking $@"
-	@$(FC95) $(F95FLAGS) -o $@ $^
+	$(FC) $(FFLAGS) -o $@ $^
 
 .PHONY: clean
 clean:

@@ -20,7 +20,7 @@ implicit none
 
 contains
   subroutine invoke_rhs_v3(rhs)
-    use v3_kernel_mod,        only : rhs_v3_code
+    use v3_rhs_kernel_mod,        only : rhs_v3_code
     type(field_type), intent(inout) :: rhs
     integer :: cell
     integer, pointer :: map(:)

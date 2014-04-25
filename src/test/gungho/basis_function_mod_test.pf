@@ -6,7 +6,7 @@
 !-------------------------------------------------------------------------------
 !
 !-------------------------------------------------------------------------------
-module basis_function_modTest
+module basis_function_mod_test
   implicit none 
 
 contains
@@ -23,33 +23,26 @@ contains
     real(kind=dp) :: basis,tol
     real(kind=dp) ,pointer :: whole_basis(:,:,:,:,:)
     real(kind=dp) ,pointer :: diff_basis(:,:,:,:,:)
-    
+
     ndofs_per_cell = 4
     vdim = 1
     vdim_diff = 3
     basis_func = basis_function_type(ndofs_per_cell, vdim, vdim_diff, ngp = 3)
- 
+
     basis = 0.5
 
     call basis_func%set_basis(basis,1,1,1,1,1)
     call basis_func%get_basis(whole_basis)
 
     tol = 1.0e-14
-    write(*,*) "basis_function test"
-    write(*,*) "basis set, get"
-    write(*,*) basis,whole_basis(1,1,1,1,1)
-    @assertEqual(basis,whole_basis(1,1,1,1,1))
+    @assertEqual( basis, whole_basis(1,1,1,1,1) )
 
     basis = 3.142_dp
-    
-    call basis_func%set_diff_basis(basis,2,3,2,1,1)
-    write(*,*) "diff_basis set, get"
-    call basis_func%get_diff_basis(diff_basis)
-    write(*,*) basis,diff_basis(2,3,2,1,1)
-    @assertEqual(basis,diff_basis(2,3,2,1,1))
-    write(*,*) "---------------------------------"
 
+    call basis_func%set_diff_basis(basis,2,3,2,1,1)
+    call basis_func%get_diff_basis(diff_basis)
+    @assertEqual( basis, diff_basis(2,3,2,1,1) )
 
   end subroutine test_basis_func
 
-end module basis_function_modTest
+end module basis_function_mod_test

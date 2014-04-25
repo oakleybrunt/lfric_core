@@ -6,7 +6,7 @@
 !-------------------------------------------------------------------------------
 !
 !-------------------------------------------------------------------------------
-module gaussian_quadrature_modTest
+module gaussian_quadrature_mod_test
   implicit none 
 
 contains
@@ -30,15 +30,11 @@ contains
     result = gaussian_quadrature%integrate(polynomial)
 
     answer = 0.33333333333333333333333D0
-    
+
     epsilon = 1.0e-14
-    write(*,*) "test gaussian_quadrature: result, answer, diff"
 
-    diff = abs(result - answer)/(result+answer)
-    write(*,'(4(E23.16,":"))') result,answer,diff,epsilon
-    @assertEqual(result,answer,epsilon)
+    @assertEqual( answer, result, epsilon )
 
-    write(*,*) "------------------------------------"
   end subroutine test_gaussian_quadrature
 
-end module gaussian_quadrature_modTest
+end module gaussian_quadrature_mod_test

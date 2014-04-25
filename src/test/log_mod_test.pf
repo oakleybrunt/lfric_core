@@ -8,7 +8,7 @@
 !>
 !> @details A pFUnit test module to exercise the logging facilities.
 !>
-module log_modTest
+module log_mod_test
 
   use pFUnit_Mod
   use log_mod
@@ -308,4 +308,4 @@ contains
 
   end subroutine log_level_test
 
-end module log_modTest
+end module log_mod_test

@@ -6,7 +6,7 @@
 !-------------------------------------------------------------------------------
 !
 !-------------------------------------------------------------------------------
-module matrix_invert_modTest
+module matrix_invert_mod_test
   implicit none 
 
 contains
@@ -17,7 +17,7 @@ contains
     use matrix_invert_mod, only : matrix_invert
     use constants_mod, only : dp
     implicit none
-    
+
     real(kind=dp) :: a(4,4),a_inv(4,4),answer(4,4)
     real(kind=dp) :: tol,one
 
@@ -28,22 +28,17 @@ contains
     a(4,:) = 1.0_dp/9.0_dp*(/ 1.0_dp, 2.0_dp, 2.0_dp, 4.0_dp /)
 
     call matrix_invert(a,a_inv,4)
-    
+
     answer = matmul(a,a_inv)
 
     tol=1.0e-14
     one = 1.0_dp
 
-    write(*,*) "matrix_invert test, diagonals = 1"
-    write(*,*) answer(1,1),answer(2,2), answer(3,3), answer(4,4)
-
-    @assertEqual(answer(1,1),one,tol)
-    @assertEqual(answer(2,2),one,tol)
-    @assertEqual(answer(3,3),one,tol)
-    @assertEqual(answer(4,4),one,tol)
-
-    write(*,*) "--------------------------------"
+    @assertEqual( one, answer(1,1), tol )
+    @assertEqual( one, answer(2,2), tol )
+    @assertEqual( one, answer(3,3), tol )
+    @assertEqual( one, answer(4,4), tol )
 
   end subroutine test_of_matrix_invert
 
-end module matrix_invert_modTest
+end module matrix_invert_mod_test

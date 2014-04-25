@@ -13,7 +13,7 @@
 !! with P_analytic over a single column
 
 
-module v3_kernel_mod
+module v3_rhs_kernel_mod
 use lfric
 use argument_mod,            only: arg_type, &          ! the type
                                    gh_rw, v3, fe, cells ! the enums
@@ -25,7 +25,7 @@ implicit none
 ! Public types
 !-------------------------------------------------------------------------------
 !> The type declaration for the kernel. Contains the metadata needed by the Psy layer
-type, public, extends(kernel_type) :: v3_kernel_type
+type, public, extends(kernel_type) :: v3_rhs_kernel_type
   private
   type(arg_type) :: meta_args(1) = [ &
        arg_type(gh_rw,v3,fe,.true.,.false.,.true.) &
@@ -41,19 +41,19 @@ end type
 !-------------------------------------------------------------------------------
 
 ! overload the default structure constructor for function space
-interface v3_kernel_type
-   module procedure v3_kernel_constructor
+interface v3_rhs_kernel_type
+   module procedure v3_rhs_kernel_constructor
 end interface
 
 !-------------------------------------------------------------------------------
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
-public rhs_v3_code              
+public rhs_v3_code
 contains
 
-type(v3_kernel_type) function v3_kernel_constructor() result(self)
+type(v3_rhs_kernel_type) function v3_rhs_kernel_constructor() result(self)
   return
-end function v3_kernel_constructor
+end function v3_rhs_kernel_constructor
 
 !> @brief The subroutine which is called directly by the psy layer
 !! @param[in] nlayers Integer the number of layers
@@ -94,4 +94,4 @@ subroutine rhs_v3_code(nlayers,ndf,map,v3_basis,x,gq)
   
 end subroutine rhs_v3_code
 
-end module v3_kernel_mod
+end module v3_rhs_kernel_mod

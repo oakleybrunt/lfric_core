@@ -19,89 +19,38 @@
 !> Comments starting with !PSY are what the code would lool like before Psyclone
 !> generated anything.
 
-
-
 program dynamo
 
   use lfric
-  use log_mod,                 only: log_event, log_scratch_space, &
-                                     LOG_LEVEL_INFO
-!PSY use v3_kernel_mod,        only: v3_kernel_type
-!PSY use v3_solver_kernel_mod, only: v3_solver_kernel_type
-  use psy,                     only: invoke_rhs_v3, invoke_v3_solver_kernel
-  use set_up_mod,              only: set_up
+  use log_mod,              only : log_event, log_scratch_space, LOG_LEVEL_INFO
+  use set_up_mod,           only : set_up
+  use dynamo_algorithm_mod, only : dynamo_algorithm
 
   implicit none
 
-  type(function_space_type)      :: v3_function_space, v2_function_space, & 
-                                    v1_function_space, v0_function_space
-  type(field_type)               :: pressure_density,rhs
-  type(gaussian_quadrature_type) :: gq
-
-  integer        :: cell
-  integer        :: num_cells,num_dofs,num_unique_dofs,num_layers
+  type( function_space_type )      :: v3_function_space, v2_function_space, &
+                                      v1_function_space, v0_function_space
+  type( field_type )               :: pressure_density, rhs
+  type( gaussian_quadrature_type ) :: gq
+  integer                          :: num_layers
 
   call log_event( 'Dynamo running...', LOG_LEVEL_INFO )
 
-  call set_up(v0_function_space,v1_function_space,v2_function_space,      &
-  v3_function_space, num_layers)
+  call set_up( v0_function_space, v1_function_space, v2_function_space, &
+               v3_function_space, num_layers )
 
-  gq = gaussian_quadrature_type()
+  gq = gaussian_quadrature_type( )
 
-  pressure_density = field_type(vector_space = v3_function_space,         &
-       gq = gq,                                                           &
-       num_layers = num_layers)
+  pressure_density = field_type( vector_space = v3_function_space, &
+                                 gq = gq,                          &
+                                 num_layers = num_layers)
 
-  rhs = field_type(vector_space = v3_function_space,                      &
-       gq = gq,                                                           &
-       num_layers = num_layers)
+  rhs = field_type( vector_space = v3_function_space, &
+                    gq = gq,                          &
+                    num_layers = num_layers )
 
-  !Construct PSy layer given a list of kernels. This is the line the code
-  !generator may parse and do its stuff.
-
-  call log_event( "Dynamo: calling 1st kernel", LOG_LEVEL_INFO )
-  !PSY call invoke (v3_kernel_type(rhs) )
-  call invoke_rhs_v3(rhs)
-
-  call log_event( "Dynamo:calling 2nd kernel", LOG_LEVEL_INFO )
-  !PSY call invoke (v3_solver_kernel_type(pressure_density,rhs) )
-  call invoke_v3_solver_kernel(pressure_density,rhs)
-
-  call print_field( 'RHS field...', rhs )
-  call print_field( 'LHS field...', pressure_density )
+  call dynamo_algorithm( pressure_density, rhs )
 
   call log_event( 'Dynamo completed', LOG_LEVEL_INFO )
 
 end program dynamo
-
-!> Send a field to the log.
-!>
-subroutine print_field( title, field )
-
-  use lfric
-  use log_mod, only : log_event, log_scratch_space, LOG_LEVEL_INFO
-
-  implicit none
-
-  character( * ),     intent( in ) :: title
-  type( field_type ), intent( in ) :: field
-
-  integer                   :: cell
-  integer                   :: layer
-  integer                   :: df
-  integer,          pointer :: map( : )
-
-  call log_event( title, LOG_LEVEL_INFO )
-
-  do cell=1,field%vspace%get_ncell()
-    call field%vspace%get_cell_dofmap(cell,map)
-    do df=1,field%vspace%get_ndf()
-      do layer=0,field%get_nlayers()-1
-        write( log_scratch_space, '( I4, I4, I4, F8.2 )' ) &
-             cell, df, layer+1, field%data( map( df ) + layer )
-        call log_event( log_scratch_space, LOG_LEVEL_INFO )
-      end do
-    end do
-  end do
-
-end subroutine print_field

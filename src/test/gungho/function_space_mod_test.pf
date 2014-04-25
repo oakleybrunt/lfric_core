@@ -6,7 +6,7 @@
 !-------------------------------------------------------------------------------
 !
 !-------------------------------------------------------------------------------
-module function_space_modTest
+module function_space_mod_test
   implicit none 
 
 contains
@@ -32,35 +32,29 @@ contains
     func_space = function_space_type( &
          num_cells=num_cells, num_dofs=num_dofs, num_unique_dofs=num_unique_dofs, &
          dim_space=1, dim_space_p1=3, ngp = 3)
-    
+
     ! test the procedures of the type
-    write(*,*) "test functions_space_mod:get_ncell()"
     testncell = func_space%get_ncell()
-    @assertEqual(testncell,num_cells)
+    @assertEqual( num_cells, testncell )
 
-    write(*,*) "test functions_space_mod:get_undf()"
     testundf = func_space%get_undf()
-    @assertEqual(testundf,num_unique_dofs)
+    @assertEqual( num_unique_dofs, testundf )
 
-    write(*,*) "test function_space_mod:populate_cell_dofmap/get_cell_dofmap()"
     do i=1,num_dofs
        map(i) = i
     end do
 
     call func_space%populate_cell_dofmap(1,map)
     call func_space%get_cell_dofmap(1,testmap)
-    @assertEqual(map,testmap)
+    @assertEqual( map, testmap )
 
     do i=1,num_dofs
        map(i) = i+64
-    end do   
+    end do
     call func_space%populate_cell_dofmap(num_cells-2,map)
     call func_space%get_cell_dofmap(num_cells-2,testmap)
-    @assertEqual(map,testmap)
-    write(*,*) "-----------------------------------------"
-    
-    
+    @assertEqual( map, testmap )
 
   end subroutine test_func_space
 
-end module function_space_modTest
+end module function_space_mod_test

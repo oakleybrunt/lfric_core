@@ -8,18 +8,22 @@
 ROOT = ../..
 include $(ROOT)/Makefile.inc
 
+SUBDIRS = $(shell find * -maxdepth 1 -type d)
+
 export SRC        = $(wildcard *.F90)
 export OBJ_DIR    = $(BUILD_DIR)/dynamo
 export DEP_FILE   = dependencies.mk
+
+OBJ_SUBDIRS = $(patsubst %,$(OBJ_DIR)/%,$(SUBDIRS))
 
 .PHONY: all
 all: $(OBJ_DIR)/$(DEP_FILE)
 	$(MAKE) -f dynamo.mk all
 
-$(OBJ_DIR)/$(DEP_FILE): $(SRC) $(OBJ_DIR)
+$(OBJ_DIR)/$(DEP_FILE): $(SRC) $(OBJ_DIR) $(OBJ_SUBDIRS)
 	@$(TOOL_DIR)/DependencyAnalyser $(OBJ_DIR) $(OBJ_DIR) $(OBJ_DIR) .
 
-$(OBJ_DIR):
+$(OBJ_DIR) $(OBJ_SUBDIRS):
 	@echo "Creating $@"
 	@mkdir -p $@
 

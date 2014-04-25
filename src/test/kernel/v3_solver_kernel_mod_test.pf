@@ -6,41 +6,38 @@
 !-------------------------------------------------------------------------------
 !
 !-------------------------------------------------------------------------------
-module v3_kernel_modTest
+module v3_solver_kernel_mod_test
   implicit none 
 
 contains
 
   @test
-  subroutine v3_kernel_test()
+  subroutine v3_solver_kernel_test()
     use pFUnit_Mod
-    use v3_kernel_mod,            only : RHS_v3_code
+    use v3_solver_kernel_mod, only : solver_v3_code
+    use constants_mod,        only : dp
     use gaussian_quadrature_mod,  only : gaussian_quadrature_type
-    use constants_mod,            only : dp
     implicit none
 
     integer :: num_layers, ndf, map(1)
     type(gaussian_quadrature_type) :: gq
     real(kind=dp) :: xdata(1)
+    real(kind=dp) :: rhsdata(1)
     real(kind=dp) :: answer, tol
     real(kind=dp) :: basis(3,3,3,3,1)
 
+    basis=1.0D0
     gq=gaussian_quadrature_type()
     map(1)=1
     num_layers=1
-    ndf = 1
-    basis=1.0D0
-    call RHS_v3_code(num_layers,ndf,map,basis,xdata,gq)
-    
-    write(*,*) "v3_kernel test"
+    ndf=1
+    rhsdata(1)=1.0D0
+    call solver_v3_code(num_layers,ndf,map,basis,xdata,rhsdata,gq)
+
     answer = 1.0D0
     tol=1.0e-14
-    write(*,*) "v3_kernel xdata, answer"
-    write(*,*) xdata(1),answer
-    @assertEqual(xdata(1),answer,tol)
-    
-    write(*,*) "--------------------------------"
+    @assertEqual( answer, xdata(1), tol )
 
-  end subroutine v3_kernel_test
+  end subroutine v3_solver_kernel_test
 
-end module v3_kernel_modTest
+end module v3_solver_kernel_mod_test
