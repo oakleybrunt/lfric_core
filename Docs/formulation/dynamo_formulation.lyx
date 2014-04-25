@@ -1,0 +1,3879 @@
+#LyX 1.6.10 created this file. For more info see http://www.lyx.org/
+\lyxformat 345
+\begin_document
+\begin_header
+\textclass article
+\begin_preamble
+\input{paper_single_style}
+\usepackage{indentfirst}
+\parindent = 5 mm
+\usepackage{cancel}
+\usepackage{bm}
+\end_preamble
+\use_default_options false
+\language english
+\inputencoding auto
+\font_roman lmodern
+\font_sans lmss
+\font_typewriter lmtt
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 0
+\cite_engine natbib_authoryear
+\use_bibtopic false
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\bulletLaTeX 0 "\textcolor{red}{\(\bullet\)}"
+\bulletLaTeX 1 "\textcolor{red}{\(\ast\)}"
+\tracking_changes false
+\output_changes false
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Dynamo formulation V0.1
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+copyright
+\end_layout
+
+\end_inset
+
+
+\begin_inset space \space{}
+\end_inset
+
+Crown copyright, 2014
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Author
+Thomas Melvin
+\begin_inset Formula $^{1}$
+\end_inset
+
+
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset space \space{}
+\end_inset
+
+Correspondence to:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+hspace*{7 mm}
+\end_layout
+
+\end_inset
+
+T.
+ Melvin, Met Office, FitzRoy Road, Exeter EX1 3PB, U.K.
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+hspace*{7 mm}
+\end_layout
+
+\end_inset
+
+email: Thomas.Melvin@metoffice.gov.uk
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula $^{1}$
+\end_inset
+
+ Met Office, Exeter, U.K.
+\end_layout
+
+\begin_layout Abstract
+Abstract goes here
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+vskip
+\end_layout
+
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+baselineskip
+\end_layout
+
+\end_inset
+
+ KEYWORDS keywords here,
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+newpage
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Introduction"
+
+\end_inset
+
+Introduction
+\end_layout
+
+\begin_layout Standard
+This document describes the model and discretisation for the dynamo prototype
+ dynamical core produced as part of the Gung-Ho project
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Governing-Equations"
+
+\end_inset
+
+Governing Equations
+\end_layout
+
+\begin_layout Standard
+Consider a 3-dimensional version of the nonlinear compressible Bousinesq
+ equations 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "durran_blossey12"
+
+\end_inset
+
+ 
+\begin_inset Formula \begin{eqnarray}
+\frac{\partial\mathbf{u}}{\partial t}+\mathbf{u}.\nabla\left(\mathbf{u}\right)+\nabla P & = & b\mathbf{k}+\nabla\times\bm{\psi},\label{eq:comp_bousinesq_momentum}\\
+\frac{\partial P}{\partial t}+\mathbf{u}.\nabla P+c_{s}^{2}\nabla.\mathbf{u} & = & 0,\label{eq:comp_bousinesq_continuity}\\
+\frac{\partial b}{\partial t}+\mathbf{u}.\nabla b+wN^{2} & = & 0,\label{eq:com_bousinesq_energy}\end{eqnarray}
+
+\end_inset
+
+where 
+\begin_inset Formula $\mathbf{u}=\left(u,v,w\right)$
+\end_inset
+
+ is the velocity vector in the general orthogonal coordinate system 
+\begin_inset Formula $\bm{\chi}\equiv\left(\chi_{1},\chi_{2},\chi_{3}\right)$
+\end_inset
+
+ with unit vectors 
+\begin_inset Formula $\left(\mathbf{i},\mathbf{j},\mathbf{k}\right)$
+\end_inset
+
+ respectively; 
+\begin_inset Formula $P\equiv\frac{p-\tilde{p}\left(\chi_{3}\right)}{\rho_{0}}$
+\end_inset
+
+ is the departure of pressure from some reference profile 
+\begin_inset Formula $\tilde{p}\left(\chi_{3}\right)$
+\end_inset
+
+ normalised by a constant reference density 
+\begin_inset Formula $\rho_{0};$
+\end_inset
+
+ 
+\begin_inset Formula $b\equiv g\frac{\rho-\tilde{\rho}\left(\chi_{3}\right)}{\rho_{0}}$
+\end_inset
+
+is the buoyancy given in terms of the density 
+\begin_inset Formula $\rho$
+\end_inset
+
+ and reference density 
+\begin_inset Formula $\tilde{\rho}\left(\chi_{3}\right);$
+\end_inset
+
+ 
+\begin_inset Formula $\mathbf{g}\equiv\left(0,0,-g\right)$
+\end_inset
+
+ is the gravity and 
+\begin_inset Formula $N^{2}\equiv-\frac{g}{\rho_{0}}\frac{d\tilde{\rho}}{d\chi_{3}}$
+\end_inset
+
+ where 
+\begin_inset Formula $N$
+\end_inset
+
+ is the buoyancy frequency.
+ 
+\begin_inset Formula $\bm{\psi}$
+\end_inset
+
+ is an explicitly defined stream function used in 
+\begin_inset CommandInset citation
+LatexCommand citet
+key "durran_blossey12"
+
+\end_inset
+
+ test cases.
+ Equations 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:comp_bousinesq_momentum"
+
+\end_inset
+
+-
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:com_bousinesq_energy"
+
+\end_inset
+
+ constitute the compressible Bousinesq versions of the momentum, continuity
+ and energy equations.
+ Reformulating 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:comp_bousinesq_momentum"
+
+\end_inset
+
+-
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:com_bousinesq_energy"
+
+\end_inset
+
+ into the vector invaraint form
+\begin_inset Formula \begin{eqnarray}
+\frac{\partial\mathbf{u}}{\partial t}+\mathbf{u}\times\bm{\xi}+\nabla\left(P+K\right) & = & b\mathbf{k}+\nabla\times\bm{\psi},\label{eq:comp_bousinesq_momentum-1}\\
+\frac{\partial P}{\partial t}+\nabla.\left(\mathbf{u}P\right)+\left(c_{s}^{2}-P\right)\nabla.\mathbf{u} & = & 0,\label{eq:comp_bousinesq_continuity-1}\\
+\frac{\partial b}{\partial t}+\nabla.\left(\mathbf{u}b\right)-b\nabla.\mathbf{u}+\left(\mathbf{k}.\mathbf{u}\right)N^{2} & = & 0,\label{eq:com_bousinesq_energy-1}\end{eqnarray}
+
+\end_inset
+
+where 
+\begin_inset Formula $\bm{\xi}\equiv\nabla\times\mathbf{u}$
+\end_inset
+
+ is the relative vorticity and 
+\begin_inset Formula $K\equiv\frac{1}{2}\mathbf{u}.\mathbf{u}$
+\end_inset
+
+ is the kinetic energy per unit mass.
+\end_layout
+
+\begin_layout Subsection
+Linear equations
+\end_layout
+
+\begin_layout Standard
+The linear forms of 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:comp_bousinesq_momentum"
+
+\end_inset
+
+-
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:com_bousinesq_energy"
+
+\end_inset
+
+ are 
+\begin_inset Formula \begin{eqnarray}
+\frac{\partial\mathbf{u}}{\partial t}+\mathbf{U}.\nabla\left(\mathbf{u}\right)+\nabla P & = & b\mathbf{k},\label{eq:comp_bousinesq_momentum-linear}\\
+\frac{\partial P}{\partial t}+\mathbf{U}.\nabla P+c_{s}^{2}\nabla.\mathbf{u} & = & 0,\label{eq:comp_bousinesq_continuity-linear}\\
+\frac{\partial b}{\partial t}+\mathbf{U}.\nabla b+\left(\mathbf{k}.\mathbf{u}\right)N^{2} & = & 0,\label{eq:com_bousinesq_energy-linear}\end{eqnarray}
+
+\end_inset
+
+where a constant advecting velocity 
+\begin_inset Formula $\bm{U}=\left(U,V,0\right)$
+\end_inset
+
+ has been introduced, the momentum equation can again be rewritten as 
+\begin_inset Formula \begin{eqnarray}
+\frac{\partial\mathbf{u}}{\partial t}+\bm{U}\times\bm{\xi}+\nabla\left(P+K\right) & = & b\mathbf{k},\label{eq:comp_bousinesq_momentum-linear-1}\end{eqnarray}
+
+\end_inset
+
+where 
+\begin_inset Formula $\bm{\xi}\equiv\nabla\times\mathbf{u}$
+\end_inset
+
+ is the relative vorticity and 
+\begin_inset Formula $K\equiv\mathbf{u}.\mathbf{U}$
+\end_inset
+
+ is the linear kinetic energy per unit mass.
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:FEM-Discretisation"
+
+\end_inset
+
+Finite Element Discretisation
+\end_layout
+
+\begin_layout Standard
+Equations 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:comp_bousinesq_momentum-1"
+
+\end_inset
+
+-
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:com_bousinesq_energy-1"
+
+\end_inset
+
+ constitute at set of coupled nonlinear equations for the unknowns 
+\begin_inset Formula $b\,,\bm{\xi},\,\mathbf{u},\, P.$
+\end_inset
+
+ These are to be discretised using a mixed finite element method on quadrilatera
+l elements, see Appendix 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Reference-Element"
+
+\end_inset
+
+, for this four function spaces are defined as denoted by 
+\begin_inset Formula $\mathbb{W}_{i},\, i=0..3$
+\end_inset
+
+:
+\begin_inset Formula \begin{equation}
+\begin{array}{ccccccc}
+\mathbb{W}_{0} & \overset{\nabla}{\longrightarrow} & \mathbb{W}_{1} & \overset{\nabla\times}{\longrightarrow} & \mathbb{W}_{2} & \overset{\nabla.}{\longrightarrow} & \mathbb{W}_{3}\\
+ & \underset{\tilde{\nabla.}}{\dashleftarrow} &  & \underset{\tilde{\nabla}\times}{\dashleftarrow} &  & \underset{\tilde{\nabla}}{\dashleftarrow}\end{array}\label{eq:derham_complex}\end{equation}
+
+\end_inset
+
+ where arrows pointing to the right denote strong operators and arrows to
+ the left indicate weak operations.
+ The function spaces correspond to 
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+\begin_inset Formula $\mathbb{W}_{0}$
+\end_inset
+
+ The space of scalar functions built from the tensor product of 
+\begin_inset Formula $P^{k+1}(\chi_{1})P^{k+1}(\chi_{2})P^{k+1}(\chi_{3})$
+\end_inset
+
+ polynomials with full continuity.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+\begin_inset Formula $\mathbb{W}_{1}$
+\end_inset
+
+ The space of vector functions built from the tensor product of two 
+\begin_inset Formula $P^{k+1}$
+\end_inset
+
+ polynomials and one 
+\begin_inset Formula $P^{k}$
+\end_inset
+
+ polynomial with continuity in the tangential direction only.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+\begin_inset Formula $\mathbb{W}_{2}$
+\end_inset
+
+ The space of vector functions built from the tensor product of one 
+\begin_inset Formula $P^{k+1}$
+\end_inset
+
+ polynomial and two 
+\begin_inset Formula $P^{k}$
+\end_inset
+
+ polynomials with continuity in the normal direction only.
+\end_layout
+
+\begin_layout List
+\labelwidthstring 00.00.0000
+\begin_inset Formula $\mathbb{W}_{3}$
+\end_inset
+
+ The space of scalar functions built from the tensor product of 
+\begin_inset Formula $P^{k}(\chi_{1})P^{k}(\chi_{2})P^{k}(\chi_{3})$
+\end_inset
+
+ polynomials with no continuity.
+\end_layout
+
+\begin_layout Standard
+the associated test/trial functions for each function space are 
+\begin_inset Formula $\gamma,\,\bm{c},\,\bm{v}\,,\sigma$
+\end_inset
+
+ respectively, see Appendix 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Basis-Functions"
+
+\end_inset
+
+.
+ To obtain the finite element discretisation each variable has to be placed
+ into a function space from which it will inherit a polynomial expansion.
+ Consistent with the physical nature of each variable these are: 
+\begin_inset Formula $b\in\mathbb{W}_{0}$
+\end_inset
+
+, point wise scalar functions; 
+\begin_inset Formula $\bm{\xi}\in\mathbb{W}_{1}$
+\end_inset
+
+, vector functions corresponding to circulations; 
+\begin_inset Formula $\bm{u}\in\mathbb{W}_{2}$
+\end_inset
+
+, vector functions corresponding to fluxes and 
+\begin_inset Formula $P\in\mathbb{W}_{3}$
+\end_inset
+
+, scalar functions corresponding to volume integrals.
+ Multiplying 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:comp_bousinesq_momentum-1"
+
+\end_inset
+
+-
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:com_bousinesq_energy-1"
+
+\end_inset
+
+ by test functions from the appropriate space and integrating over the domain
+ 
+\begin_inset Formula $\Omega\in\mathbb{R}^{3}$
+\end_inset
+
+ gives the weak form of the equations
+\begin_inset Formula \begin{eqnarray}
+\left\langle \bm{v},\frac{\partial\mathbf{u}}{\partial t}\right\rangle +\left\langle \bm{v},\left(\frac{\bm{\xi}}{P}\times\mathbf{F}\right)\right\rangle +\left\langle \bm{v},\tilde{\nabla}\left(P+K\right)\right\rangle  & = & \left\langle \bm{v},b\mathbf{k}\right\rangle ,\label{eq:comp_bousinesq_momentum-weak}\\
+\left\langle \sigma,\frac{\partial P}{\partial t}\right\rangle +\left\langle \sigma,\nabla.\left(\mathbf{F}\right)\right\rangle +\left\langle \sigma,\left(c_{s}^{2}-P\right)\nabla.\mathbf{u}\right\rangle  & = & 0,\label{eq:comp_bousinesq_continuity-weak}\\
+\left\langle \gamma,\frac{\partial b}{\partial t}\right\rangle +\left\langle \gamma,\tilde{\nabla}.\left(\mathbf{u}b\right)\right\rangle -\left\langle \gamma,b\nabla.\mathbf{u}\right\rangle +\left\langle \gamma,\left(\mathbf{k}.\mathbf{u}\right)N^{2}\right\rangle  & = & 0,\label{eq:com_bousinesq_energy-weak}\\
+\left\langle \bm{c},\bm{\xi}\right\rangle  & = & \left\langle \bm{c},\tilde{\nabla}\times\mathbf{u}\right\rangle ,\label{eq:vorticity_weak}\\
+\left\langle \bm{v},\bm{F}\right\rangle  & \equiv & \left\langle \bm{v},\bm{u}P\right\rangle ,\label{eq:mass_flux}\end{eqnarray}
+
+\end_inset
+
+where the inner product takes its usual form 
+\begin_inset Formula $\left\langle f,g\right\rangle \equiv\int_{\Omega}f\left(\bm{\chi}\right)g\left(\bm{\chi}\right)d\bm{\chi}.$
+\end_inset
+
+ In addition the stream function forcing term to the momentum equation has
+ been dropped.
+ The vorticity advection term can be split onto advection of the horizontal
+ and vertical parts 
+\begin_inset Formula \begin{equation}
+\frac{\bm{\xi}}{P}\times\mathbf{F}\equiv\frac{\bm{\xi}_{h}}{P}\times\mathbf{F}+\frac{\xi_{v}}{P}\mathbf{F}_{h}^{\perp}\label{eq:vorticity_split}\end{equation}
+
+\end_inset
+
+where subscripts 
+\begin_inset Formula $h$
+\end_inset
+
+ and 
+\begin_inset Formula $v$
+\end_inset
+
+ indicate the horizontal and vertical parts of a vector respectively and
+ 
+\begin_inset Formula $\mathbf{F}_{h}^{\perp}\equiv\mathbf{k}\times\mathbf{F}_{h}$
+\end_inset
+
+.
+ The last term in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:vorticity_split"
+
+\end_inset
+
+ is the vorticity flux term that appears in the shallow water equations.
+ Replacing the weak operators in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:comp_bousinesq_momentum-weak"
+
+\end_inset
+
+-
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:vorticity_weak"
+
+\end_inset
+
+ through integrating by parts and using 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:vorticity_split"
+
+\end_inset
+
+ gives 
+\begin_inset Formula \begin{eqnarray}
+\left\langle \bm{v},\frac{\partial\mathbf{u}}{\partial t}\right\rangle +\left\langle \bm{v},\frac{\bm{\xi}_{h}}{P}\times\mathbf{F}+\frac{\xi_{v}}{P}\mathbf{F}_{h}^{\perp}\right\rangle -\left\langle \nabla.\bm{v},\left(P+K\right)\right\rangle  & = & \left\langle \bm{v},b\mathbf{k}\right\rangle ,\label{eq:comp_bousinesq_momentum-weak-1}\\
+\left\langle \sigma,\frac{\partial P}{\partial t}\right\rangle +\left\langle \sigma,\nabla.\mathbf{F}\right\rangle +\left\langle \sigma,\left(c_{s}^{2}-P\right)\nabla.\mathbf{u}\right\rangle  & = & 0,\label{eq:comp_bousinesq_continuity-weak-1}\\
+\left\langle \gamma,\frac{\partial b}{\partial t}\right\rangle -\left\langle \nabla\gamma,\left(\mathbf{u}b\right)\right\rangle -\left\langle \gamma,b\nabla.\mathbf{u}\right\rangle +\left\langle \gamma,\left(\mathbf{k}.\mathbf{u}\right)N^{2}\right\rangle  & = & 0,\label{eq:com_bousinesq_energy-weak-1}\\
+\left\langle \bm{c},\bm{\xi}\right\rangle  & = & \left\langle \nabla\times\bm{c},\mathbf{u}\right\rangle ,\label{eq:vorticity_weak-1}\\
+\left\langle \bm{v},\bm{F}\right\rangle  & \equiv & \left\langle \bm{v},\bm{u}P\right\rangle ,\label{eq:mass_flux-1}\end{eqnarray}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Coordinate-Transforms"
+
+\end_inset
+
+Coordinate Transforms
+\end_layout
+
+\begin_layout Standard
+Consider a mapping 
+\begin_inset Formula $\bm{\mathbf{\phi}}:\hat{\Omega}\rightarrow\Omega$
+\end_inset
+
+ between a reference domain 
+\begin_inset Formula $\hat{\Omega}$
+\end_inset
+
+ with coordinates 
+\begin_inset Formula $\hat{\bm{\mathbf{\chi}}}=\left(\hat{\chi}_{1},\hat{\chi}_{2},\hat{\chi}_{3}\right)$
+\end_inset
+
+ and metric tensor 
+\begin_inset Formula $\mathbf{g}^{{\rm ref}}$
+\end_inset
+
+, and a physical domain 
+\begin_inset Formula $\Omega$
+\end_inset
+
+ with coordinates 
+\begin_inset Formula $\bm{\chi}=\left(\chi_{1},\chi_{2},\chi_{3}\right)$
+\end_inset
+
+ and metric tensor 
+\begin_inset Formula $\mathbf{g}$
+\end_inset
+
+ respectively such that 
+\begin_inset Formula $\bm{\chi}=\bm{\mathbf{\phi}}\left(\bm{\hat{\bm{\mathbf{\chi}}}}\right).$
+\end_inset
+
+ Variables and operators in the reference space are denoted with a 
+\begin_inset Formula $\hat{\hphantom{a}}$
+\end_inset
+
+ to differentiate them from the undressed variables and operators in the
+ physical space.
+ We now require a set of mappings for each function space that maintains
+ the continuity from the reference to the physical domain.
+ For the vector spaces 
+\begin_inset Formula $\mathbb{W}_{2}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbb{W}_{3}$
+\end_inset
+
+ this means using 
+\family typewriter
+div
+\family default
+ and 
+\family typewriter
+curl
+\family default
+ conforming mappings respectively, that is mappings that preserve the continuity
+ of normal and tangential components.
+ These mappings are the contravariant and covariant Piola transforms respectivel
+y, see 
+\begin_inset CommandInset citation
+LatexCommand citet
+key "rognes09,brezzi91,monk03"
+
+\end_inset
+
+ for further a more thorough treatment of the Piola transform.
+ For vector fields in 
+\begin_inset Formula $\mathbb{W}_{2}$
+\end_inset
+
+ the Contravariant Piola transform is used 
+\begin_inset Formula \begin{equation}
+\mathbf{v\left(\bm{\chi}\right)\equiv}\mathbf{v}\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\frac{J\hat{\mathbf{v}}\left(\hat{\bm{\mathbf{\chi}}}\right)}{\det J},\label{eq:W2_contravariant_piola}\end{equation}
+
+\end_inset
+
+where the Jacobian 
+\begin_inset Formula $J\equiv\partial\bm{\mathbf{\phi}}\left(\bm{\chi}\right)/\partial\hat{\bm{\mathbf{\chi}}},$
+\end_inset
+
+ crucially this transformation satisfies 
+\begin_inset Formula \begin{equation}
+\nabla.\mathbf{v}\left(\bm{\chi}\right)=\frac{1}{\det J}\hat{\nabla}.\left(\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\mathbf{v}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right).\label{eq:piola_div}\end{equation}
+
+\end_inset
+
+and therefore 
+\begin_inset Formula \begin{equation}
+\int_{\Omega}\gamma\nabla.\mathbf{v}d\chi=\int_{\hat{\Omega}}\hat{\gamma}\hat{\nabla}.\left(\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\mathbf{v}}\right)d\hat{\chi}.\label{eq:div_mapping}\end{equation}
+
+\end_inset
+
+For vector fields in 
+\begin_inset Formula $\mathbb{W}_{1}$
+\end_inset
+
+ the covariant Piola transform is used 
+\begin_inset Formula \begin{equation}
+\mathbf{c}\left(\bm{\chi}\right)\equiv\mathbf{c}\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\left(\mathbf{g}^{-1}\right)^{T}J^{-1}\mathbf{g}^{{\rm ref}}\hat{\mathbf{c}}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:W1_covariant_piola}\end{equation}
+
+\end_inset
+
+which satisfies 
+\begin_inset Formula \begin{equation}
+\nabla\times\mathbf{c}\left(\bm{\chi}\right)=J^{-1}\hat{\nabla}\times\hat{\mathbf{c}}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:piola_curl}\end{equation}
+
+\end_inset
+
+and therefore (this might be missing metric tensor terms)
+\begin_inset Formula \begin{equation}
+\int_{\Omega}\mathbf{v}.\nabla\times\mathbf{c}d\chi=\int_{\hat{\Omega}}\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\mathbf{v}}.\hat{\nabla}\times\hat{\mathbf{c}}d\hat{\chi}.\label{eq:curl_mapping}\end{equation}
+
+\end_inset
+
+The transforms for scalar variables are: for space 
+\begin_inset Formula $\mathbb{W}_{0}$
+\end_inset
+
+ 
+\begin_inset Formula \begin{equation}
+\gamma\left(\bm{\chi}\right)\equiv\gamma\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\hat{\gamma}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:W0_scaler_transform}\end{equation}
+
+\end_inset
+
+and for 
+\begin_inset Formula $\mathbb{W}_{3}$
+\end_inset
+
+ 
+\begin_inset Formula \begin{equation}
+\sigma\left(\bm{\chi}\right)\equiv\sigma\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\frac{\hat{\sigma}\left(\hat{\bm{\mathbf{\chi}}}\right)}{\det J},\label{eq:W3_scalar_transform}\end{equation}
+
+\end_inset
+
+however, use of 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:W3_scalar_transform"
+
+\end_inset
+
+ would result in the divergence mapping becoming 
+\begin_inset Formula \begin{equation}
+\int_{\Omega}\sigma\nabla.\mathbf{v}d\chi=\int_{\hat{\Omega}}\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\frac{\hat{\sigma}}{\det J}\hat{\nabla}.\hat{\mathbf{v}}d\hat{\chi}\label{eq:divergence_problem}\end{equation}
+
+\end_inset
+
+which for non-flat elements (such as when mapping to the sphere) cannot
+ be integrated exactly as 
+\begin_inset Formula ${\rm det}J$
+\end_inset
+
+ is not constant (for flat elements 
+\begin_inset Formula ${\rm det}J=const$
+\end_inset
+
+ and there is no problem).
+ The solution proposed is to modify the 
+\begin_inset Formula $\mathbb{W}_{3}$
+\end_inset
+
+ mapping 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:W3_scalar_transform"
+
+\end_inset
+
+ so that it becomes 
+\begin_inset Formula \begin{equation}
+\sigma\left(\bm{\chi}\right)\equiv\sigma\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\sigma}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:W3_scalar_transform-new}\end{equation}
+
+\end_inset
+
+this now means that the div-curl relationships are not satisfied anymore,
+ i.e 
+\begin_inset Formula $\nabla.$
+\end_inset
+
+ does not map 
+\begin_inset Formula $\mathbb{W}_{2}$
+\end_inset
+
+ to 
+\begin_inset Formula $\mathbb{W}_{3},$
+\end_inset
+
+ the chosen solution to this, proposed by 
+\begin_inset CommandInset citation
+LatexCommand citet
+key "bochev_ridzal10"
+
+\end_inset
+
+, is to replace 
+\begin_inset Formula $\nabla.$
+\end_inset
+
+ by 
+\begin_inset Formula $\mu\nabla.$
+\end_inset
+
+ where 
+\begin_inset Formula $\mu$
+\end_inset
+
+ is the finite element projection into 
+\begin_inset Formula $\mathbb{W}_{3}$
+\end_inset
+
+ and so the correct div-curl relationship is regained as 
+\begin_inset Formula $\mathbb{W}_{2}\overset{\mu\nabla.}{\longrightarrow}\mathbb{W}_{3}.$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace smallskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+
+\shape italic
+Aside: For the special case where both the reference and physical spaces
+ are Euclidean spaces with Cartesian coordinate systems the metric terms
+ reduce to 
+\begin_inset Formula \begin{equation}
+g_{i,j}=\delta_{i,j},\qquad g_{i',j'}^{{\rm ref}}=\delta_{i',j'},\label{eq:Euclidean_metrics}\end{equation}
+
+\end_inset
+
+and the terms involving 
+\begin_inset Formula $\mathbf{g}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{g}^{{\rm ref}}$
+\end_inset
+
+ in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:W2_contravariant_piola"
+
+\end_inset
+
+-
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:W3_scalar_transform-new"
+
+\end_inset
+
+ drop out.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Discrete equations in the reference domain
+\end_layout
+
+\begin_layout Standard
+The pullback of equations 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:comp_bousinesq_momentum-weak-1"
+
+\end_inset
+
+-
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:mass_flux-1"
+
+\end_inset
+
+ into the reference domains using the transforms 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:W0_scaler_transform"
+
+\end_inset
+
+, 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:W1_covariant_piola"
+
+\end_inset
+
+, 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:W2_contravariant_piola"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:W3_scalar_transform-new"
+
+\end_inset
+
+ for variables in spaces 
+\begin_inset Formula $\mathbb{W}_{0}-\mathbb{W}_{3}$
+\end_inset
+
+ respectively yields
+\begin_inset Formula \begin{eqnarray}
+\left\langle \frac{J\hat{\bm{v}}}{\det J},J\frac{\partial\hat{\mathbf{u}}}{\partial t}\right\rangle +\left\langle \bm{v},\frac{\bm{\xi}_{h}}{P}\times\mathbf{F}+\frac{\xi_{v}}{P}\mathbf{F}_{h}^{\perp}\right\rangle -\left\langle \hat{\nabla}.\hat{\bm{v}},\left[\hat{P}+\frac{1}{2}\left(\frac{J\hat{\mathbf{u}}}{\det J}\right).\left(\frac{J\hat{\mathbf{u}}}{\det J}\right)\right]\right\rangle  & = & \left\langle \frac{J\hat{\bm{v}}}{\det J},\frac{Jb\hat{\mathbf{k}}}{\det J}\right\rangle ,\label{eq:comp_bousinesq_momentum-weak-reference}\\
+\left\langle \hat{\sigma},\frac{\partial\hat{P}}{\partial t}\det J\right\rangle +\left\langle \hat{\sigma},\hat{\nabla}.\hat{\mathbf{F}}\right\rangle +\left\langle \hat{\sigma},\left(c_{s}^{2}-\hat{P}\right)\hat{\nabla}.\hat{\mathbf{u}}\right\rangle  & = & 0,\label{eq:comp_bousinesq_continuity-weak-reference}\\
+\left\langle \hat{\gamma},\frac{\partial\hat{b}}{\partial t}\right\rangle -\left\langle \nabla\gamma,\left(\mathbf{u}b\right)\right\rangle -\left\langle \hat{\gamma},\hat{b}\hat{\nabla}.\hat{\mathbf{u}}\right\rangle +N^{2}\left\langle \gamma,\left(\mathbf{k}.\mathbf{u}\right)\right\rangle  & = & 0,\label{eq:com_bousinesq_energy-weak-reference}\\
+\left\langle J^{-1}\hat{\bm{c}},J^{-1}\hat{\bm{\xi}}\det J\right\rangle  & = & \left\langle \hat{\nabla}\times\hat{\bm{c}},\hat{\mathbf{u}}\right\rangle ,\label{eq:vorticity_weak-reference}\\
+\left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{F}}\right\rangle  & = & \left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{u}}\hat{P}\right\rangle ,\label{eq:mass_flux-reference}\end{eqnarray}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Computation of the Jacobian
+\end_layout
+
+\begin_layout Standard
+For various computations the Jacobian, along with its determinant, of the
+ coordinate transformation from the reference space to the physical space
+ is required.
+ By setting 
+\begin_inset Formula $\bm{\phi}\left(\hat{\bm{\chi}}\right)=\left(\phi_{1}\left(\hat{\bm{\chi}}\right),\phi_{2}\left(\hat{\bm{\chi}}\right),\phi_{3}\left(\hat{\bm{\chi}}\right)\right)$
+\end_inset
+
+and requiring that 
+\begin_inset Formula $\phi_{i}\in\mathbb{W}_{0}$
+\end_inset
+
+ for 
+\begin_inset Formula $i=1,2,3$
+\end_inset
+
+ then the Jacobian can be calculated.
+ In practice this means that each element is parameterised by a polynomial
+ function and therefore in general 
+\begin_inset Formula $\det J$
+\end_inset
+
+ will be a polynomial and so terms with factors 
+\begin_inset Formula $\det J^{-1}$
+\end_inset
+
+ will not be able to be integrated exactly, instead a suitably high order
+ quadrature will be used such that the error in the integration is small,
+ Appendix 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Quadrature"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Timestepping"
+
+\end_inset
+
+Timestepping Schemes
+\end_layout
+
+\begin_layout Standard
+Equations 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:comp_bousinesq_momentum-weak-reference"
+
+\end_inset
+
+-
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:mass_flux-reference"
+
+\end_inset
+
+ constitute three nonlinear prognostic equations for the velocity vector
+ 
+\begin_inset Formula $\hat{\mathbf{u}}$
+\end_inset
+
+, the pressure 
+\begin_inset Formula $\hat{P}$
+\end_inset
+
+ and the buoyancy 
+\begin_inset Formula $\hat{b}$
+\end_inset
+
+ along with two diagnostic equations for the vorticity 
+\begin_inset Formula $\hat{\bm{\xi}}$
+\end_inset
+
+ and the mass flux 
+\begin_inset Formula $\hat{\mathbf{F}}.$
+\end_inset
+
+ These equations are continuous in time and discrete in space, the temporal
+ discretisation is achieved either through a fully explicit Runge-Kutta
+ method or a semi-implicit method.
+\end_layout
+
+\begin_layout Subsection
+Runge-Kutta Timestepping
+\end_layout
+
+\begin_layout Standard
+A generic 
+\begin_inset Formula $m$
+\end_inset
+
+-stage Runge-Kutta timestepping scheme for the prototypical ode 
+\begin_inset Formula $\frac{dy}{dt}=f(y,t)$
+\end_inset
+
+ can be written as 
+\begin_inset Formula \begin{equation}
+y^{\left(j\right)}=y^{n}+\Delta t\sum_{k=1}^{j-1}a_{j,k}f\left(y^{\left(k\right)},t+c_{k}\Delta t\right)\label{eq:RK-1}\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula \begin{equation}
+y^{n+1}=y^{n}+\Delta t\sum_{j=1}^{m}\omega_{j}f\left(y^{\left(j\right)},t+c_{j}\Delta t\right)\label{eq:RK-2}\end{equation}
+
+\end_inset
+
+where the weights 
+\begin_inset Formula $a_{i,j}$
+\end_inset
+
+ are the entries of a matrix 
+\begin_inset Formula $A$
+\end_inset
+
+ and all the weights are given by a Butcher tableau 
+\begin_inset Tabular
+<lyxtabular version="3" rows="2" columns="2">
+<features>
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $c$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $A$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\omega$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+, eg for the strong stability preserving 3 stage 3rd order scheme this is
+ given in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:RKSSP3"
+
+\end_inset
+
+
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="4">
+<features>
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1/2$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1/2$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1/4$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1/4$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1/6$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1/6$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $4/6$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:RKSSP3"
+
+\end_inset
+
+RKSSP3 Butcher tableau
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+Equations 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:comp_bousinesq_momentum-weak-reference"
+
+\end_inset
+
+-
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:mass_flux-reference"
+
+\end_inset
+
+ can be reformulated into a form appropriate for applying 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:RK-1"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:RK-2"
+
+\end_inset
+
+ 
+\begin_inset Formula \begin{equation}
+M_{2}\frac{d\tilde{u}}{dt}=R_{u},\label{eq:u_RK}\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula \begin{equation}
+M_{3}\frac{d\tilde{P}}{dt}=R_{p},\label{eq:P_RK}\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \begin{equation}
+M_{0}\frac{d\tilde{b}}{dt}=R_{b},\label{eq:b_RK}\end{equation}
+
+\end_inset
+
+where now the unknowns 
+\begin_inset Formula $\tilde{u},\tilde{P},\tilde{b}$
+\end_inset
+
+ correspond to vectors of dof's and 
+\begin_inset Formula $M_{i}$
+\end_inset
+
+ is the mass matrix for function space 
+\begin_inset Formula $\mathbb{W}_{i}$
+\end_inset
+
+ given by 
+\begin_inset Formula \begin{equation}
+M_{0}=\left\langle \hat{\gamma},\hat{\gamma}\det J\right\rangle ,\label{eq:M0_mass_matrix}\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula \begin{equation}
+M_{1}=\left\langle J^{-1}\hat{\mathbf{c}},J^{-1}\hat{\mathbf{c}}\det J\right\rangle ,\label{eq:M1_mass_matrix}\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula \begin{equation}
+M_{2}=\left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{v}}\right\rangle ,\label{eq:M2_mass_matrix}\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula \begin{equation}
+M_{3}=\left\langle \hat{\sigma},\hat{\sigma}\det J\right\rangle ,\label{eq:M3_mass_matrix}\end{equation}
+
+\end_inset
+
+and the right hand sides are given by
+\begin_inset Formula \begin{eqnarray}
+R_{u} & \equiv & -\left\langle \bm{v},\frac{\bm{\xi}_{h}}{P}\times\mathbf{F}+\frac{\xi_{v}}{P}\mathbf{F}_{h}^{\perp}\right\rangle +\left\langle \hat{\nabla}.\hat{\bm{v}},\left[\hat{P}+\frac{1}{2}\left(\frac{J\hat{\mathbf{u}}}{\det J}\right).\left(\frac{J\hat{\mathbf{u}}}{\det J}\right)\right]\right\rangle +\left\langle \frac{J\hat{\bm{v}}}{\det J},\frac{Jb\hat{\mathbf{k}}}{\det J}\right\rangle ,\label{eq:R_u}\\
+R_{P} & \equiv & -\left\langle \hat{\sigma},\hat{\nabla}.\hat{\mathbf{F}}\right\rangle -\left\langle \hat{\sigma},\left(c_{s}^{2}-\hat{P}\right)\hat{\nabla}.\hat{\mathbf{u}}\right\rangle ,\label{eq:R_p}\\
+R_{b} & \equiv & \left\langle \nabla\gamma,\left(\mathbf{u}b\right)\right\rangle +\left\langle \hat{\gamma},\hat{b}\hat{\nabla}.\hat{\mathbf{u}}\right\rangle -N^{2}\left\langle \gamma,\left(\mathbf{k}.\mathbf{u}\right)\right\rangle .\label{eq:R_b}\end{eqnarray}
+
+\end_inset
+
+Where they are needed, the vorticity and mass flux are computed from 
+\begin_inset Formula \begin{equation}
+M_{1}\tilde{\xi}=R_{\xi}\label{eq:xi_diagnostic}\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula \begin{equation}
+M_{2}\tilde{F}=R_{F}\label{eq:F_diagnostic}\end{equation}
+
+\end_inset
+
+with 
+\begin_inset Formula \begin{equation}
+R_{\xi}\equiv\left\langle \hat{\nabla}\times\hat{\bm{c}},\hat{\mathbf{u}}\right\rangle ,\label{eq:R_xi}\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula \begin{equation}
+R_{F}\equiv\left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{u}}\hat{P}\right\rangle .\label{eq:R_F}\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Semi-Implicit Timestepping
+\end_layout
+
+\begin_layout Standard
+To be populated
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "/net/home/h01/dynamics/BiB_Styles/master"
+options "/net/home/h01/dynamics/BiB_Styles/wileyqj"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+newpage
+\end_layout
+
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+resetcounters
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+\start_of_appendix
+Reference Element
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Reference-Element"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/ref_cube_vertices.eps
+	scale 50
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Vertices
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/ref_cube_edges.eps
+	scale 50
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Edges
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/ref_cube_faces.eps
+	scale 50
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Faces
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Reference-cube-topology"
+
+\end_inset
+
+Reference cube topology.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For many computations some assumptions about the element are made, such
+ as ordering of faces, directions of tangent vectors etc.
+ The choice made here is to define a reference element with the following
+ orderings imposed upon it
+\end_layout
+
+\begin_layout Enumerate
+Numbering of vertices is depicted in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Reference-cube-topology"
+
+\end_inset
+
+ (a)
+\end_layout
+
+\begin_layout Enumerate
+Numbering of edges is depicted in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Reference-cube-topology"
+
+\end_inset
+
+ (b)
+\end_layout
+
+\begin_layout Enumerate
+Numbering of vertices is depicted in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Reference-cube-topology"
+
+\end_inset
+
+ (c)
+\end_layout
+
+\begin_layout Enumerate
+Normals to vertical faces (
+\begin_inset Formula $\hat{\chi}_{1}=const$
+\end_inset
+
+ or 
+\begin_inset Formula $\hat{\chi}_{2}=const$
+\end_inset
+
+) point outwards and normals to horizontal faces (
+\begin_inset Formula $\hat{\chi}_{3}=const$
+\end_inset
+
+) point in the positive 
+\begin_inset Formula $\hat{\chi}_{3}$
+\end_inset
+
+ direction, Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Reference-cube-directions"
+
+\end_inset
+
+ (a)
+\end_layout
+
+\begin_layout Enumerate
+Tangents to edges horizontal edges have an anticlockwise circulation, tangents
+ to vertical edges point in the positive 
+\begin_inset Formula $\hat{\chi}_{3}$
+\end_inset
+
+ direction, Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Reference-cube-directions"
+
+\end_inset
+
+ (b)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/ref_cube_face_normal.eps
+	scale 50
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/ref_cube_edge_tangent.eps
+	scale 50
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Reference-cube-directions"
+
+\end_inset
+
+Reference cube (a) face normal directions and (b) edge tangent directions
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Basis Functions
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Basis-Functions"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Quadrilateral Elements
+\end_layout
+
+\begin_layout Standard
+For quadrilateral elements each basis function can be decomposed into the
+ tensor product of three orthogonal polynomials, multiplied by a unit vector
+ for the basis functions in the the vector spaces 
+\begin_inset Formula $\mathbb{W}_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbb{W}_{2}$
+\end_inset
+
+.
+ Two orders of polynomial functions are required in order to fully specify
+ the basis functions, if the functions in 
+\begin_inset Formula $\mathbb{W}_{0}$
+\end_inset
+
+are order 
+\begin_inset Formula $k+1$
+\end_inset
+
+ the two sets of polynomials can be denoted by 
+\begin_inset Formula \begin{equation}
+F_{i}\left(\xi\right)\equiv\Pi_{i\neq j}^{k+2}\frac{\xi_{i}-\xi}{\xi_{i}-\xi_{j}},\label{eq:F_basis}\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula \begin{equation}
+G_{i}\left(\xi\right)\equiv\Pi_{i\neq j}^{k+1}\frac{\xi_{i}-\xi}{\xi_{i}-\xi_{j}},\label{eq:G_basis}\end{equation}
+
+\end_inset
+
+for a generic coordinate 
+\begin_inset Formula $\xi$
+\end_inset
+
+ where the index 
+\begin_inset Formula $i$
+\end_inset
+
+ picks out one individual basis function from the set of functions.
+ The location of the basis nodal points 
+\begin_inset Formula $\xi_{j}$
+\end_inset
+
+ depends upon the choice of polynomial functions, eg Legendre polynomials.
+ Using 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:F_basis"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:G_basis"
+
+\end_inset
+
+ then the basis functions, in the reference coordinates 
+\begin_inset Formula $\bm{\chi}\equiv\left(\chi_{1},\chi_{2},\chi_{3}\right),$
+\end_inset
+
+ for space 
+\begin_inset Formula $\mathbb{W}_{0}$
+\end_inset
+
+ are given by
+\begin_inset Formula \begin{equation}
+\gamma\left(\bm{\hat{\chi}}\right)\equiv F\left(\hat{\chi}_{1}\right)F\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right),\label{eq:gamma_def}\end{equation}
+
+\end_inset
+
+those in 
+\begin_inset Formula $\mathbb{W}_{1}$
+\end_inset
+
+ are given by
+\begin_inset Formula \begin{equation}
+\mathbf{c}\left(\bm{\hat{\chi}}\right)\equiv\begin{cases}
+G\left(\hat{\chi}_{1}\right)F\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right)\mathbf{i},\\
+F\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right)\mathbf{j},\\
+F\left(\hat{\chi}_{1}\right)F\left(\hat{\chi}_{2}\right)G\left(\hat{\chi}_{3}\right)\mathbf{k},\end{cases}\label{eq:c_def}\end{equation}
+
+\end_inset
+
+those in 
+\begin_inset Formula $\mathbb{W}_{2}$
+\end_inset
+
+ are given by
+\begin_inset Formula \begin{equation}
+\mathbf{v}\left(\bm{\hat{\chi}}\right)\equiv\begin{cases}
+F\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)G\left(\hat{\chi}_{3}\right)\mathbf{i},\\
+G\left(\hat{\chi}_{1}\right)F\left(\hat{\chi}_{2}\right)G\left(\hat{\chi}_{3}\right)\mathbf{j},\\
+G\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right)\mathbf{k},\end{cases}\label{eq:c_def-1}\end{equation}
+
+\end_inset
+
+those in 
+\begin_inset Formula $\mathbb{W}_{\theta}$
+\end_inset
+
+ are given by
+\begin_inset Formula \begin{equation}
+w\left(\bm{\hat{\chi}}\right)\equiv G\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right)\label{eq:w_def}\end{equation}
+
+\end_inset
+
+and finally those in 
+\begin_inset Formula $\mathbb{W}_{3}$
+\end_inset
+
+ are given by 
+\begin_inset Formula \begin{equation}
+\sigma\left(\bm{\hat{\chi}}\right)\equiv G\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)G\left(\hat{\chi}_{3}\right),\label{eq:sigma_def}\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Triangular elements
+\end_layout
+
+\begin_layout Standard
+To be populated
+\end_layout
+
+\begin_layout Subsection
+Compound elements
+\end_layout
+
+\begin_layout Standard
+To be populated
+\end_layout
+
+\begin_layout Section
+Computation of dofs
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Computation-of-dofs"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The number of dofs per element in each function space is the same as the
+ number of unique basis functions in that space.
+ A dof can be associated with any mesh entity (volume,face,edge,vertex)
+ and will inherit the connectivity of its associated mesh entity.
+ The number of dofs associated with each entity depends upon the order of
+ the function spaces chosen for the lowest order spaces 
+\begin_inset Formula $k=0$
+\end_inset
+
+ the number of dofs in each space associated with each entity is shown in
+ Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:num_dofs"
+
+\end_inset
+
+ (a) and for general order elements in (b)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="5">
+<features>
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+vertex
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+edge
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+face
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+volume
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{0}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{1}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{3}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="5">
+<features>
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+vertex
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+edge
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+face
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+volume
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{0}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $k$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $k^{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $k^{3}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{1}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\left(k+1\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $k\left(k+1\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $3k\left(k+1\right)\left(k+2\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\left(k+1\right)^{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $3k\left(k+1\right)^{2}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{3}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\left(k+1\right)^{3}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:num_dofs"
+
+\end_inset
+
+Numbers of dofs per mesh entity for the (a) lowest order elements 
+\begin_inset Formula $\left(k=0\right)$
+\end_inset
+
+ and (b) general order elements
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Location of dofs
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Location-of-dofs"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The locations of each dof within an element can be deduced from its associated
+ mesh entity and the order of approximation.
+ Examples are given in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:dof_locations"
+
+\end_inset
+
+ for the two lowest orders 
+\begin_inset Formula $k=0$
+\end_inset
+
+ and 
+\begin_inset Formula $k=1$
+\end_inset
+
+ for quadrilateral elements
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/k0_W0_dofs.eps
+	scale 40
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{0},\, k=0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/k0_W0_dofs.eps
+	scale 40
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{0},\, k=1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/k0_W1_dofs.eps
+	scale 40
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{1},\, k=0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/k1_W1_dofs.eps
+	scale 40
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{1},\, k=1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/k0_W2_dofs.eps
+	scale 40
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{2},\, k=0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/k1_W2_dofs.eps
+	scale 40
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{2},\, k=1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/k0_W3_dofs.eps
+	scale 40
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{3},\, k=0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/k1_W3_dofs.eps
+	scale 40
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{3},\, k=1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:dof_locations"
+
+\end_inset
+
+Locations of dofs for spaces 
+\begin_inset Formula $\mathbb{W}_{0}..\mathbb{W}_{3}$
+\end_inset
+
+ for (left column) 
+\begin_inset Formula $k=0$
+\end_inset
+
+ and (right column) 
+\begin_inset Formula $k=1.$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The corresponding diagrams for 
+\begin_inset Formula $\mathbb{W}_{\theta}$
+\end_inset
+
+ are given in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:dof_locations-Wtheta"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/k0_Wtheta_dofs.eps
+	scale 40
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{\theta},\, k=0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/k1_Wtheta_dofs.eps
+	scale 40
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset Formula $\mathbb{W}_{\theta},\, k=1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:dof_locations-Wtheta"
+
+\end_inset
+
+Locations of dofs for the 
+\begin_inset Formula $\mathbb{W}_{\theta}$
+\end_inset
+
+ space for (a) 
+\begin_inset Formula $k=0$
+\end_inset
+
+ and (b) 
+\begin_inset Formula $k=1.$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Computation of dofmaps
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Computation-of-dofmaps"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The cell dofmaps for each space contain the indices in a global array of
+ all the dof's that have none zero support for a given cell, i.e 
+\family typewriter
+dofmap_w1(i,:)
+\family default
+ will return the indices of all the dofs in cell 
+\family typewriter
+i 
+\family default
+for space 
+\begin_inset Formula $\mathbb{W}_{1}$
+\end_inset
+
+.
+ The dofmaps for other mesh entities (faces,edges,vertices) could in principle
+ be computed, but these are not in general needed.
+ The ordering of the dofs within the cell dofmap is of importance as we
+ need to know which basis function to associate that dof.
+ The assumption made about the ordering of the dofs within the cell dofmap
+ is that are in the the order 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\align center
+
+\family typewriter
+dofmap_w2(i,:)=[dofs_in_volume,dofs_on_faces,dofs_on_edges,dofs_on_vertices]
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+with this ordering a further assumption is made about the ordering of faces,
+ edges and vertices.
+ The choice made here is that the ordering follows that of the reference
+ element detailed in Appendix 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Reference-Element"
+
+\end_inset
+
+, eg for 
+\begin_inset Formula $k=0$
+\end_inset
+
+ and space 
+\begin_inset Formula $\mathbb{W}_{2}$
+\end_inset
+
+ the cell dofmap applied to a velocity field for cell 
+\family typewriter
+i
+\family default
+ will return:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\align center
+
+\family typewriter
+dofmap_w2(i,:)=[u_face1,u_face2,u_face3,u_face4,u_face5,u_face6]
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+for comparison the same operator for a C-grid finite difference model (such
+ as ENDGame) would return, for a cell located at 
+\begin_inset Formula $\left(i-\frac{1}{2},k-\frac{1}{2},k-\frac{1}{2}\right)$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\align center
+
+\family typewriter
+dofmap_endgame(i,j,k,:)=[
+\begin_inset Formula $u_{i-1,j-\frac{1}{2},k-\frac{1}{2}},u_{i,j-\frac{1}{2},k-\frac{1}{2}},v_{i-\frac{1}{2},j-1,k-\frac{1}{2}},v_{i-\frac{1}{2},j,k-\frac{1}{2}},w_{i-\frac{1}{2},j-\frac{1}{2},k-1},w_{i-\frac{1}{2}.j-\frac{1}{2},k}$
+\end_inset
+
+]
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+With higher order elements there is potentially more that one dof per mesh
+ entity and a further ordering of the dofs is required and the choice made
+ here is to use lexicographical ordering along the dimensions of the associated
+ mesh entity, i.e.
+ for 
+\begin_inset Formula $k=2$
+\end_inset
+
+ along edge 1 the dofmap ordering for a field 
+\begin_inset Formula $q$
+\end_inset
+
+ would be 
+\begin_inset Formula $\left[q\left(\chi_{1}^{1},0,0\right),q\left(\chi_{1}^{2},0,0\right)\right]$
+\end_inset
+
+where 
+\begin_inset Formula $\chi_{1}^{i}$
+\end_inset
+
+ are the dof nodal points along the edge.
+ For face 6 the corresponding ordering would be 
+\begin_inset Formula $\left[q\left(\chi_{1}^{1},\chi_{2}^{1},1\right),q\left(\chi_{1}^{2},\chi_{2}^{1},1\right),q\left(\chi_{1}^{1},\chi_{2}^{2},1\right),q\left(\chi_{1}^{2},\chi_{2}^{2},1\right)\right]$
+\end_inset
+
+ where now 
+\begin_inset Formula $\chi_{1}^{i}\chi_{2}^{i}$
+\end_inset
+
+ are the dof nodal points on the face.
+\end_layout
+
+\begin_layout Section
+Quadrature
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Quadrature"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Using Gaussian quadrature of order 
+\begin_inset Formula $n$
+\end_inset
+
+, for the integral 
+\begin_inset Formula \begin{equation}
+\int_{-1}^{+1}y(x)dx\approx\sum_{i=1}^{n}y\left(x_{i}\right)w_{i}\label{eq:guass1}\end{equation}
+
+\end_inset
+
+ provides the exact value exact for polynomials up to order 
+\begin_inset Formula $2n-1$
+\end_inset
+
+.
+ The quadrature points 
+\begin_inset Formula $x_{i}$
+\end_inset
+
+ and weights 
+\begin_inset Formula $w_{i}$
+\end_inset
+
+ for orders up to 
+\begin_inset Formula $n=5$
+\end_inset
+
+ (exact for 
+\begin_inset Formula $9^{{\rm th}}$
+\end_inset
+
+ order polynomials) are given in Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:quad"
+
+\end_inset
+
+.
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="8" columns="3">
+<features>
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $n$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $x_{i}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $w_{i}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\pm\frac{1}{\sqrt{3}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0,\,\pm\frac{\sqrt{15}}{5}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\frac{8}{9},\,\frac{5}{9},\,\frac{5}{9}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\pm\frac{1}{35}\sqrt{525-70\sqrt{30}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\frac{1}{36}\left(18+\sqrt{30}\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\pm\frac{1}{35}\sqrt{525+70\sqrt{30}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\frac{1}{36}\left(18-\sqrt{30}\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\pm\frac{1}{3}\sqrt{5+2\sqrt{\frac{10}{7}}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\frac{322-13\sqrt{70}}{900}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\pm\frac{1}{3}\sqrt{5-2\sqrt{\frac{10}{7}}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\frac{322+13\sqrt{70}}{900}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\frac{128}{225}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:quad"
+
+\end_inset
+
+Quadrature points 
+\begin_inset Formula $x_{i}$
+\end_inset
+
+ and weights 
+\begin_inset Formula $w_{i}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Integration over the element can be transformed to the interval 
+\begin_inset Formula $\left(-1,1\right)$
+\end_inset
+
+ through
+\begin_inset Formula \begin{equation}
+\int_{x^{m}}^{x^{m+1}}y(x)dx=\frac{h}{2}\int_{-1}^{+1}y\left(\frac{h}{2}z+x^{m+\frac{1}{2}}\right).\label{eq:gauss2}\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $h\equiv x^{m+1}-x^{m}$
+\end_inset
+
+ and 
+\begin_inset Formula $x^{m+\frac{1}{2}}\equiv\frac{1}{2}\left(x^{m+1}+x^{m}\right).$
+\end_inset
+
+ The order of the Gaussian quadrature is chosen such that it will be exact
+ for all linear terms under the assumption of constant determinant of the
+ Jacobian, this gives the order 
+\begin_inset Formula $n=4$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Work To Do
+\end_layout
+
+\begin_layout Enumerate
+Galerkin projection for 
+\begin_inset Formula $\mathbb{W}_{1}$
+\end_inset
+
+-Iva
+\end_layout
+
+\begin_layout Enumerate
+Galerkin projection for 
+\begin_inset Formula $\mathbb{W}_{2}$
+\end_inset
+
+-Iva
+\end_layout
+
+\begin_layout Enumerate
+Piola transform for all spaces-Tom
+\end_layout
+
+\begin_layout Enumerate
+Construct and discretise test equation set (Boussinesq)
+\end_layout
+
+\begin_layout Enumerate
+Document formulation 
+\end_layout
+
+\begin_layout Enumerate
+Add in timestepping to code
+\end_layout
+
+\end_body
+\end_document
