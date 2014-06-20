@@ -1,42 +1,67 @@
-#LyX 1.6.10 created this file. For more info see http://www.lyx.org/
-\lyxformat 345
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
 \begin_document
 \begin_header
 \textclass article
 \begin_preamble
-\input{paper_single_style}
+\input{../tex/paper_single_style}
 \usepackage{indentfirst}
 \parindent = 5 mm
-\usepackage{cancel}
 \usepackage{bm}
 \end_preamble
 \use_default_options false
+\maintain_unincluded_children false
 \language english
+\language_package default
 \inputencoding auto
+\fontencoding global
 \font_roman lmodern
 \font_sans lmss
 \font_typewriter lmtt
+\font_math auto
 \font_default_family default
+\use_non_tex_fonts false
 \font_sc false
 \font_osf false
 \font_sf_scale 100
 \font_tt_scale 100
-
 \graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
 \paperfontsize default
 \spacing single
 \use_hyperref false
 \papersize default
 \use_geometry false
-\use_amsmath 1
-\use_esint 0
-\cite_engine natbib_authoryear
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 2
+\use_package esint 0
+\use_package mathdots 0
+\use_package mathtools 0
+\use_package mhchem 1
+\use_package stackrel 0
+\use_package stmaryrd 0
+\use_package undertilde 0
+\cite_engine natbib
+\cite_engine_type authoryear
+\biblio_style plainnat
 \use_bibtopic false
+\use_indices false
 \paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
 \secnumdepth 3
 \tocdepth 3
 \paragraph_separation indent
-\defskip medskip
+\paragraph_indentation default
 \quotes_language english
 \papercolumns 1
 \papersides 1
@@ -45,7 +70,9 @@
 \bulletLaTeX 1 "\textcolor{red}{\(\ast\)}"
 \tracking_changes false
 \output_changes false
-\author "" 
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
 \end_header
 
 \begin_body
@@ -228,10 +255,12 @@ key "durran_blossey12"
 \end_inset
 
  
-\begin_inset Formula \begin{eqnarray}
+\begin_inset Formula 
+\begin{eqnarray}
 \frac{\partial\mathbf{u}}{\partial t}+\mathbf{u}.\nabla\left(\mathbf{u}\right)+\nabla P & = & b\mathbf{k}+\nabla\times\bm{\psi},\label{eq:comp_bousinesq_momentum}\\
 \frac{\partial P}{\partial t}+\mathbf{u}.\nabla P+c_{s}^{2}\nabla.\mathbf{u} & = & 0,\label{eq:comp_bousinesq_continuity}\\
-\frac{\partial b}{\partial t}+\mathbf{u}.\nabla b+wN^{2} & = & 0,\label{eq:com_bousinesq_energy}\end{eqnarray}
+\frac{\partial b}{\partial t}+\mathbf{u}.\nabla b+wN^{2} & = & 0,\label{eq:com_bousinesq_energy}
+\end{eqnarray}
 
 \end_inset
 
@@ -327,10 +356,12 @@ reference "eq:com_bousinesq_energy"
 \end_inset
 
  into the vector invaraint form
-\begin_inset Formula \begin{eqnarray}
+\begin_inset Formula 
+\begin{eqnarray}
 \frac{\partial\mathbf{u}}{\partial t}+\mathbf{u}\times\bm{\xi}+\nabla\left(P+K\right) & = & b\mathbf{k}+\nabla\times\bm{\psi},\label{eq:comp_bousinesq_momentum-1}\\
 \frac{\partial P}{\partial t}+\nabla.\left(\mathbf{u}P\right)+\left(c_{s}^{2}-P\right)\nabla.\mathbf{u} & = & 0,\label{eq:comp_bousinesq_continuity-1}\\
-\frac{\partial b}{\partial t}+\nabla.\left(\mathbf{u}b\right)-b\nabla.\mathbf{u}+\left(\mathbf{k}.\mathbf{u}\right)N^{2} & = & 0,\label{eq:com_bousinesq_energy-1}\end{eqnarray}
+\frac{\partial b}{\partial t}+\nabla.\left(\mathbf{u}b\right)-b\nabla.\mathbf{u}+\left(\mathbf{k}.\mathbf{u}\right)N^{2} & = & 0,\label{eq:com_bousinesq_energy-1}
+\end{eqnarray}
 
 \end_inset
 
@@ -365,10 +396,12 @@ reference "eq:com_bousinesq_energy"
 \end_inset
 
  are 
-\begin_inset Formula \begin{eqnarray}
+\begin_inset Formula 
+\begin{eqnarray}
 \frac{\partial\mathbf{u}}{\partial t}+\mathbf{U}.\nabla\left(\mathbf{u}\right)+\nabla P & = & b\mathbf{k},\label{eq:comp_bousinesq_momentum-linear}\\
 \frac{\partial P}{\partial t}+\mathbf{U}.\nabla P+c_{s}^{2}\nabla.\mathbf{u} & = & 0,\label{eq:comp_bousinesq_continuity-linear}\\
-\frac{\partial b}{\partial t}+\mathbf{U}.\nabla b+\left(\mathbf{k}.\mathbf{u}\right)N^{2} & = & 0,\label{eq:com_bousinesq_energy-linear}\end{eqnarray}
+\frac{\partial b}{\partial t}+\mathbf{U}.\nabla b+\left(\mathbf{k}.\mathbf{u}\right)N^{2} & = & 0,\label{eq:com_bousinesq_energy-linear}
+\end{eqnarray}
 
 \end_inset
 
@@ -377,8 +410,10 @@ where a constant advecting velocity
 \end_inset
 
  has been introduced, the momentum equation can again be rewritten as 
-\begin_inset Formula \begin{eqnarray}
-\frac{\partial\mathbf{u}}{\partial t}+\bm{U}\times\bm{\xi}+\nabla\left(P+K\right) & = & b\mathbf{k},\label{eq:comp_bousinesq_momentum-linear-1}\end{eqnarray}
+\begin_inset Formula 
+\begin{eqnarray}
+\frac{\partial\mathbf{u}}{\partial t}+\bm{U}\times\bm{\xi}+\nabla\left(P+K\right) & = & b\mathbf{k},\label{eq:comp_bousinesq_momentum-linear-1}
+\end{eqnarray}
 
 \end_inset
 
@@ -435,10 +470,13 @@ reference "sec:Reference-Element"
 \end_inset
 
 :
-\begin_inset Formula \begin{equation}
+\begin_inset Formula 
+\begin{equation}
 \begin{array}{ccccccc}
 \mathbb{W}_{0} & \overset{\nabla}{\longrightarrow} & \mathbb{W}_{1} & \overset{\nabla\times}{\longrightarrow} & \mathbb{W}_{2} & \overset{\nabla.}{\longrightarrow} & \mathbb{W}_{3}\\
- & \underset{\tilde{\nabla.}}{\dashleftarrow} &  & \underset{\tilde{\nabla}\times}{\dashleftarrow} &  & \underset{\tilde{\nabla}}{\dashleftarrow}\end{array}\label{eq:derham_complex}\end{equation}
+ & \underset{\tilde{\nabla.}}{\dashleftarrow} &  & \underset{\tilde{\nabla}\times}{\dashleftarrow} &  & \underset{\tilde{\nabla}}{\dashleftarrow}
+\end{array}\label{eq:derham_complex}
+\end{equation}
 
 \end_inset
 
@@ -447,7 +485,7 @@ reference "sec:Reference-Element"
  The function spaces correspond to 
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 \begin_inset Formula $\mathbb{W}_{0}$
 \end_inset
@@ -459,7 +497,7 @@ reference "sec:Reference-Element"
  polynomials with full continuity.
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 \begin_inset Formula $\mathbb{W}_{1}$
 \end_inset
@@ -475,7 +513,7 @@ reference "sec:Reference-Element"
  polynomial with continuity in the tangential direction only.
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 \begin_inset Formula $\mathbb{W}_{2}$
 \end_inset
@@ -491,7 +529,7 @@ reference "sec:Reference-Element"
  polynomials with continuity in the normal direction only.
 \end_layout
 
-\begin_layout List
+\begin_layout Labeling
 \labelwidthstring 00.00.0000
 \begin_inset Formula $\mathbb{W}_{3}$
 \end_inset
@@ -555,12 +593,14 @@ reference "eq:com_bousinesq_energy-1"
 \end_inset
 
  gives the weak form of the equations
-\begin_inset Formula \begin{eqnarray}
+\begin_inset Formula 
+\begin{eqnarray}
 \left\langle \bm{v},\frac{\partial\mathbf{u}}{\partial t}\right\rangle +\left\langle \bm{v},\left(\frac{\bm{\xi}}{P}\times\mathbf{F}\right)\right\rangle +\left\langle \bm{v},\tilde{\nabla}\left(P+K\right)\right\rangle  & = & \left\langle \bm{v},b\mathbf{k}\right\rangle ,\label{eq:comp_bousinesq_momentum-weak}\\
 \left\langle \sigma,\frac{\partial P}{\partial t}\right\rangle +\left\langle \sigma,\nabla.\left(\mathbf{F}\right)\right\rangle +\left\langle \sigma,\left(c_{s}^{2}-P\right)\nabla.\mathbf{u}\right\rangle  & = & 0,\label{eq:comp_bousinesq_continuity-weak}\\
 \left\langle \gamma,\frac{\partial b}{\partial t}\right\rangle +\left\langle \gamma,\tilde{\nabla}.\left(\mathbf{u}b\right)\right\rangle -\left\langle \gamma,b\nabla.\mathbf{u}\right\rangle +\left\langle \gamma,\left(\mathbf{k}.\mathbf{u}\right)N^{2}\right\rangle  & = & 0,\label{eq:com_bousinesq_energy-weak}\\
 \left\langle \bm{c},\bm{\xi}\right\rangle  & = & \left\langle \bm{c},\tilde{\nabla}\times\mathbf{u}\right\rangle ,\label{eq:vorticity_weak}\\
-\left\langle \bm{v},\bm{F}\right\rangle  & \equiv & \left\langle \bm{v},\bm{u}P\right\rangle ,\label{eq:mass_flux}\end{eqnarray}
+\left\langle \bm{v},\bm{F}\right\rangle  & \equiv & \left\langle \bm{v},\bm{u}P\right\rangle ,\label{eq:mass_flux}
+\end{eqnarray}
 
 \end_inset
 
@@ -572,8 +612,10 @@ where the inner product takes its usual form
  been dropped.
  The vorticity advection term can be split onto advection of the horizontal
  and vertical parts 
-\begin_inset Formula \begin{equation}
-\frac{\bm{\xi}}{P}\times\mathbf{F}\equiv\frac{\bm{\xi}_{h}}{P}\times\mathbf{F}+\frac{\xi_{v}}{P}\mathbf{F}_{h}^{\perp}\label{eq:vorticity_split}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\frac{\bm{\xi}}{P}\times\mathbf{F}\equiv\frac{\bm{\xi}_{h}}{P}\times\mathbf{F}+\frac{\xi_{v}}{P}\mathbf{F}_{h}^{\perp}\label{eq:vorticity_split}
+\end{equation}
 
 \end_inset
 
@@ -621,12 +663,14 @@ reference "eq:vorticity_split"
 \end_inset
 
  gives 
-\begin_inset Formula \begin{eqnarray}
+\begin_inset Formula 
+\begin{eqnarray}
 \left\langle \bm{v},\frac{\partial\mathbf{u}}{\partial t}\right\rangle +\left\langle \bm{v},\frac{\bm{\xi}_{h}}{P}\times\mathbf{F}+\frac{\xi_{v}}{P}\mathbf{F}_{h}^{\perp}\right\rangle -\left\langle \nabla.\bm{v},\left(P+K\right)\right\rangle  & = & \left\langle \bm{v},b\mathbf{k}\right\rangle ,\label{eq:comp_bousinesq_momentum-weak-1}\\
 \left\langle \sigma,\frac{\partial P}{\partial t}\right\rangle +\left\langle \sigma,\nabla.\mathbf{F}\right\rangle +\left\langle \sigma,\left(c_{s}^{2}-P\right)\nabla.\mathbf{u}\right\rangle  & = & 0,\label{eq:comp_bousinesq_continuity-weak-1}\\
 \left\langle \gamma,\frac{\partial b}{\partial t}\right\rangle -\left\langle \nabla\gamma,\left(\mathbf{u}b\right)\right\rangle -\left\langle \gamma,b\nabla.\mathbf{u}\right\rangle +\left\langle \gamma,\left(\mathbf{k}.\mathbf{u}\right)N^{2}\right\rangle  & = & 0,\label{eq:com_bousinesq_energy-weak-1}\\
 \left\langle \bm{c},\bm{\xi}\right\rangle  & = & \left\langle \nabla\times\bm{c},\mathbf{u}\right\rangle ,\label{eq:vorticity_weak-1}\\
-\left\langle \bm{v},\bm{F}\right\rangle  & \equiv & \left\langle \bm{v},\bm{u}P\right\rangle ,\label{eq:mass_flux-1}\end{eqnarray}
+\left\langle \bm{v},\bm{F}\right\rangle  & \equiv & \left\langle \bm{v},\bm{u}P\right\rangle ,\label{eq:mass_flux-1}
+\end{eqnarray}
 
 \end_inset
 
@@ -716,8 +760,10 @@ key "rognes09,brezzi91,monk03"
 \end_inset
 
  the Contravariant Piola transform is used 
-\begin_inset Formula \begin{equation}
-\mathbf{v\left(\bm{\chi}\right)\equiv}\mathbf{v}\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\frac{J\hat{\mathbf{v}}\left(\hat{\bm{\mathbf{\chi}}}\right)}{\det J},\label{eq:W2_contravariant_piola}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\mathbf{v\left(\bm{\chi}\right)\equiv}\mathbf{v}\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\frac{J\hat{\mathbf{v}}\left(\hat{\bm{\mathbf{\chi}}}\right)}{\det J},\label{eq:W2_contravariant_piola}
+\end{equation}
 
 \end_inset
 
@@ -726,14 +772,18 @@ where the Jacobian
 \end_inset
 
  crucially this transformation satisfies 
-\begin_inset Formula \begin{equation}
-\nabla.\mathbf{v}\left(\bm{\chi}\right)=\frac{1}{\det J}\hat{\nabla}.\left(\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\mathbf{v}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right).\label{eq:piola_div}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\nabla.\mathbf{v}\left(\bm{\chi}\right)=\frac{1}{\det J}\hat{\nabla}.\left(\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\mathbf{v}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right).\label{eq:piola_div}
+\end{equation}
 
 \end_inset
 
 and therefore 
-\begin_inset Formula \begin{equation}
-\int_{\Omega}\gamma\nabla.\mathbf{v}d\chi=\int_{\hat{\Omega}}\hat{\gamma}\hat{\nabla}.\left(\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\mathbf{v}}\right)d\hat{\chi}.\label{eq:div_mapping}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\int_{\Omega}\gamma\nabla.\mathbf{v}d\chi=\int_{\hat{\Omega}}\hat{\gamma}\hat{\nabla}.\left(\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\mathbf{v}}\right)d\hat{\chi}.\label{eq:div_mapping}
+\end{equation}
 
 \end_inset
 
@@ -742,20 +792,26 @@ For vector fields in
 \end_inset
 
  the covariant Piola transform is used 
-\begin_inset Formula \begin{equation}
-\mathbf{c}\left(\bm{\chi}\right)\equiv\mathbf{c}\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\left(\mathbf{g}^{-1}\right)^{T}J^{-1}\mathbf{g}^{{\rm ref}}\hat{\mathbf{c}}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:W1_covariant_piola}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\mathbf{c}\left(\bm{\chi}\right)\equiv\mathbf{c}\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\left(\mathbf{g}^{-1}\right)^{T}J^{-1}\mathbf{g}^{{\rm ref}}\hat{\mathbf{c}}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:W1_covariant_piola}
+\end{equation}
 
 \end_inset
 
 which satisfies 
-\begin_inset Formula \begin{equation}
-\nabla\times\mathbf{c}\left(\bm{\chi}\right)=J^{-1}\hat{\nabla}\times\hat{\mathbf{c}}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:piola_curl}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\nabla\times\mathbf{c}\left(\bm{\chi}\right)=J^{-1}\hat{\nabla}\times\hat{\mathbf{c}}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:piola_curl}
+\end{equation}
 
 \end_inset
 
 and therefore (this might be missing metric tensor terms)
-\begin_inset Formula \begin{equation}
-\int_{\Omega}\mathbf{v}.\nabla\times\mathbf{c}d\chi=\int_{\hat{\Omega}}\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\mathbf{v}}.\hat{\nabla}\times\hat{\mathbf{c}}d\hat{\chi}.\label{eq:curl_mapping}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\int_{\Omega}\mathbf{v}.\nabla\times\mathbf{c}d\chi=\int_{\hat{\Omega}}\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\mathbf{v}}.\hat{\nabla}\times\hat{\mathbf{c}}d\hat{\chi}.\label{eq:curl_mapping}
+\end{equation}
 
 \end_inset
 
@@ -764,8 +820,10 @@ The transforms for scalar variables are: for space
 \end_inset
 
  
-\begin_inset Formula \begin{equation}
-\gamma\left(\bm{\chi}\right)\equiv\gamma\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\hat{\gamma}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:W0_scaler_transform}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\gamma\left(\bm{\chi}\right)\equiv\gamma\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\hat{\gamma}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:W0_scaler_transform}
+\end{equation}
 
 \end_inset
 
@@ -774,8 +832,10 @@ and for
 \end_inset
 
  
-\begin_inset Formula \begin{equation}
-\sigma\left(\bm{\chi}\right)\equiv\sigma\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\frac{\hat{\sigma}\left(\hat{\bm{\mathbf{\chi}}}\right)}{\det J},\label{eq:W3_scalar_transform}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\sigma\left(\bm{\chi}\right)\equiv\sigma\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\frac{\hat{\sigma}\left(\hat{\bm{\mathbf{\chi}}}\right)}{\det J},\label{eq:W3_scalar_transform}
+\end{equation}
 
 \end_inset
 
@@ -787,8 +847,10 @@ reference "eq:W3_scalar_transform"
 \end_inset
 
  would result in the divergence mapping becoming 
-\begin_inset Formula \begin{equation}
-\int_{\Omega}\sigma\nabla.\mathbf{v}d\chi=\int_{\hat{\Omega}}\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\frac{\hat{\sigma}}{\det J}\hat{\nabla}.\hat{\mathbf{v}}d\hat{\chi}\label{eq:divergence_problem}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\int_{\Omega}\sigma\nabla.\mathbf{v}d\chi=\int_{\hat{\Omega}}\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\frac{\hat{\sigma}}{\det J}\hat{\nabla}.\hat{\mathbf{v}}d\hat{\chi}\label{eq:divergence_problem}
+\end{equation}
 
 \end_inset
 
@@ -814,8 +876,10 @@ reference "eq:W3_scalar_transform"
 \end_inset
 
  so that it becomes 
-\begin_inset Formula \begin{equation}
-\sigma\left(\bm{\chi}\right)\equiv\sigma\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\sigma}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:W3_scalar_transform-new}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\sigma\left(\bm{\chi}\right)\equiv\sigma\left(\bm{\mathbf{\phi}}\left(\hat{\bm{\mathbf{\chi}}}\right)\right)=\frac{\sqrt{\det\left(\mathbf{g}^{{\rm ref}}\right)}}{\sqrt{\det\left(\mathbf{g}\right)}}\hat{\sigma}\left(\hat{\bm{\mathbf{\chi}}}\right),\label{eq:W3_scalar_transform-new}
+\end{equation}
 
 \end_inset
 
@@ -876,6 +940,7 @@ hor_pos "c"
 has_inner_box 1
 inner_pos "t"
 use_parbox 0
+use_makebox 0
 width "100col%"
 special "none"
 height "1in"
@@ -888,8 +953,10 @@ status open
 Aside: For the special case where both the reference and physical spaces
  are Euclidean spaces with Cartesian coordinate systems the metric terms
  reduce to 
-\begin_inset Formula \begin{equation}
-g_{i,j}=\delta_{i,j},\qquad g_{i',j'}^{{\rm ref}}=\delta_{i',j'},\label{eq:Euclidean_metrics}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+g_{i,j}=\delta_{i,j},\qquad g_{i',j'}^{{\rm ref}}=\delta_{i',j'},\label{eq:Euclidean_metrics}
+\end{equation}
 
 \end_inset
 
@@ -975,12 +1042,14 @@ reference "eq:W3_scalar_transform-new"
 \end_inset
 
  respectively yields
-\begin_inset Formula \begin{eqnarray}
+\begin_inset Formula 
+\begin{eqnarray}
 \left\langle \frac{J\hat{\bm{v}}}{\det J},J\frac{\partial\hat{\mathbf{u}}}{\partial t}\right\rangle +\left\langle \bm{v},\frac{\bm{\xi}_{h}}{P}\times\mathbf{F}+\frac{\xi_{v}}{P}\mathbf{F}_{h}^{\perp}\right\rangle -\left\langle \hat{\nabla}.\hat{\bm{v}},\left[\hat{P}+\frac{1}{2}\left(\frac{J\hat{\mathbf{u}}}{\det J}\right).\left(\frac{J\hat{\mathbf{u}}}{\det J}\right)\right]\right\rangle  & = & \left\langle \frac{J\hat{\bm{v}}}{\det J},\frac{Jb\hat{\mathbf{k}}}{\det J}\right\rangle ,\label{eq:comp_bousinesq_momentum-weak-reference}\\
 \left\langle \hat{\sigma},\frac{\partial\hat{P}}{\partial t}\det J\right\rangle +\left\langle \hat{\sigma},\hat{\nabla}.\hat{\mathbf{F}}\right\rangle +\left\langle \hat{\sigma},\left(c_{s}^{2}-\hat{P}\right)\hat{\nabla}.\hat{\mathbf{u}}\right\rangle  & = & 0,\label{eq:comp_bousinesq_continuity-weak-reference}\\
 \left\langle \hat{\gamma},\frac{\partial\hat{b}}{\partial t}\right\rangle -\left\langle \nabla\gamma,\left(\mathbf{u}b\right)\right\rangle -\left\langle \hat{\gamma},\hat{b}\hat{\nabla}.\hat{\mathbf{u}}\right\rangle +N^{2}\left\langle \gamma,\left(\mathbf{k}.\mathbf{u}\right)\right\rangle  & = & 0,\label{eq:com_bousinesq_energy-weak-reference}\\
 \left\langle J^{-1}\hat{\bm{c}},J^{-1}\hat{\bm{\xi}}\det J\right\rangle  & = & \left\langle \hat{\nabla}\times\hat{\bm{c}},\hat{\mathbf{u}}\right\rangle ,\label{eq:vorticity_weak-reference}\\
-\left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{F}}\right\rangle  & = & \left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{u}}\hat{P}\right\rangle ,\label{eq:mass_flux-reference}\end{eqnarray}
+\left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{F}}\right\rangle  & = & \left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{u}}\hat{P}\right\rangle ,\label{eq:mass_flux-reference}
+\end{eqnarray}
 
 \end_inset
 
@@ -1094,14 +1163,18 @@ A generic
 \end_inset
 
  can be written as 
-\begin_inset Formula \begin{equation}
-y^{\left(j\right)}=y^{n}+\Delta t\sum_{k=1}^{j-1}a_{j,k}f\left(y^{\left(k\right)},t+c_{k}\Delta t\right)\label{eq:RK-1}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+y^{\left(j\right)}=y^{n}+\Delta t\sum_{k=1}^{j-1}a_{j,k}f\left(y^{\left(k\right)},t+c_{k}\Delta t\right)\label{eq:RK-1}
+\end{equation}
 
 \end_inset
 
 
-\begin_inset Formula \begin{equation}
-y^{n+1}=y^{n}+\Delta t\sum_{j=1}^{m}\omega_{j}f\left(y^{\left(j\right)},t+c_{j}\Delta t\right)\label{eq:RK-2}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+y^{n+1}=y^{n}+\Delta t\sum_{j=1}^{m}\omega_{j}f\left(y^{\left(j\right)},t+c_{j}\Delta t\right)\label{eq:RK-2}
+\end{equation}
 
 \end_inset
 
@@ -1116,9 +1189,9 @@ where the weights
  and all the weights are given by a Butcher tableau 
 \begin_inset Tabular
 <lyxtabular version="3" rows="2" columns="2">
-<features>
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
+<features rotate="0" tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
 <row>
 <cell alignment="center" valignment="top" bottomline="true" usebox="none">
 \begin_inset Text
@@ -1190,11 +1263,11 @@ status open
 \align center
 \begin_inset Tabular
 <lyxtabular version="3" rows="4" columns="4">
-<features>
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
+<features rotate="0" tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
 <row>
 <cell alignment="center" valignment="top" usebox="none">
 \begin_inset Text
@@ -1388,7 +1461,7 @@ status open
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset CommandInset label
@@ -1440,14 +1513,18 @@ reference "eq:RK-2"
 \end_inset
 
  
-\begin_inset Formula \begin{equation}
-M_{2}\frac{d\tilde{u}}{dt}=R_{u},\label{eq:u_RK}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+M_{2}\frac{d\tilde{u}}{dt}=R_{u},\label{eq:u_RK}
+\end{equation}
 
 \end_inset
 
 
-\begin_inset Formula \begin{equation}
-M_{3}\frac{d\tilde{P}}{dt}=R_{p},\label{eq:P_RK}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+M_{3}\frac{d\tilde{P}}{dt}=R_{p},\label{eq:P_RK}
+\end{equation}
 
 \end_inset
 
@@ -1455,8 +1532,10 @@ M_{3}\frac{d\tilde{P}}{dt}=R_{p},\label{eq:P_RK}\end{equation}
 \end_layout
 
 \begin_layout Standard
-\begin_inset Formula \begin{equation}
-M_{0}\frac{d\tilde{b}}{dt}=R_{b},\label{eq:b_RK}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+M_{0}\frac{d\tilde{b}}{dt}=R_{b},\label{eq:b_RK}
+\end{equation}
 
 \end_inset
 
@@ -1473,58 +1552,76 @@ where now the unknowns
 \end_inset
 
  given by 
-\begin_inset Formula \begin{equation}
-M_{0}=\left\langle \hat{\gamma},\hat{\gamma}\det J\right\rangle ,\label{eq:M0_mass_matrix}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+M_{0}=\left\langle \hat{\gamma},\hat{\gamma}\det J\right\rangle ,\label{eq:M0_mass_matrix}
+\end{equation}
 
 \end_inset
 
 
-\begin_inset Formula \begin{equation}
-M_{1}=\left\langle J^{-1}\hat{\mathbf{c}},J^{-1}\hat{\mathbf{c}}\det J\right\rangle ,\label{eq:M1_mass_matrix}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+M_{1}=\left\langle J^{-1}\hat{\mathbf{c}},J^{-1}\hat{\mathbf{c}}\det J\right\rangle ,\label{eq:M1_mass_matrix}
+\end{equation}
 
 \end_inset
 
 
-\begin_inset Formula \begin{equation}
-M_{2}=\left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{v}}\right\rangle ,\label{eq:M2_mass_matrix}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+M_{2}=\left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{v}}\right\rangle ,\label{eq:M2_mass_matrix}
+\end{equation}
 
 \end_inset
 
 
-\begin_inset Formula \begin{equation}
-M_{3}=\left\langle \hat{\sigma},\hat{\sigma}\det J\right\rangle ,\label{eq:M3_mass_matrix}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+M_{3}=\left\langle \hat{\sigma},\hat{\sigma}\det J\right\rangle ,\label{eq:M3_mass_matrix}
+\end{equation}
 
 \end_inset
 
 and the right hand sides are given by
-\begin_inset Formula \begin{eqnarray}
+\begin_inset Formula 
+\begin{eqnarray}
 R_{u} & \equiv & -\left\langle \bm{v},\frac{\bm{\xi}_{h}}{P}\times\mathbf{F}+\frac{\xi_{v}}{P}\mathbf{F}_{h}^{\perp}\right\rangle +\left\langle \hat{\nabla}.\hat{\bm{v}},\left[\hat{P}+\frac{1}{2}\left(\frac{J\hat{\mathbf{u}}}{\det J}\right).\left(\frac{J\hat{\mathbf{u}}}{\det J}\right)\right]\right\rangle +\left\langle \frac{J\hat{\bm{v}}}{\det J},\frac{Jb\hat{\mathbf{k}}}{\det J}\right\rangle ,\label{eq:R_u}\\
 R_{P} & \equiv & -\left\langle \hat{\sigma},\hat{\nabla}.\hat{\mathbf{F}}\right\rangle -\left\langle \hat{\sigma},\left(c_{s}^{2}-\hat{P}\right)\hat{\nabla}.\hat{\mathbf{u}}\right\rangle ,\label{eq:R_p}\\
-R_{b} & \equiv & \left\langle \nabla\gamma,\left(\mathbf{u}b\right)\right\rangle +\left\langle \hat{\gamma},\hat{b}\hat{\nabla}.\hat{\mathbf{u}}\right\rangle -N^{2}\left\langle \gamma,\left(\mathbf{k}.\mathbf{u}\right)\right\rangle .\label{eq:R_b}\end{eqnarray}
+R_{b} & \equiv & \left\langle \nabla\gamma,\left(\mathbf{u}b\right)\right\rangle +\left\langle \hat{\gamma},\hat{b}\hat{\nabla}.\hat{\mathbf{u}}\right\rangle -N^{2}\left\langle \gamma,\left(\mathbf{k}.\mathbf{u}\right)\right\rangle .\label{eq:R_b}
+\end{eqnarray}
 
 \end_inset
 
 Where they are needed, the vorticity and mass flux are computed from 
-\begin_inset Formula \begin{equation}
-M_{1}\tilde{\xi}=R_{\xi}\label{eq:xi_diagnostic}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+M_{1}\tilde{\xi}=R_{\xi}\label{eq:xi_diagnostic}
+\end{equation}
 
 \end_inset
 
 
-\begin_inset Formula \begin{equation}
-M_{2}\tilde{F}=R_{F}\label{eq:F_diagnostic}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+M_{2}\tilde{F}=R_{F}\label{eq:F_diagnostic}
+\end{equation}
 
 \end_inset
 
 with 
-\begin_inset Formula \begin{equation}
-R_{\xi}\equiv\left\langle \hat{\nabla}\times\hat{\bm{c}},\hat{\mathbf{u}}\right\rangle ,\label{eq:R_xi}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+R_{\xi}\equiv\left\langle \hat{\nabla}\times\hat{\bm{c}},\hat{\mathbf{u}}\right\rangle ,\label{eq:R_xi}
+\end{equation}
 
 \end_inset
 
 
-\begin_inset Formula \begin{equation}
-R_{F}\equiv\left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{u}}\hat{P}\right\rangle .\label{eq:R_F}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+R_{F}\equiv\left\langle \frac{J\hat{\bm{v}}}{\det J},J\hat{\bm{u}}\hat{P}\right\rangle .\label{eq:R_F}
+\end{equation}
 
 \end_inset
 
@@ -1613,7 +1710,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 Vertices
@@ -1644,7 +1741,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 Edges
@@ -1675,7 +1772,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 Faces
@@ -1689,7 +1786,7 @@ Faces
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset CommandInset label
@@ -1827,7 +1924,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 
@@ -1858,7 +1955,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 
@@ -1872,7 +1969,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset CommandInset label
@@ -1935,14 +2032,18 @@ are order
 \end_inset
 
  the two sets of polynomials can be denoted by 
-\begin_inset Formula \begin{equation}
-F_{i}\left(\xi\right)\equiv\Pi_{i\neq j}^{k+2}\frac{\xi_{i}-\xi}{\xi_{i}-\xi_{j}},\label{eq:F_basis}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+F_{i}\left(\xi\right)\equiv\Pi_{i\neq j}^{k+2}\frac{\xi_{i}-\xi}{\xi_{i}-\xi_{j}},\label{eq:F_basis}
+\end{equation}
 
 \end_inset
 
 
-\begin_inset Formula \begin{equation}
-G_{i}\left(\xi\right)\equiv\Pi_{i\neq j}^{k+1}\frac{\xi_{i}-\xi}{\xi_{i}-\xi_{j}},\label{eq:G_basis}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+G_{i}\left(\xi\right)\equiv\Pi_{i\neq j}^{k+1}\frac{\xi_{i}-\xi}{\xi_{i}-\xi_{j}},\label{eq:G_basis}
+\end{equation}
 
 \end_inset
 
@@ -1983,8 +2084,10 @@ reference "eq:G_basis"
 \end_inset
 
  are given by
-\begin_inset Formula \begin{equation}
-\gamma\left(\bm{\hat{\chi}}\right)\equiv F\left(\hat{\chi}_{1}\right)F\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right),\label{eq:gamma_def}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\gamma\left(\bm{\hat{\chi}}\right)\equiv F\left(\hat{\chi}_{1}\right)F\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right),\label{eq:gamma_def}
+\end{equation}
 
 \end_inset
 
@@ -1993,11 +2096,14 @@ those in
 \end_inset
 
  are given by
-\begin_inset Formula \begin{equation}
+\begin_inset Formula 
+\begin{equation}
 \mathbf{c}\left(\bm{\hat{\chi}}\right)\equiv\begin{cases}
 G\left(\hat{\chi}_{1}\right)F\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right)\mathbf{i},\\
 F\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right)\mathbf{j},\\
-F\left(\hat{\chi}_{1}\right)F\left(\hat{\chi}_{2}\right)G\left(\hat{\chi}_{3}\right)\mathbf{k},\end{cases}\label{eq:c_def}\end{equation}
+F\left(\hat{\chi}_{1}\right)F\left(\hat{\chi}_{2}\right)G\left(\hat{\chi}_{3}\right)\mathbf{k},
+\end{cases}\label{eq:c_def}
+\end{equation}
 
 \end_inset
 
@@ -2006,11 +2112,14 @@ those in
 \end_inset
 
  are given by
-\begin_inset Formula \begin{equation}
+\begin_inset Formula 
+\begin{equation}
 \mathbf{v}\left(\bm{\hat{\chi}}\right)\equiv\begin{cases}
 F\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)G\left(\hat{\chi}_{3}\right)\mathbf{i},\\
 G\left(\hat{\chi}_{1}\right)F\left(\hat{\chi}_{2}\right)G\left(\hat{\chi}_{3}\right)\mathbf{j},\\
-G\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right)\mathbf{k},\end{cases}\label{eq:c_def-1}\end{equation}
+G\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right)\mathbf{k},
+\end{cases}\label{eq:c_def-1}
+\end{equation}
 
 \end_inset
 
@@ -2019,8 +2128,10 @@ those in
 \end_inset
 
  are given by
-\begin_inset Formula \begin{equation}
-w\left(\bm{\hat{\chi}}\right)\equiv G\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right)\label{eq:w_def}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+w\left(\bm{\hat{\chi}}\right)\equiv G\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)F\left(\hat{\chi}_{3}\right)\label{eq:w_def}
+\end{equation}
 
 \end_inset
 
@@ -2029,8 +2140,10 @@ and finally those in
 \end_inset
 
  are given by 
-\begin_inset Formula \begin{equation}
-\sigma\left(\bm{\hat{\chi}}\right)\equiv G\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)G\left(\hat{\chi}_{3}\right),\label{eq:sigma_def}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\sigma\left(\bm{\hat{\chi}}\right)\equiv G\left(\hat{\chi}_{1}\right)G\left(\hat{\chi}_{2}\right)G\left(\hat{\chi}_{3}\right),\label{eq:sigma_def}
+\end{equation}
 
 \end_inset
 
@@ -2101,12 +2214,12 @@ status open
 \begin_layout Plain Layout
 \begin_inset Tabular
 <lyxtabular version="3" rows="5" columns="5">
-<features>
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
+<features rotate="0" tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
 <row>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
@@ -2407,7 +2520,7 @@ volume
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 
@@ -2437,12 +2550,12 @@ status open
 \begin_layout Plain Layout
 \begin_inset Tabular
 <lyxtabular version="3" rows="5" columns="5">
-<features>
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
+<features rotate="0" tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
 <row>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
@@ -2740,7 +2853,7 @@ volume
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 
@@ -2758,7 +2871,7 @@ volume
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset CommandInset label
@@ -2845,7 +2958,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset Formula $\mathbb{W}_{0},\, k=0$
@@ -2875,7 +2988,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset Formula $\mathbb{W}_{0},\, k=1$
@@ -2909,7 +3022,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset Formula $\mathbb{W}_{1},\, k=0$
@@ -2939,7 +3052,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset Formula $\mathbb{W}_{1},\, k=1$
@@ -2973,7 +3086,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset Formula $\mathbb{W}_{2},\, k=0$
@@ -3003,7 +3116,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset Formula $\mathbb{W}_{2},\, k=1$
@@ -3037,7 +3150,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset Formula $\mathbb{W}_{3},\, k=0$
@@ -3067,7 +3180,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset Formula $\mathbb{W}_{3},\, k=1$
@@ -3084,7 +3197,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset CommandInset label
@@ -3158,7 +3271,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset Formula $\mathbb{W}_{\theta},\, k=0$
@@ -3188,7 +3301,7 @@ status collapsed
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset Formula $\mathbb{W}_{\theta},\, k=1$
@@ -3209,7 +3322,7 @@ status collapsed
 
 \begin_layout Plain Layout
 \align center
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset CommandInset label
@@ -3284,6 +3397,7 @@ hor_pos "c"
 has_inner_box 1
 inner_pos "t"
 use_parbox 0
+use_makebox 0
 width "100col%"
 special "none"
 height "1in"
@@ -3335,6 +3449,7 @@ hor_pos "c"
 has_inner_box 1
 inner_pos "t"
 use_parbox 0
+use_makebox 0
 width "100col%"
 special "none"
 height "1in"
@@ -3369,6 +3484,7 @@ hor_pos "c"
 has_inner_box 1
 inner_pos "t"
 use_parbox 0
+use_makebox 0
 width "100col%"
 special "none"
 height "1in"
@@ -3441,8 +3557,10 @@ Using Gaussian quadrature of order
 \end_inset
 
 , for the integral 
-\begin_inset Formula \begin{equation}
-\int_{-1}^{+1}y(x)dx\approx\sum_{i=1}^{n}y\left(x_{i}\right)w_{i}\label{eq:guass1}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\int_{-1}^{+1}y(x)dx\approx\sum_{i=1}^{n}y\left(x_{i}\right)w_{i}\label{eq:guass1}
+\end{equation}
 
 \end_inset
 
@@ -3484,10 +3602,10 @@ status open
 \align center
 \begin_inset Tabular
 <lyxtabular version="3" rows="8" columns="3">
-<features>
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
+<features rotate="0" tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
 <row>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
@@ -3773,7 +3891,7 @@ status open
 \end_inset
 
 
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
 \begin_inset CommandInset label
@@ -3809,8 +3927,10 @@ Integration over the element can be transformed to the interval
 \end_inset
 
  through
-\begin_inset Formula \begin{equation}
-\int_{x^{m}}^{x^{m+1}}y(x)dx=\frac{h}{2}\int_{-1}^{+1}y\left(\frac{h}{2}z+x^{m+\frac{1}{2}}\right).\label{eq:gauss2}\end{equation}
+\begin_inset Formula 
+\begin{equation}
+\int_{x^{m}}^{x^{m+1}}y(x)dx=\frac{h}{2}\int_{-1}^{+1}y\left(\frac{h}{2}z+x^{m+\frac{1}{2}}\right).\label{eq:gauss2}
+\end{equation}
 
 \end_inset
 

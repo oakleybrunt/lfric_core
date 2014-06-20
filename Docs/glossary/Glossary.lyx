@@ -4,7 +4,7 @@
 \begin_header
 \textclass article
 \begin_preamble
-\input{paper_single_style}
+\input{../tex/paper_single_style}
 \end_preamble
 \use_default_options false
 \language english
