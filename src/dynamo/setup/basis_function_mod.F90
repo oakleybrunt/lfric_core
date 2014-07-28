@@ -82,7 +82,7 @@ contains
     integer :: j(3), j2l_edge(12,3), j2l_face(6,3), face_idx(6), edge_idx(12,2)
     integer, allocatable :: lx(:), ly(:), lz(:)
     real(kind=r_def)     :: fx, fy, fz, gx, gy, gz, dfx, dfy, dfz
-    real(kind=r_def)     :: x1(k+2), x2(k+1)
+    real(kind=r_def)     :: x1(k+2), x2(k+2)
     !real(kind=r_def)     :: unit_vec_v2(nv2,3), unit_vec_v1(nv1,3)
     real(kind=r_def), allocatable    :: unit_vec_v2(:,:), unit_vec_v1(:,:)
     type( gaussian_quadrature_type ), pointer :: gq
@@ -121,6 +121,8 @@ contains
       x2(i) = real(i-1)/real(k)
     end do
     if ( k == 0 ) x2(1) = 0.5_r_def
+    ! this value isn't needed and is always multipled by 0 
+    x2(k+2) = 0.0_r_def
 
     ! some look arrays based upon reference cube topology
     face_idx = (/ 1, k+2, k+2, 1, 1, k+2 /)
@@ -374,7 +376,7 @@ contains
           end do
        end do
        v1_nodal_coords(1,i)= &
-             unit_vec_v2(i,1)*x2(lx(i)) + (1.0_r_def - unit_vec_v1(i,1))*x1(lx(i))
+             unit_vec_v1(i,1)*x2(lx(i)) + (1.0_r_def - unit_vec_v1(i,1))*x1(lx(i))
        v1_nodal_coords(2,i)= &
              unit_vec_v1(i,2)*x2(ly(i)) + (1.0_r_def - unit_vec_v1(i,2))*x1(ly(i))
        v1_nodal_coords(3,i)= &
