@@ -25,8 +25,8 @@ contains
     real(kind=r_def) :: answer, tol
     real(kind=r_def), allocatable :: basis(:,:,:,:), &
                                      basis_f(:,:,:,:), &
-				     diff_basis(:,:,:,:)   
-    real(kind=r_def), allocatable :: xgp_h(:,:), xgp_v(:)   				     
+                                     diff_basis(:,:,:,:)
+    real(kind=r_def), allocatable :: xgp_h(:,:), xgp_v(:)
     integer :: ndf_w0, map_w0(8), ndf_f, map_f(1)
     real(kind=r_def) :: chi(8,3)
     real(kind=r_def) :: x_vert(8,3)

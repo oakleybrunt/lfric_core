@@ -53,10 +53,29 @@ $(PFUNIT_BUILD) $(dir $(DRIVER_OBJ) ):
 
 $(PFUNIT_INSTALL)/include/driver.F90: pfunit
 
-$(DRIVER_OBJ): $(PFUNIT_INSTALL)/include/driver.F90 testSuites.inc | $(dir $(DRIVER_OBJ) )
+DRIVER_DIR = $(dir $(DRIVER_OBJ))
+
+$(DRIVER_OBJ): $(PFUNIT_INSTALL)/include/driver.F90 $(DRIVER_DIR)testSuites.inc
 	@echo Compiling $@
-	$(Q)$(FC) $(SPECIAL_FFLAGS) -c -I$(PFUNIT_INSTALL)/mod -I. \
+	$(Q)$(FC) $(SPECIAL_FFLAGS) -c -I$(PFUNIT_INSTALL)/mod -I$(DRIVER_DIR) \
 	          -DBUILD_ROBUST -o $@ $<
+
+ALL_TESTS = $(shell find . -name "*.pf")
+
+$(DRIVER_DIR)testSuites.inc: $(DRIVER_DIR)testSuites.inc.new $(ALL_TESTS)
+	@echo Replacing $@ with $<
+	@mv -f $< $@
+
+$(DRIVER_DIR)testSuites.inc.new: ALWAYS | $(DRIVER_DIR)
+	@echo Clearing $@
+	@echo > $@
+
+$(ALL_TESTS): ALWAYS
+	@echo Adding $@
+	@echo ADD_TEST_SUITE\($(notdir $(basename $@))_suite\) >> $(DRIVER_DIR)testSuites.inc.new
+
+.PHONY: ALWAYS
+ALWAYS:
 
 .PHONY: clean
 clean:
