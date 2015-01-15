@@ -7,8 +7,6 @@
 
 CMAKE ?= cmake
 
-SPECIAL_FFLAGS := $(filter-out -Werror,$(FFLAGS)) # pFUnit isn't that well put together
-
 PFUNIT_SOURCE = $(abspath ../pfunit)
 PFUNIT_BUILD = $(BUILD_DIR)/pfunit
 
@@ -23,11 +21,13 @@ ifeq '$(COMPILER_NAME)' 'ifort'
     export CPPFLAGS += -DINTEL_13
     export FPPFLAGS += -DINTEL_13
   endif
+  FFLAGS := $(filter-out -warn errors all,$(FFLAGS)) # pFUnit isn't that well put together
 else ifeq '$(COMPILER_NAME)' 'gfortran'
   PFUNIT_COMPILER_ID = GNU
   ifeq ($(shell test $(GFORTRAN_VERSION) -lt 040500), 0)
     $(error pFUnit will only compile with gfortran v4.5 or later.)
   endif
+  FFLAGS := $(filter-out -Werror,$(FFLAGS)) # pFUnit isn't that well put together
 else ifeq '$(COMPILER_NAME)' 'nagfor'
   PFUNIT_COMPILER_ID = NAG
 else ifeq '$(COMPILER_NAME)' 'xlf'
@@ -57,7 +57,7 @@ DRIVER_DIR = $(dir $(DRIVER_OBJ))
 
 $(DRIVER_OBJ): $(PFUNIT_INSTALL)/include/driver.F90 $(DRIVER_DIR)testSuites.inc
 	@echo Compiling $@
-	$(Q)$(FC) $(SPECIAL_FFLAGS) -c -I$(PFUNIT_INSTALL)/mod -I$(DRIVER_DIR) \
+	$(Q)$(FC) $(FFLAGS) -c -I$(PFUNIT_INSTALL)/mod -I$(DRIVER_DIR) \
 	          -DBUILD_ROBUST -o $@ $<
 
 ALL_TESTS = $(shell find . -name "*.pf")
