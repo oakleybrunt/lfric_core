@@ -24,5 +24,13 @@ endif
 
 export Q
 
-VT_BOLD = \\x1b[1m
-VT_RESET = \\x1b[0m
+# We only want to send terminal control characters if there is a terminal to
+# interpret them...
+ifneq 'x$(TERM)' 'x'
+  VT_BOLD = \\x1b[1m
+  VT_RESET = \\x1b[0m
+else
+  VT_BOLD = *
+  VT_RESET = *
+endif
+
