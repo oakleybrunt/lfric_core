@@ -10,7 +10,7 @@ module output_alg_mod
   use constants_mod,                     only: r_def
   use mesh_mod,                          only: mesh_type
   use field_mod,                         only: field_type
-  use function_space_mod,                only: function_space_type, W0
+  use function_space_mod,                only: function_space_type, W0, W3
   use galerkin_projection_algorithm_mod, only: galerkin_projection_algorithm
   use driver_layer,                      only: interpolated_output
   use quadrature_mod,                    only: quadrature_type, QR3
@@ -49,7 +49,8 @@ contains
     integer :: dir
     integer, parameter :: VECTOR_FIELD = 3, &
                           SCALAR_FIELD = 1
-    type( field_type ) :: projected_field(3)
+    type( field_type ) :: W0_projected_field(3)
+    type( field_type ) :: W3_projected_field(1)
     type( quadrature_type ), pointer :: qr => null()
     type( function_space_type )      :: fs
 
@@ -57,21 +58,23 @@ contains
 
     ! Create fields needed for output (these can be in CG or DG space)
     do dir = 1,3
-      projected_field(dir) = field_type( vector_space = fs%get_instance(mesh, W0) )
+      W0_projected_field(dir) = field_type( vector_space = fs%get_instance(mesh, W0) )
     end do
+    W3_projected_field(1) = field_type( vector_space = fs%get_instance(mesh, W3) )
 
-    call galerkin_projection_algorithm(projected_field(1), theta, mesh, chi, &
+
+    call galerkin_projection_algorithm(W0_projected_field(1), theta, mesh, chi, &
                                        SCALAR_FIELD, qr, mm=mm_w0)
-    call interpolated_output(n, SCALAR_FIELD, projected_field(1), mesh, chi, &
+    call interpolated_output(n, SCALAR_FIELD, W0_projected_field(1), mesh, chi, &
                              'theta_')
-    call invoke_set_field_scalar(0.0_r_def, projected_field(1)) 
-    call galerkin_projection_algorithm(projected_field(1), rho, mesh, chi, &
-                                       SCALAR_FIELD, qr, mm=mm_w0)
-    call interpolated_output(n, SCALAR_FIELD, projected_field(1), mesh, chi, &
+    call invoke_set_field_scalar(0.0_r_def, W3_projected_field(1)) 
+    call galerkin_projection_algorithm(W3_projected_field(1), rho, mesh, chi, &
+                                       SCALAR_FIELD, qr)
+    call interpolated_output(n, SCALAR_FIELD, W3_projected_field(1), mesh, chi, &
                              'rho___')
-    call galerkin_projection_algorithm(projected_field(:), u, mesh, chi, &
+    call galerkin_projection_algorithm(W0_projected_field(:), u, mesh, chi, &
                                        VECTOR_FIELD, qr, mm=mm_w0)
-    call interpolated_output(n, VECTOR_FIELD, projected_field(:), mesh, chi, &
+    call interpolated_output(n, VECTOR_FIELD, W0_projected_field(:), mesh, chi, &
                              'u_____')
 
   end subroutine output_alg
