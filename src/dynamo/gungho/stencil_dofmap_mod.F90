@@ -79,7 +79,7 @@ function stencil_dofmap_constructor( st_shape, st_size, ndf, mesh, master_dofmap
     self%dofmap_size  = st_size
     self%dofmap_id    = st_shape*100 + st_size
 
-    ncells = mesh%get_ncells()
+    ncells = mesh%get_ncells_2d()
     ! Allocate the dofmap array
     allocate( self%dofmap( ndf, st_size, ncells ) )
     ! Compute the dofmap
