@@ -25,6 +25,7 @@ public :: spdist
 public :: cartesian_distance
 public :: sphere2cart_vector
 public :: cart2sphere_vector
+public :: central_angle
 
 !--------------------------------------------------------------------------------
 ! Contained functions / subroutines
@@ -285,6 +286,36 @@ subroutine spdist(x1,y1,z1,x2,y2,z2,s)
 
   return
 end subroutine spdist
+
+
+!-------------------------------------------------------------------------------
+!> @brief  Calculates the central angle between two points
+!!
+!! @details  Calculates the central angle between two points with 
+!!           latitude-longitude coordinates (lat1,long1), (lat2,long2)
+!!
+!! @param[in]  lat1
+!! @param[in]  long1
+!! @param[in]  lat2
+!! @param[in]  long2
+!! @param[out] angle   Angle between the points.
+!-------------------------------------------------------------------------------
+subroutine central_angle(long1,lat1,long2,lat2,angle)
+  ! Calculates the central angle between points 1 and 2 with latitude and longitude
+
+  implicit none
+  !Arguments
+  real(kind=r_def), intent(in)  :: long1,lat1,long2,lat2
+  real(kind=r_def), intent(out) :: angle
+
+  !Internal variables
+  real(kind=r_def) :: deltalong
+
+  deltalong = long2-long1
+  angle = acos(sin(lat1)*sin(lat2)+cos(lat1)*cos(lat2)*cos(deltalong))
+
+  return
+end subroutine central_angle
 
 !-------------------------------------------------------------------------------
 !> @brief  Calculates the Cartesian distance between two points.

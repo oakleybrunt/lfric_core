@@ -15,7 +15,7 @@
 !>          Temperature initialisation (Brunt-Vaisala frequency). 
 module initialisation_mod
 
-  use constants_mod, only: r_def, i_def 
+  use constants_mod, only: r_def, i_def, PI
 
   implicit none
 
@@ -24,15 +24,43 @@ module initialisation_mod
 
   !> @name Idealised test options
   !> @{
-  integer, parameter :: ITEST_GRAVITY_WAVE = 1  !< Gravity wave test (either planar or spherical).   
-  integer, parameter :: ITEST_COLD_BUBBLE  = 2  !< Straka density cold current test (planar domain only).
-  integer, parameter :: ITEST_WARM_BUBBLE  = 3  !< Warm bubble test (planar domain only).
-
+  integer, parameter :: ITEST_GRAVITY_WAVE     = 1  !< Gravity wave test (either planar or spherical).   
+  integer, parameter :: ITEST_COLD_BUBBLE      = 2  !< Straka density cold current test (planar domain only).
+  integer, parameter :: ITEST_WARM_BUBBLE      = 3  !< Warm bubble test (planar domain only).
+  integer, parameter :: ITEST_GAUSSIAN_HILL    = 4  !< Pair of Gaussian hills (either planer or spherical).
+  integer, parameter :: ITEST_COSINE_HILL      = 5  !< Pair of cosine hills (either planer or spherical).
+  integer, parameter :: ITEST_SLOTTED_CYLINDER = 6  !< Pair of slotted cylinders (either planer or spherical).
   !> @}
 
   !> @name Idealised test choice
   !> @{
   integer(kind=i_def) :: itest_option = ITEST_GRAVITY_WAVE   !< Choice of which idealised test to run.
+  !> @}
+
+  !=========================== Density initialisation  ========================!
+
+  !> @name Density profile parameters
+  !> @{
+  real(kind=r_def) :: tracer_max = 2.0_r_def !< Maximum value of tracer
+  real(kind=r_def) :: tracer_background = 0.1_r_def !< Background value of tracer
+  !> Radius for one of the pair of initial tracer functions.
+  !! Biperiodic domain: in metres.
+  !! Cubed sphere domain: in radians.
+  real(kind=r_def) :: r1 = PI/8.0_r_def
+  !> Position for one of the pair of initial tracer functions.
+  !! Biperiodic domain: centre of the function given in terms of metres in the chi1 direction.
+  !! Cubed sphere domain: longitudinal position of the centre of the function (a value between 0 and \f$2\pi\f$).
+  real(kind=r_def) :: x1 = PI-PI/4.0_r_def
+  !> Position for one of the pair of initial tracer functions.
+  !! Biperiodic domain: centre of the function given in terms of metres in the chi2 direction.
+  !! Cubed sphere domain: latitudinal position of the centre of the function (a value between \f$-\pi/2\f$ and \f$\pi/2\f$).
+  real(kind=r_def) :: y1 = 0.0_r_def
+  !> Radius parameter for the second of the pair of initial tracer functions (see r1).
+  real(kind=r_def) :: r2 = PI/8.0_r_def
+  !> Position parameter for the second of the pair of initial tracer functions (see x1).
+  real(kind=r_def) :: x2 = PI+PI/4.0_r_def
+  !> Position parameter for the second of the pair of initial tracer functions (see y1).
+  real(kind=r_def) :: y2 = 0.0_r_def
   !> @}
 
   !=========================== Wind initialisation  ===========================!
@@ -85,7 +113,7 @@ subroutine read_initialisation_namelist()
   character(len = str_max_filename) :: init_fname
   character(len = str_long)         :: ioerrmsg = ''
 
-  namelist /idealised_test_nml/ itest_option
+  namelist /idealised_test_nml/ itest_option, tracer_max, tracer_background, r1, x1, y1, r2, x2, y2
   namelist /wind_nml/ initial_u_profile, rotation_angle
   namelist /temperature_nml/ n_sq
 
