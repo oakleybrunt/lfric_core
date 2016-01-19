@@ -73,6 +73,14 @@ contains
   !> @param[out] cells The cells either side of the given edge
   procedure, public :: get_cell_on_edge
 
+  !> @brief  Gets the total number of vertices in the global domain
+  !> @return nverts The total number of vertices in the global domain
+  procedure, public :: get_nverts
+
+  !> @brief  Gets the total number of edges in the global domain
+  !> @return negdes The total number of edges in the global domain
+  procedure, public :: get_nedges
+
   !> @brief  Gets the total number of cells in the global domain
   !> @return ncells The total number of cells in the global domain
   procedure, public :: get_ncells
@@ -416,6 +424,32 @@ integer, intent(out) :: cells(:)
 cells=self%cell_on_edge_2d(:,edge_number)
 
 end subroutine get_cell_on_edge
+
+!-------------------------------------------------------------------------------
+! Gets the total number of vertices in the global domain
+!-------------------------------------------------------------------------------
+function get_nverts( self ) result (nverts)
+
+class(global_mesh_type), intent(in) :: self
+
+integer :: nverts
+
+nverts = self%nverts
+
+end function get_nverts
+
+!-------------------------------------------------------------------------------
+! Gets the total number of edges in the global domain
+!-------------------------------------------------------------------------------
+function get_nedges( self ) result (nedges)
+
+class(global_mesh_type), intent(in) :: self
+
+integer :: nedges
+
+nedges = self%nedges
+
+end function get_nedges
 
 !-------------------------------------------------------------------------------
 ! Gets the total number of cells in the global domain

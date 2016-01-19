@@ -418,6 +418,11 @@ end function partition_constructor
   integer,               intent(out)   :: num_halo( : )
   integer(i_def),        intent(out)   :: num_ghost
 
+  !check that we have a number of ranks that is compatible with this partitioner
+  if( modulo(total_ranks,6) /= 0 ) call log_event( &
+  'The cubed-sphere partitioner requires a multiple of six processors.', &
+  LOG_LEVEL_ERROR )
+
   call partitioner_rectangular_panels( global_mesh, &
                                        6, &
                                        xproc, &
@@ -542,7 +547,7 @@ end function partition_constructor
                                              num_ghost )
 
   use linked_list_mod,       only : linked_list_type, add_item, add_unique_item, clear_list
-  use reference_element_mod, only : W
+  use reference_element_mod, only : W, E, N
 
   implicit none
 
@@ -590,7 +595,13 @@ end function partition_constructor
   type(linked_list_type), pointer :: last_halo=>null() ! location of the last halo cell in the list of cells
   type(linked_list_type), pointer :: curr_pos=>null() ! current position when looping over subsections of cells
 
-  integer :: i            ! loop counter
+  integer :: i, j         ! loop counters
+  integer :: cells(4)     ! The cells around the vertex being queried
+  integer :: oth1, oth2   ! When querying a cell around a vertex, these are
+                          ! the indeces of the other two cells
+  integer, allocatable :: sw_corner_cells(:)
+                          ! List of cells at the SW corner of the panels
+  integer :: panel        ! panel number
   integer :: cell         ! starting point for num_cells_x calculation
   integer :: cell_next(4) ! The cells around the cell being queried
   integer :: num_cells_x  ! number of cells across a panel in x-direction
@@ -614,18 +625,49 @@ end function partition_constructor
     end do
     ! Infer num_cells_y from the total domin size and num_cells_x
     num_cells_y=global_mesh%get_ncells()/num_cells_x
+    ! make cell number 1 the South West corner cell of the single panel
+    allocate(sw_corner_cells(1))
+    sw_corner_cells(1)=1
   else
     ! For multi-panel meshes, the panels must be square
     num_cells_x = nint(sqrt(float(global_mesh%get_ncells())/float(num_panels)))
     num_cells_y = num_cells_x
+
+    ! Calculate the South West corner cells of all the panels in the global mesh
+    allocate(sw_corner_cells(num_panels))
+    panel=1
+    do i=1,global_mesh%get_nverts()
+      call global_mesh%get_cell_on_vert(i,cells)
+      if(cells(4) == 0)then
+        do j=1,3
+          call global_mesh%get_cell_next(cells(j),cell_next)
+          oth1=j+1
+          if(oth1>3)oth1=oth1-3
+          oth2=j+2
+          if(oth2>3)oth2=oth2-3
+          if(cell_next(N)/=cells(oth1) .and. cell_next(N)/=cells(oth2) .and. &
+             cell_next(E)/=cells(oth1) .and. cell_next(E)/=cells(oth2) ) then
+            if(panel > num_panels) &
+              call log_event( 'Failed to partition the mesh: '// &
+                 'the global mesh has more panels than the partitioner '// &
+                 'is expecting.', LOG_LEVEL_ERROR )
+            sw_corner_cells(panel)=cells(j)
+            panel=panel+1
+          end if
+        end do
+      end if
+    end do
+
   endif
 
   !convert the local rank number into a face number and a local xproc and yproc
   face = int(float(num_panels)*(real(local_rank)/real(total_ranks)))+1
-  start_cell = (num_cells_x*num_cells_y)*(face-1)+1
+  start_cell = sw_corner_cells(face)
   start_rank = xproc*yproc*(face-1)
   local_xproc = modulo(local_rank-start_rank,xproc)
   local_yproc = (local_rank-start_rank)/xproc
+
+  deallocate(sw_corner_cells)
 
   !Work out the start index and number of cells (in x- and y-dirn) for
   !the local partition - this algorithm should spread out the number of
