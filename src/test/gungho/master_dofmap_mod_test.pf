@@ -30,9 +30,10 @@ contains
     ! Allocate the maps
     ncells = 4
     ndf = 3
-    allocate( map_init(ndf,ncells), map_copy(ndf,ncells) )
+    allocate( map_init(ndf,0:ncells), map_copy(ndf,0:ncells) )
 
     ! populate the map
+    map_init(:,0) = (/ 0, 0, 0 /)
     map_init(:,1) = (/ 1, 2, 3 /)
     map_init(:,2) = (/ 3, 4, 5 /)
     map_init(:,3) = (/ 5, 6, 7 /)

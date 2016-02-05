@@ -9,26 +9,37 @@
 !!       Effectively these are generally wrapper functions to pointwise kernels
 module field_bundle_mod
   use field_mod,     only: field_type
-  use constants_mod, only: r_def
+  use constants_mod, only: i_def, r_def
+ 
   implicit none
 
   contains
 
 !> Create a bundle y of fields on the same function space as bundel x
- subroutine clone_bundle(x, y, mesh, bundle_size)
+ subroutine clone_bundle(x, y, bundle_size)
+
     use function_space_mod, only: function_space_type
     use mesh_mod,           only: mesh_type
+
     implicit none
     integer,          intent(in)    :: bundle_size
     type(field_type), intent(in)    :: x(bundle_size)
-    type(mesh_type),  intent(in)    :: mesh
     type(field_type), intent(inout) :: y(bundle_size)
-    type(function_space_type)       :: fs
+
+    type(function_space_type) :: fs
+    type(mesh_type), pointer :: mesh => null()
+
+    integer(i_def) :: fs_handle
     integer :: i
 
+
     do i = 1,bundle_size   
-      y(i) = field_type( vector_space = &
-         fs%get_instance(mesh, x(i)%which_function_space()) )
+
+      mesh => x(i)%get_mesh()
+      fs_handle = x(i)%which_function_space()
+
+      y(i) = field_type( vector_space = fs%get_instance(mesh,0,fs_handle) )
+
     end do
   end subroutine clone_bundle
 !=============================================================================!
@@ -166,27 +177,37 @@ module field_bundle_mod
 !=============================================================================!
 !> Write the min and max values of a field bundle to the log file
 !> @param [in] x The first field bundle
-!> @param [in] mesh The mesh all the fields in x are defined on
 !> @param [in] bundle_size the number of fields in the bundle
-  subroutine bundle_minmax(x, mesh, bundle_size)
+  subroutine bundle_minmax(x, bundle_size)
+
     use function_space_mod, only: function_space_type
     use mesh_mod,           only: mesh_type
     use psykal_lite_mod,                only: invoke_copy_field_data
     use log_mod,            only: lOG_LEVEL_INFO   
+
     implicit none
     integer,          intent(in)    :: bundle_size
-    type(mesh_type),  intent(in)    :: mesh
-    type(function_space_type) :: fs
+
     type(field_type) :: x(bundle_size)
     type(field_type) :: y
+
+    type(function_space_type) :: fs
+    type(mesh_type),  pointer :: mesh => null()
+
+
+    integer(i_def) :: fs_handle
     integer :: i
-! This has strange syntax as psykal_lite_modclone doesnt like calls to type bound
-! procedures of field arrays
+
+! This has strange syntax as psykal_lite_modclone doesnt like calls to
+! type-bound procedures of field arrays
     do i = 1,bundle_size
-      y = field_type( vector_space = &
-           fs%get_instance(mesh, x(1)%which_function_space()) )
+      mesh => x(i)%get_mesh()
+      fs_handle = x(1)%which_function_space()
+
+      y = field_type( vector_space = fs%get_instance(mesh,0,fs_handle) )
       call invoke_copy_field_data( x(1), y ) 
       call y%log_minmax(LOG_LEVEL_INFO, 'field')
+
     end do
   end subroutine bundle_minmax
 

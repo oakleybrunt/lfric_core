@@ -175,6 +175,7 @@ contains
 
   end function get_proxy
 
+
   !> Construct a <code>field_type</code> object.
   !>
   !> @param [in] vector_space the function space that the field lives on
@@ -383,9 +384,9 @@ contains
     implicit none
 
     class (field_type) :: self
-    type (mesh_type)   :: mesh
+    type (mesh_type), pointer :: mesh
 
-    mesh = self%vspace%get_mesh()
+    mesh => self%vspace%get_mesh()
 
     return
   end function get_mesh

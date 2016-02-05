@@ -39,7 +39,7 @@ module lin_rk_alg_timestep_mod
   use linear_rrho_kernel_mod,            only: linear_rrho_kernel_type 
 
   use field_mod,           only: field_type 
-  use function_space_mod,  only: function_space_type, W0, W1, W2, W3
+  use function_space_mod,  only: function_space_type
   use galerkin_projection_algorithm_mod, only : galerkin_projection_algorithm
   use quadrature_mod,      only: quadrature_type, GAUSSIAN
   use solver_mod,          only: solver_algorithm
@@ -48,6 +48,9 @@ module lin_rk_alg_timestep_mod
   use mesh_mod,            only: mesh_type
   use restart_control_mod, only: restart_type
   use output_alg_mod,      only: output_alg
+
+  use fs_continuity_mod,   only: W0, W2
+
   implicit none
 
   private
@@ -74,7 +77,7 @@ contains
   !> @param[in] restart checkpoint/restart type with timestepping information
   !> @deprecated The Usefulness of the linear model is to be re-evaluated at 
   !>             the end of the Gung-Ho project and removed if possible
-  subroutine lin_rk_alg_timestep( mesh, chi, u, rho, theta, restart)
+  subroutine lin_rk_alg_timestep(mesh, chi, u, rho, theta, restart)
 
     implicit none
 
@@ -96,9 +99,14 @@ contains
                                        rr_prediction(:) 
     type( field_type ) :: projected_field(3)                                       
     
-    integer :: theta_fs, u_fs, rho_fs
+    type(function_space_type)  :: fs
+    type(function_space_type), pointer :: theta_fs => null()
+    type(function_space_type), pointer :: u_fs     => null()
+    type(function_space_type), pointer :: rho_fs   => null()
+    type(function_space_type), pointer :: w0_fs    => null()
+    type(function_space_type), pointer :: w2_fs    => null()
+
     real(kind=r_def), allocatable :: ak(:,:)
-    type(function_space_type) :: fs
     type(operator_type) :: mm_w2, mm_w0  
 
     ! Timestepping variables
@@ -118,48 +126,44 @@ contains
     allocate ( rt_prediction(num_rk_stage), &
                ru_prediction(num_rk_stage), & 
                rr_prediction(num_rk_stage) )
-               
- ! Local fields
-    theta_fs  = theta%which_function_space()
-    u_fs      = u%which_function_space()
-    rho_fs    = rho%which_function_space()
+
+    !=== Section 1: Create field objects =====================================!         
+    ! Local fields
+    theta_fs => fs%get_instance(mesh,element_order,theta%which_function_space())
+    u_fs     => fs%get_instance(mesh,element_order,u%which_function_space())
+    rho_fs   => fs%get_instance(mesh,element_order,rho%which_function_space())
+    w0_fs    => fs%get_instance(mesh,element_order,W0)
+    w2_fs    => fs%get_instance(mesh,element_order,W2)
 
     qr = quadrature_type(element_order+3, GAUSSIAN)
 
-    theta_n   = field_type( vector_space = fs%get_instance(mesh, theta_fs) )
-    u_n       = field_type( vector_space = fs%get_instance(mesh, u_fs) )
-    rho_n     = field_type( vector_space = fs%get_instance(mesh, rho_fs) )
-    r_theta   = field_type( vector_space = fs%get_instance(mesh, theta_fs) )
-    r_u       = field_type( vector_space = fs%get_instance(mesh, u_fs) )
-    r_rho     = field_type( vector_space = fs%get_instance(mesh, rho_fs) )
-    theta_inc = field_type( vector_space = fs%get_instance(mesh, theta_fs) )
-    u_inc     = field_type( vector_space = fs%get_instance(mesh, u_fs) )
-    rho_inc   = field_type( vector_space = fs%get_instance(mesh, rho_fs) )
-    geopotential = field_type( vector_space = fs%get_instance(mesh, theta_fs) )
+    theta_n      = field_type( vector_space = theta_fs )
+    u_n          = field_type( vector_space = u_fs     ) 
+    rho_n        = field_type( vector_space = rho_fs   ) 
+    r_theta      = field_type( vector_space = theta_fs ) 
+    r_u          = field_type( vector_space = u_fs     ) 
+    r_rho        = field_type( vector_space = rho_fs   ) 
+    theta_inc    = field_type( vector_space = theta_fs ) 
+    u_inc        = field_type( vector_space = u_fs     ) 
+    rho_inc      = field_type( vector_space = rho_fs   ) 
+    geopotential = field_type( vector_space = theta_fs )
 
     do stage = 1,num_rk_stage
-      rt_prediction(stage) = field_type                                        &
-                             (vector_space = fs%get_instance(mesh, theta_fs))
-
-      ru_prediction(stage) = field_type                                        &
-                             (vector_space = fs%get_instance(mesh, u_fs))
-
-      rr_prediction(stage) = field_type                                        &
-                             (vector_space = fs%get_instance(mesh, rho_fs))
-
+      rt_prediction(stage) = field_type( vector_space = theta_fs )
+      ru_prediction(stage) = field_type( vector_space = u_fs     )
+      rr_prediction(stage) = field_type( vector_space = rho_fs   )
     end do   
 
     ! Create operators needed for timestepping
-    mm_w0 = operator_type(fs%get_instance(mesh, W0),fs%get_instance(mesh, W0))              
-    mm_w2 = operator_type(fs%get_instance(mesh, W2),fs%get_instance(mesh, W2)) 
+    mm_w0 = operator_type(w0_fs, w0_fs)              
+    mm_w2 = operator_type(w2_fs, w2_fs) 
 
     !=== Section 2: Initialise local algorithm fields ========================!
     call log_event( "Dynamo: computing Linear RK algorithm fields", &
                      LOG_LEVEL_INFO )
     ! Compute geopotential
     do stage = 1,3 
-      projected_field(stage) = field_type                                      &
-                               (vector_space = fs%get_instance(mesh, theta_fs))
+      projected_field(stage) = field_type (vector_space = theta_fs)
     end do
 
     !Construct PSy layer given a list of kernels. This is the line the code

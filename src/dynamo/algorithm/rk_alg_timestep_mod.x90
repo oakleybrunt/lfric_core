@@ -8,7 +8,7 @@
 !>@brief A Runge-Kutta time-discretisation of the non-linear 3D equations,
 !>       currently using 3-stage SSP.
 !>@details An algorithm for timstepping the 3D nonlinear linear
-!>         equations using a multistage explicit Runge-Kutta algortihm. 
+!>         equations using a multistage explicit Runge-Kutta algortihm.
 module rk_alg_timestep_mod
 
   use log_mod,       only: log_event,         &
@@ -46,7 +46,8 @@ module rk_alg_timestep_mod
   ! Derived Types
   use mesh_mod,            only: mesh_type
   use field_mod,           only: field_type
-  use function_space_mod,  only: function_space_type, W0, W1, W2, W3
+  use function_space_mod,  only: function_space_type
+  use fs_continuity_mod,   only: W0, W1, W2
   use operator_mod,        only: operator_type
 
   ! Algorithms
@@ -66,13 +67,13 @@ contains
   !> @brief A Runge-Kutta time-discretisation of the non-linear 3D equations,
   !>        currently using 3-stage SSP.
   !> @details An algorithm for timstepping the 3D nonlinear
-  !>          equations using a Runge-Kutta algortihm. The 
+  !>          equations using a Runge-Kutta algortihm. The
   !>          algorithm initialialises all fields, sets up temporary fields
   !>          and performs the timestepping and checks to see if it should
   !>          dump output.
-  !>          The type of Runge-Kutta scheme can be simply changed by 
+  !>          The type of Runge-Kutta scheme can be simply changed by
   !>          modifying the (currently hardwired) Butcher tableau (ak array)
-  !>          The current set up uses the 3rd-order three stage 
+  !>          The current set up uses the 3rd-order three stage
   !>          Strong-Stability-Preserving (SSP3) method
   !> @param[in]    mesh Mesh object on which the model runs
   !> @param[inout] chi  The finite element form of the coordinates
@@ -105,9 +106,17 @@ contains
                                        ru_prediction(:),  &
                                        rr_prediction(:)
 
-    integer :: theta_fs, u_fs, rho_fs, xi_fs
-    real(kind=r_def), allocatable :: ak(:,:)
     type(function_space_type) :: fs
+    type(function_space_type), pointer :: theta_fs => null()
+    type(function_space_type), pointer :: u_fs     => null()
+    type(function_space_type), pointer :: rho_fs   => null()
+    type(function_space_type), pointer :: xi_fs    => null()
+    type(function_space_type), pointer :: w0_fs    => null()
+    type(function_space_type), pointer :: w1_fs    => null()
+    type(function_space_type), pointer :: w2_fs    => null()
+
+
+    real(kind=r_def), allocatable :: ak(:,:)
     type( quadrature_type) :: qr 
     integer, parameter :: VECTOR_FIELD = 3, &
                           SCALAR_FIELD = 1
@@ -130,40 +139,41 @@ contains
                rr_prediction(num_rk_stage) )
 
     !=== Section 1: Create field objects =====================================!
-    ! Local fields
-    theta_fs  = theta%which_function_space()
-    u_fs      = u%which_function_space()
-    rho_fs    = rho%which_function_space()
-    xi_fs     = xi%which_function_space()
+    ! Function spaces
+    theta_fs => fs%get_instance( mesh, element_order, theta%which_function_space() )
+    u_fs     => fs%get_instance( mesh, element_order, u%which_function_space()     )
+    rho_fs   => fs%get_instance( mesh, element_order, rho%which_function_space()   )
+    xi_fs    => fs%get_instance( mesh, element_order, xi%which_function_space()    )
+    w0_fs    => fs%get_instance( mesh, element_order, W0 )
+    w1_fs    => fs%get_instance( mesh, element_order, W1 )
+    w2_fs    => fs%get_instance( mesh, element_order, W2 )
 
     qr = quadrature_type(element_order+3, GAUSSIAN)
 
-    theta_n      = field_type( vector_space = fs%get_instance(mesh, theta_fs) )
-    u_n          = field_type( vector_space = fs%get_instance(mesh, u_fs) )
-    rho_n        = field_type( vector_space = fs%get_instance(mesh, rho_fs) )
-    r_theta      = field_type( vector_space = fs%get_instance(mesh, theta_fs) )
-    r_u          = field_type( vector_space = fs%get_instance(mesh, u_fs) )
-    r_rho        = field_type( vector_space = fs%get_instance(mesh, rho_fs) )
-    theta_inc    = field_type( vector_space = fs%get_instance(mesh, theta_fs) )
-    u_inc        = field_type( vector_space = fs%get_instance(mesh, u_fs) )
-    rho_inc      = field_type( vector_space = fs%get_instance(mesh, rho_fs) )
-    mass_flux    = field_type( vector_space = fs%get_instance(mesh, u_fs) )
-    rhs_xi       = field_type( vector_space = fs%get_instance(mesh, xi_fs) )
-    geopotential = field_type( vector_space = fs%get_instance(mesh, theta_fs) )
+    ! Local fields
+    theta_n      = field_type( vector_space = theta_fs )
+    u_n          = field_type( vector_space = u_fs     )
+    rho_n        = field_type( vector_space = rho_fs   )
+    r_theta      = field_type( vector_space = theta_fs )
+    r_u          = field_type( vector_space = u_fs     )
+    r_rho        = field_type( vector_space = rho_fs   )
+    theta_inc    = field_type( vector_space = theta_fs )
+    u_inc        = field_type( vector_space = u_fs     )
+    rho_inc      = field_type( vector_space = rho_fs   )
+    mass_flux    = field_type( vector_space = u_fs     )
+    rhs_xi       = field_type( vector_space = xi_fs    )
+    geopotential = field_type( vector_space = theta_fs )
 
     do stage = 1,num_rk_stage
-      rt_prediction(stage) = field_type                                        &
-                             (vector_space = fs%get_instance(mesh, theta_fs))
-      ru_prediction(stage) = field_type                                        &
-                             (vector_space = fs%get_instance(mesh, u_fs))
-      rr_prediction(stage) = field_type                                        &
-                             (vector_space = fs%get_instance(mesh, rho_fs))
+      rt_prediction(stage) = field_type( vector_space = theta_fs )
+      ru_prediction(stage) = field_type( vector_space = u_fs     )
+      rr_prediction(stage) = field_type( vector_space = rho_fs   )
     end do
 
     ! Create operators needed for timestepping
-    mm_w0 = operator_type(fs%get_instance(mesh, W0),fs%get_instance(mesh, W0))
-    mm_w1 = operator_type(fs%get_instance(mesh, W1),fs%get_instance(mesh, W1))
-    mm_w2 = operator_type(fs%get_instance(mesh, W2),fs%get_instance(mesh, W2))
+    mm_w0 = operator_type(W0_fs, W0_fs)
+    mm_w1 = operator_type(W1_fs, W1_fs)
+    mm_w2 = operator_type(W2_fs, W2_fs)
 
     !=== Section 2: Initialise local algorithm fields ========================!
     call log_event( "Dynamo: Computing Nonlinear RK algorithm fields", &

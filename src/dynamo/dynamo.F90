@@ -22,10 +22,10 @@ program dynamo
 
   use ESMF
   use constants_mod,           only : i_def, str_max_filename
-  use configuration_mod,       only : configure_dynamo,        &
-                                      l_nonlinear,             &
-                                      ITIMESTEP_SEMI_IMPLICIT, &
-                                      ITIMESTEP_RK_SSP3,       &     
+  use configuration_mod,       only : configure_dynamo,           &
+                                      l_nonlinear, element_order, &
+                                      ITIMESTEP_SEMI_IMPLICIT,    &
+                                      ITIMESTEP_RK_SSP3,          &     
                                       itimestep_option   
   use init_prognostic_fields_alg_mod, &
                                only : init_prognostic_fields_alg
@@ -33,8 +33,6 @@ program dynamo
   use rk_alg_timestep_mod,     only : rk_alg_timestep
   use lin_rk_alg_timestep_mod, only : lin_rk_alg_timestep
   use field_mod,               only : field_type
-  use function_space_mod,      only : function_space_type, W0, W1, W2, W3,    &
-                                      Wtheta, W2V, W2H
   use set_up_mod,              only : set_up
   use assign_coordinate_field_mod, only : assign_coordinate_field
   use field_io_mod,            only : write_state_netcdf                      &
@@ -49,26 +47,29 @@ program dynamo
                                       LOG_LEVEL_INFO,    &
                                       LOG_LEVEL_DEBUG,   &
                                       LOG_LEVEL_TRACE
-  use mesh_mod,                only : mesh_type
+
+  use mesh_mod,                only: mesh_type
+  use function_space_mod,      only: function_space_type
+  use fs_continuity_mod,       only: W0, W1, W2, W3, Wtheta, W2V, W2H
 
   implicit none
 
-  type( function_space_type )      :: function_space
+  type( function_space_type ) :: fs
+  type( mesh_type )           :: mesh
 
   ! coordinate fields
   type( field_type ) :: chi(3)
 
-  ! prognostic fields    
+  ! prognostic fields
   type( field_type ) :: u, rho, theta, xi
-                  
-  type(mesh_type)                  :: mesh
+
   integer                          :: coord
   type( field_type ), allocatable  :: state(:)
   integer                          :: n_fields
   type(ESMF_VM) :: vm
   integer :: rc
   integer :: total_ranks, local_rank
-  integer :: petCount, localPET  
+  integer :: petCount, localPET
   integer( i_def )                 :: argument_index,  &
                                       argument_length, &
                                       argument_status
@@ -127,18 +128,18 @@ program dynamo
 
   ! Calculate coordinates
   do coord = 1,3
-    chi(coord) = field_type                                                    &
-                 (vector_space = function_space%get_instance(mesh, W0))
+    chi(coord) = field_type (vector_space =                                    &
+                                fs%get_instance(mesh,element_order,W0) )
   end do
   ! Assign coordinate field
   call log_event( "Dynamo: Computing W0 coordinate fields", LOG_LEVEL_INFO )
   call assign_coordinate_field(mesh, chi)
 
   ! Create prognostic fields
-  theta = field_type(vector_space = function_space%get_instance(mesh, W0))
-  xi    = field_type(vector_space = function_space%get_instance(mesh, W1))
-  u     = field_type(vector_space = function_space%get_instance(mesh, W2))
-  rho   = field_type(vector_space = function_space%get_instance(mesh, W3))
+  theta = field_type( vector_space = fs%get_instance(mesh, element_order, W0) )
+  xi    = field_type( vector_space = fs%get_instance(mesh, element_order, W1) )
+  u     = field_type( vector_space = fs%get_instance(mesh, element_order, W2) )
+  rho   = field_type( vector_space = fs%get_instance(mesh, element_order, W3) )
 
   ! Initialise prognostic fields: Theta, U, Xi, Rho are initialised in 
   ! separate algorithm/subroutine

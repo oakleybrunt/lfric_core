@@ -10,7 +10,7 @@ module output_alg_mod
   use constants_mod,                     only: r_def, str_max_filename
   use mesh_mod,                          only: mesh_type
   use field_mod,                         only: field_type
-  use function_space_mod,                only: function_space_type, W0, W3
+  use function_space_mod,                only: function_space_type
   use operator_mod,                      only: operator_type
   use restart_control_mod,               only: restart_type
 
@@ -23,6 +23,8 @@ module output_alg_mod
 
   use quadrature_mod,                    only: quadrature_type, GAUSSIAN
   use psykal_lite_mod,                   only: invoke_set_field_scalar
+  use fs_continuity_mod,                 only: W0, W3
+
   implicit none
 
   private
@@ -69,9 +71,11 @@ contains
 
       ! Create fields needed for output (these can be in CG or DG space)
       do dir = 1,3
-        W0_projected_field(dir) = field_type( vector_space = fs%get_instance(mesh, W0) )
+        W0_projected_field(dir) = field_type(                                    &
+                        vector_space = fs%get_instance(mesh, element_order, W0) )
       end do
-      W3_projected_field(1) = field_type( vector_space = fs%get_instance(mesh, W3) )
+      W3_projected_field(1) = field_type(                                        &
+                        vector_space = fs%get_instance(mesh, element_order, W3) )
 
       call galerkin_projection_algorithm(W0_projected_field(1), theta, mesh, chi, &
                                          SCALAR_FIELD, qr, mm=mm_w0)

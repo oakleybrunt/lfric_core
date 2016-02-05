@@ -10,8 +10,6 @@ module si_solver_alg_mod
   use field_mod,             only: field_type
   use runtime_constants_mod, only: runtime_constants_type
   use operator_mod,          only: operator_type
-  use function_space_mod,    only: function_space_type
-  use mesh_mod,              only: mesh_type
 
   use constants_mod,         only: r_def, str_def
   use configuration_mod,     only: MAX_ITER, SOLVER_TOL, &
@@ -63,7 +61,6 @@ contains
     type(field_type), intent(in)             :: rhs0(bundle_size), x_ref(bundle_size)
     type(runtime_constants_type), intent(in) :: runtime_constants
     
-    type(mesh_type), pointer     :: mesh
     type(field_type)             :: rhs(bundle_size)
     real(kind=r_def)             :: tau_dt    ! tau_dt would eventually be set globally 
                                               ! (probably the same place as alpha)
@@ -73,8 +70,7 @@ contains
     ! Set up tau_dt: to be used here and in subsequent algorithms
     tau_dt = -0.5_r_def*dt
 
-    mesh => runtime_constants%get_mesh()    
-    call clone_bundle(x0, rhs, mesh, bundle_size)
+    call clone_bundle(x0, rhs, bundle_size)
 
     if ( l_newton_krylov ) then
       call rhs_alg(rhs, tau_dt, x0, runtime_constants, .true.)    
@@ -116,7 +112,6 @@ subroutine mixed_gmres_alg(x0, rhs0, rhs, x_ref, delta, tau_dt, runtime_constant
     real(kind=r_def),             intent(in)    :: delta, tau_dt
 
 
-    type(mesh_type), pointer :: mesh => null()
 ! The temporary fields
     type(field_type)         :: mm_diagonal(bundle_size)
     type(field_type)         :: dx(bundle_size), Ax(bundle_size), &
@@ -134,19 +129,18 @@ subroutine mixed_gmres_alg(x0, rhs0, rhs, x_ref, delta, tau_dt, runtime_constant
     integer                  :: precon = NO_PRE_COND
     integer                  :: postcon = DIAGONAL_PRE_COND
 
-    mesh => runtime_constants%get_mesh()
 
     mm_diagonal(1) = runtime_constants%get_mass_matrix_diagonal(2)
     mm_diagonal(2) = runtime_constants%get_mass_matrix_diagonal(0)
     mm_diagonal(3) = runtime_constants%get_mass_matrix_diagonal(3)
 
-    call clone_bundle(x0, dx, mesh, bundle_size)
-    call clone_bundle(x0, Ax, mesh, bundle_size)
-    call clone_bundle(x0, s, mesh, bundle_size)
-    call clone_bundle(x0, w, mesh, bundle_size)
-    call clone_bundle(x0, residual,  mesh, bundle_size)
+    call clone_bundle(x0, dx, bundle_size)
+    call clone_bundle(x0, Ax, bundle_size)
+    call clone_bundle(x0, s, bundle_size)
+    call clone_bundle(x0, w, bundle_size)
+    call clone_bundle(x0, residual, bundle_size)
     do iter = 1,SI_GCRK
-      call clone_bundle(x0, v(:,iter), mesh, bundle_size)
+      call clone_bundle(x0, v(:,iter), bundle_size)
     end do
 
     err = bundle_inner_product(rhs0, rhs0, bundle_size)
@@ -299,12 +293,10 @@ end subroutine mixed_gmres_alg
     type(runtime_constants_type), intent(in)    :: runtime_constants
     real(kind=r_def),             intent(in)    :: tau_dt
     type(field_type)                            :: x_new(bundle_size), rhs_new(bundle_size)
-    type(mesh_type), pointer                    :: mesh => null()
 
     if ( l_newton_krylov ) then
-      mesh => runtime_constants%get_mesh()
-      call clone_bundle(x0, x_new, mesh, bundle_size)
-      call clone_bundle(x0, rhs_new, mesh, bundle_size)
+      call clone_bundle(x0, x_new, bundle_size)
+      call clone_bundle(x0, rhs_new, bundle_size)
       call bundle_axpy(delta, x, x0, x_new, bundle_size)
       call rhs_alg(rhs_new, tau_dt, x_new, runtime_constants, .true.)
       call minus_bundle(rhs_new, rhs, ax, bundle_size)

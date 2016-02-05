@@ -1,7 +1,7 @@
 !-------------------------------------------------------------------------------
-! (c) The copyright relating to this work is owned jointly by the Crown, 
-! Met Office and NERC 2014. 
-! However, it has been created with the help of the GungHo Consortium, 
+! (c) The copyright relating to this work is owned jointly by the Crown,
+! Met Office and NERC 2014.
+! However, it has been created with the help of the GungHo Consortium,
 ! whose members are identified at https://puma.nerc.ac.uk/trac/GungHo/wiki
 !-------------------------------------------------------------------------------
 
@@ -9,31 +9,24 @@
 
 !> @details This code generates a mesh and determines the basis functions and
 !> dofmaps. This will be replaced with code that reads this in from a mesh
-!> generation and paritioning pre-processor stage.  
+!> generation and paritioning pre-processor stage.
 
 ! There are no tests for this code as this will be replaced.
 
 module set_up_mod
 
-  use constants_mod,              only : i_def, r_def, str_def 
-  use configuration_mod,          only : TRI, QUAD, &
-                                         VGRID_UNIFORM, VGRID_QUADRATIC, &
-                                         VGRID_GEOMETRIC, VGRID_DCMIP, &
-                                         mesh_filename
-  use function_space_mod,         only : function_space_type
-  use reference_element_mod,      only : reference_cube, &
-                                         reference_element, nfaces, nedges, nverts
-  use num_dof_mod,                only : num_dof_init
-  use basis_function_mod,         only : get_basis, &
-              w0_nodal_coords, w1_nodal_coords, w2_nodal_coords, w3_nodal_coords
+  use constants_mod,          only: i_def, r_def, str_def, PI
+  use configuration_mod,      only: TRI, QUAD,                                 &
+                                    VGRID_UNIFORM, VGRID_QUADRATIC,            &
+                                    VGRID_GEOMETRIC, VGRID_DCMIP,              &
+                                    mesh_filename
+  use reference_element_mod,  only: reference_cube, reference_element          &
+                                  , nfaces, nedges, nverts
+  use mesh_mod,               only: mesh_type
 
-  use dofmap_mod,                 only : get_dofmap, get_orientation, &
-                                  w0_dofmap, w1_dofmap, w2_dofmap, w3_dofmap, &
-                                  wtheta_dofmap, w2v_dofmap, w2h_dofmap
-  use mesh_colouring_mod,         only : set_colours
   implicit none
-  
-contains 
+
+contains
 
 !> @brief Generates a mesh and determines the basis functions and dofmaps
 !> @details This will be replaced with code that reads the information in
@@ -42,34 +35,32 @@ contains
 !> @param[in] total_ranks Total number of MPI ranks in this job
   subroutine set_up(mesh, local_rank, total_ranks)
 
-    use log_mod,           only : log_event, LOG_LEVEL_INFO
-    use configuration_mod, only : element_order, l_spherical, & 
-                                  nlayers, domain_top, vgrid_option
+    use log_mod,           only: log_event, LOG_LEVEL_INFO
+    use configuration_mod, only: l_spherical, nlayers, domain_top, vgrid_option
+    use partition_mod,     only: partition_type,                   &
+                                 partitioner_interface,            &
+                                 partitioner_cubedsphere_serial,   &
+                                 partitioner_cubedsphere,          &
+                                 partitioner_biperiodic
+    use global_mesh_mod,   only: global_mesh_type
 
-    use slush_mod,       only : w_unique_dofs, w_dof_entity
-    use mesh_mod,        only : mesh_type
-    use partition_mod,   only : partition_type,                 &
-                                partitioner_interface,          &
-                                partitioner_cubedsphere_serial, &
-                                partitioner_cubedsphere,        &
-                                partitioner_biperiodic
-
-    use global_mesh_mod, only : global_mesh_type
 
     implicit none
 
-    type (global_mesh_type)  :: global_mesh
-    type (partition_type)    :: partition
+    type (mesh_type), intent(out), target   :: mesh
+    integer(i_def), intent(in) :: local_rank
+    integer(i_def), intent(in) :: total_ranks
 
-    type (mesh_type), intent(out) :: mesh
-    integer, intent(in)           :: local_rank
-    integer, intent(in)           :: total_ranks
+    type (global_mesh_type)    :: global_mesh
+    type (partition_type)      :: partition
+
 
     procedure (partitioner_interface), pointer :: partitioner_ptr => null ()
 
     ! Number of ranks the mesh is partitioned over in the x- and y-directions
     ! (across a single face for a cubed-sphere mesh)
-    integer :: xproc, yproc
+    integer(i_def) :: xproc, yproc
+
 
     ! Until we have configuration, set up xproc and yproc for square decomposition
     xproc=max(1,int(sqrt(real(total_ranks/6.0))))
@@ -78,13 +69,15 @@ contains
 !>       When this happens their values will need to be checked to make sure they are
 !>       sensible
 
+
+
     call log_event( "set_up: Generating/reading the mesh", LOG_LEVEL_INFO )
 
     ! Currently only quad elements are fully functional
-    if ( reference_element /= QUAD ) then 
+    if ( reference_element /= QUAD ) then
       call log_event( "set_up: Reference_element must be QUAD for now...", LOG_LEVEL_INFO )
     end if
-    ! Setup reference cube  
+    ! Setup reference cube
     call reference_cube()
 
     ! Generate the global mesh and choose a partitioning strategy by setting
@@ -99,44 +92,21 @@ contains
     end if
 
     ! Generate the partition object
-    partition = partition_type( global_mesh, &
+    partition = partition_type( global_mesh,    &
                                partitioner_ptr, &
-                               xproc, &
-                               yproc, &
-                               1, &
-                               local_rank, &
+                               xproc,           &
+                               yproc,           &
+                               1,               &
+                               local_rank,      &
                                total_ranks)
+
+
+
     ! Generate the mesh
-    mesh = mesh_type(partition, global_mesh, nlayers, domain_top, vgrid_option)
+    mesh =  mesh_type ( partition, global_mesh, nlayers, domain_top, vgrid_option)
     call mesh%set_colours()
 
-! -----------------------------------------------------------
-! Initialise FE elements on the mesh constructed above
-! really another pre-processor step
-! ----------------------------------------------------------
-
-    ! initialise numbers of dofs    
-    call num_dof_init( mesh, element_order, w_unique_dofs, w_dof_entity )
-         
-    call log_event( "set_up: computing basis functions", LOG_LEVEL_INFO )
-
-    ! read the values of the basis functions. 
-    call get_basis( k=element_order,             &
-                    w_unique_dofs=w_unique_dofs, &
-                    w_dof_entity=w_dof_entity )  
-
-    call log_event( "set_up: computing the dof_map", LOG_LEVEL_INFO )
-
-    ! compute the dof maps for each function space
-    call get_dofmap( mesh=mesh,                  &
-                     w_dof_entity=w_dof_entity,  &
-                     w_unique_dofs=w_unique_dofs)
-    
-    ! compute cell local orientations for vector spaces
-    call get_orientation( mesh, w_unique_dofs)
 
     return
-
   end subroutine set_up
-
 end module set_up_mod

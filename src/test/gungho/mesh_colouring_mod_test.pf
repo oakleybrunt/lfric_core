@@ -102,8 +102,8 @@ subroutine test_compute_colours_cubedsphere(this)
   integer(kind=i_def), pointer :: num_cell_per_colour(:)
   integer(kind=i_def), pointer :: cells_in_colour(:,:)
 
-  type(mesh_type)                  :: mesh
-
+  type(mesh_type) :: mesh
+  integer(i_def)  :: err
 
   filename = "data/ugrid_quads_2d_cubedsphere_6x4x4.nc"
   global_mesh = global_mesh_type(filename)
@@ -119,7 +119,8 @@ subroutine test_compute_colours_cubedsphere(this)
 
   ! Mesh is now constructed with num_layers and domain top instead of dz and
   ! is uniform in vertical for purpose of the test
-  mesh = mesh_type(partition, global_mesh, this%num_layers, 10000.0_r_def, VGRID_UNIFORM)
+  mesh = mesh_type( partition, global_mesh, this%num_layers, 10000.0_r_def, VGRID_UNIFORM )
+
   ! Mesh is not yet coloured...
   @assertFalse(mesh%is_coloured(), "Mesh is unexpectedly coloured")
   call mesh%set_colours()
@@ -153,6 +154,7 @@ subroutine test_compute_colours_cubedsphere(this)
   end do
 
 
+  return
 end subroutine test_compute_colours_cubedsphere
 
 !-------------------------------------------------------------------------------

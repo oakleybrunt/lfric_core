@@ -14,7 +14,7 @@
 !! discontinuous systems an exact solver can be used
 module solver_mod
   use constants_mod,           only : r_def, str_def
-  use configuration_mod,       only : MAX_ITER, SOLVER_TOL, &
+  use configuration_mod,       only : element_order, MAX_ITER, SOLVER_TOL,   &
                                       CG_SOLVER, BICG_SOLVER, JACOBI_SOLVER, &
                                       GMRES_SOLVER, GCR_SOLVER, NO_PRE_COND, &
                                       DIAGONAL_PRE_COND
@@ -25,7 +25,11 @@ module solver_mod
                                       LOG_LEVEL_DEBUG,   &
                                       LOG_LEVEL_TRACE
   use field_mod,               only : field_type
-  use function_space_mod,      only : function_space_type, W0, W1, W2, W3, Wtheta, W2V, W2H
+
+  use function_space_mod,  only: function_space_type
+  use fs_continuity_mod,   only: W3
+  use mesh_mod,            only: mesh_type
+
   use psykal_lite_mod,         only : invoke_inner_prod,              &
                                       invoke_axpy,                    &
                                       invoke_minus_field_data,        &
@@ -38,7 +42,7 @@ module solver_mod
 
   use quadrature_mod,  only : quadrature_type
   use operator_mod,    only : operator_type
-  use mesh_mod,        only : mesh_type
+
 
   implicit none
   private
@@ -70,9 +74,9 @@ contains
 
   subroutine solver_algorithm(lhs, rhs, mesh, chi, solver_type, qr, mm, preconditioner_choice, mmd)
     implicit none
-    type(field_type), intent(inout)    :: lhs
-    type(field_type), intent(inout)    :: rhs
-    type(mesh_type),  intent(in)       :: mesh
+    type(field_type), intent(inout) :: lhs
+    type(field_type), intent(inout) :: rhs
+    type(mesh_type),  intent(in)    :: mesh
 
     ! chi is really intent(in) but this currently causes
     ! problems because PSyclone makes everything (inout)
@@ -159,6 +163,8 @@ contains
     type(field_type),    intent(in), optional :: mmd
     integer,             intent(in)    :: precond_option
 
+    type(function_space_type)          :: fs
+    type(function_space_type), pointer :: rhs_fs => null()
 
     ! The temporary fields
     type(field_type)                   :: res, p, v, s, t, z, y
@@ -170,8 +176,7 @@ contains
     ! others
     real(kind=r_def)                   :: err,sc_err, init_err
     integer                            :: iter
-    integer                            :: rhs_fs
-    type(function_space_type)          :: fs
+
 
     ! compute the residual this is a global sum to the PSy ---
     call invoke_inner_prod(rhs,rhs,sc_err)
@@ -184,15 +189,15 @@ contains
     omega  = 1.0_r_def
     norm   = 1.0_r_def
 
-    rhs_fs = rhs%which_function_space()
+    rhs_fs => fs%get_instance( mesh, element_order, rhs%which_function_space() )
 
-    v = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-    z = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-    p = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-    t = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-    s = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-    y = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-    res = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
+    v   = field_type( vector_space = rhs_fs )
+    z   = field_type( vector_space = rhs_fs )
+    p   = field_type( vector_space = rhs_fs )
+    t   = field_type( vector_space = rhs_fs )
+    s   = field_type( vector_space = rhs_fs )
+    y   = field_type( vector_space = rhs_fs )
+    res = field_type( vector_space = rhs_fs )
 
     call invoke_set_field_scalar(0.0_r_def, lhs)
     call invoke_copy_field_data(rhs,res)
@@ -202,8 +207,9 @@ contains
     init_err=err
     if (err < SOLVER_TOL) then
       write( log_scratch_space, '(I4, A, I2,A,E12.4,A,E15.8)') &
-           rhs_fs,"-space solver_algorithm:converged in ", 0, &
-           " iters, init=", init_err, &
+           rhs_fs%which(),                                     &
+           "-space solver_algorithm:converged in ", 0,         &
+           " iters, init=", init_err,                          &
            " final=", err
       call log_event( log_scratch_space, LOG_LEVEL_INFO )
       return
@@ -251,8 +257,9 @@ contains
 
       if (err < SOLVER_TOL) then
         write( log_scratch_space, '(I4, A, I2, A, E12.4, A, E15.8)' ) &
-             rhs_fs,"-space solver_algorithm:converged in ", iter, &
-             " iters, init=", init_err, &
+             rhs_fs%which(),                                          &
+             "-space solver_algorithm:converged in ", iter,           &
+             " iters, init=", init_err,                               &
              " final=", err
         call log_event( log_scratch_space, LOG_LEVEL_INFO )
         exit
@@ -287,6 +294,9 @@ contains
     integer,             intent(in)    :: precond_option
     type(field_type),    intent(in), optional :: mmd
 
+    type(function_space_type)          :: fs
+    type(function_space_type), pointer :: rhs_fs => null()
+
     ! The temporary fields
     type(field_type)                   :: res, p, Ap, z
 
@@ -296,19 +306,17 @@ contains
     ! others
     real(kind=r_def)                   :: err,sc_err, init_err
     integer                            :: iter
-    integer                            :: rhs_fs
-    type(function_space_type)          :: fs
 
     call invoke_inner_prod( rhs, rhs, rs_old )
 
     ! compute the residual this is a global sum to the PSy ---
 
-    rhs_fs = rhs%which_function_space()
+    rhs_fs => fs%get_instance( mesh, element_order, rhs%which_function_space() )
 
-    res = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-    p   = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-    Ap  = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-    z   = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
+    res = field_type(vector_space = rhs_fs )
+    p   = field_type(vector_space = rhs_fs )
+    Ap  = field_type(vector_space = rhs_fs )
+    z   = field_type(vector_space = rhs_fs )
 
     if ( present(mmd) ) then
     ! First guess: lhs = rhs/diag(M)
@@ -358,8 +366,9 @@ contains
       call log_event( log_scratch_space, LOG_LEVEL_TRACE )
       if (err < SOLVER_TOL) then
         write( log_scratch_space, '(I4, A, I2, A, E12.4, A, E15.8)' ) &
-             rhs_fs,"-space cg solver_algorithm:converged in ", iter, &
-             " iters, init=", init_err,                           &
+             rhs_fs%which(),                                          &
+             "-space cg solver_algorithm:converged in ", iter,        &
+             " iters, init=", init_err,                               &
              " final=", err
         call log_event( log_scratch_space, LOG_LEVEL_INFO )
         exit
@@ -408,15 +417,14 @@ contains
   real(kind=r_def), parameter :: MU = 0.9_r_def
 
   integer :: iter
-  integer                            :: rhs_fs
-  type( function_space_type )        :: fs
 
-  rhs_fs = rhs%which_function_space()
+  type(function_space_type) :: fs
+  type(function_space_type), pointer :: rhs_fs => null()
 
-  Ax = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
+  rhs_fs => fs%get_instance( mesh, element_order, rhs%which_function_space() )
 
-  diagonal = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-  res = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
+  diagonal = field_type( vector_space = rhs_fs )
+  res      = field_type( vector_space = rhs_fs )
 
   call invoke( mm_diagonal_kernel_type(diagonal, mm) )
   call invoke_divide_field( rhs, diagonal, lhs )
@@ -473,18 +481,20 @@ contains
     ! others
     real(kind=r_def)                   :: err, sc_err, init_err
     integer                            :: iter, i, j, k, m
-    integer                            :: rhs_fs
+
     type(function_space_type)          :: fs
+    type(function_space_type), pointer :: rhs_fs => null()
 
-    rhs_fs = rhs%which_function_space()
-    Ax = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
 
-    r  = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-    s  = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-    w   = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
+    rhs_fs => fs%get_instance( mesh, element_order, rhs%which_function_space() )
+
+    Ax = field_type(vector_space = rhs_fs)
+    r  = field_type(vector_space = rhs_fs)
+    s  = field_type(vector_space = rhs_fs)
+    w  = field_type(vector_space = rhs_fs)
 
     do iter = 1,GCRK
-      v(iter) = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
+      v(iter) = field_type(vector_space = rhs_fs)
     end do
 
     call invoke_inner_prod( rhs, rhs, err )
@@ -636,18 +646,18 @@ contains
     ! others
     real(kind=r_def)                   :: err, sc_err, init_err
     integer                            :: iter, m, n
-    integer                            :: rhs_fs
+
     type(function_space_type)          :: fs
+    type(function_space_type), pointer :: rhs_fs => null()
 
-    rhs_fs = rhs%which_function_space()
+    rhs_fs => fs%get_instance( mesh, element_order, rhs%which_function_space() )
 
-    Ax = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-
-    r  = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
+    Ax = field_type(vector_space = rhs_fs)
+    r  = field_type(vector_space = rhs_fs)
 
     do iter = 1,GCRK
-      s(iter)  = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
-      v(iter)  = field_type(vector_space = fs%get_instance(mesh, rhs_fs) )
+      s(iter)  = field_type (vector_space = rhs_fs)
+      v(iter)  = field_type (vector_space = rhs_fs)
     end do
     call invoke_inner_prod( rhs, rhs, err )
     sc_err = max( sqrt(err), 0.01_r_def )
@@ -693,8 +703,9 @@ contains
       err = sqrt( err )/sc_err
       if( err <  SOLVER_TOL ) then
        write( log_scratch_space, '(I4, A, I2, A, E12.4, A, E15.8)' ) &
-             rhs_fs,"-space GCR solver_algorithm:converged in ", iter, &
-             " iters, init=", init_err, &
+             rhs_fs%which(),                                         &
+             "-space GCR solver_algorithm:converged in ", iter,      &
+             " iters, init=", init_err,                              &
              " final=", err
         call log_event( log_scratch_space, LOG_LEVEL_INFO )
         exit

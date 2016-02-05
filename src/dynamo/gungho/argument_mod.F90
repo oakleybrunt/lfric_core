@@ -23,7 +23,8 @@
 
 module argument_mod
 
-  use function_space_mod, only : W0, W1, W2, W3, Wtheta, W2V, W2H
+  use fs_continuity_mod, only : W0, W1, W2, W3, Wtheta, W2V, W2H
+
   implicit none
 
 ! argument types

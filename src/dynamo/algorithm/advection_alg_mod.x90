@@ -73,19 +73,21 @@ contains
   type(field_type),    pointer :: mmd_w2, mmd_w1 => null()
   type(mesh_type),     pointer :: mesh => null()
 
-  type(function_space_type) :: fs
-  type( quadrature_type )   :: qr
+  type(quadrature_type)     :: qr
   type(field_type), pointer :: u ,theta, rho, theta_np1, theta_n => null()
   type(field_type)          :: r_xi, mass_flux, r_rho 
-  integer                   :: xi_fs, u_fs, rho_fs, theta_fs
- 
-  mesh         => runtime_constants%get_mesh()
-  mm_w1        => runtime_constants%get_mass_matrix(1)
-  mm_w2        => runtime_constants%get_mass_matrix(2)
-  mmd_w1       => runtime_constants%get_mass_matrix_diagonal(1)
-  mmd_w2       => runtime_constants%get_mass_matrix_diagonal(2)
 
-  chi          => runtime_constants%get_coordinates()
+  type(function_space_type) :: fs
+  type(function_space_type), pointer :: xi_fs  => null()
+  type(function_space_type), pointer :: u_fs   => null()
+  type(function_space_type), pointer :: rho_fs => null()
+
+  mesh   => runtime_constants%get_mesh()
+  mm_w1  => runtime_constants%get_mass_matrix(1)
+  mm_w2  => runtime_constants%get_mass_matrix(2)
+  mmd_w1 => runtime_constants%get_mass_matrix_diagonal(1)
+  mmd_w2 => runtime_constants%get_mass_matrix_diagonal(2)
+  chi    => runtime_constants%get_coordinates()
 
   u     => state(1)
   theta => state(2)
@@ -94,14 +96,14 @@ contains
   theta_np1 => state_np1(2)
   theta_n => state_n(2)
  
-  u_fs   = u%which_function_space() 
-  xi_fs  = xi%which_function_space()
-  theta_fs = theta%which_function_space() 
-  rho_fs   = rho%which_function_space() 
+  u_fs   => fs%get_instance( mesh, element_order, u%which_function_space()   )
+  xi_fs  => fs%get_instance( mesh, element_order, xi%which_function_space()  )
+  rho_fs => fs%get_instance( mesh, element_order, rho%which_function_space() )
 
-  mass_flux = field_type( vector_space = fs%get_instance(mesh, u_fs) )
-  r_xi      = field_type( vector_space = fs%get_instance(mesh, xi_fs) )
-  r_rho     = field_type( vector_space = fs%get_instance(mesh, rho_fs) )
+
+  mass_flux = field_type( vector_space = u_fs   )
+  r_xi      = field_type( vector_space = xi_fs  )
+  r_rho     = field_type( vector_space = rho_fs )
 
   qr = quadrature_type(element_order+3, GAUSSIAN)
 

@@ -13,15 +13,17 @@ module galerkin_projection_algorithm_mod
   use log_mod,                 only: log_event, log_scratch_space, LOG_LEVEL_INFO
   use solver_mod,              only: solver_algorithm
   use constants_mod,           only: r_def 
-  use configuration_mod,       only: solver_option  
+  use configuration_mod,       only: solver_option, element_order
   use psykal_lite_mod,         only: invoke_copy_field_data, invoke_set_field_scalar
   use gp_rhs_kernel_mod,       only: gp_rhs_kernel_type
   use gp_vector_rhs_kernel_mod,only: gp_vector_rhs_kernel_type
   use field_mod,               only: field_type
   use quadrature_mod,          only: quadrature_type
-  use function_space_mod,      only: function_space_type, W0, W3
+  use function_space_mod,      only: function_space_type
   use operator_mod,            only: operator_type
   use mesh_mod,                only: mesh_type
+
+  use fs_continuity_mod,       only: W3
 
   implicit none
 
@@ -67,13 +69,15 @@ contains
     integer                          :: out_fs
     type( field_type )               :: rhs(space_dimension)
     integer                          :: dir, space 
-    type(function_space_type)        :: fs
+
+    type(function_space_type) :: fs
 
 
 ! Create continuous fields to project data into
     out_fs = f_out(1)%which_function_space()
     do dir = 1,space_dimension
-      rhs(dir) = field_type( vector_space = fs%get_instance(mesh, out_fs) )
+      rhs(dir) = field_type(                                                   &
+               vector_space = fs%get_instance(mesh, element_order, out_fs) )
       call invoke_set_field_scalar(0.0_r_def, rhs(dir))
     end do
     

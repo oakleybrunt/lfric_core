@@ -32,19 +32,19 @@ implicit none
 private
 type, public :: stencil_dofmap_type
   private 
-  integer :: dofmap_shape
-  integer :: dofmap_extent
-  integer :: dofmap_id
-  integer, allocatable :: dofmap(:,:,:) 
+  integer(i_def) :: dofmap_shape
+  integer(i_def) :: dofmap_extent
+  integer(i_def) :: dofmap_id
+  integer(i_def), allocatable :: dofmap(:,:,:) 
 contains
   procedure :: get_dofmap
   procedure :: get_id
 end type stencil_dofmap_type
 
-integer, public, parameter :: STENCIL_POINT = 1100
-integer, public, parameter :: STENCIL_1DX   = 1200
-integer, public, parameter :: STENCIL_1DY   = 1300
-integer, public, parameter :: STENCIL_CROSS = 1400
+integer(i_def), public, parameter :: STENCIL_POINT = 1100
+integer(i_def), public, parameter :: STENCIL_1DX   = 1200
+integer(i_def), public, parameter :: STENCIL_1DY   = 1300
+integer(i_def), public, parameter :: STENCIL_CROSS = 1400
 
 interface stencil_dofmap_type
   module procedure stencil_dofmap_constructor
@@ -67,22 +67,22 @@ function stencil_dofmap_constructor( st_shape, st_extent, ndf, mesh, master_dofm
                         LOG_LEVEL_ERROR
     use mesh_mod, only: mesh_type
 
-    integer,                  intent(in) :: st_shape, st_extent, ndf
+    integer(i_def),           intent(in) :: st_shape, st_extent, ndf
     type(mesh_type),          intent(in) :: mesh
     type(master_dofmap_type), intent(in) :: master_dofmap
     type(stencil_dofmap_type), target    :: self
 
-    integer :: cell, ncells
-    integer, pointer :: map(:) => null()
-    integer :: cell_in_stencil
-    integer :: cell_west,  next_cell_west,  &
+    integer(i_def) :: cell, ncells
+    integer(i_def), pointer :: map(:) => null()
+    integer(i_def) :: cell_in_stencil
+    integer(i_def) :: cell_west,  next_cell_west,  &
                cell_south, next_cell_south, &
                cell_east,  next_cell_east,  &
                cell_north, next_cell_north
 
-    self%dofmap_shape = st_shape
-    self%dofmap_extent  = st_extent
-    self%dofmap_id    = st_shape*100 + st_extent
+    self%dofmap_shape  = st_shape
+    self%dofmap_extent = st_extent
+    self%dofmap_id     = st_shape*100 + st_extent
 
     ncells = mesh%get_ncells_2d()
     ! Allocate the dofmap array
@@ -208,8 +208,8 @@ function stencil_dofmap_constructor( st_shape, st_extent, ndf, mesh, master_dofm
 function get_dofmap(self,cell) result(map)
   implicit none
   class(stencil_dofmap_type), target, intent(in) :: self
-  integer,                            intent(in) :: cell
-  integer, pointer                               :: map(:,:) 
+  integer(i_def),                     intent(in) :: cell
+  integer(i_def), pointer                        :: map(:,:) 
 
   map => self%dofmap(:,:,cell)
   return

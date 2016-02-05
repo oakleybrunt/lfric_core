@@ -66,15 +66,20 @@ contains
   type(field_type),             intent(inout) :: lhs(3)
   type(runtime_constants_type), intent(in)    :: runtime_constants
 
+  type(quadrature_type)     :: qr
+  type(function_space_type) :: fs
+
   type(field_type), pointer :: chi(:)=> null()
   type(operator_type), pointer :: mm_w2, mm_w0 => null()
-  type(mesh_type), pointer    :: mesh => null()
+  type(mesh_type),           pointer :: mesh   => null()
+  type(function_space_type), pointer :: rho_fs => null()
+  type(function_space_type), pointer :: u_fs   => null()
 
-  type( quadrature_type )   :: qr
   type(field_type), pointer :: u ,theta, rho, u_ref, theta_ref, rho_ref
   type(field_type)          :: ones, f_star, w2_multiplicity 
-  type(function_space_type) :: fs
-  integer                   :: u_fs, rho_fs
+
+
+
   type(field_type)          :: lhs_tmp(3)
 
   mesh         => runtime_constants%get_mesh()
@@ -90,7 +95,7 @@ contains
   theta_ref => ref_state(2)
   rho_ref   => ref_state(3)
 
-  call clone_bundle(lhs, lhs_tmp, mesh, 3)
+  call clone_bundle(lhs, lhs_tmp, 3)
 
   qr = quadrature_type(element_order+2, GAUSSIAN)
 
@@ -102,12 +107,14 @@ contains
                matrix_vector_kernel_mm_type( lhs(1), u, mm_w2) )
   call invoke( enforce_bc_kernel_type( lhs_tmp(1) ) )
   call invoke_axpy( alpha_dt, lhs_tmp(1), lhs(1), lhs(1) ) 
+ 
+  rho_fs => fs%get_instance (mesh,element_order,rho%which_function_space() )
+  u_fs   => fs%get_instance (mesh,element_order,u%which_function_space()   )
 
   qr = quadrature_type(element_order+1, GAUSSIAN)
- 
+
   ! Compute lhs_theta
-  rho_fs = rho%which_function_space()  
-  ones = field_type( vector_space = fs%get_instance(mesh, rho_fs) )
+  ones = field_type( vector_space = rho_fs )
   call invoke_set_field_scalar( 1.0_r_def, ones )
   call invoke_set_field_scalar( 0.0_r_def, lhs_tmp(2) )
   call invoke_set_field_scalar( 0.0_r_def, lhs(2) )
@@ -117,11 +124,11 @@ contains
 
   ! Compute lhs_rho
   ! Need to create u*rho^ref \in W2 for lhs_tmp(3) kernel -> sampled mass flux
-  u_fs = u%which_function_space()  
-  w2_multiplicity = field_type( vector_space = fs%get_instance(mesh, u_fs) )
+  w2_multiplicity = field_type( vector_space = u_fs )
   call invoke_set_field_scalar( 0.0_r_def, w2_multiplicity )
   call invoke ( multiplicity_kernel_type( w2_multiplicity ) )
-  f_star = field_type( vector_space = fs%get_instance(mesh, u_fs) )
+
+  f_star = field_type( vector_space = u_fs )
   call invoke_set_field_scalar( 0.0_r_def, f_star )
   call invoke_sample_flux_kernel( f_star, u, w2_multiplicity, rho_ref )
 

@@ -45,8 +45,9 @@ type select_entity_type
   integer, allocatable :: verts(:)
 end type select_entity_type
 
-type(select_entity_type) ::  select_entity_all, select_entity_theta, &
-                             select_entity_w2v, select_entity_w2h
+type(select_entity_type), target ::       &
+  select_entity_all, select_entity_theta, &
+  select_entity_w2v, select_entity_w2h
 
 !Entity naming convention for reference cube:
 !
@@ -220,15 +221,16 @@ subroutine reference_cube()
   !-----------------------------------------------------------------------------
   implicit none
   
-! 2D cell information
+  ! 2D cell information
   nverts_h = 4 
   nfaces_h = 4  
   nedges_h = 4
   
-! vertical extrusion  
+  ! Vertical extrusion  
   nverts = 2*nverts_h
   nfaces = nfaces_h + 2
   nedges = 3*nedges_h
+
   
   ! Allocate arrays
   allocate ( vert_on_face(nfaces,4) )
@@ -239,6 +241,7 @@ subroutine reference_cube()
   allocate ( x_vert(nverts,3) )
   allocate ( normal_to_face(nfaces,3))
   allocate ( tangent_to_edge(nedges,3) )
+
   ! Allocate arrays for derrived types
   ! all entities 
   allocate ( select_entity_all % faces(nfaces) )

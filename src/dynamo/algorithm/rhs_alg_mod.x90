@@ -32,6 +32,7 @@ module rhs_alg_mod
   use function_space_mod,                only: function_space_type
   use runtime_constants_mod,             only: runtime_constants_type
   use field_bundle_mod,                  only: clone_bundle
+
   implicit none
 
   private
@@ -71,14 +72,16 @@ contains
 
   type(field_type), pointer :: chi(:), geopotential => null()
   type(operator_type), pointer :: mm_w2, mm_w0 => null()
-  type(mesh_type), pointer    :: mesh => null()
+  type(mesh_type),  pointer    :: mesh => null()
 
   type( quadrature_type )   :: qr 
   type(field_type), pointer :: u ,theta, rho
   type(field_type)          :: rhs_tmp(3)
   type(field_type)          :: f_star, ones, w2_multiplicity
+
   type(function_space_type) :: fs
-  integer                   :: u_fs, rho_fs
+  type(function_space_type), pointer :: u_fs   => null()
+  type(function_space_type), pointer :: rho_fs => null()
 
   mesh         => runtime_constants%get_mesh()
   geopotential => runtime_constants%get_geopotential()
@@ -90,7 +93,7 @@ contains
   theta => state(2)
   rho   => state(3)
  
-  call clone_bundle(rhs, rhs_tmp, mesh, 3)
+  call clone_bundle(rhs, rhs_tmp, 3)
 
   if ( l_from_solver ) then
     qr = quadrature_type(element_order+3, GAUSSIAN)
@@ -98,13 +101,16 @@ contains
     qr = quadrature_type(element_order+2, GAUSSIAN)
   end if
 
+
   if ( l_from_solver ) then    
     ! Need to create u*rho^ref \in W2 for rhs_tmp(3) kernel -> sampled mass flux
-    u_fs = u%which_function_space() 
-    w2_multiplicity = field_type( vector_space = fs%get_instance(mesh, u_fs) )
+    u_fs => fs%get_instance( mesh, element_order, u%which_function_space() )
+
+    w2_multiplicity = field_type( vector_space = u_fs )
     call invoke_set_field_scalar( 0.0_r_def, w2_multiplicity )
     call invoke ( multiplicity_kernel_type( w2_multiplicity ) )
-    f_star = field_type( vector_space = fs%get_instance(mesh, u_fs) )
+
+    f_star = field_type( vector_space = u_fs )
     call invoke_set_field_scalar( 0.0_r_def, f_star )
     call invoke_sample_flux_kernel( f_star, u, w2_multiplicity, rho )
   end if
@@ -125,8 +131,8 @@ contains
   call invoke_set_field_scalar( 0.0_r_def, rhs_tmp(2) )
   if ( l_from_solver ) then
     qr = quadrature_type(element_order+1, GAUSSIAN)
-    rho_fs = rho%which_function_space() 
-    ones = field_type( vector_space = fs%get_instance(mesh, rho_fs) )
+    rho_fs => fs%get_instance( mesh, element_order, rho%which_function_space() )
+    ones = field_type( vector_space = rho_fs )
     call invoke_set_field_scalar( 1.0_r_def, ones )
     call invoke( rtheta_kernel_type( rhs_tmp(2), theta, u, ones, qr) )
   end if

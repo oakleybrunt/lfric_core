@@ -46,7 +46,7 @@ module iter_timestep_alg_mod
   ! Derived Types
   use mesh_mod,                          only: mesh_type
   use field_mod,                         only: field_type
-  use function_space_mod,                only: function_space_type, W0, W1, W2, W3
+  use function_space_mod,                only: function_space_type
   use quadrature_mod,                    only: quadrature_type, GAUSSIAN
   use operator_mod,                      only: operator_type
   use runtime_constants_mod,             only: runtime_constants_type
@@ -58,6 +58,9 @@ module iter_timestep_alg_mod
   use advection_alg_mod,                 only: advection_alg
   use output_alg_mod,                    only: output_alg
   use si_solver_alg_mod,                 only: si_solver_alg
+
+  ! Handles
+  use fs_continuity_mod,                 only: W0, W1, W2
 
   implicit none
 
@@ -83,7 +86,7 @@ contains
   !> @param[inout] u  The 3D wind field
   !> @param[inout] rho The density
   !> @param[inout] theta The potential temperature
-  !> @param[inout] xi The vorticity field 
+  !> @param[inout] xi The vorticity field
   !> @param[in] restart Checkpoint/restart type with timestepping information
   subroutine iter_timestep_alg( mesh, chi, u, rho, theta, xi, &
        restart)
@@ -92,8 +95,10 @@ contains
 
     ! Mesh
     type (mesh_type), intent(in) :: mesh 
+
     ! Coordinate fields
     type( field_type ), intent( inout ) :: chi(3)
+
     ! Prognostic fields    
     type( field_type ), intent( inout ) :: u, rho, theta, xi
     ! Restart for timestep control and diagnostic output control
@@ -110,10 +115,17 @@ contains
     
     type( runtime_constants_type ) :: runtime_constants
 
-    integer :: theta_fs, u_fs, rho_fs, xi_fs
+    type(quadrature_type)     :: qr
+    type(function_space_type) :: fs
+    type(function_space_type), pointer :: theta_fs => null()
+    type(function_space_type), pointer :: rho_fs   => null()
+    type(function_space_type), pointer :: u_fs     => null()
+    type(function_space_type), pointer :: xi_fs    => null()
+    type(function_space_type), pointer :: w0_fs    => null()
+    type(function_space_type), pointer :: w1_fs    => null()
+    type(function_space_type), pointer :: w2_fs    => null()
 
-    type( function_space_type )      :: fs
-    type( quadrature_type )          :: qr
+
     type( operator_type )            :: mm_w2, mm_w1, mm_w0
 
     ! Iterative timestepping variables
@@ -122,33 +134,41 @@ contains
 
     !=== Section 1: Create field objects =====================================!
     ! Local fields
-    theta_fs  = theta%which_function_space()
-    u_fs      = u%which_function_space()
-    rho_fs    = rho%which_function_space()
-    xi_fs     = xi%which_function_space()
+    theta_fs => fs%get_instance ( mesh, element_order                          &
+                                , theta%which_function_space() )
+    u_fs     => fs%get_instance ( mesh, element_order                          &
+                                , u%which_function_space()     )
+    rho_fs   => fs%get_instance ( mesh, element_order                          &
+                                , rho%which_function_space()   )
+    xi_fs    => fs%get_instance ( mesh, element_order                          &
+                                , xi%which_function_space()    )
+
+    w0_fs => fs%get_instance( mesh, element_order, W0 )
+    w1_fs => fs%get_instance( mesh, element_order, W1 )
+    w2_fs => fs%get_instance( mesh, element_order, W2 )
 
     qr = quadrature_type(element_order+3, GAUSSIAN)
 
     ! Create field bundles
-    state_np1(1) = field_type( vector_space = fs%get_instance(mesh, u_fs) )
-    state_np1(2) = field_type( vector_space = fs%get_instance(mesh, theta_fs) )
-    state_np1(3) = field_type( vector_space = fs%get_instance(mesh, rho_fs) )
-    call clone_bundle(state_np1, state_adv, mesh, 3)
-    call clone_bundle(state_np1, state_n,   mesh, 3)
-    call clone_bundle(state_np1, rhs_n,     mesh, 3)
-    call clone_bundle(state_np1, rhs_np1,   mesh, 3)
-    call clone_bundle(state_np1, rhs_adv,   mesh, 3)
+    state_np1(1) = field_type( vector_space = u_fs     )
+    state_np1(2) = field_type( vector_space = theta_fs )
+    state_np1(3) = field_type( vector_space = rho_fs   )
+    call clone_bundle(state_np1, state_adv, 3)
+    call clone_bundle(state_np1, state_n,   3)
+    call clone_bundle(state_np1, rhs_n,     3)
+    call clone_bundle(state_np1, rhs_np1,   3)
+    call clone_bundle(state_np1, rhs_adv,   3)
     
     ! Create W2 field needed for u initialisation
-    r_u = field_type( vector_space = fs%get_instance(mesh, u_fs) )
+    r_u = field_type( vector_space = u_fs )
 
     ! Create W0 fields needed for timestepping
-    geopotential = field_type( vector_space = fs%get_instance(mesh, theta_fs) )
+    geopotential = field_type( vector_space = theta_fs )
 
     ! Create operators needed for timestepping
-    mm_w0 = operator_type(fs%get_instance(mesh, W0),fs%get_instance(mesh, W0))
-    mm_w1 = operator_type(fs%get_instance(mesh, W1),fs%get_instance(mesh, W1))
-    mm_w2 = operator_type(fs%get_instance(mesh, W2),fs%get_instance(mesh, W2))
+    mm_w0 = operator_type( w0_fs, w0_fs )
+    mm_w1 = operator_type( w1_fs, w1_fs )
+    mm_w2 = operator_type( w2_fs, w2_fs )
 
     !=== Section 2: Initialise local algorithm fields ========================!
     call log_event( "Dynamo: computing Semi-Implicit algorithm fields", &
@@ -161,10 +181,10 @@ contains
                  compute_mass_matrix_kernel_w2_type(mm_w2, chi, qr) )
 
     ! Compute mass matrix diagonals
-    mm_diagonal_w0 = field_type( vector_space = fs%get_instance(mesh, theta_fs) )
-    mm_diagonal_w1 = field_type( vector_space = fs%get_instance(mesh, xi_fs) )
-    mm_diagonal_w2 = field_type( vector_space = fs%get_instance(mesh, u_fs) )
-    mm_diagonal_w3 = field_type( vector_space = fs%get_instance(mesh, rho_fs) )
+    mm_diagonal_w0 = field_type( vector_space = theta_fs )
+    mm_diagonal_w1 = field_type( vector_space = xi_fs    )
+    mm_diagonal_w2 = field_type( vector_space = u_fs     )
+    mm_diagonal_w3 = field_type( vector_space = rho_fs   )
     call invoke_set_field_scalar(0.0_r_def,mm_diagonal_w0)
     call invoke_set_field_scalar(0.0_r_def,mm_diagonal_w1)
     call invoke_set_field_scalar(0.0_r_def,mm_diagonal_w2)

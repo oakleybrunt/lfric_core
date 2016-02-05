@@ -15,7 +15,7 @@ implicit none
 private
 type, public :: master_dofmap_type
   private 
-  integer, allocatable :: dofmap(:,:) 
+  integer(i_def), allocatable :: dofmap(:,:) 
 contains
   procedure :: get_master_dofmap
 end type master_dofmap_type
@@ -34,10 +34,20 @@ contains
 !> @return The master dofmap object
 function master_dofmap_constructor( master_dofmap ) result(self)
 
-    integer, intent(inout), allocatable :: master_dofmap(:,:)
-    type(master_dofmap_type), target :: self
+  implicit none
 
-    call move_alloc(master_dofmap, self%dofmap)
+  integer(i_def), intent(in) :: master_dofmap(:,:)
+  type(master_dofmap_type) :: self
+
+  integer(i_def) :: dim1, dim2
+
+  dim1 = size(master_dofmap,1)
+  dim2 = size(master_dofmap,2)-1
+
+  allocate( self%dofmap(dim1,0:dim2) )
+  self%dofmap(:,:) = master_dofmap(:,:)
+
+  return
 end function master_dofmap_constructor
 
 !-----------------------------------------------------------------------------
@@ -50,8 +60,8 @@ end function master_dofmap_constructor
 function get_master_dofmap(self,cell) result(map)
   implicit none
   class(master_dofmap_type), target, intent(in) :: self
-  integer,                           intent(in) :: cell
-  integer, pointer                              :: map(:) 
+  integer(i_def),                    intent(in) :: cell
+  integer(i_def), pointer                       :: map(:) 
 
   map => self%dofmap(:,cell)
   return

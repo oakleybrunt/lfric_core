@@ -13,63 +13,87 @@ contains
 
   @test
   subroutine test_func_space()
-    use pFUnit_Mod
-    use function_space_mod, only : function_space_type, W0, W1, W2, W3, Wtheta, W2V, W2H
-    use constants_mod, only : r_def, i_def
-    use quadrature_mod, only : quadrature_type, GAUSSIAN
-    use function_space_build_mod, only : & 
-                                  w0_func_space, w1_func_space,              &
-                                  w2_func_space, w3_func_space,              &
-                                  wtheta_func_space,                         &
-                                  w2v_func_space, w2h_func_space,            &
-                                  fs_build, fs_destroy,get_test_map,         &
-                                  basis_func_w0, diff_basis_func_w0,         &
-                                  basis_func_w1, diff_basis_func_w1,         &
-                                  basis_func_w2, diff_basis_func_w2,         &
-                                  basis_func_w3, diff_basis_func_w3,         &
-                                  basis_func_wtheta, diff_basis_func_wtheta, &
-                                  basis_func_w2v, diff_basis_func_w2v,       &
-                                  basis_func_w2h, diff_basis_func_w2h
 
-    use mesh_mod,                 only : mesh_type, PLANE_BI_PERIODIC
-    use stencil_dofmap_mod,       only : stencil_dofmap_type, STENCIL_POINT, &
-                                         STENCIL_CROSS, STENCIL_1DX,         &
-                                         STENCIL_1DY
+    use pFUnit_Mod
+
+    use constants_mod,         only: i_def, r_def
+    use quadrature_mod,        only: quadrature_type, GAUSSIAN
+    use stencil_dofmap_mod,    only: stencil_dofmap_type, STENCIL_POINT        &
+                                   , STENCIL_CROSS, STENCIL_1DX                &
+                                   , STENCIL_1DY
+
+    use configuration_mod,     only: QUAD
+    use mesh_mod,              only: mesh_type, PLANE_BI_PERIODIC
+    use function_space_mod,    only: function_space_type                       &
+                                   , purge_function_spaces
+    use fs_continuity_mod,     only: W0, W1, W2, W3, Wtheta, W2V, W2H
+    use reference_element_mod, only: reference_cube, deallocate_reference      &
+                                   , reference_element
+
+    use fs_test_data_mod  ! Will use everything in here
+                          ! as it's the static data
 
     implicit none
 
-    type(quadrature_type) :: qr
-    type(mesh_type)  :: mesh
-    type(mesh_type)  :: mesh_out
-    integer          :: test_fs
+    type(mesh_type),  pointer :: mesh_out => null()
+
+    type(mesh_type)           :: mesh
+    type(quadrature_type)     :: qr
+    type(function_space_type) :: fs
+    type(function_space_type), pointer :: test_fs0k0 => null()
+    type(function_space_type), pointer :: test_fs1k0 => null()
+    type(function_space_type), pointer :: test_fs2k0 => null()
+    type(function_space_type), pointer :: test_fs3k0 => null()
+    type(function_space_type), pointer :: test_fs4k0 => null()
+    type(function_space_type), pointer :: test_fs5k0 => null()
+    type(function_space_type), pointer :: test_fs6k0 => null()
+
     integer          :: scalar, vector
     integer          :: nqp_h, nqp_v
 
-    real(kind=r_def), pointer :: xp(:,:) => null()
-    real(kind=r_def), pointer :: zp(:) => null()
-    integer, pointer :: testmap(:,:)
-    real(kind=r_def) :: epsilon
-    
-    real(kind=r_def), allocatable, dimension(:,:,:,:) :: basis, test_basis
+    real(r_def), pointer :: xp(:,:) => null()
+    real(r_def), pointer :: zp(:)   => null()
+    real(r_def)          :: epsilon
 
-    integer, pointer,     dimension(:) :: map => null()
-    integer                            :: cell
+    integer          :: test_fs
+    integer, pointer :: map(:) => null()
+  
 
+    real(r_def), allocatable, dimension(:,:,:,:) :: test_diff_basis
+    real(r_def), allocatable, dimension(:,:,:,:) :: test_basis
+
+
+    integer(i_def) :: err
+    integer :: i
+    integer :: cell
     integer :: ndf
     integer :: iface, iedge, lid, test_integer
-    integer :: i
-    type(stencil_dofmap_type), pointer :: stencil_dofmap => null()
-    integer, pointer :: stencil_map(:,:) => null()
+    integer :: test_ncells
+    integer :: test_ndof_cell
+    integer :: test_dim_space
+    integer :: test_dim_space_diff
+    integer :: element_order
 
-!-------------------------------------------------------------------------------
-! Colouring vars
-    integer                          :: total_colours, colour_idx
-    integer                          :: nc_colour, cic_colour
+    type(stencil_dofmap_type), pointer :: stencil_dofmap   => null()
+    integer,                   pointer :: stencil_map(:,:) => null()
+
+    !--------------------------------------------------------------------------
+    ! Colouring vars
+    integer                 :: total_colours, colour_idx
+    integer                 :: nc_colour, cic_colour
   
-    integer(i_def)                   :: num_colours
-    integer(kind=i_def), pointer :: num_cell_per_colour(:)
-    integer(kind=i_def), pointer :: cells_in_colour(:,:)
-!-------------------------------------------------------------------------------
+    integer(i_def)          :: num_colours
+    integer(i_def), pointer :: num_cell_per_colour(:)
+    integer(i_def), pointer :: cells_in_colour(:,:)
+    !--------------------------------------------------------------------------
+
+
+
+
+
+
+    reference_element = QUAD
+    call reference_cube()
 
     scalar=1
     vector=3
@@ -85,310 +109,368 @@ contains
     ! Dummy mesh mod has 9 cells, 3 layers and is uniform in vertical
     mesh = mesh_type(PLANE_BI_PERIODIC)
 
+    ! Set element order
+    element_order = 0
+
     ! Make the function spaces
-    call fs_build(mesh)
+    test_fs0k0 => fs%get_instance(mesh, element_order, W0)
+    test_fs1k0 => fs%get_instance(mesh, element_order, W1)
+    test_fs2k0 => fs%get_instance(mesh, element_order, W2)
+    test_fs3k0 => fs%get_instance(mesh, element_order, W3)
+    test_fs4k0 => fs%get_instance(mesh, element_order, WTHETA)
+    test_fs5k0 => fs%get_instance(mesh, element_order, W2V)
+    test_fs6k0 => fs%get_instance(mesh, element_order, W2H)
+
 
     ! -----------------------------------
-    ! Test w0
-    test_fs = w0_func_space%which()
-    @assertEqual( test_fs, W0 )
+    ! Test w0, order-0
+    ! -----------------------------------
+    @assertEqual( fs0k0_dynamo_fs,     test_fs0k0%which()             )
+    @assertEqual( fs0k0_element_order, test_fs0k0%get_element_order() )
 
-    ndf = w0_func_space%get_ndf()
-    ! W0 at lowest order on quads ...
-    @assertEqual(ndf,8) 
-    ! 36 for w0
-    @assertEqual( w0_func_space%get_undf(), 36 ) 
-    @assertEqual( w0_func_space%get_ncell(), 9)
-    @assertEqual( w0_func_space%get_nlayers(),3 )
-    @assertEqual( w0_func_space%get_dim_space(), scalar )  
-    @assertEqual( w0_func_space%get_dim_space_diff(), vector ) 
+    test_ncells    = test_fs0k0%get_ncell()
+    test_ndof_cell = test_fs0k0%get_ndf()
 
-    call get_test_map(testmap,W0)
-    do cell = 1, w0_func_space%get_ncell()
-       map => w0_func_space%get_cell_dofmap( cell )
-       @assertEqual( map, testmap(:,cell) )
+    @assertEqual( fs0k0_ndof_cell,    test_ndof_cell           )
+    @assertEqual( 9,                  test_ncells              )
+    @assertEqual( 3,                  test_fs0k0%get_nlayers() )
+    @assertEqual( fs0k0_ndof_glob,    test_fs0k0%get_undf()    )
+    @assertEqual( fs0k0_ndof_cell,    test_fs0k0%get_ndf()     ) 
+    @assertEqual( fs0k0_nodal_coords, test_fs0k0%get_nodes()   )
+
+    test_dim_space      = test_fs0k0%get_dim_space()
+    test_dim_space_diff = test_fs0k0%get_dim_space_diff()
+    @assertEqual( fs0k0_dim_space,      test_dim_space         )  
+    @assertEqual( fs0k0_dim_space_diff, test_dim_space_diff    ) 
+   
+
+    do cell=1, test_ncells
+      @assertEqual( fs0k0_dofmap(:,cell),      test_fs0k0%get_cell_dofmap(cell)      )
     end do
 
-    allocate(basis(     w0_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w0_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    call basis_func_w0(test_basis)
-    call w0_func_space%compute_basis_function(                       &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
-    allocate(basis(     w0_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w0_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    call diff_basis_func_w0(test_basis)
-    call w0_func_space%compute_diff_basis_function(                   &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
 
-    ! ------------------------------------------------
-    ! Test w1
-    test_fs = w1_func_space%which()
-    @assertEqual( test_fs, W1 )
+    allocate( test_basis ( test_dim_space, test_ndof_cell, nqp_h, nqp_v) )
+    call test_fs0k0%compute_basis_function                                     &
+       ( test_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs0k0_basis_function, test_basis, epsilon)
+    deallocate(test_basis)
 
-    call get_test_map(testmap,W1)
-    do cell = 1, w1_func_space%get_ncell()
-       map => w1_func_space%get_cell_dofmap( cell )
-       @assertEqual( map, testmap(:,cell) )
+
+    allocate( test_diff_basis( test_dim_space_diff, test_ndof_cell             &
+                             , nqp_h, nqp_v) )
+    call test_fs0k0%compute_diff_basis_function                                &
+       ( test_diff_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs0k0_basis_diff_function, test_diff_basis, epsilon)
+    deallocate(test_diff_basis)
+
+
+
+
+
+    ! -----------------------------------
+    ! Test w1, order-0
+    ! -----------------------------------
+    @assertEqual( fs1k0_dynamo_fs,     test_fs1k0%which()             )
+    @assertEqual( fs1k0_element_order, test_fs1k0%get_element_order() )
+
+    test_ncells    = test_fs1k0%get_ncell()
+    test_ndof_cell = test_fs1k0%get_ndf()
+
+    @assertEqual( fs1k0_ndof_cell,    test_ndof_cell           )
+    @assertEqual( 9,                  test_ncells              )
+    @assertEqual( 3,                  test_fs1k0%get_nlayers() )
+    @assertEqual( fs1k0_ndof_glob,    test_fs1k0%get_undf()    )
+    @assertEqual( fs1k0_ndof_cell,    test_fs1k0%get_ndf()     ) 
+    @assertEqual( fs1k0_nodal_coords, test_fs1k0%get_nodes()   )
+
+    test_dim_space      = test_fs1k0%get_dim_space()
+    test_dim_space_diff = test_fs1k0%get_dim_space_diff()
+    @assertEqual( fs1k0_dim_space,      test_dim_space         )  
+    @assertEqual( fs1k0_dim_space_diff, test_dim_space_diff    ) 
+   
+
+    do cell=1, test_ncells
+      @assertEqual( fs1k0_dofmap(:,cell),      test_fs1k0%get_cell_dofmap(cell)      )
     end do
 
-    ndf = w1_func_space%get_ndf()
-    ! W1 at lowest order on quads ...
-    @assertEqual(ndf,12)
-    ! 99 for w1
-    @assertEqual( w1_func_space%get_undf(), 99 )
-    @assertEqual( w1_func_space%get_ncell(), 9)
-    @assertEqual( w1_func_space%get_nlayers(),3 )
-    @assertEqual( w1_func_space%get_dim_space(), vector )
-    @assertEqual( w1_func_space%get_dim_space_diff(), vector )
 
-    allocate(basis(     w1_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w1_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    call basis_func_w1(test_basis)
-    call w1_func_space%compute_basis_function(                       &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
+    allocate( test_basis ( test_dim_space, test_ndof_cell, nqp_h, nqp_v) )
+    call test_fs1k0%compute_basis_function                                     &
+       ( test_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs1k0_basis_function, test_basis, epsilon)
+    deallocate(test_basis)
 
-    allocate(basis(     w1_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w1_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    call diff_basis_func_w1(test_basis)
-    call w1_func_space%compute_diff_basis_function(                   &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
+
+    allocate( test_diff_basis( test_dim_space_diff, test_ndof_cell             &
+                             , nqp_h, nqp_v) )
+    call test_fs1k0%compute_diff_basis_function                                &
+       ( test_diff_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs1k0_basis_diff_function, test_diff_basis, epsilon)
+    deallocate(test_diff_basis)
+
 
     ! Test the stencil dofmap linked list structure
-    stencil_dofmap => w1_func_space%ll_get_instance(STENCIL_1DX,3)
-    stencil_map => stencil_dofmap%get_dofmap(1)
-    map => w1_func_space%get_cell_dofmap(1)
+    stencil_dofmap => test_fs1k0%ll_get_instance(STENCIL_1DX,3)
+    stencil_map    => stencil_dofmap%get_dofmap(1)
+
+    map => test_fs1k0%get_cell_dofmap(1)
     @assertEqual( map, stencil_map(:,1) )
-    map => w1_func_space%get_cell_dofmap(mesh%get_cell_next(1,1))
+    map => test_fs1k0%get_cell_dofmap(mesh%get_cell_next(1,1))
     @assertEqual( map, stencil_map(:,2) )
-    map => w1_func_space%get_cell_dofmap(mesh%get_cell_next(3,1))
+    map => test_fs1k0%get_cell_dofmap(mesh%get_cell_next(3,1))
     @assertEqual( map, stencil_map(:,3) )
 
-    stencil_dofmap => w1_func_space%ll_get_instance(STENCIL_1DY,5)
+    stencil_dofmap => test_fs1k0%ll_get_instance(STENCIL_1DY,5)
     stencil_map => stencil_dofmap%get_dofmap(1)
-    map => w1_func_space%get_cell_dofmap(1)
+
+    map => test_fs1k0%get_cell_dofmap(1)
     @assertEqual( map, stencil_map(:,1) )
-    map => w1_func_space%get_cell_dofmap(mesh%get_cell_next(2,1))
+    map => test_fs1k0%get_cell_dofmap(mesh%get_cell_next(2,1))
     @assertEqual( map, stencil_map(:,2) )
-    map => w1_func_space%get_cell_dofmap(mesh%get_cell_next(4,1))
+    map => test_fs1k0%get_cell_dofmap(mesh%get_cell_next(4,1))
     @assertEqual( map, stencil_map(:,3) )
-    map => w1_func_space%get_cell_dofmap( &
-              mesh%get_cell_next(2,mesh%get_cell_next(2,1)))
+    map => test_fs1k0%get_cell_dofmap(&
+           mesh%get_cell_next(2,mesh%get_cell_next(2,1)))
     @assertEqual( map, stencil_map(:,4) )
-    map => w1_func_space%get_cell_dofmap(&
+    map => test_fs1k0%get_cell_dofmap(&
               mesh%get_cell_next(4,mesh%get_cell_next(4,1)))
     @assertEqual( map, stencil_map(:,5) )
 
-    ! ---------------------------------------------
-    ! Test w2 
-    test_fs = w2_func_space%which()
-    @assertEqual( test_fs, W2 )
 
-    call get_test_map(testmap,W2)
-    do cell = 1, w2_func_space%get_ncell()
-       map => w2_func_space%get_cell_dofmap( cell )
-       @assertEqual( map, testmap(:,cell) )
+
+    ! -----------------------------------
+    ! Test w2, order-0
+    ! -----------------------------------
+    @assertEqual( fs2k0_dynamo_fs,     test_fs2k0%which()             )
+    @assertEqual( fs2k0_element_order, test_fs2k0%get_element_order() )
+
+    test_ncells    = test_fs2k0%get_ncell()
+    test_ndof_cell = test_fs2k0%get_ndf()
+
+    @assertEqual( fs2k0_ndof_cell,    test_ndof_cell           )
+    @assertEqual( 9,                  test_ncells              )
+    @assertEqual( 3,                  test_fs2k0%get_nlayers() )
+    @assertEqual( fs2k0_ndof_glob,    test_fs2k0%get_undf()    )
+    @assertEqual( fs2k0_ndof_cell,    test_fs2k0%get_ndf()     ) 
+    @assertEqual( fs2k0_nodal_coords, test_fs2k0%get_nodes()   )
+
+    test_dim_space      = test_fs2k0%get_dim_space()
+    test_dim_space_diff = test_fs2k0%get_dim_space_diff()
+    @assertEqual( fs2k0_dim_space,      test_dim_space         )  
+    @assertEqual( fs2k0_dim_space_diff, test_dim_space_diff    ) 
+   
+
+    do cell=1, test_ncells
+      @assertEqual( fs2k0_dofmap(:,cell),      test_fs2k0%get_cell_dofmap(cell)      )
     end do
 
-    ndf = w2_func_space%get_ndf()
-    ! W2 at lowest order on quads ...
-    @assertEqual(ndf,6) 
-    ! 90 for w2
-    @assertEqual( w2_func_space%get_undf(), 90 ) 
-    @assertEqual( w2_func_space%get_ncell(), nqp_h)
-    @assertEqual( w2_func_space%get_nlayers(), nqp_v )
-    @assertEqual( w2_func_space%get_dim_space(), vector )  
-    @assertEqual( w2_func_space%get_dim_space_diff(), scalar ) 
 
-    allocate(basis(     w2_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w2_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    call basis_func_w2(test_basis)
-    call w2_func_space%compute_basis_function(                       &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
+    allocate( test_basis ( test_dim_space, test_ndof_cell, nqp_h, nqp_v) )
+    call test_fs2k0%compute_basis_function                                     &
+       ( test_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs2k0_basis_function, test_basis, epsilon)
+    deallocate(test_basis)
 
-    allocate(basis(     w2_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w2_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    call diff_basis_func_w2(test_basis)
-    call w2_func_space%compute_diff_basis_function(                   &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
 
-    ! ---------------------------------------------
-    ! Test w3 
-    test_fs = w3_func_space%which()
-    @assertEqual( test_fs, W3 )
+    allocate( test_diff_basis( test_dim_space_diff, test_ndof_cell             &
+                             , nqp_h, nqp_v) )
+    call test_fs2k0%compute_diff_basis_function                                &
+       ( test_diff_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs2k0_basis_diff_function, test_diff_basis, epsilon)
+    deallocate(test_diff_basis)
 
-    call get_test_map(testmap,W3)
-     do cell = 1, w3_func_space%get_ncell()
-       map => w3_func_space%get_cell_dofmap( cell )
-       @assertEqual( map, testmap(:,cell) )
-    end do
 
-    ndf = w3_func_space%get_ndf()
-    ! W3 at lowest order on quads ...
-    @assertEqual(ndf,1) 
-    ! 27 for w3
-    @assertEqual( w3_func_space%get_undf(), 27 ) 
-    @assertEqual( w3_func_space%get_ncell(), nqp_h)
-    @assertEqual( w3_func_space%get_nlayers(), nqp_v )
-    @assertEqual( w3_func_space%get_dim_space(), scalar )  
-    @assertEqual( w3_func_space%get_dim_space_diff(), scalar ) 
-
-    allocate(basis(     w3_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w3_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    call basis_func_w3(test_basis)
-    call w3_func_space%compute_basis_function(                       &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
-
-    allocate(basis(     w3_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w3_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    call diff_basis_func_w3(test_basis)
-    call w3_func_space%compute_diff_basis_function(                   &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
-
-    ! ---------------------------------------------
-    ! Test wtheta
-    test_fs = wtheta_func_space%which()
-    @assertEqual( test_fs, Wtheta )
-    call get_test_map(testmap,Wtheta)
-    do cell = 1, wtheta_func_space%get_ncell()
-       map => wtheta_func_space%get_cell_dofmap( cell )
-       @assertEqual( map, testmap(:,cell) )
-    end do
-
-    ndf = wtheta_func_space%get_ndf()
-    ! Wtheta at lowest order on quads ...
-    @assertEqual(ndf,2)
-    ! 36 for wtheta
-    @assertEqual( wtheta_func_space%get_undf(), 36 )
-    @assertEqual( wtheta_func_space%get_ncell(), nqp_h)
-    @assertEqual( wtheta_func_space%get_nlayers(), nqp_v )
-    @assertEqual( wtheta_func_space%get_dim_space(), scalar )
-    @assertEqual( wtheta_func_space%get_dim_space_diff(), vector )
-
-    allocate(basis(     wtheta_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(wtheta_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    call basis_func_wtheta(test_basis)
-    call wtheta_func_space%compute_basis_function(                       &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
-
-    allocate(basis(     wtheta_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(wtheta_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    call diff_basis_func_wtheta(test_basis)
-    call wtheta_func_space%compute_diff_basis_function(                   &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
-
-! Test the stencil dofmap linked list structure
-    stencil_dofmap => w2_func_space%ll_get_instance(STENCIL_POINT,1)
+    ! Test the stencil dofmap linked list structure
+    stencil_dofmap => test_fs2k0%ll_get_instance(STENCIL_POINT,1)
     stencil_map => stencil_dofmap%get_dofmap(1)
-    map => w2_func_space%get_cell_dofmap(1)
+    map => test_fs2k0%get_cell_dofmap(1)
     @assertEqual( map, stencil_map(:,1) )
 
-    stencil_dofmap => w2_func_space%ll_get_instance(STENCIL_CROSS,5)
+    stencil_dofmap => test_fs2k0%ll_get_instance(STENCIL_CROSS,5)
     stencil_map => stencil_dofmap%get_dofmap(1)
-    map => w2_func_space%get_cell_dofmap(1)
+    map => test_fs2k0%get_cell_dofmap(1)
     @assertEqual( map, stencil_map(:,1) )
     do i = 1,4
-      map => w2_func_space%get_cell_dofmap(mesh%get_cell_next(i,1))
+      map => test_fs2k0%get_cell_dofmap(mesh%get_cell_next(i,1))
       @assertEqual( map, stencil_map(:,i+1) )
     end do
+
+
+    ! -----------------------------------
+    ! Test w3, order-0
+    ! -----------------------------------
+    @assertEqual( fs3k0_dynamo_fs,     test_fs3k0%which()             )
+    @assertEqual( fs3k0_element_order, test_fs3k0%get_element_order() )
+
+    test_ncells    = test_fs3k0%get_ncell()
+    test_ndof_cell = test_fs3k0%get_ndf()
+
+    @assertEqual( fs3k0_ndof_cell,    test_ndof_cell           )
+    @assertEqual( 9,                  test_ncells              )
+    @assertEqual( 3,                  test_fs3k0%get_nlayers() )
+    @assertEqual( fs3k0_ndof_glob,    test_fs3k0%get_undf()    )
+    @assertEqual( fs3k0_ndof_cell,    test_fs3k0%get_ndf()     ) 
+    @assertEqual( fs3k0_nodal_coords, test_fs3k0%get_nodes()   )
+
+    test_dim_space      = test_fs3k0%get_dim_space()
+    test_dim_space_diff = test_fs3k0%get_dim_space_diff()
+    @assertEqual( fs3k0_dim_space,      test_dim_space         )  
+    @assertEqual( fs3k0_dim_space_diff, test_dim_space_diff    ) 
    
-    ! ---------------------------------------------
-    ! Test w2v
-    test_fs = w2v_func_space%which()
-    @assertEqual( test_fs, W2V )
 
-    call get_test_map(testmap,W2V)
-    do cell = 1, w2v_func_space%get_ncell()
-       map => w2v_func_space%get_cell_dofmap( cell )
-       @assertEqual( map, testmap(:,cell) )
+    do cell=1, test_ncells
+      @assertEqual( fs3k0_dofmap(:,cell),      test_fs3k0%get_cell_dofmap(cell)      )
     end do
 
-    ndf = w2v_func_space%get_ndf()
-    ! W2V at lowest order on quads ...
-    @assertEqual(ndf,2)
-    ! 36 for w2v
-    @assertEqual( w2v_func_space%get_undf(), 36 )
-    @assertEqual( w2v_func_space%get_ncell(), nqp_h)
-    @assertEqual( w2v_func_space%get_nlayers(), nqp_v )
-    @assertEqual( w2v_func_space%get_dim_space(), vector )
-    @assertEqual( w2v_func_space%get_dim_space_diff(), scalar )
 
-    allocate(basis(     w2v_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w2v_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    call basis_func_w2v(test_basis)
-    call w2v_func_space%compute_basis_function(                       &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
+    allocate( test_basis ( test_dim_space, test_ndof_cell, nqp_h, nqp_v) )
+    call test_fs3k0%compute_basis_function                                     &
+       ( test_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs3k0_basis_function, test_basis, epsilon)
+    deallocate(test_basis)
 
-    allocate(basis(     w2v_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w2v_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    call diff_basis_func_w2v(test_basis)
-    call w2v_func_space%compute_diff_basis_function(                   &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
 
-    ! ---------------------------------------------
-    ! Test w2h
-    test_fs = w2h_func_space%which()
-    @assertEqual( test_fs, W2H )
+    allocate( test_diff_basis( test_dim_space_diff, test_ndof_cell             &
+                             , nqp_h, nqp_v) )
+    call test_fs3k0%compute_diff_basis_function                                &
+       ( test_diff_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs3k0_basis_diff_function, test_diff_basis, epsilon)
+    deallocate(test_diff_basis)
 
-    call get_test_map(testmap,W2H)
-    do cell = 1, w2h_func_space%get_ncell()
-       map => w2h_func_space%get_cell_dofmap( cell )
-       @assertEqual( map, testmap(:,cell) )
+
+    ! -----------------------------------
+    ! Test wtheta, order-0
+    ! -----------------------------------
+    @assertEqual( fs4k0_dynamo_fs,     test_fs4k0%which()             )
+    @assertEqual( fs4k0_element_order, test_fs4k0%get_element_order() )
+
+    test_ncells    = test_fs4k0%get_ncell()
+    test_ndof_cell = test_fs4k0%get_ndf()
+
+    @assertEqual( fs4k0_ndof_cell,    test_ndof_cell           )
+    @assertEqual( 9,                  test_ncells              )
+    @assertEqual( 3,                  test_fs4k0%get_nlayers() )
+    @assertEqual( fs4k0_ndof_glob,    test_fs4k0%get_undf()    )
+    @assertEqual( fs4k0_ndof_cell,    test_fs4k0%get_ndf()     ) 
+    @assertEqual( fs4k0_nodal_coords, test_fs4k0%get_nodes()   )
+
+    test_dim_space      = test_fs4k0%get_dim_space()
+    test_dim_space_diff = test_fs4k0%get_dim_space_diff()
+    @assertEqual( fs4k0_dim_space,      test_dim_space         )  
+    @assertEqual( fs4k0_dim_space_diff, test_dim_space_diff    ) 
+   
+
+    do cell=1, test_ncells
+      @assertEqual( fs4k0_dofmap(:,cell),      test_fs4k0%get_cell_dofmap(cell)      )
     end do
 
-    ndf = w2h_func_space%get_ndf()
-    ! W2H at lowest order on quads ...
-    @assertEqual(ndf,4)
-    ! 54 for w2h
-    @assertEqual( w2h_func_space%get_undf(), 54 )
-    @assertEqual( w2h_func_space%get_ncell(), nqp_h)
-    @assertEqual( w2h_func_space%get_nlayers(), nqp_v )
-    @assertEqual( w2h_func_space%get_dim_space(), vector )
-    @assertEqual( w2h_func_space%get_dim_space_diff(), scalar )
 
-    allocate(basis(     w2h_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w2h_func_space%get_dim_space(), ndf, nqp_h, nqp_v) )
-    call basis_func_w2h(test_basis)
-    call w2h_func_space%compute_basis_function(                       &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
-
-    allocate(basis(     w2h_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    allocate(test_basis(w2h_func_space%get_dim_space_diff(), ndf, nqp_h, nqp_v) )
-    call diff_basis_func_w2h(test_basis)
-    call w2h_func_space%compute_diff_basis_function(                   &
-         basis, ndf, nqp_h, nqp_v, xp, zp )
-    @assertEqual(test_basis, basis, epsilon)
-    deallocate(basis, test_basis)
+    allocate( test_basis ( test_dim_space, test_ndof_cell, nqp_h, nqp_v) )
+    call test_fs4k0%compute_basis_function                                     &
+       ( test_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs4k0_basis_function, test_basis, epsilon)
+    deallocate(test_basis)
 
 
+    allocate( test_diff_basis( test_dim_space_diff, test_ndof_cell             &
+                             , nqp_h, nqp_v) )
+    call test_fs4k0%compute_diff_basis_function                                &
+       ( test_diff_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs4k0_basis_diff_function, test_diff_basis, epsilon)
+    deallocate(test_diff_basis)
+
+
+    ! -----------------------------------
+    ! Test w2v, order-0
+    ! -----------------------------------
+    @assertEqual( fs5k0_dynamo_fs,     test_fs5k0%which()             )
+    @assertEqual( fs5k0_element_order, test_fs5k0%get_element_order() )
+
+    test_ncells    = test_fs5k0%get_ncell()
+    test_ndof_cell = test_fs5k0%get_ndf()
+
+    @assertEqual( fs5k0_ndof_cell,    test_ndof_cell           )
+    @assertEqual( 9,                  test_ncells              )
+    @assertEqual( 3,                  test_fs5k0%get_nlayers() )
+    @assertEqual( fs5k0_ndof_glob,    test_fs5k0%get_undf()    )
+    @assertEqual( fs5k0_ndof_cell,    test_fs5k0%get_ndf()     ) 
+    @assertEqual( fs5k0_nodal_coords, test_fs5k0%get_nodes()   )
+
+    test_dim_space      = test_fs5k0%get_dim_space()
+    test_dim_space_diff = test_fs5k0%get_dim_space_diff()
+    @assertEqual( fs5k0_dim_space,      test_dim_space         )  
+    @assertEqual( fs5k0_dim_space_diff, test_dim_space_diff    ) 
+   
+
+    do cell=1, test_ncells
+      @assertEqual( fs5k0_dofmap(:,cell),      test_fs5k0%get_cell_dofmap(cell)      )
+    end do
+
+
+    allocate( test_basis ( test_dim_space, test_ndof_cell, nqp_h, nqp_v) )
+    call test_fs5k0%compute_basis_function                                     &
+       ( test_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs5k0_basis_function, test_basis, epsilon)
+    deallocate(test_basis)
+
+
+    allocate( test_diff_basis( test_dim_space_diff, test_ndof_cell             &
+                             , nqp_h, nqp_v) )
+    call test_fs5k0%compute_diff_basis_function                                &
+       ( test_diff_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs5k0_basis_diff_function, test_diff_basis, epsilon)
+    deallocate(test_diff_basis)
+
+
+    ! -----------------------------------
+    ! Test w2h, order-0
+    ! -----------------------------------
+    @assertEqual( fs6k0_dynamo_fs,     test_fs6k0%which()             )
+    @assertEqual( fs6k0_element_order, test_fs6k0%get_element_order() )
+
+    test_ncells    = test_fs6k0%get_ncell()
+    test_ndof_cell = test_fs6k0%get_ndf()
+
+    @assertEqual( fs6k0_ndof_cell,    test_ndof_cell           )
+    @assertEqual( 9,                  test_ncells              )
+    @assertEqual( 3,                  test_fs6k0%get_nlayers() )
+    @assertEqual( fs6k0_ndof_glob,    test_fs6k0%get_undf()    )
+    @assertEqual( fs6k0_ndof_cell,    test_fs6k0%get_ndf()     ) 
+    @assertEqual( fs6k0_nodal_coords, test_fs6k0%get_nodes()   )
+
+    test_dim_space      = test_fs6k0%get_dim_space()
+    test_dim_space_diff = test_fs6k0%get_dim_space_diff()
+    @assertEqual( fs6k0_dim_space,      test_dim_space         )  
+    @assertEqual( fs6k0_dim_space_diff, test_dim_space_diff    ) 
+   
+
+    do cell=1, test_ncells
+      @assertEqual( fs6k0_dofmap(:,cell),      test_fs6k0%get_cell_dofmap(cell)      )
+    end do
+
+
+    allocate( test_basis ( test_dim_space, test_ndof_cell, nqp_h, nqp_v) )
+    call test_fs6k0%compute_basis_function                                     &
+       ( test_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs6k0_basis_function, test_basis, epsilon)
+    deallocate(test_basis)
+
+
+    allocate( test_diff_basis( test_dim_space_diff, test_ndof_cell             &
+                             , nqp_h, nqp_v) )
+    call test_fs6k0%compute_diff_basis_function                                &
+       ( test_diff_basis, test_ndof_cell, nqp_h, nqp_v, xp, zp )
+    @assertEqual(fs6k0_basis_diff_function, test_diff_basis, epsilon)
+    deallocate(test_diff_basis)
+
+
+
+
+    !-------------------------------------------------------------------
     ! Test if the function space returns the correct mesh
     ! Use a subset of the tests from mesh_mod_test.pf
-    mesh_out = w1_func_space%get_mesh()
+    !-------------------------------------------------------------------
+    mesh_out => test_fs0k0%get_mesh()
 
     !-------------------------------------------------------------------
     ! Test get_face_on_cell()
@@ -428,9 +510,9 @@ contains
     ! Test colouring via function space
 
     ! Must set colours before use...
-    call w0_func_space%set_colours()
+    call test_fs0k0%set_colours()
 
-    call w0_func_space%get_colours(num_colours, num_cell_per_colour, cells_in_colour)
+    call test_fs0k0%get_colours(num_colours, num_cell_per_colour, cells_in_colour)
 
     ! Is there storage for colour map...
     @assertTrue(associated(cells_in_colour), "Colours not set for function space.")
@@ -448,12 +530,12 @@ contains
       cic_colour = count(cells_in_colour(colour_idx,:) /= 0)
       @assertEqual(nc_colour, cic_colour, "Mismatch between num-per-colour total and cell count.")
     end do
-
     !-------------------------------------------------------------------
-    ! Tear down that which we have build, 'cos there are some module scope
-    ! allocated arrays. Yuk, but it works
-    call fs_destroy()
 
+    ! Tear down
+    call deallocate_reference()
+    call purge_function_spaces()
+    return
   end subroutine test_func_space 
 
 end module function_space_mod_test
