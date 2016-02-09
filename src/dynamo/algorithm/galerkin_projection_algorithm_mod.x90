@@ -23,7 +23,7 @@ module galerkin_projection_algorithm_mod
   use operator_mod,            only: operator_type
   use mesh_mod,                only: mesh_type
 
-  use fs_continuity_mod,       only: W3
+  use fs_continuity_mod,       only: W2, W3
 
   implicit none
 
@@ -68,6 +68,7 @@ contains
 
     integer                          :: out_fs
     type( field_type )               :: rhs(space_dimension)
+    type( field_type )               :: w2_field
     integer                          :: dir, space 
 
     type(function_space_type) :: fs
@@ -96,7 +97,9 @@ contains
        else
           write( log_scratch_space, '(A)' ) '    vector field ... '
           call log_event( log_scratch_space, LOG_LEVEL_INFO )
-          call invoke( gp_vector_rhs_kernel_type(rhs, f_in, chi, qr) )
+          ! Create dummy W2 field for kernel to perform check agains
+          w2_field = field_type( vector_space = fs%get_instance(mesh, element_order, W2) ) 
+          call invoke( gp_vector_rhs_kernel_type(rhs, f_in, chi, w2_field, qr) )
        end if
        space = f_out(1)%which_function_space()
        do dir = 1,space_dimension

@@ -186,12 +186,13 @@ contains
                  compute_mass_matrix_kernel_w2_type(mm_w2, chi, qr) )
     ! Initialise other required fields
     call invoke_set_field_scalar(0.0_r_def, mass_flux)
+    call invoke_set_field_scalar(0.0_r_def, xi)
 
     !--- Intial output and output frequency -----------------------------------! 
     ! Output initial conditions
     call log_event( "Dynamo: Outputing initial fields", LOG_LEVEL_INFO )
     ts_init = max( (restart%ts_start() - 1), 0 ) ! 0 or t previous.
-    call output_alg(ts_init, restart, theta, u, rho, chi, mesh, mm_w0)
+    call output_alg(ts_init, restart, theta, xi, u, rho, chi, mesh, mm_w0)
     call conservation_algorithm(ts_init, mesh, rho, u, theta, xi, &
                                 geopotential, chi)
 
@@ -204,19 +205,17 @@ contains
       write( log_scratch_space, '(A,I0)' ) 'Start of timestep ', timestep
       call log_event( log_scratch_space, LOG_LEVEL_INFO )
 
-      ! PSY call invoke ( copy_field_data(theta,theta_n))
       call invoke_copy_field_data(theta,theta_n)
-      ! PSY call invoke ( copy_field_data(u,u_n))
       call invoke_copy_field_data(u,u_n)
-      ! PSY call invoke ( copy_field_data(rho,rho_n))
       call invoke_copy_field_data(rho,rho_n)
 
       ! Runge-Kutta algorithm
       do stage = 1,num_rk_stage
+        write( log_scratch_space, '(A,I0)' ) '  Start of stage ', stage
+        call log_event( log_scratch_space, LOG_LEVEL_INFO )
         ! Compute advection terms
         ! mass flux ( F = rho * u )
         call invoke_set_field_scalar(0.0_r_def, r_u)
-        ! PSY  call invoke(flux_rhs_kernel_type( r_u, u, rho, chi, qr ) )
         call invoke_flux_rhs( r_u, u, rho, chi, qr ) 
 
         call solver_algorithm( mass_flux     &
@@ -231,15 +230,13 @@ contains
         ! Compute vorticity
         call invoke_set_field_scalar(0.0_r_def, rhs_xi)
         call invoke( vorticity_rhs_kernel_type( rhs_xi, u, chi, qr ) )
+        call invoke( enforce_bc_kernel_type( rhs_xi ) )
         call solver_algorithm( xi, rhs_xi, mesh, chi, solver_option, mm=mm_w1)
 
         ! Compute new rhs
-        ! PSY call invoke ( set_field_scalar(0.0_r_def, rt_prediction(stage)))
         call invoke_set_field_scalar(0.0_r_def, rt_prediction(stage))
-        ! Call invoke_rtheta_kernel( rt_prediction(stage), u, chi, qr)
         call invoke( rtheta_kernel_type( rt_prediction(stage), theta, &
              mass_flux, rho, qr) )
-        ! PSY call invoke ( set_field_scalar(0.0_r_def, ru_prediction(stage)))
         call invoke_set_field_scalar(0.0_r_def, ru_prediction(stage))
         if ( l_rotating ) &
           call invoke( rotation_kernel_type( ru_prediction(stage), u, chi, qr ) )
@@ -253,19 +250,13 @@ contains
              ( ru_prediction(stage), mass_flux, rho, xi, chi, qr ) )
         call invoke( enforce_bc_kernel_type( ru_prediction(stage) ) ) 
 
-        ! PSY call invoke ( set_field_scalar(0.0_r_def, r_theta))
         call invoke_set_field_scalar(0.0_r_def, r_theta)
-        ! PSY call invoke ( set_field_scalar(0.0_r_def, r_u))
         call invoke_set_field_scalar(0.0_r_def, r_u)
-        ! PSY call invoke ( set_field_scalar(0.0_r_def, r_rho))
         call invoke_set_field_scalar(0.0_r_def, r_rho)
 
         do st = 1, stage
-          ! PSY call invoke ( axpy(ak(stage,st), rt_prediction(st),r_theta, r_theta))
           call invoke_axpy(ak(stage,st), rt_prediction(st),r_theta, r_theta)
-          ! PSY call invoke ( axpy(ak(stage,st), ru_prediction(st),r_u, r_u))
           call invoke_axpy(ak(stage,st), ru_prediction(st),r_u, r_u)
-          ! PSY call invoke ( axpy(ak(stage,st), rr_prediction(st),r_rho, r_rho))
           call invoke_axpy(ak(stage,st), rr_prediction(st),r_rho, r_rho)
         end do
 
@@ -290,11 +281,8 @@ contains
                              , qr=qr )
 
         ! Add increments
-        ! PSY call invoke ( axpy(dt, theta_inc, theta_n, theta))
         call invoke_axpy(dt, theta_inc, theta_n, theta)
-        ! PSY call invoke ( axpy(dt, u_inc, u_n, u))
         call invoke_axpy(dt, u_inc, u_n, u)
-        ! PSY call invoke ( axpy(dt, rho_inc, rho_n, rho))
         call invoke_axpy(dt, rho_inc, rho_n, rho)
 
         ! Diagnostics
@@ -305,7 +293,7 @@ contains
       end do
        !---------End of timestep diagnostics ----------------------------------!
       if ( mod(timestep, (restart%ts_start()+restart%diag_freq() - 1) )  == 0 ) then
-        call output_alg(timestep, restart, theta, u, rho, chi, mesh, mm_w0)
+        call output_alg(timestep, restart, theta, xi, u, rho, chi, mesh, mm_w0)
       end if
       call conservation_algorithm(timestep, mesh, rho, u, theta, xi, &
                                   geopotential, chi)

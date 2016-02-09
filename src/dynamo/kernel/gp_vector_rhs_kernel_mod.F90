@@ -12,7 +12,8 @@ use kernel_mod,              only : kernel_type
 use constants_mod,           only : r_def
 use argument_mod,            only : arg_type, func_type,           &
                                     GH_FIELD, GH_INC, GH_READ,     &
-                                    W0, ANY_SPACE_1, ANY_SPACE_2,  &
+                                    W0, W2, ANY_SPACE_1,           &
+                                    ANY_SPACE_2,                   &
                                     GH_BASIS, GH_DIFF_BASIS,       &
                                     CELLS
 
@@ -24,10 +25,11 @@ implicit none
 !> The type declaration for the kernel. Contains the metadata needed by the Psy layer
 type, public, extends(kernel_type) :: gp_vector_rhs_kernel_type
   private
-  type(arg_type) :: meta_args(3) = (/                                  &
+  type(arg_type) :: meta_args(4) = (/                                  &
        arg_type(GH_FIELD*3, GH_INC,  ANY_SPACE_1),                     &
        ARG_TYPE(GH_FIELD,   GH_READ, ANY_SPACE_2),                     &
-       ARG_TYPE(GH_FIELD*3, GH_READ, W0)                               &
+       ARG_TYPE(GH_FIELD*3, GH_READ, W0),                              &
+       ARG_TYPE(GH_FIELD,   GH_READ, W2)                               &
        /)
   type(func_type) :: meta_funcs(3) = (/                                &
        func_type(ANY_SPACE_1, GH_BASIS),                               &
@@ -86,27 +88,32 @@ end function gp_vector_rhs_kernel_constructor
 subroutine gp_vector_rhs_code(nlayers, &
                               rhs1, rhs2, rhs3, field, &
                               chi_1, chi_2, chi_3, &
+                              w2_field, &
                               ndf, undf, &
                               map, basis, &
                               ndf_f, undf_f, map_f, f_basis, &
                               ndf_chi, undf_chi, &
                               map_chi, chi_basis, chi_diff_basis, &
+                              ndf_w2, undf_w2, map_w2, &
                               nqp_h, nqp_v, wqp_h, wqp_v &
                              )
                        
-  use coordinate_jacobian_mod, only: coordinate_jacobian
+  use coordinate_jacobian_mod, only: coordinate_jacobian, &
+                                     coordinate_jacobian_inverse
   use configuration_mod,       only: l_spherical
   use coord_transform_mod,     only: cart2sphere_vector
                          
 
   !Arguments
-  integer, intent(in) :: nlayers, ndf, ndf_f, ndf_chi
-  integer, intent(in) :: undf, undf_f, undf_chi
+  integer, intent(in) :: nlayers, ndf, ndf_f, ndf_chi, ndf_w2
+  integer, intent(in) :: undf, undf_f, undf_chi, undf_w2
   integer, intent(in) :: nqp_h, nqp_v
 
   integer, dimension(ndf),     intent(in) :: map
   integer, dimension(ndf_f),   intent(in) :: map_f
   integer, dimension(ndf_chi), intent(in) :: map_chi
+  integer, dimension(ndf_w2),  intent(in) :: map_w2
+
 
   real(kind=r_def), intent(in), dimension(1,ndf,    nqp_h,nqp_v) :: basis 
   real(kind=r_def), intent(in), dimension(3,ndf_f,  nqp_h,nqp_v) :: f_basis 
@@ -116,17 +123,27 @@ subroutine gp_vector_rhs_code(nlayers, &
   real(kind=r_def), dimension(undf),     intent(inout) :: rhs1, rhs2, rhs3
   real(kind=r_def), dimension(undf_chi), intent(in)    :: chi_1, chi_2, chi_3
   real(kind=r_def), dimension(undf_f),   intent(in)    :: field
+  real(kind=r_def), dimension(undf_w2),  intent(in)    :: w2_field
+
 
   real(kind=r_def), dimension(nqp_h), intent(in)      ::  wqp_h
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
   
   !Internal variables
-  integer               :: df, df2, k, qp1, qp2
+  integer                                      :: df, df2, k, qp1, qp2
   real(kind=r_def), dimension(nqp_h,nqp_v)     :: dj
-  real(kind=r_def), dimension(3,3,nqp_h,nqp_v) :: jacobian
+  real(kind=r_def), dimension(3,3,nqp_h,nqp_v) :: jacobian, jacobian_inv
   real(kind=r_def), dimension(ndf_chi)         :: chi_1_cell, chi_2_cell, chi_3_cell
   real(kind=r_def), dimension(3)               :: u_at_quad, x_at_quad, u_physical
   real(kind=r_def)                             :: integrand
+  logical                                      :: hdiv
+
+  ! Check if this is hdiv (W2) field or a hcurl (W1) field
+  if ( ndf_f == ndf_w2 ) then 
+    hdiv = .true.
+  else
+    hdiv = .false.
+  end if
 
   do k = 0, nlayers-1
     do df = 1, ndf_chi
@@ -143,20 +160,27 @@ subroutine gp_vector_rhs_code(nlayers, &
                              chi_diff_basis, &
                              jacobian, &
                              dj)
+    if ( .not. hdiv) call coordinate_jacobian_inverse(nqp_h, nqp_v, &
+                                                      jacobian, dj, &
+                                                      jacobian_inv)  
+ 
     do df = 1, ndf
       do qp2 = 1, nqp_v
         do qp1 = 1, nqp_h
-! Compute vector in computational space
+          ! Compute vector in computational space
           u_at_quad(:) = 0.0_r_def
           do df2 = 1,ndf_f
             u_at_quad(:) = u_at_quad(:) &
                          + f_basis(:,df2,qp1,qp2)*field(map_f(df2) + k) 
           end do
-! For W2 space            
-          u_at_quad(:) = matmul(jacobian(:,:,qp1,qp2),u_at_quad(:))/dj(qp1,qp2)
-! For W1 space (not implemented yet)
-!          u_at_quad(:) = matmul(transpose(jacobian_inv(:,:,qp1,qp2)),u_at_quad(:))
-! Compute physical coordinate of quadrature point   
+          if ( hdiv ) then           
+            ! For W2 space 
+            u_at_quad(:) = matmul(jacobian(:,:,qp1,qp2),u_at_quad(:))/dj(qp1,qp2)
+          else
+            ! For W1 space
+            u_at_quad(:) = matmul(transpose(jacobian_inv(:,:,qp1,qp2)),u_at_quad(:))
+          end if
+          ! Compute physical coordinate of quadrature point   
           if ( l_spherical ) then
             x_at_quad(:) = 0.0_r_def
             do df2 = 1,ndf_chi

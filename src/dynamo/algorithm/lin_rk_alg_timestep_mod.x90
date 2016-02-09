@@ -49,7 +49,7 @@ module lin_rk_alg_timestep_mod
   use restart_control_mod, only: restart_type
   use output_alg_mod,      only: output_alg
 
-  use fs_continuity_mod,   only: W0, W2
+  use fs_continuity_mod,   only: W0, W1, W2
 
   implicit none
 
@@ -92,7 +92,7 @@ contains
     type( field_type ) :: u_n, rho_n, theta_n,       &
                           r_u, r_rho, r_theta,       &
                           u_inc, rho_inc, theta_inc, &
-                          geopotential
+                          geopotential, xi
 
     type( field_type ), allocatable :: rt_prediction(:),  &
                                        ru_prediction(:),  &
@@ -152,7 +152,12 @@ contains
       rt_prediction(stage) = field_type( vector_space = theta_fs )
       ru_prediction(stage) = field_type( vector_space = u_fs     )
       rr_prediction(stage) = field_type( vector_space = rho_fs   )
-    end do   
+    end do  
+
+    ! Dummy W1 field needed for output algorithm
+    xi = field_type( vector_space = fs%get_instance(mesh, element_order, W1) )
+    call invoke_set_field_scalar(0.0_r_def, xi)
+
 
     ! Create operators needed for timestepping
     mm_w0 = operator_type(w0_fs, w0_fs)              
@@ -195,7 +200,7 @@ contains
                                       , qr                 &
                                       , mm=mm_w0 ) 
     ts_init = max( (restart%ts_start() - 1), 0 ) ! 0 or t previous.
-    call output_alg(ts_init, restart, theta, u, rho, chi, mesh, mm_w0)
+    call output_alg(ts_init, restart, theta, xi, u, rho, chi, mesh, mm_w0)
 
     !=== Section 3: Timestepping ==============================================!   
 
@@ -264,7 +269,7 @@ contains
       end do
        !---------End of timestep diagnostics ----------------------------------!
       if ( mod(timestep, (restart%ts_start()+restart%diag_freq()) )  == 0 ) then
-        call output_alg(timestep, restart, theta, u, rho, chi, mesh, mm_w0)
+        call output_alg(timestep, restart, theta, xi, u, rho, chi, mesh, mm_w0)
       end if
       write( log_scratch_space, '(A,I0)' ) 'End of timestep ', timestep
       call log_event( log_scratch_space, LOG_LEVEL_INFO )

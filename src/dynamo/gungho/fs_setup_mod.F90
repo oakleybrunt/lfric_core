@@ -333,6 +333,7 @@ subroutine basis_setup( element_order, dynamo_fs, ndof_vert,  ndof_cell        &
   j2l_edge(11,:) = (/ 2, 1, 3 /)
   j2l_edge(12,:) = (/ 1, 2, 3 /)
 
+  dof_on_vert_boundary(:,:) = 1
 
   ! Allocate arrays to allow on the fly evaluation of basis functions
   select case (dynamo_fs)
@@ -496,6 +497,8 @@ subroutine basis_setup( element_order, dynamo_fs, ndof_vert,  ndof_cell        &
           ly(idx) = j(j2l_face(i,2))
           lz(idx) = j(j2l_face(i,3))
           unit_vec(idx,:) = tangent_to_edge(edge_on_face(i,1),:)
+          if (i == nfaces - 1) dof_on_vert_boundary(idx,1) = 0
+          if (i == nfaces )    dof_on_vert_boundary(idx,2) = 0
           idx = idx + 1
         end do
       end do
@@ -508,6 +511,8 @@ subroutine basis_setup( element_order, dynamo_fs, ndof_vert,  ndof_cell        &
           ly(idx) = j(j2l_face(i,2))
           lz(idx) = j(j2l_face(i,3))
           unit_vec(idx,:) = tangent_to_edge(edge_on_face(i,2),:)
+          if (i == nfaces - 1) dof_on_vert_boundary(idx,1) = 0
+          if (i == nfaces )    dof_on_vert_boundary(idx,2) = 0
           idx = idx + 1
         end do
       end do
@@ -523,6 +528,8 @@ subroutine basis_setup( element_order, dynamo_fs, ndof_vert,  ndof_cell        &
         ly(idx) = j(j2l_edge(i,2))
         lz(idx) = j(j2l_edge(i,3))
         unit_vec(idx,:) = tangent_to_edge(i,:)
+        if (i <= nedges_h )          dof_on_vert_boundary(idx,1) = 0
+        if (i >= nedges - nedges_h ) dof_on_vert_boundary(idx,2) = 0
         idx = idx + 1
       end do
     end do
@@ -568,8 +575,6 @@ subroutine basis_setup( element_order, dynamo_fs, ndof_vert,  ndof_cell        &
     !---------------------------------------------------------------------------
 
     poly_order = k + 1
-
-    dof_on_vert_boundary(:,:) = 1
 
     do idx=1, ndof_cell
       do i=1, 3
@@ -712,8 +717,6 @@ subroutine basis_setup( element_order, dynamo_fs, ndof_vert,  ndof_cell        &
     !---------------------------------------------------------------------------
     poly_order = k + 1
 
-    dof_on_vert_boundary(:,:) = 1
-
     idx = 1
     ! dofs in volume - (w only)
     ! w components
@@ -772,8 +775,6 @@ subroutine basis_setup( element_order, dynamo_fs, ndof_vert,  ndof_cell        &
     ! Section for test/trial functions of W2V space
     !---------------------------------------------------------------------------
     poly_order = k + 1
-
-    dof_on_vert_boundary(:,:) = 1
 
     do idx=1, ndof_cell
       do i=1, 3
@@ -854,9 +855,6 @@ subroutine basis_setup( element_order, dynamo_fs, ndof_vert,  ndof_cell        &
     ! Section for test/trial functions of W2H space
     !---------------------------------------------------------------------------
     poly_order = k + 1
-
-    dof_on_vert_boundary(:,:) = 1
-
 
     do idx=1, ndof_cell
       do i=1, 3

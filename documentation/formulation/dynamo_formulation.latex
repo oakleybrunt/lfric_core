@@ -255,7 +255,7 @@ scheme is to compute the mass flux and vorticity as projections into
 the appropriate spaces, i.e.
 \begin{eqnarray}
 \left\langle \mathbf{v},\mathbf{F}\right\rangle  & = & \left\langle \mathbf{v},\rho\mathbf{u}\right\rangle ,\label{eq:mass_flux_projection}\\
-\left\langle \mathbf{c},\mbox{\ensuremath{\bm{\xi}}}\right\rangle  & = & \left\langle \mathbf{c},\tilde{\nabla}\times\mathbf{u}\right\rangle =-\left\langle \nabla\times\mathbf{c},\mathbf{u}\right\rangle ,\label{eq:voticity_projection}
+\left\langle \mathbf{c},\mbox{\ensuremath{\bm{\xi}}}\right\rangle  & = & \left\langle \mathbf{c},\tilde{\nabla}\times\mathbf{u}\right\rangle =\left\langle \nabla\times\mathbf{c},\mathbf{u}\right\rangle ,\label{eq:voticity_projection}
 \end{eqnarray}
 and the potential temperature advection term is computed as in \eqref{eq:nonlinear_thermo-1-1}.
 
@@ -430,7 +430,7 @@ Applying these coordinate transformations to the nonlinear equations
 \left\langle \hat{\sigma},\frac{\partial\hat{\rho}'}{\partial t}\det\left(J\right)\right\rangle  & = & -\left\langle \hat{\sigma},\nabla.\hat{\mathbf{F}}\right\rangle ,\label{eq:nonlinear_continuity-pullback}\\
 \left\langle \hat{\gamma},\frac{\partial\hat{\theta}'}{\partial t}\det\left(J\right)\right\rangle  & = & -\left\langle \hat{\gamma},\hat{\mathbf{u}}.\nabla\hat{\theta}\right\rangle ,\label{eq:nonlinear_thermo-pullback}\\
 \left\langle J\hat{\mathbf{v}},\frac{J\hat{\mathbf{F}}}{\det\left(J\right)}\right\rangle  & = & \left\langle J\hat{\mathbf{v}},\hat{\rho}\frac{J\hat{\mathbf{u}}}{\det\left(J\right)}\right\rangle ,\label{eq:mass_flux_pullback}\\
-\left\langle J^{-T}\hat{\mathbf{c}},J^{-T}\hat{\mbox{\ensuremath{\bm{\xi}}}}\det\left(J\right)\right\rangle  & = & -\left\langle J\nabla\times\hat{\mathbf{c}},\frac{J\hat{\mathbf{u}}}{\det\left(J\right)}\right\rangle .\label{eq:vorticity_pullback}
+\left\langle J^{-T}\hat{\mathbf{c}},J^{-T}\hat{\mbox{\ensuremath{\bm{\xi}}}}\det\left(J\right)\right\rangle  & = & \left\langle J\nabla\times\hat{\mathbf{c}},\frac{J\hat{\mathbf{u}}}{\det\left(J\right)}\right\rangle .\label{eq:vorticity_pullback}
 \end{eqnarray}
 
 
@@ -608,7 +608,7 @@ into the mass flux space
  The vortcity is defined as the projection of the weak curl of the
 velocity into the $\mathbb{W}_{1}$ space.
 \begin{equation}
-\left\langle \mathbf{c},\bm{\xi}\right\rangle =-\left\langle \nabla\times\mathbf{c},\overline{\mathbf{u}}\right\rangle ,\label{eq:fem_vorticity}
+\left\langle \mathbf{c},\bm{\xi}\right\rangle =\left\langle \nabla\times\mathbf{c},\overline{\mathbf{u}}\right\rangle ,\label{eq:fem_vorticity}
 \end{equation}
  and the vorticity advection terms is defined as the projection into
 $\mathbb{W}_{2}$ of the cross product of the vorticity and the mass

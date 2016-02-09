@@ -45,12 +45,12 @@ contains
 !> @param[inout] chi the fem coordinate field array
 !> @param[in] mesh  The mesh all fields are on
 !> @param[inout] mm_w0 The mass matrix operator for the field to be projected to
-  subroutine output_alg(n, rs, theta, u, rho, chi, mesh, mm_w0)
+  subroutine output_alg(n, rs, theta, xi, u, rho, chi, mesh, mm_w0)
 
     implicit none
  
     integer,             intent(in)    :: n
-    type(field_type),    intent(inout) :: theta, u, rho, chi(3)
+    type(field_type),    intent(inout) :: theta, xi, u, rho, chi(3)
     type(mesh_type),     intent(in)    :: mesh
     type(operator_type), intent(inout) :: mm_w0
     type(restart_type),  intent(in)    :: rs
@@ -93,6 +93,11 @@ contains
       fname=trim(rs%ts_fname("interp_u",n))//".m"
       call interpolated_output(VECTOR_FIELD, W0_projected_field(:), mesh, chi, &
                                fname)
+      call galerkin_projection_algorithm(W0_projected_field(:), xi, mesh, chi, &
+                                         VECTOR_FIELD, qr, mm=mm_w0)
+      fname=trim(rs%ts_fname("interp_xi",n))//".m"
+      call interpolated_output(VECTOR_FIELD, W0_projected_field(:), mesh, chi, &
+                               fname)
     end if
 
     if ( write_nodal_output ) then  
@@ -102,6 +107,8 @@ contains
       call nodal_output_alg(u, chi, fname, mesh)
       fname=trim(rs%ts_fname("nodal_rho",n))//".m"
       call nodal_output_alg(rho, chi, fname, mesh)
+      fname=trim(rs%ts_fname("nodal_xi",n))//".m"
+      call nodal_output_alg(xi, chi, fname, mesh)
     end if
   end subroutine output_alg
 

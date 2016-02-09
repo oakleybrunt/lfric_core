@@ -97,10 +97,12 @@ contains
     call gp_vector_rhs_code(num_layers,                   &
                             rhs1, rhs2, rhs3, f_data,     &
                             chi(:,1), chi(:,2), chi(:,3), &
+                            f_data,                       &
                             ndf_w0, undf, map_w0, basis,  &
                             ndf_f, undf_f,map_f, basis_f, &
                             ndf_w0, undf, map_w0, basis,  &
                             diff_basis,                   &
+                            ndf_f, undf_f, map_f,         &
                             nqp_h, nqp_v, wh, wv )
 ! Answers for hardwired jacobian
 !    dx = 6000.0_r_def

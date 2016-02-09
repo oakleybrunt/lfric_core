@@ -508,16 +508,12 @@ subroutine init_function_space( self )
                   , self%ndof_interior, self%ndof_exterior )
 
 
-  select case (self%fs)
-  case (W2,W2H,W2V,WTHETA)
-    allocate( self%dof_on_vert_boundary (self%ndof_cell,2) )
-  end select
-
   allocate( self%basis_index  (                     3, self%ndof_cell) )
   allocate( self%basis_order  (                     3, self%ndof_cell) )
   allocate( self%basis_vector (self%dim_space,         self%ndof_cell) )
   allocate( self%basis_x      (self%element_order+2,3, self%ndof_cell) )
   allocate( self%nodal_coords (                     3, self%ndof_cell) )
+  allocate( self%dof_on_vert_boundary (self%ndof_cell,2) )
 
   call basis_setup ( self%element_order, self%fs, self%ndof_vert               &
                    , self%ndof_cell, self%basis_index,  self%basis_order       &

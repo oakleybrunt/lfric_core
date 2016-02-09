@@ -146,7 +146,7 @@ subroutine vorticity_rhs_code(nlayers,                                          
         u_at_quad(:) = wqp_h(qp1)*wqp_v(qp2)*matmul(jac(:,:,qp1,qp2),u_at_quad(:))/dj(qp1,qp2)
         do df = 1, ndf_xi
           dc = matmul(jac(:,:,qp1,qp2), diff_basis_xi(:,df,qp1,qp2))
-          rhs_cell(df) = rhs_cell(df) -  dot_product(dc,u_at_quad(:))
+          rhs_cell(df) = rhs_cell(df) + dot_product(dc,u_at_quad(:))
         end do
       end do
     end do

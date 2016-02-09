@@ -205,6 +205,7 @@ contains
                                                mm_diagonal_w3)
     ! Prognostics
     if(.not.restart%read_file()) then ! no check point to start from
+      call invoke_set_field_scalar(0.0_r_def, xi)
       call invoke_set_field_scalar(0.0_r_def, u)
       call invoke_set_field_scalar(0.0_r_def, r_u) 
       call invoke( initial_u_kernel_type( r_u, chi, qr ) )
@@ -215,7 +216,7 @@ contains
     ! Output initial conditions
     call log_event( "Dynamo: Outputing initial fields", LOG_LEVEL_INFO )
     ts_init = max( (restart%ts_start() - 1), 0 ) ! 0 or t previous.
-    call output_alg(ts_init, restart, theta, u, rho, chi, mesh, mm_w0)
+    call output_alg(ts_init, restart, theta, xi, u, rho, chi, mesh, mm_w0)
     call conservation_algorithm(ts_init, mesh, rho, u, theta, xi, &
                                 geopotential, chi)
 
@@ -260,7 +261,7 @@ contains
        !=== End Section 3.1 ===================================================!
        !=== Section 3.4: End of timestep diagnostics ==========================!
        if ( mod(timestep, (restart%ts_start()+restart%diag_freq() - 1) ) == 0 ) then
-         call output_alg(timestep, restart, state_np1(2), state_np1(1), &
+         call output_alg(timestep, restart, state_np1(2), xi, state_np1(1), &
                          state_np1(3), chi, mesh, mm_w0)
        end if
        call conservation_algorithm(timestep, mesh, state_np1(3), state_np1(1), &
