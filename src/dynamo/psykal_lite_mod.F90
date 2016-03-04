@@ -17,7 +17,7 @@ module psykal_lite_mod
   use field_mod,      only : field_type, field_proxy_type 
   use operator_mod,   only : operator_type, operator_proxy_type
   use quadrature_mod, only : quadrature_type
-  use constants_mod,  only : r_def
+  use constants_mod,  only : r_def, i_def
 
   implicit none
   public
@@ -27,31 +27,34 @@ contains
 !-------------------------------------------------------------------------------    
 !> invoke_inner_prod: Calculate inner product of x and y
   subroutine invoke_inner_prod(x,y,inner_prod)
-    use log_mod, only : log_event, LOG_LEVEL_ERROR
+    USE log_mod, ONLY : log_event, LOG_LEVEL_ERROR
     implicit none
     type( field_type ),  intent(in ) :: x,y
     real(kind=r_def),    intent(out) :: inner_prod
-
+    REAL(kind=r_def)                 :: inner_prod_local
     type( field_proxy_type)          ::  x_p,y_p
-    integer                          :: i,undf
+    INTEGER                          :: i,undf
 
     x_p = x%get_proxy()
     y_p = y%get_proxy()
 
-    undf = x_p%vspace%get_undf()
+    undf = x_p%vspace%get_last_dof_owned()
     !sanity check
-    if(undf /= y_p%vspace%get_undf() ) then
+    if(undf /= y_p%vspace%get_last_dof_owned() ) then
       ! they are not on the same function space
       call log_event("Psy:inner_prod:x and y live on different w-spaces",LOG_LEVEL_ERROR)
       !abort
       stop
     endif
 
-    inner_prod = 0.0_r_def
+    inner_prod_local = 0.0_r_def
     do i = 1,undf
-      inner_prod = inner_prod + ( x_p%data(i) * y_p%data(i) )
+      inner_prod_local = inner_prod_local + ( x_p%data(i) * y_p%data(i) )
     end do
 
+    ! This is an ungenerated comment! Yuk. Now call the global sum
+    CALL invoke_global_sum_scalar(inner_prod_local, inner_prod)
+    
   end subroutine invoke_inner_prod
   
 !-------------------------------------------------------------------------------   
@@ -1246,5 +1249,68 @@ subroutine invoke_calc_departure_wind(u_departure_wind, u_piola, chi)
 end subroutine invoke_calc_departure_wind
 !-------------------------------------------------------------------------------
 
+
+!-------------------------------------------------------------------------------   
+!> Perform a global sum on a scalar
+  subroutine invoke_global_sum_scalar(scalar, global_sum )
+    use ESMF
+    implicit none
+    real(kind=r_def), intent(inout) :: scalar
+    REAL(kind=r_def), INTENT(inout) :: global_sum
+
+    type(ESMF_VM)  :: vm
+    integer(kind=i_def) :: rc
+
+    call ESMF_VMGetCurrent(vm=vm, rc=rc)
+    call ESMF_VMAllFullReduce(vm, &
+                             [scalar], &
+                             global_sum, &
+                             1, &
+                             ESMF_REDUCE_SUM, &
+                             rc=rc)
+
+  end subroutine invoke_global_sum_scalar
+
+!-------------------------------------------------------------------------------   
+!> Find the maximum of a distributed scalar
+  subroutine invoke_global_max_scalar(scalar, global_max )
+    use ESMF
+    implicit none
+    real(kind=r_def), intent(inout) :: scalar
+    real(kind=r_def), intent(inout) :: global_max
+
+    type(ESMF_VM)  :: vm
+    INTEGER(kind=i_def) :: rc
+
+    call ESMF_VMGetCurrent(vm=vm, rc=rc)
+    call ESMF_VMAllFullReduce(vm, &
+                             [scalar], &
+                             global_max, &
+                             1, &
+                             ESMF_REDUCE_MAX, &
+                             rc=rc)
+
+  end subroutine invoke_global_max_scalar
+
+!-------------------------------------------------------------------------------   
+!> Find the minimum of a distributed scalar
+  subroutine invoke_global_min_scalar(scalar, global_min )
+    use ESMF
+    implicit none
+    real(kind=r_def), intent(inout) :: scalar
+    real(kind=r_def), intent(inout) :: global_min
+
+    type(ESMF_VM)  :: vm
+    integer(kind=i_def) :: rc
+
+    call ESMF_VMGetCurrent(vm=vm, rc=rc)
+    call ESMF_VMAllFullReduce(vm, &
+                             [scalar], &
+                             global_min, &
+                             1, &
+                             ESMF_REDUCE_MIN, &
+                             rc=rc)
+
+  end subroutine invoke_global_min_scalar
 
 end module psykal_lite_mod
