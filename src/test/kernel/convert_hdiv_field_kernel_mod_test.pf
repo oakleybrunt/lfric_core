@@ -114,7 +114,7 @@ contains
 
     class(convert_hdiv_field_test_type), intent(inout) :: this
 
-    real(r_def), parameter :: tol = 1.0e-6_r_def
+    real(r_def), parameter :: tol = 1.0e-10_r_def
     real(r_def), parameter :: dx = 6000.0_r_def, &
                               dy = 1000.0_r_def, &
                               dz = 2000.0_r_def
@@ -190,9 +190,9 @@ contains
     phys_p(2)%data(:) = 0.0_r_def
     phys_p(3)%data(:) = 0.0_r_def
     comp_p%data(:) = 0.0_r_def
-    comp_p%data(map(1)) = 1.0
-    comp_p%data(map(2)) = 3.0
-    comp_p%data(map(6)) = -6.0
+    comp_p%data(map(1)) = 1.0*dy*dz
+    comp_p%data(map(2)) = 3.0*dx*dz
+    comp_p%data(map(6)) = -6.0*dx*dy
 
     call convert_hdiv_field_code(nlayers, &
                                  phys_p(1)%data, &
@@ -208,11 +208,16 @@ contains
                                  this%diff_basis_chi &
                                  )
 
-    answer = 1.0_r_def / (dy*dz)
+    answer = 1.0_r_def 
     @assertEqual(answer, phys_p(1)%data(map(1)), tol)
-    answer = 3.0_r_def / (dx*dz)
+    answer = -3.0_r_def
     @assertEqual(answer, phys_p(2)%data(map(2)), tol)
-    answer = -6.0_r_def / (dx*dy)
+    answer = 0.0_r_def 
+    @assertEqual(answer, phys_p(1)%data(map(3)), tol)
+    @assertEqual(answer, phys_p(2)%data(map(4)), tol)
+    @assertEqual(answer, phys_p(3)%data(map(5)), tol)
+    ! *2 as values is computed for cells both above and below the dof
+    answer = -6.0_r_def * 2.0_r_def
     @assertEqual(answer, phys_p(3)%data(map(6)), tol)
 
   end subroutine test_all
