@@ -89,7 +89,8 @@ contains
 
     ! Currently only quad elements are fully functional
     if ( reference_element /= finite_element_shape_quadrilateral ) then
-      call log_event( "set_up: Reference_element must be QUAD for now...", LOG_LEVEL_INFO )
+      call log_event( "set_up: Reference_element must be QUAD for now...", &
+                      LOG_LEVEL_INFO )
     end if
     ! Setup reference cube
     call reference_cube()
@@ -98,11 +99,21 @@ contains
     ! a function pointer to point at the appropriate partitioning routine
     global_mesh = global_mesh_type( filename )
     if ( geometry == base_mesh_geometry_spherical ) then
-      partitioner_ptr => partitioner_cubedsphere_serial
-      call log_event( "set_up: Setting up cubed sphere partitioner ", LOG_LEVEL_INFO )
+
+
+      if(total_ranks == 1) then
+        partitioner_ptr => partitioner_cubedsphere_serial
+        call log_event( "set_up: Setting up serial cubed sphere partitioner", &
+                       LOG_LEVEL_INFO )
+      else
+        partitioner_ptr => partitioner_cubedsphere
+        call log_event( "set_up: Setting up parallel cubed sphere partitioner",&
+                        LOG_LEVEL_INFO )
+      end if
     else
       partitioner_ptr => partitioner_biperiodic
-      call log_event( "set_up: Setting up biperiodic plane partitioner ", LOG_LEVEL_INFO )
+      call log_event( "set_up: Setting up biperiodic plane partitioner ", &
+                      LOG_LEVEL_INFO )
     end if
 
     ! Generate the partition object

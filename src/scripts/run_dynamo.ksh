@@ -13,11 +13,11 @@ rm -f *.out
 export XPROC=1
 export YPROC=1
 
-export NPANELS=1
+export NPANELS=6
 
 NPES=$(($NPANELS * $XPROC * $YPROC ))
 
-EXE=dynamo
+EXE=../bin/dynamo
 
 echo "mpirun -np $NPES $EXE 1>$EXE.out 2>$EXE.err"
 
