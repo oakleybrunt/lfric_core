@@ -865,9 +865,11 @@ end subroutine partition_type_assign
     if(depth <= max_stencil_depth+1)then
       num_halo(depth) = known_cells%get_length() - orig_num_in_list ! num halo cells at this depth 
                                                                     ! is the number we just added
-      ! reset start point to previous end of known_cells list
-      start_subsect => last%next
-      ! and insert point to current end of list
+      ! if cells were added at this depth, reset start point to previous end of known_cells list
+      if (num_halo(depth) > 0) then
+        start_subsect => last%next
+      end if
+      ! reset insert point to current end of list
       insert_point => known_cells%get_tail()
       ! num cells to apply stencil to next is the number of cells just added to known_cells
       num_apply = num_halo(depth)
