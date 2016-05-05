@@ -134,9 +134,13 @@ contains
     endif
 
     inner_prod_local = 0.0_r_def
+    !$omp parallel do default(none), schedule(static) & 
+    !$omp& shared(x_p, y_p, undf),  private(i) &
+    !$omp& reduction(+:inner_prod_local)
     do i = 1,undf
       inner_prod_local = inner_prod_local + ( x_p%data(i) * y_p%data(i) )
     end do
+    !$omp end parallel do
 
     ! This is an ungenerated comment! Yuk. Now call the global sum
     CALL invoke_global_sum_scalar(inner_prod_local, inner_prod)
@@ -177,10 +181,13 @@ contains
       !abort
       stop
     endif
-
+    !$omp parallel do schedule(static), default(none) &
+    !$omp&  shared(field1_proxy,field2_proxy, field_res_proxy, &
+    !$omp&  undf, scalar),  private(i)
     do i = 1,undf
       field_res_proxy%data(i) = (scalar * field1_proxy%data(i)) + field2_proxy%data(i)
     end do
+    !$omp end parallel do
 
     mesh = field_res%get_mesh()
     depth = mesh%get_halo_depth()
@@ -230,10 +237,11 @@ contains
       !abort
       stop
     endif
-
+    !$omp parallel do schedule(static), default(none), shared(field1_proxy,field2_proxy, field_res_proxy, undf, scalar),  private(i)
     do i = 1,undf
       field_res_proxy%data(i) = (scalar * field1_proxy%data(i)) - field2_proxy%data(i)
     end do
+    !$omp end parallel do
 
     mesh = field_res%get_mesh()
     depth = mesh%get_halo_depth()
@@ -273,10 +281,11 @@ contains
       !abort
       stop
     endif
-
+    !$omp parallel do schedule(static), default(none), shared(field1_proxy, field_res_proxy, undf),  private(i)
     do i = 1,undf
       field_res_proxy%data(i) = field1_proxy%data(i)
     end do
+    !$omp end parallel do
 
     mesh = field_res%get_mesh()
     depth = mesh%get_halo_depth()
@@ -325,10 +334,11 @@ contains
       !abort
       stop
     endif
-
+    !$omp parallel do schedule(static), default(none), shared(field1_proxy,field2_proxy, field_res_proxy, undf),  private(i)
     do i = 1,undf
       field_res_proxy%data(i) = field1_proxy%data(i) - field2_proxy%data(i)
     end do
+    !$omp end parallel do
 
     mesh = field_res%get_mesh()
     depth = mesh%get_halo_depth()
@@ -377,10 +387,11 @@ contains
       !abort
       stop
     endif
-
+    !$omp parallel do schedule(static), default(none), shared(field1_proxy,field2_proxy, field_res_proxy, undf),  private(i)
     do i = 1,undf
       field_res_proxy%data(i) = field1_proxy%data(i) + field2_proxy%data(i)
     end do
+    !$omp end parallel do
 
     mesh = field_res%get_mesh()
     depth = mesh%get_halo_depth()
@@ -411,9 +422,11 @@ contains
 
     undf = field_res_proxy%vspace%get_undf()
 
+    !$omp parallel do schedule(static), default(none), shared(field_res_proxy, undf, scalar),  private(i)
     do i = 1,undf
       field_res_proxy%data(i) = scalar
     end do
+    !$omp end parallel do
 
     mesh = field_res%get_mesh()
     depth = mesh%get_halo_depth()
@@ -459,10 +472,11 @@ contains
       !abort
       stop
     endif
-
+    !$omp parallel do schedule(static), default(none), shared(field1_proxy,field2_proxy, field_res_proxy, undf),  private(i)
     do i = 1,undf
       field_res_proxy%data(i) = field1_proxy%data(i)/field2_proxy%data(i)
     end do
+    !$omp end parallel do
 
     mesh = field_res%get_mesh()
     depth = mesh%get_halo_depth()
@@ -479,11 +493,11 @@ contains
   end subroutine invoke_divide_field
 
 !-------------------------------------------------------------------------------   
-!> invoke_copy_scaled_field_data: Copy the scaled data from one field to another ( a = scaler*b )
-  subroutine invoke_copy_scaled_field_data(scaler,field1,field_res)
+!> invoke_copy_scaled_field_data: Copy the scaled data from one field to another ( a = scalar*b )
+  subroutine invoke_copy_scaled_field_data(scalar,field1,field_res)
     use log_mod, only : log_event, LOG_LEVEL_ERROR
     implicit none
-    real( kind=r_def ), intent(in)     :: scaler
+    real( kind=r_def ), intent(in)     :: scalar
     type( field_type ), intent(in )    :: field1
     type( field_type ), intent(inout ) :: field_res
     type( field_proxy_type)            :: field1_proxy , field_res_proxy
@@ -503,10 +517,11 @@ contains
       !abort
       stop
     endif
-
+    !$omp parallel do schedule(static), default(none), shared(field1_proxy, field_res_proxy, undf, scalar),  private(i)
     do i = 1,undf
-       field_res_proxy%data(i) = scaler*field1_proxy%data(i)
+       field_res_proxy%data(i) = scalar*field1_proxy%data(i)
     end do
+    !$omp end parallel do
    
     mesh = field_res%get_mesh()
     depth = mesh%get_halo_depth()
@@ -539,9 +554,11 @@ contains
     
     ! Calculate the local sum on this partition
     field_sum_local = 0.0_r_def
+    !$omp parallel do schedule(static), default(none), shared(x_p, undf),  private(df), reduction(+:field_sum_local)
     do df = 1,undf
       field_sum_local = field_sum_local + x_p%data(df)
     end do
+    !$omp end parallel do
 
     ! Now call the global sum
     field_sum = 0.0_r_def
@@ -583,10 +600,11 @@ contains
       !abort
       stop
     endif
-
+    !$omp parallel do schedule(static), default(none), shared(z_proxy,x_proxy, y_proxy, undf, a, b),  private(i)
     do i = 1,undf
       z_proxy%data(i) = (a * x_proxy%data(i)) + (b * y_proxy%data(i))
     end do
+    !$omp end parallel do
 
     mesh = z%get_mesh()
     depth = mesh%get_halo_depth()
@@ -625,10 +643,11 @@ contains
       !abort
       stop
     end if
-
+    !$omp parallel do schedule(static), default(none), shared(y_proxy,x_proxy, undf, a),  private(i)
     do i = 1,undf
       y_proxy%data(i) = a*x_proxy%data(i)
     end do
+    !$omp end parallel do
 
     mesh = y%get_mesh()
     depth = mesh%get_halo_depth()
@@ -660,11 +679,14 @@ contains
 
     ! Calculate local delta
     undf = x_proxy%vspace%get_last_dof_owned()
-
     delta_l = 0.0_r_def
+    !$omp parallel do default(none), schedule(static) &
+    !$omp&            shared(x_proxy, undf) &
+    !$omp&            private(i), reduction(+:delta_l)
     do i = 1,undf
       delta_l = delta_l + delta0*abs(x_proxy%data(i)) + delta0
     end do
+    !$omp end parallel do
 
     ! Get global delta
     delta   = 0.0_r_def
