@@ -111,12 +111,12 @@ Currently the following compilers are supported:
 | GNU Fortran   | 4.9.2           |
 +---------------+-----------------+
 
-The requirements for building Dynamo are:
+The minimum requirements for building Dynamo are:
 
 +---------+----------+-----------------+---------------------------------------+------------------------------------------+
 | Package | Version  | Dependency Type | Purpose                               | Pointed to by...                         |
 +=========+==========+=================+=======================================+==========================================+
-| CMake   | 2.8.12.2 | Build           | pFUnit builds are prepared using this | PATH                                     |
+| CMake   | 3.0.0    | Build           | pFUnit builds are prepared using this | PATH                                     |
 +---------+----------+-----------------+---------------------------------------+------------------------------------------+
 | ESMF    | 7.0.0    | Build, Run      | Framework & Infrastructure library    | FFLAGS, LDFLAGS, LD_LIBRARY_PATH         |
 +---------+----------+-----------------+---------------------------------------+------------------------------------------+
@@ -162,8 +162,10 @@ Gource is just a bit of fun so it gets a separate section:
 +-----------+---------+---------------------------------+-----------------------------------------------------+
 | FFMPEG    | 2.1.4   |                                 | Video transcoding tool, used to create video output |
 +-----------+---------+---------------------------------+-----------------------------------------------------+
-| Gource    | 0.40    | http://code.google.com/p/gource | Repository visualisation tool                       |
+| Gource    | 0.40    | `Hosted on GitHub`__            | Repository visualisation tool                       |
 +-----------+---------+---------------------------------+-----------------------------------------------------+
+
+__ https://github.com/acaudwell/Gource
 
 Checkout Dynamo
 ---------------
