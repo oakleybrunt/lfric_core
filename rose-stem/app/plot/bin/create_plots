@@ -119,7 +119,7 @@ def make_figure(plotpath, field, timestep):
 
     # Interpolate using delaunay triangulation 
 
-    zi = mlab.griddata(x[p], y[p], z[p], xi, yi)
+    zi = mlab.griddata(x[p], y[p], z[p], xi, yi, interp='linear')
 
     # Conversion factor from radians to degrees
     r2d = 180.0/math.pi;

@@ -314,10 +314,14 @@ Just running ``rose stem``, without specifying a group, causes the developer
 tests to be run. If you want to run the nightly tests you must use ``rose
 stem --group=nightly``.
 
-These tests will publish various reports to your
-``~/public_html/dynamo-<target>`` (where "target" is as described for
+Nightly tests will publish various reports to your
+``~/public_html/dynamo-<target>`` (where "target" will be a platform listed in the
 ``DYNAMO_TEST_SUITE_TARGETS``) directory. If this does not exist you will see
 suite failures.
+
+By default nightly tests will be run on the Met Office SPICE server farm. 
+To run on Cray you need to specify the target explicitly using
+``rose stem --group=nightly --opt-conf-key=meto-xc40``.
 
 If you want to run the nightly tests as a "Cron" job the following ``crontab``
 should give you some pointers::

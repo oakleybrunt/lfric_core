@@ -57,6 +57,7 @@
 {%-   endif %}
 {%-   if plotting %}
             run_{{configuration|replace('-','foo')}}_{{label}} => plot_{{configuration|replace('-','foo')}}_{{label}}
+            plot_{{configuration|replace('-','foo')}}_{{label}} => copy_results_{{configuration|replace('-','foo')}}_{{label}}
 {%-   endif %}
 {%- endmacro %}
 {#- #########################################################################}
@@ -379,9 +380,8 @@
                      chmod 755 ~/public_html/dynamo-{{TARGET_OPT}}/model_output
                      chmod 755 ~/public_html/dynamo-{{TARGET_OPT}}/model_output/{{configuration_label}}
                      chmod 755 ~/public_html/dynamo-{{TARGET_OPT}}/model_output/{{configuration_label}}/nodal_data
-                     RELATIVE_DESTINATION_DIRECTORY=`echo $DYNAMO_DESTINATION_DIRECTORY | sed "s|$HOME/||"`
-                     scp {{TARGET_HOST}}:$RELATIVE_DESTINATION_DIRECTORY/results/* $NODAL_DATA_DIR
-                     chmod 754 ~/public_html/dynamo-{{TARGET_OPT}}/model_output/{{configuration_label}}/nodal_data/*.m
+                     cp $DYNAMO_DESTINATION_DIRECTORY/results/* $NODAL_DATA_DIR
+                     chmod 754 $NODAL_DATA_DIR/*.m
                      """
         script = rose task-run --app-key=plot
         post-script = """
@@ -395,6 +395,17 @@
              TS = T000360
 
 {%-       endif %}
+
+    # Copy of model results back to user's public_html must be performed locally as the target machine may
+    # not allow outgoing ssh connections
+    
+{%-       if 'copy_results_' + configuration_label in scheduledTasks %}
+    [[copy_results_{{configuration_label}}]]
+        inherit = PUBLISH, {{family}}, LOCAL
+        script = """
+                 scp -pr {{TARGET_HOST}}:public_html/dynamo-{{TARGET_OPT}}/model_output ~/public_html/dynamo-{{TARGET_OPT}}
+                 """
+{%- endif %}
 
 {%-       if 'publish_' + label + '_' +  configuration|lower|replace('-','foo') in scheduledTasks %}
     [[publish_{{label}}_{{configuration|lower|replace('-','foo')}}]]
