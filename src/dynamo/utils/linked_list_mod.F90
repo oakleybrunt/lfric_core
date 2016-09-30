@@ -25,10 +25,14 @@ module linked_list_mod
 
   type, public                           :: linked_list_type
     private
-    integer(i_def) :: length ! The number of items in the list                        
-    type(linked_list_item_type), pointer :: head    ! The first entry in the linked list 
-    type(linked_list_item_type), pointer :: tail    ! The last entry in the linked list 
-    type(linked_list_item_type), pointer :: current ! The entry currently pointed to
+    integer(i_def) :: length ! The number of items in the list 
+
+    ! The first entry in the linked list                        
+    type(linked_list_item_type), pointer :: head => null()
+    ! The last entry in the linked list 
+    type(linked_list_item_type), pointer :: tail => null()  
+    ! The entry currently pointed to  
+    type(linked_list_item_type), pointer :: current => null()
 
   contains
     procedure, public              :: insert_item
@@ -60,9 +64,6 @@ contains
 type(linked_list_type) function linked_list_constructor()
 
   linked_list_constructor%length = 0
-  linked_list_constructor%head => null()
-  linked_list_constructor%tail => null()
-  linked_list_constructor%current => null()
 
 end function linked_list_constructor
 
