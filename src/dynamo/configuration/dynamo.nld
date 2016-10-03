@@ -1,5 +1,0 @@
-namelist dynamo
-
-  verbose : logical ! Kick model into "trace" mode for logging.
-
-end namelist dynamo

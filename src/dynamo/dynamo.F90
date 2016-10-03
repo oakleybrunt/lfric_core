@@ -23,19 +23,17 @@
 
 program dynamo
 
-  use cli_mod,                        only : get_initial_filename
   use constants_mod,                  only : i_def
-  use dynamo_config_mod,              only : read_dynamo_namelist, verbose
-  use dynamo_mod,                     only : load_configuration
+  use dynamo_mod,                     only : load_configuration, &
+                                             process_commandline
+  use init_gungho_mod,                only : init_gungho
+  use init_dynamo_mod,                only : init_dynamo
   use ESMF
   use field_io_mod,                   only : write_state_netcdf
   use field_mod,                      only : field_type
   use finite_element_config_mod,      only : element_order
   use formulation_config_mod,         only : nonlinear, transport_only
   use function_space_collection_mod,  only : function_space_collection
-  use init_gungho_mod,                only : init_gungho
-  use init_dynamo_mod,                only : init_dynamo
-  use io_utility_mod,                 only : open_file, close_file
   use iter_timestep_alg_mod,          only : iter_alg_init, &
                                              iter_alg_step
   use lin_rk_alg_timestep_mod,        only : lin_rk_alg_init, &
@@ -60,7 +58,7 @@ program dynamo
                                              LOG_LEVEL_DEBUG,   &
                                              LOG_LEVEL_TRACE,   &
                                              log_scratch_space
-  use restart_config_mod,             only : restart_filename => filename
+  use restart_config_mod,             only : filename
   use restart_control_mod,            only : restart_type
   use output_config_mod,              only : diagnostic_frequency
   use output_alg_mod,                 only : output_alg
@@ -73,9 +71,6 @@ program dynamo
 
 
   implicit none
-
-  character(:), allocatable :: filename
-  integer                   :: namelist_unit
 
   type(ESMF_VM)      :: vm
   integer            :: rc
@@ -102,6 +97,7 @@ program dynamo
 
   integer                          :: timestep, ts_init
 
+
   !-----------------------------------------------------------------------------
   ! Driver layer init
   !-----------------------------------------------------------------------------
@@ -117,27 +113,18 @@ program dynamo
   total_ranks = petCount
   local_rank  = localPET
 
-  ! Currently log_event can only use ESMF so it cannot be used before ESMF is
-  ! initialised.
   call log_event( 'Dynamo running...', LOG_LEVEL_INFO )
 
-  call get_initial_filename( filename )
-  namelist_unit = open_file( filename )
-  call load_configuration( namelist_unit )
+  call process_commandline()
+  call load_configuration()
   call set_derived_config()
-  call close_file( namelist_unit )
-  deallocate( filename )
 
-  if (verbose) then
-    call log_set_level( LOG_LEVEL_TRACE )
-    call log_event( 'Switching to full debug output', LOG_LEVEL_DEBUG )
-  endif
-
-  restart = restart_type( restart_filename, local_rank, total_ranks )
+  restart = restart_type( filename, local_rank, total_ranks )
 
   !-----------------------------------------------------------------------------
   ! model init
   !-----------------------------------------------------------------------------
+
 
   ! Create the mesh and function space collection
   call init_gungho(mesh_id, local_rank, total_ranks, function_space_collection)

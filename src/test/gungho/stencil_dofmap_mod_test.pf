@@ -44,9 +44,9 @@ module stencil_dofmap_mod_test
 
   contains
     private
-    procedure, public :: setUp
-    procedure, public :: tearDown
-    procedure, public :: test_stencil_dofmaps
+    procedure setUp
+    procedure tearDown
+    procedure test_stencil_dofmaps
 
   end type stencil_dofmap_test_type
 

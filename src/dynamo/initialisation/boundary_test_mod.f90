@@ -21,24 +21,22 @@ module boundary_test_mod
   implicit none
 
   private
-  public :: load_configuration
+  public :: load_configuration, process_commandline
 
 contains
 
   !> Loads run-time configuration and ensures everything is ship-shape.
   !>
-  subroutine load_configuration( file_unit )
+  subroutine load_configuration()
 
     use configuration_mod, only : read_configuration, &
                                   ensure_configuration
 
     implicit none
 
-    integer, intent(in) :: file_unit
-
+    character(*), parameter :: filename = 'boundary_test_configuration.nml'
     character(*), parameter :: &
-                            required_configuration(6) = ['dynamo           ', &
-                                                         'finite_element   ', &
+                            required_configuration(5) = ['finite_element   ', &
                                                          'base_mesh        ', &
                                                          'planet           ', &
                                                          'restart          ', &
@@ -50,7 +48,7 @@ contains
 
     allocate( success_map(size(required_configuration)) )
 
-    call read_configuration( file_unit )
+    call read_configuration( filename )
 
     okay = ensure_configuration( required_configuration, success_map )
     if (.not. okay) then
@@ -67,5 +65,49 @@ contains
     deallocate( success_map )
 
   end subroutine load_configuration
+
+  !> Reads the command line arguments and acts on them.
+  !>
+  subroutine process_commandline()
+
+    use log_mod, only : log_set_level
+
+    implicit none
+
+    integer      :: argument_index,  &
+                    argument_length, &
+                    argument_status
+    character(6) :: argument
+
+    cli_argument_loop: do argument_index = 1, command_argument_count()
+
+      call get_command_argument( argument_index,  &
+                                argument,        &
+                                argument_length, &
+                                argument_status )
+
+      if ( argument_status > 0 ) then
+        call log_event( 'Unable to retrieve command line argument', &
+                        LOG_LEVEL_ERROR )
+      else if ( argument_status < 0 ) then
+        write( log_scratch_space, '( A, A, A )' ) "Argument starting >", &
+                                                  argument,              &
+                                                  "< is too long"
+        call log_event( log_scratch_space, LOG_LEVEL_ERROR )
+      end if
+
+      if ( argument == '-debug' ) then
+        call log_set_level( LOG_LEVEL_TRACE )
+        call log_event( 'Switching to full debug output', LOG_LEVEL_DEBUG )
+      else
+        write( log_scratch_space, '( A, A, A )' ) "Unrecognised argument >", &
+                                                  trim( argument ), &
+                                                  "<"
+        call log_event( log_scratch_space, LOG_LEVEL_ERROR )
+      end if
+
+    end do cli_argument_loop
+
+  end subroutine process_commandline
 
 end module boundary_test_mod

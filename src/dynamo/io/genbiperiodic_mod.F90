@@ -30,7 +30,7 @@ integer, parameter     :: SW = SWB
 ! Prefix for error messages
 character(len=*), parameter  :: prefix = "[Biperiodic Mesh] "
 !-------------------------------------------------------------------------------
-type, extends(ugrid_generator_type), public :: genbiperiodic_type
+type, extends(ugrid_generator_type), public        :: genbiperiodic_type
   private
   integer                            :: nx, ny
   real(kind=r_def)                   :: dx, dy
@@ -52,7 +52,7 @@ contains
 end type genbiperiodic_type
 !-------------------------------------------------------------------------------
 interface genbiperiodic_type
-  module procedure genbiperiodic_constructor
+  module procedure         genbiperiodic_constructor
 end interface genbiperiodic_type
 !-------------------------------------------------------------------------------
 contains

@@ -1,6 +1,0 @@
-namelist cubedsphere_mesh_generator
-
-  edge_cells    : integer ! cells on a panel edge (6 panels to a cubedsphere)
-  mesh_filename : string(filename)
-
-end namelist cubedsphere_mesh_generator

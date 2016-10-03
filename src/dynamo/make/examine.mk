@@ -29,10 +29,6 @@ STALE_TOUCH = $(filter-out $(MANUAL_TOUCH_FILES) $(AUTO_TOUCH_FILES), \
 
 IGNORE_ARGUMENTS := $(patsubst %,-ignore %,$(IGNORE_DEPENDENCIES))
 
-ifdef VERBOSE
-    EXTRA_ARGS = -verbose
-endif
-
 $(OBJ_DIR)/programs.mk: $(OBJ_DIR)/dependencies.mk | $(OBJ_DIR)
 	@echo -e $(VT_BOLD)Building$(VT_RESET) $@
 	$(Q)$(TOOL_DIR)/ProgramObjects -database $(OBJ_DIR)/dependencies.db $@
@@ -54,22 +50,22 @@ unused-check: $(OBJ_DIR)/dependencies.mk | $(OBJ_DIR)
 
 $(OBJ_DIR)/%.t: %.F90 | $(OBJ_DIR) $$(dir $$@)
 	@echo -e $(VT_BOLD)Analysing$(VT_RESET) $<
-	$(Q)$(TOOL_DIR)/DependencyAnalyser $(IGNORE_ARGUMENTS) $(EXTRA_ARGS) \
+	$(Q)$(TOOL_DIR)/DependencyAnalyser $(IGNORE_ARGUMENTS) \
 	                             $(OBJ_DIR)/dependencies.db $< && touch $@
 
 $(OBJ_DIR)/%.t: %.f90 | $(OBJ_DIR) $$(dir $$@)
 	@echo -e $(VT_BOLD)Analysing$(VT_RESET) $<
-	$(Q)$(TOOL_DIR)/DependencyAnalyser $(IGNORE_ARGUMENTS) $(EXTRA_ARGS) \
+	$(Q)$(TOOL_DIR)/DependencyAnalyser $(IGNORE_ARGUMENTS) \
 	                             $(OBJ_DIR)/dependencies.db $< && touch $@
 
 $(OBJ_DIR)/%.t: $(OBJ_DIR)/%.F90 | $(OBJ_DIR) $$(dir $$@)
 	@echo -e $(VT_BOLD)Analysing$(VT_RESET) $<
-	$(Q)$(TOOL_DIR)/DependencyAnalyser $(IGNORE_ARGUMENTS) $(EXTRA_ARGS) \
+	$(Q)$(TOOL_DIR)/DependencyAnalyser $(IGNORE_ARGUMENTS) \
 	                             $(OBJ_DIR)/dependencies.db $< && touch $@
 
 $(OBJ_DIR)/%.t: $(OBJ_DIR)/%.f90 | $(OBJ_DIR) $$(dir $$@)
 	@echo -e $(VT_BOLD)Analysing$(VT_RESET) $<
-	$(Q)$(TOOL_DIR)/DependencyAnalyser $(IGNORE_ARGUMENTS) $(EXTRA_ARGS) \
+	$(Q)$(TOOL_DIR)/DependencyAnalyser $(IGNORE_ARGUMENTS) \
 	                             $(OBJ_DIR)/dependencies.db $< && touch $@
 
 $(OBJ_DIR) $(OBJ_SUBDIRS):

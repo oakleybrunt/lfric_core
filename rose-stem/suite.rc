@@ -513,7 +513,7 @@
         pre-script = """
                      {{'\n'|commandList(TARGET_BASE_SETUP, compiler_setup[compiler], TARGET_BUILD_SETUP, TARGET_REVEAL_SETUP)}}
                      """
-        script = "rose task-run --app-key=mesh --command-key={{mesh}} --opt-conf-key={{mesh}}"
+        script = "rose task-run --app-key=mesh --command-key={{mesh}}"
         [[[directives]]]
 {%-         for DIRECTIVE in TARGET_RUN_BATCHER_DIRECTIVES %}
             {{DIRECTIVE}}

@@ -15,11 +15,3 @@ IFORT_VERSION := $(shell ifort -v 2>&1 \
 $(info ** Intel Fortran version $(IFORT_VERSION))
 
 F_MOD_DESTINATION_ARG  = -module$(SPACE)
-
-# The "-assume realloc-lhs" switch causes Intel Fortran prior to v17 to
-# actually implement the Fortran2003 standard. At version 17 it becomes the
-# default behaviour.
-ifeq ($(shell test $(IFORT_VERSION) -lt 0170000; echo $$?), 0)
-  $(info ** Activating Intel "Make it work" switch for version earlier than 17)
-  FFLAGS += -assume realloc-lhs
-endif
