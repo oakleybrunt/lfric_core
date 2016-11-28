@@ -137,7 +137,6 @@ contains
     if (chi_proxy(1)%is_dirty(depth=1)) call chi_proxy(1)%halo_exchange(depth=1)
     if (chi_proxy(2)%is_dirty(depth=1)) call chi_proxy(2)%halo_exchange(depth=1)
     if (chi_proxy(3)%is_dirty(depth=1)) call chi_proxy(3)%halo_exchange(depth=1)
-    if (theta_proxy%is_dirty(depth=1))  call theta_proxy%halo_exchange(depth=1)
 
     mesh => theta%get_mesh()
     do cell = 1, mesh%get_last_halo_cell(1)
@@ -291,10 +290,12 @@ contains
 
     end do
 
-    if(theta_proxy%is_dirty(depth=1) ) call theta_proxy%halo_exchange(depth=1)
-    if(  rho_proxy%is_dirty(depth=1) ) call   rho_proxy%halo_exchange(depth=1)
-    if(    f_proxy%is_dirty(depth=1) ) call     f_proxy%halo_exchange(depth=1)
-    do cell = 1, mesh%get_last_edge_cell()
+    if(r_theta_bd_proxy%is_dirty(depth=2) ) call r_theta_bd_proxy%halo_exchange(depth=2)
+    if(theta_proxy%is_dirty(depth=2) ) call theta_proxy%halo_exchange(depth=2)
+    if(rho_proxy%is_dirty(depth=2) ) call rho_proxy%halo_exchange(depth=2)
+    if(f_proxy%is_dirty(depth=2) ) call f_proxy%halo_exchange(depth=2)
+
+    do cell = 1, mesh%get_last_halo_cell(1)
 
       do ii = 1, nfaces_h
         do jj = 1, nfaces_h
@@ -454,9 +455,9 @@ contains
 
     end do
 
-    if( theta_proxy%is_dirty(depth=1) ) call theta_proxy%halo_exchange(depth=2)
-    if(   rho_proxy%is_dirty(depth=1) ) call rho_proxy%halo_exchange(depth=2)
-    if(r_u_bd_proxy%is_dirty(depth=1) ) call r_u_bd_proxy%halo_exchange(depth=2)
+    if(theta_proxy%is_dirty(depth=2) ) call theta_proxy%halo_exchange(depth=2)
+    if(rho_proxy%is_dirty(depth=2) ) call rho_proxy%halo_exchange(depth=2)
+    if(r_u_bd_proxy%is_dirty(depth=2) ) call r_u_bd_proxy%halo_exchange(depth=2)
 
     do cell = 1, mesh%get_last_halo_cell(1)
 
@@ -613,9 +614,10 @@ contains
 
     end do
 
-    if( theta_proxy%is_dirty(depth=1) ) call theta_proxy%halo_exchange(depth=2)
-    if( exner_proxy%is_dirty(depth=1) ) call exner_proxy%halo_exchange(depth=2)
-    if(r_u_bd_proxy%is_dirty(depth=1) ) call r_u_bd_proxy%halo_exchange(depth=2)
+    if( theta_proxy%is_dirty(depth=1) ) call theta_proxy%halo_exchange(depth=1)
+
+    if(exner_proxy%is_dirty(depth=2) ) call exner_proxy%halo_exchange(depth=2)
+    if(r_u_bd_proxy%is_dirty(depth=2) ) call r_u_bd_proxy%halo_exchange(depth=2)
 
     do cell = 1,mesh%get_last_halo_cell(1)
 
@@ -780,11 +782,11 @@ contains
 
     end do
 
-    if(theta_proxy%is_dirty(depth=1) )     call theta_proxy%halo_exchange(depth=2)
-    if(rho_proxy%is_dirty(depth=1) )       call rho_proxy%halo_exchange(depth=2)
-    if(theta_ref_proxy%is_dirty(depth=1) ) call theta_ref_proxy%halo_exchange(depth=2)
-    if(rho_ref_proxy%is_dirty(depth=1) )   call rho_ref_proxy%halo_exchange(depth=2)
-    if(r_u_bd_proxy%is_dirty(depth=1) )    call r_u_bd_proxy%halo_exchange(depth=2)
+    if(theta_proxy%is_dirty(depth=2) ) call theta_proxy%halo_exchange(depth=2)
+    if(rho_proxy%is_dirty(depth=2) ) call rho_proxy%halo_exchange(depth=2)
+    if(theta_ref_proxy%is_dirty(depth=2) ) call theta_ref_proxy%halo_exchange(depth=2)
+    if(rho_ref_proxy%is_dirty(depth=2) ) call rho_ref_proxy%halo_exchange(depth=2)
+    if(r_u_bd_proxy%is_dirty(depth=2) ) call r_u_bd_proxy%halo_exchange(depth=2)
 
 
     do cell = 1, mesh%get_last_halo_cell(1)
@@ -935,7 +937,7 @@ contains
       ! Call kernels and communication routines
       !
       if (theta_proxy%is_dirty(depth=1)) then
-        call theta_proxy%halo_exchange(depth=2)
+        call theta_proxy%halo_exchange(depth=1)
       end if
       !
       do cell=1,mesh%get_last_halo_cell(1)
@@ -1984,7 +1986,6 @@ contains
   undf = l_p%vspace%get_undf()
   ndf  = l_p%vspace%get_ndf()
   nodes => l_p%vspace%get_nodes( )
-  if (l_p%is_dirty(depth=1)) call l_p%halo_exchange(depth=1)
 
   mesh => level%get_mesh()
   do cell = 1,mesh%get_last_halo_cell(1)
@@ -2956,9 +2957,6 @@ subroutine invoke_sample_poly_adv( adv, wind, tracer, stencil_extent, evaluator)
     if(tracer_proxy%is_dirty(depth=d) ) swap = .true.
   end do
   if ( swap ) call tracer_proxy%halo_exchange(depth=stencil_extent+1)
-  if(adv_proxy%is_dirty(depth=1) ) then
-    call adv_proxy%halo_exchange(depth=1)
-  end if
 
   mesh => adv%get_mesh()
   do cell = 1,mesh%get_last_edge_cell()

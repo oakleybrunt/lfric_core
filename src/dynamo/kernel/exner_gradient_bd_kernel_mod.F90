@@ -25,7 +25,7 @@ module exner_gradient_bd_kernel_mod
   use constants_mod,           only : r_def, i_def
   use cross_product_mod,       only : cross_product
   use planet_config_mod,       only : cp
-  use reference_element_mod,    only: nfaces_h, out_face_normal
+  use reference_element_mod,   only: nfaces_h, out_face_normal
 
   implicit none
 

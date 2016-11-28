@@ -34,13 +34,14 @@ module rtheta_bd_kernel_mod
     !> The type declaration for the kernel. Contains the metadata needed by the Psy layer
     type, public, extends(kernel_type) :: rtheta_bd_kernel_type
         private
-        type(arg_type) :: meta_args(3) = (/                               &
+        type(arg_type) :: meta_args(4) = (/                               &
             arg_type(GH_FIELD,   GH_INC,  Wtheta),                        &
-            arg_type(GH_FIELD,   GH_READ, W2),                            &
-            arg_type(GH_FIELD,   GH_READ, W3)                             &
+            arg_type(GH_FIELD,   GH_READ, W3),                            &
+            arg_type(GH_FIELD,   GH_READ, Wtheta),                        &
+            arg_type(GH_FIELD,   GH_READ, W2)                             &
             /)
         type(func_type) :: meta_funcs(3) = (/                             &
-            func_type(W2, GH_BASIS, GH_ORIENTATION ),                     &
+            func_type(W2, GH_BASIS),                                      &
             func_type(W3, GH_BASIS),                                      &
             func_type(Wtheta, GH_BASIS)                                   &
             /)
@@ -168,6 +169,8 @@ contains
 
               sign_face_next_outward = (-1.0_r_def)**(int(floor(real(mod(face_next, 4))/2.0) + 1.0_r_def))
               face_next_inward_normal(:) = -sign_face_next_outward * normal_to_face(face_next, :)
+
+
 
               ! Computing rho, theta and f in adjacent cells
 

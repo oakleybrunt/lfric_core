@@ -84,7 +84,7 @@ contains
         integer(kind=i_def), intent(in) :: nlayers, ndf_wtheta, ndf_chi, undf_wtheta, undf_chi
         integer(kind=i_def), dimension(ndf_wtheta), intent(in) :: map_wtheta
         integer(kind=i_def), dimension(ndf_chi), intent(in) :: map_chi
-        real(kind=r_def), dimension(undf_wtheta),          intent(inout) :: theta
+        real(kind=r_def), dimension(undf_wtheta),          intent(out) :: theta
         real(kind=r_def), dimension(undf_chi),              intent(in)    :: chi_1, chi_2, chi_3
         real(kind=r_def), dimension(1,ndf_chi,ndf_wtheta),  intent(in)    :: chi_basis
 
