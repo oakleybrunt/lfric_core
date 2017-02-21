@@ -53,10 +53,9 @@ def subversionTagOrigin( repoURL, tag ):
     @return (tuple) Corresponding trunk revision and time tag was cut.
     '''
     tagHandler = _SubversionTagHandler()
-    process = subprocess.Popen( ['svn', 'log', \
-                                 '--xml', '--stop-on-copy', '--verbose', \
-                                 repoURL + '/tags/' + tag], \
-                                stdout=subprocess.PIPE )
+    command = ['svn', 'log', '--xml', '--verbose', \
+               repoURL + '/tags/' + tag]
+    process = subprocess.Popen( command, stdout=subprocess.PIPE )
     xml.sax.parse( process.stdout, tagHandler )
     
     return tagHandler.revision, tagHandler.timestamp
@@ -182,12 +181,11 @@ class _SubversionTagHandler( _XMLHandler ):
     def startElement( self, name, attrs ):
         super( _SubversionTagHandler, self).startElement( name, attrs )
 
-        if name == 'path':
-          if not attrs['copyfrom-path'].endswith( 'trunk' ):
-              message = 'Tag copied from {}, not trunk'
-              raise SubversionException(message.format(attrs['copyfrom-path']))
+        if name == 'path' and not hasattr( self, 'revision' ):
+          if 'copyfrom-path' in attrs:
+            if attrs['copyfrom-path'].endswith( 'trunk' ):
+              self.revision  = attrs['copyfrom-rev']
 
-          self.revision  = attrs['copyfrom-rev']
     def endElement( self, name ):
         super( _SubversionTagHandler, self ).endElement( name )
 

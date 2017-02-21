@@ -5,30 +5,33 @@
 # https://puma.nerc.ac.uk/trac/GungHo/wiki
 ##############################################################################
 
-INITIAL_dynamo_VERSION   = v1.0
-INITIAL_psyclone_VERSION = vn1.2.1
+INITIAL_lfric_VERSION    = v1.1
+FINAL_lfric_VERSION      = HEAD
+INITIAL_psyclone_VERSION = vn1.3.1
+FINAL_psyclone_VERSION   = HEAD
 
-dynamo_REPOSITORY_URL   = https://code.metoffice.gov.uk/svn/lfric/Dynamo
+lfric_REPOSITORY_URL   = https://code.metoffice.gov.uk/svn/lfric/LFRic
 psyclone_REPOSITORY_URL = https://code.metoffice.gov.uk/svn/lfric/PSyclone
 
 Q ?= @
 
-REPOSITORY_URL = $($*_REPOSITORY_URL)
-INITIAL_VERSION        = $(INITIAL_$*_VERSION)
+REPOSITORY_URL  = $($*_REPOSITORY_URL)
+INITIAL_VERSION = $(INITIAL_$*_VERSION)
+FINAL_VERSION   = $(FINAL_$*_VERSION)
 
-gource-$(INITIAL_dynamo_VERSION).mp4: gource/combined.txt gource/dynamo-captions.txt
+gource-$(FINAL_lfric_VERSION).mp4: gource/combined.txt gource/lfric-captions.txt
 	$(warning The 'gource' visualisation tool takes frames straight from rendered output.)
 	$(warning If you obscure the window during rendering frames will be incomplete.)
 	gource -1280x720 -r 25 --multi-sampling --title LFric \
 	    --user-image-dir avatars \
-	    --key -caption-file gource/dynamo-captions.txt \
+	    --key -caption-file gource/lfric-captions.txt \
 	    --hide mouse,progress,usernames,filenames,dirnames \
 	    --auto-skip-seconds 2 --seconds-per-day 1 --file-idle-time 30 -o - \
 	    $< \
 	| ffmpeg -y -r 25 -f image2pipe -vcodec ppm -i - \
-	         -vcodec mpeg4 -qscale 2 $@
+	         -c:v libx264 -preset slow -crf 22 -profile:v high -level 4.2 $@
 
-gource/combined.txt: gource/dynamo-log.txt gource/psyclone-log.txt
+gource/combined.txt: gource/lfric-log.txt gource/psyclone-log.txt
 	$(info Combining Dynamo and PSyclone logs)
 	$(Q)cat $^ | sort -n > $@
 
@@ -42,13 +45,13 @@ gource/%-captions.txt: gource/%-head.txt
 
 .PRECIOUS: gource/%-log.xml
 gource/%-log.xml: gource/%-head.txt
-	$(info Obtaining $* log)
-	$(Q)svn log -r $(shell cat $<) --xml --verbose --quiet $(REPOSITORY_URL) > $@
+	$(info Obtaining $* log $(shell cat $<))
+	$(Q)svn log -r $(shell cat $<) --xml --verbose --quiet $(REPOSITORY_URL)/trunk > $@
 
 .PRECIOUS: gource/%-head.txt
 gource/%-head.txt: ALWAYS
 	$(info Determining revision of $*)
-	$(Q)tools/headaliser -release $(INITIAL_VERSION): $(REPOSITORY_URL) $@
+	$(Q)tools/headaliser -release $(INITIAL_VERSION):$(FINAL_VERSION) $(REPOSITORY_URL) $@
 
 ALWAYS:
 

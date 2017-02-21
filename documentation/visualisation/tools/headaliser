@@ -50,8 +50,9 @@ def headaliser(repoURL, firstRevision, lastRevision, outputName):
     @param outputName (str) The file to received the revision number of "head"
                       and be time stamped.
     '''
+    info = doctools.subversive.subversionInfo(repoURL)
+
     if not lastRevision:
-        info = doctools.subversive.subversionInfo(repoURL)
         lastRevision = (info['latest-revision'], info['latest-revision-time'])
 
     with open(outputName, 'w') as output:
@@ -88,7 +89,16 @@ if __name__ == '__main__':
         if bracketVersions:
             lowerVersion = bracketVersions.pop(-1)
 
-    headaliser( args.repositoryURL,                \
-                tagToRevision( args.repositoryURL, lowerVersion ), \
-                tagToRevision( args.repositoryURL, upperVersion ), \
+    if lowerVersion == 'ROOT':
+      lowerRevision = None
+    else:
+      lowerRevision = tagToRevision( args.repositoryURL, lowerVersion )
+
+    if upperVersion == 'HEAD':
+      upperRevision = None
+    else:
+      upperRevision = tagToRevision( args.repositoryURL, upperVersion )
+
+    headaliser( args.repositoryURL, lowerRevision, upperRevision, \
                 args.outputFilename )
+

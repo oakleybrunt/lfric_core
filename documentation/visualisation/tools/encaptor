@@ -31,7 +31,7 @@ def encaptor( target, outputName ):
     @param target (str) Either a repository URL or working copy path.
     @param outputName (str) Filename for the captions file.
     '''
-    standardPattern = re.compile( r'#\d+ for .+?[:.,]\s+([^.?!\n]+)(.?).*$', \
+    standardPattern = re.compile( r'#\d+ for .+?[:.,]\s+(.+)([.?!\n])', \
                                   flags=re.MULTILINE|re.IGNORECASE )
 
     with open(outputName, 'w') as output:
