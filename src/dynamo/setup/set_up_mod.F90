@@ -52,8 +52,8 @@ module set_up_mod
   use finite_element_config_mod,  only : wtheta_on
   use transport_config_mod,       only : scheme, &
                                          transport_scheme_cosmic
-  use subgrid_config_mod,          only: transport_stencil_extent, &
-                                         rho_stencil_extent
+  use subgrid_config_mod,         only : dep_pt_stencil_extent, &
+                                         rho_approximation_stencil_extent
   implicit none
 
 contains
@@ -205,8 +205,8 @@ contains
     end if
     if ( scheme == transport_scheme_cosmic ) then
       max_stencil_depth = max(max_stencil_depth, &
-                              max(transport_stencil_extent, &
-                                  rho_stencil_extent))
+                              max(dep_pt_stencil_extent, &
+                                  rho_approximation_stencil_extent))
     end if
     if ( wtheta_on ) max_stencil_depth = max(max_stencil_depth,1)
 

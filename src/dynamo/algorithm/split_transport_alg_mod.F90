@@ -26,7 +26,7 @@ module split_transport_alg_mod
   use flux_direction_mod,                only: x_direction, y_direction
   use finite_element_config_mod,         only: element_order
   use biperiodic_deppt_config_mod,       only: method
-
+  use subgrid_config_mod,                only: dep_pt_stencil_extent
   use psykal_lite_mod,                   only: invoke_set_field_scalar,        &
                                                invoke_calc_departure_wind,     &
                                                invoke_calc_deppts,             &
@@ -108,8 +108,8 @@ contains
     call invoke_set_field_scalar(0.0_r_def,dep_pts_x)
     call invoke_set_field_scalar(0.0_r_def,dep_pts_y)
 
-    call invoke_calc_deppts(departure_wind_n,departure_wind_np1,dep_pts_x,x_direction,method)
-    call invoke_calc_deppts(departure_wind_n,departure_wind_np1,dep_pts_y,y_direction,method)
+    call invoke_calc_deppts(departure_wind_n,departure_wind_np1,dep_pts_x,x_direction,method,dep_pt_stencil_extent)
+    call invoke_calc_deppts(departure_wind_n,departure_wind_np1,dep_pts_y,y_direction,method,dep_pt_stencil_extent)
 
     ! Perform two 1D advective updates in the x and y directions (horizontal)
     call oned_advective_density_update_alg(x_direction,u_n, dep_pts_x, rho_n, rho_adv_x, mesh_id)

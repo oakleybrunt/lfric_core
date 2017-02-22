@@ -27,8 +27,8 @@ module oned_conservative_flux_alg_mod
                                                LOG_LEVEL_INFO,       &
                                                LOG_LEVEL_TRACE
   use finite_element_config_mod,         only: element_order
-  use subgrid_config_mod,                only: transport_stencil_extent,       &
-                                               rho_stencil_extent
+  use subgrid_config_mod,                only: dep_pt_stencil_extent,          &
+                                               rho_approximation_stencil_extent
 
   use psykal_lite_mod,                   only: invoke_set_field_scalar,        &
                                                invoke_subgrid_coeffs,          &
@@ -91,10 +91,10 @@ contains
     call invoke_set_field_scalar(0.0_r_def,a1)
     call invoke_set_field_scalar(0.0_r_def,a2)
 
-    call invoke_subgrid_coeffs(a0,a1,a2,rho_in,direction,rho_stencil_extent)
+    call invoke_subgrid_coeffs(a0,a1,a2,rho_in,direction,rho_approximation_stencil_extent)
 
     call invoke_conservative_fluxes(  rho_in, dep_pts, u, mass_flux,  &
-                                      a0, a1, a2, direction, transport_stencil_extent )
+                                      a0, a1, a2, direction, dep_pt_stencil_extent )
 
   end subroutine oned_conservative_flux_alg
 

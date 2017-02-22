@@ -2135,7 +2135,7 @@ end subroutine invoke_write_fields
 
 !-------------------------------------------------------------------------------  
 !> invoke_subgrid_coeffs: Invoke the calculation of subgrid rho coefficients
-subroutine invoke_subgrid_coeffs(a0,a1,a2,rho,direction,rho_stencil_extent)
+subroutine invoke_subgrid_coeffs(a0,a1,a2,rho,direction,rho_approximation_stencil_extent)
 
     use flux_direction_mod,        only: x_direction, y_direction
     use stencil_dofmap_mod,        only: stencil_dofmap_type, &
@@ -2151,7 +2151,7 @@ subroutine invoke_subgrid_coeffs(a0,a1,a2,rho,direction,rho_stencil_extent)
     type( field_type ), intent( inout ) :: a2
     type( field_type ), intent( in )    :: rho
     integer, intent(in)                 :: direction
-    integer, intent(in)                 :: rho_stencil_extent
+    integer, intent(in)                 :: rho_approximation_stencil_extent
 
     type( field_proxy_type )            :: rho_proxy
     type( field_proxy_type )            :: a0_proxy
@@ -2187,19 +2187,19 @@ subroutine invoke_subgrid_coeffs(a0,a1,a2,rho,direction,rho_stencil_extent)
     !                                   |2|
     !                                   |4|
     if (direction .EQ. x_direction) then
-      map => rho_proxy%vspace%get_stencil_dofmap(STENCIL_1DX,rho_stencil_extent)
+      map => rho_proxy%vspace%get_stencil_dofmap(STENCIL_1DX,rho_approximation_stencil_extent)
     elseif (direction .EQ. y_direction) then
-      map => rho_proxy%vspace%get_stencil_dofmap(STENCIL_1DY,rho_stencil_extent)
+      map => rho_proxy%vspace%get_stencil_dofmap(STENCIL_1DY,rho_approximation_stencil_extent)
     end if
     rho_stencil_size = map%get_size()
 
     orientation = 1
 
     swap = .false.
-    do d = 1,rho_stencil_extent
+    do d = 1,rho_approximation_stencil_extent
       if (rho_proxy%is_dirty(depth=d)) swap = .true.
     end do
-    if ( swap ) call rho_proxy%halo_exchange(depth=rho_stencil_extent)
+    if ( swap ) call rho_proxy%halo_exchange(depth=rho_approximation_stencil_extent)
 
     mesh => a0%get_mesh()
     do cell = 1, mesh%get_last_edge_cell()
@@ -2418,14 +2418,18 @@ end subroutine invoke_calc_departure_wind
 
 !-------------------------------------------------------------------------------
 !> invoke_calc_deppts: Invoke the calculation of departure points in 1D
-subroutine invoke_calc_deppts(u_n,u_np1,dep_pts,direction,dep_pt_method)
+subroutine invoke_calc_deppts(  u_n,                  &
+                                u_np1,                &
+                                dep_pts,              &
+                                direction,            &
+                                dep_pt_method,        &
+                                dep_pt_stencil_extent )
 
   use calc_departure_point_kernel_mod,  only : calc_departure_point_code
   use stencil_dofmap_mod,               only : stencil_dofmap_type, &
                                                STENCIL_1DX, &
                                                STENCIL_1DY
   use flux_direction_mod,               only : x_direction, y_direction
-  use subgrid_config_mod,               only : transport_stencil_extent
   use mesh_mod,                         only : mesh_type
   implicit none
 
@@ -2434,6 +2438,7 @@ subroutine invoke_calc_deppts(u_n,u_np1,dep_pts,direction,dep_pt_method)
   type( field_type ), intent( inout ) :: dep_pts
   integer, intent(in)                 :: direction
   integer, intent(in)                 :: dep_pt_method
+  integer, intent(in)                 :: dep_pt_stencil_extent
 
   type( field_proxy_type )        :: u_n_proxy
   type( field_proxy_type )        :: u_np1_proxy
@@ -2459,24 +2464,24 @@ subroutine invoke_calc_deppts(u_n,u_np1,dep_pts,direction,dep_pt_method)
   undf_w2 = u_n_proxy%vspace%get_undf()
 
   if (direction .EQ. x_direction) then
-    map => u_n_proxy%vspace%get_stencil_dofmap(STENCIL_1DX,transport_stencil_extent)
+    map => u_n_proxy%vspace%get_stencil_dofmap(STENCIL_1DX,dep_pt_stencil_extent)
   elseif (direction .EQ. y_direction) then
-    map => u_n_proxy%vspace%get_stencil_dofmap(STENCIL_1DY,transport_stencil_extent)
+    map => u_n_proxy%vspace%get_stencil_dofmap(STENCIL_1DY,dep_pt_stencil_extent)
   endif
   transport_stencil_size = map%get_size()
 
   nlayers = u_n_proxy%vspace%get_nlayers()
 
   swap = .false.
-  do d = 1,transport_stencil_extent
+  do d = 1,dep_pt_stencil_extent
     if (u_n_proxy%is_dirty(depth=d)) swap = .true.
   end do
-  if ( swap ) call u_n_proxy%halo_exchange(depth=transport_stencil_extent)
+  if ( swap ) call u_n_proxy%halo_exchange(depth=dep_pt_stencil_extent)
   swap = .false.
-  do d = 1,transport_stencil_extent
+  do d = 1,dep_pt_stencil_extent
     if (u_np1_proxy%is_dirty(depth=d)) swap = .true.
   end do
-  if ( swap ) call u_np1_proxy%halo_exchange(depth=transport_stencil_extent)
+  if ( swap ) call u_np1_proxy%halo_exchange(depth=dep_pt_stencil_extent)
 
   mesh => u_n%get_mesh()
   do cell=1,mesh%get_last_halo_cell(1)
