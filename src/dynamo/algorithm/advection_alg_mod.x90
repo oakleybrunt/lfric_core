@@ -56,7 +56,6 @@ module advection_alg_mod
                                             transport_operators_fem
   use log_mod,                        only: log_event,         &
                                             LOG_LEVEL_ERROR
-  use evaluator_xyz_mod,              only: evaluator_xyz_type
   use mr_indices_mod,                 only: nummr
   use timestepping_config_mod,        only: dt
   use runge_kutta_init_mod,           only: num_rk_stage, ak
@@ -141,7 +140,6 @@ contains
   type(field_type)          :: r_xi, mass_flux, r_rho, ones 
 
   type(function_space_type), pointer :: xi_fs, u_fs, rho_fs, theta_fs  => null()
-  type(evaluator_xyz_type)           :: evaluator_u, evaluator_theta
 
   type(field_type)                   :: mt_lumped, ones_wt, temp
   type(field_type)                   :: m1_lumped, ones_w1
@@ -190,9 +188,8 @@ contains
   call invoke_set_field_scalar( 0.0_r_def, advection(1) ) 
   select case(operators)
     case(transport_operators_fv)
-     evaluator_u = evaluator_xyz_type(u_fs%get_ndf( ), u_fs%get_nodes( ))
      call invoke_sample_poly_flux( mass_flux, u, rho, &
-                                   flux_stencil_extent, evaluator_u )
+                                   flux_stencil_extent)
     case(transport_operators_fem)      
       call invoke(flux_rhs_kernel_type( advection(1), u, rho, chi, qr ) )
       call invoke(enforce_bc_kernel_type( advection(1) ) )
@@ -241,9 +238,8 @@ contains
         call invoke_set_field_scalar( 0.0_r_def, temp)
         call invoke(matrix_vector_kernel_type(mt_lumped, ones_wt, mm_wt) )
         
-        evaluator_theta = evaluator_xyz_type(theta_fs%get_ndf( ), theta_fs%get_nodes( ))
-        call invoke_sample_poly_adv( advection(2), u, theta, &
-                                     advective_stencil_extent, evaluator_theta )
+        call invoke_sample_poly_adv( advection(2), theta, u, &
+                                     advective_stencil_extent) 
         call invoke_multiply_field(-1.0_r_def, advection(2), advection(2))
         call invoke_divide_field(advection(2), mt_lumped, temp)
         call invoke_set_field_scalar( 0.0_r_def, advection(2))
@@ -281,7 +277,6 @@ contains
     type(field_type), intent(inout),    target  :: mr(nummr)
     type(field_type), intent(in),       target  :: u
 
-    type(evaluator_xyz_type)  :: evaluator_theta
     integer(i_def)            :: mesh 
     type(function_space_type), pointer :: theta_fs  => null()
     type(operator_type),       pointer :: mm_wtheta => null()
@@ -299,7 +294,6 @@ contains
     theta_fs => function_space_collection%get_fs( mesh, &
                                                   element_order, &
                                                   mr(1)%which_function_space() )
-    evaluator_theta = evaluator_xyz_type( theta_fs%get_ndf( ), theta_fs%get_nodes( ) )
     mm_wtheta          => get_mass_matrix(5)
     mm_diagonal_wtheta => get_mass_matrix_diagonal(4)
 
@@ -320,8 +314,8 @@ contains
     do imr=1,nummr
       call invoke_copy_field_data(mr(imr), mr_n)
       do stage = 1,num_rk_stage
-        call invoke_sample_poly_adv(mr_prediction(stage), u, mr(imr), &
-                                    advective_stencil_extent, evaluator_theta)
+        call invoke_sample_poly_adv(mr_prediction(stage), mr(imr), u, &
+                                    advective_stencil_extent) 
         call invoke_set_field_scalar(0.0_r_def, mr_adv)
         do st = 1, stage
           call invoke_axpy(-ak(stage,st), mr_prediction(st), mr_adv,  mr_adv)

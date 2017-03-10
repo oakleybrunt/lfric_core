@@ -37,7 +37,6 @@ module gw_init_fields_alg_mod
   use field_mod,                       only: field_type
   use quadrature_mod,                  only: quadrature_type, GAUSSIAN
   use operator_mod,                    only: operator_type
-  use evaluator_xyz_mod,               only: evaluator_xyz_type
 
   ! Handles
   use fs_continuity_mod,               only: W2, W3, Wtheta
@@ -73,8 +72,7 @@ contains
     type( field_type ), allocatable    :: state(:)
     type( field_type )                 :: r_u
     type( operator_type )              :: mm_w2
-    type(function_space_type), pointer :: w2_fs, wtheta_fs => null()
-    type(evaluator_xyz_type)           :: evaluator
+    type(function_space_type), pointer :: w2_fs => null()
     integer :: n_fields
 
     qr = quadrature_type( element_order + 3, GAUSSIAN )
@@ -85,10 +83,7 @@ contains
 
       call log_event( "Gravity waves: Initialising prognostic fields", LOG_LEVEL_INFO )
 
-      wtheta_fs => function_space_collection%get_fs( mesh_id, element_order, &
-                                                     buoyancy%which_function_space() )
-      evaluator = evaluator_xyz_type( wtheta_fs%get_ndf( ), wtheta_fs%get_nodes( ))
-      call invoke_initial_buoyancy_kernel( buoyancy, chi, evaluator )
+      call invoke_initial_buoyancy_kernel( buoyancy, chi )
 
       ! Initialise U and p according to formulation
       r_u = field_type( vector_space =                                           &

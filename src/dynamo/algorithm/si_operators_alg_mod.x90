@@ -104,7 +104,6 @@ end subroutine create_si_operators
 !> Subroutine to compute the si operators
 subroutine compute_si_operators(ref_state)
   use quadrature_mod,                  only: quadrature_type, GAUSSIAN
-  use evaluator_xyz_mod,               only: evaluator_xyz_type
   use weighted_m3_rho_kernel_mod,      only: weighted_m3_rho_kernel_type
   use weighted_m3_exner_kernel_mod,    only: weighted_m3_exner_kernel_type
   use weighted_div_kernel_mod,         only: weighted_div_kernel_type
@@ -136,8 +135,8 @@ subroutine compute_si_operators(ref_state)
   integer(i_def)                       :: mesh
   integer(i_def)                       :: fs_handle
   type(field_type)                     :: ones, w2_multiplicity
-  type(function_space_type),   pointer :: u_fs, theta_fs, rho_fs => null()
-  type(evaluator_xyz_type)             :: evaluator
+  type(function_space_type),   pointer :: u_fs => null()
+  type(function_space_type),   pointer :: theta_fs=> null()
 
   call log_event( "Dynamo: computing si_operators", LOG_LEVEL_INFO )
 
@@ -173,8 +172,7 @@ subroutine compute_si_operators(ref_state)
   call invoke_set_field_scalar( 1.0_r_def, ones )
   call invoke_set_field_scalar( 0.0_r_def, rho_at_u )
 
-  evaluator = evaluator_xyz_type( u_fs%get_ndf( ), u_fs%get_nodes( ) )
-  call invoke_sample_flux_kernel( rho_at_u, ones, w2_multiplicity, rho, evaluator )
+  call invoke_sample_flux_kernel( rho_at_u, ones, w2_multiplicity, rho)
 
   if(wtheta_on) then
     mt => get_mass_matrix(5)
@@ -191,9 +189,7 @@ subroutine compute_si_operators(ref_state)
   ! compute terms for tridiagonal preconditioner
   if ( si_preconditioner == solver_si_preconditioner_tridiagonal ) then
     fs_handle = ref_state(3)%which_function_space()
-    rho_fs => function_space_collection%get_fs(mesh, element_order, fs_handle)
-    evaluator = evaluator_xyz_type( rho_fs%get_ndf( ), rho_fs%get_nodes( ) )
-    call invoke_compute_tri_precon_kernel(tri_precon, theta, rho, chi, evaluator)
+    call invoke_compute_tri_precon_kernel(tri_precon, theta, rho, chi)
   end if
   if ( normalise ) then
     if ( si_preconditioner == solver_si_preconditioner_tridiagonal) then

@@ -56,7 +56,6 @@ module rk_transport_mod
   use function_space_mod,                only: function_space_type
   use function_space_collection_mod,     only: function_space_collection
   use quadrature_mod,                    only: quadrature_type, GAUSSIAN
-  use evaluator_xyz_mod,                 only: evaluator_xyz_type
   use operator_mod,                      only: operator_type
 
   ! Algorithms
@@ -75,7 +74,6 @@ module rk_transport_mod
   type( field_type )              :: mt_lumped
   type( field_type )              :: rho0, theta0
   type( field_type )              :: ones
-  type(evaluator_xyz_type)        :: evaluator_u, evaluator_theta
 
   integer(i_def) :: flux_stencil_extent, &
                     advective_stencil_extent
@@ -170,10 +168,6 @@ contains
     rho0   = rho
     theta0 = theta
 
-    ! Instantiate the required evaluators
-    evaluator_u = evaluator_xyz_type(u_fs%get_ndf( ), u_fs%get_nodes( ))
-    evaluator_theta = evaluator_xyz_type(theta_fs%get_ndf( ), theta_fs%get_nodes( ))
-
   end subroutine rk_transport_init
 
   !> @brief A Runge-Kutta time-discretisation of the transport equation
@@ -230,9 +224,9 @@ contains
         case(transport_operators_fv)
           ! Use polynomial reconstruction
           call invoke_sample_poly_flux( mass_flux, u, rho, &
-                                        flux_stencil_extent, evaluator_u )
-          call invoke_sample_poly_adv( rt_prediction(stage), u, theta, &
-                                       advective_stencil_extent, evaluator_theta )
+                                        flux_stencil_extent )
+          call invoke_sample_poly_adv( rt_prediction(stage), theta, u, &
+                                       advective_stencil_extent )
         case(transport_operators_fem)      
           ! Use FEM projection
           ! Rho advection, compute mass flux

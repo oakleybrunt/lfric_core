@@ -78,13 +78,12 @@ contains
     !! @param[in] ndf_chi Number of degrees of freedom per cell for chi
     !! @param[in] undf_chi Number of total degrees of freedom for chi
     !! @param[in] map_chi Dofmap for the cell at the base of the column
-    !! @param[in] chi_basis Basis functions evaluated at gaussian quadrature points
     !! @param[in] chi_1 X component of the chi coordinate field
     !! @param[in] chi_2 Y component of the chi coordinate field
     !! @param[in] chi_3 Z component of the chi coordinate field
     subroutine initial_mr_code(nlayers, ndf_wtheta, undf_wtheta, map_wtheta,               &
                                theta, rho_in_wth, mr_v, mr_c, mr_r, mr_nc, mr_nr,          &
-                               ndf_chi, undf_chi, map_chi, chi_basis, chi_1, chi_2, chi_3)
+                               ndf_chi, undf_chi, map_chi, chi_1, chi_2, chi_3)
 
         implicit none
 
@@ -95,7 +94,6 @@ contains
         real(kind=r_def), dimension(undf_wtheta),   intent(inout) :: mr_v, mr_c, mr_r, mr_nc, mr_nr
         real(kind=r_def), dimension(undf_wtheta),   intent(in)    :: theta, rho_in_wth
         real(kind=r_def), dimension(undf_chi),              intent(in)    :: chi_1, chi_2, chi_3
-        real(kind=r_def), dimension(1,ndf_chi,ndf_wtheta),  intent(in)    :: chi_basis
 
         !Internal variables
         integer(kind=i_def)                 :: k, df

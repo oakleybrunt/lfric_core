@@ -14,11 +14,11 @@
 
 module initial_theta_kernel_mod
 
-    use argument_mod,                  only: arg_type,  &
+    use argument_mod, only: arg_type, func_type,        &
         GH_FIELD, GH_WRITE, GH_READ,                    &
         ANY_SPACE_9, ANY_SPACE_1, GH_BASIS,             &
         GH_DIFF_BASIS,                                  &
-        CELLS
+        CELLS, EVALUATOR_XYZ
     use constants_mod,                 only: r_def, i_def
     use kernel_mod,                    only: kernel_type
     use idealised_config_mod,          only: test
@@ -35,7 +35,11 @@ module initial_theta_kernel_mod
             arg_type(GH_FIELD,   GH_WRITE, ANY_SPACE_1),                  &
             arg_type(GH_FIELD*3, GH_READ, ANY_SPACE_9)                    &
             /)
+        type(func_type) :: meta_funcs(1) = (/                             &
+             func_type(ANY_SPACE_9, GH_BASIS)                             &
+             /)
         integer :: iterates_over = CELLS
+        integer :: evaluator_shape = EVALUATOR_XYZ
 
     contains
         procedure, nopass :: initial_theta_code

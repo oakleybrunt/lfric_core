@@ -17,7 +17,7 @@ use argument_mod,            only : arg_type, func_type,                     &
                                     GH_FIELD, GH_READ, GH_INC,               &
                                     ANY_SPACE_9, ANY_SPACE_1,                         &
                                     GH_DIFF_BASIS, GH_BASIS,                 &
-                                    CELLS
+                                    CELLS, EVALUATOR_XYZ
 use constants_mod,           only : r_def
 
 implicit none
@@ -38,6 +38,7 @@ type, public, extends(kernel_type) :: convert_hdiv_field_kernel_type
        func_type(ANY_SPACE_9, GH_DIFF_BASIS)                                    &
        /)
   integer :: iterates_over = CELLS
+  integer :: evaluator_shape = EVALUATOR_XYZ
 contains
   procedure, nopass ::convert_hdiv_field_code
 end type

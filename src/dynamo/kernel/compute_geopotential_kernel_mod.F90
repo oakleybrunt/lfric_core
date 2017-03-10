@@ -17,7 +17,7 @@ module compute_geopotential_kernel_mod
 use argument_mod,         only : arg_type, func_type,                      &
                                  GH_FIELD, GH_READ, GH_WRITE,              &
                                  W0, ANY_SPACE_9, GH_BASIS,                &
-                                 CELLS
+                                 CELLS, EVALUATOR_XYZ
 use base_mesh_config_mod, only : geometry, &
                                  base_mesh_geometry_spherical
 use constants_mod,        only : r_def
@@ -35,9 +35,13 @@ type, public, extends(kernel_type) :: compute_geopotential_kernel_type
   private
   type(arg_type) :: meta_args(2) = (/                                  &
        arg_type(GH_FIELD,   GH_WRITE, W0),                             &
-       arg_type(GH_FIELD*3, GH_READ, ANY_SPACE_9)                               &
+       arg_type(GH_FIELD*3, GH_READ, ANY_SPACE_9)                      &
+       /)
+  type(func_type) :: meta_funcs(1) = (/                                &
+       func_type(ANY_SPACE_9, GH_BASIS)                                &
        /)
   integer :: iterates_over = CELLS
+  integer :: evaluator_shape = EVALUATOR_XYZ
 contains
   procedure, nopass :: compute_geopotential_code
 end type
