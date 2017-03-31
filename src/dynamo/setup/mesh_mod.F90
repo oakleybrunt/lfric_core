@@ -155,6 +155,9 @@ module mesh_mod
     !> edge entities around each cell
     integer(i_def), allocatable :: edge_ownership(:,:)
 
+    !> Local index of face in adjacent cells
+    integer(i_def), allocatable :: face_id_in_adjacent_cell(:,:)
+
     !==========================================================================
     ! Colouring storage: these form the arguments to set_colours().
     !==========================================================================
@@ -217,7 +220,7 @@ module mesh_mod
     procedure, public :: get_gid_from_lid
     procedure, public :: get_mesh_map
     procedure, public :: add_mesh_map
-
+    procedure, public :: get_adjacent_face
 
     ! Get total_ranks and local_rank from partition
 
@@ -657,6 +660,15 @@ contains
 
     if (.not. allocated(self%mesh_maps) ) &
         allocate ( self%mesh_maps, source = mesh_map_collection_type() )
+
+    if ( .not. allocated(self%face_id_in_adjacent_cell) ) &
+      allocate ( self%face_id_in_adjacent_cell(nedges_per_2d_cell, self%ncells_2d_with_ghost) )
+
+    call calc_face_id_in_adjacent_cell( self%face_id_in_adjacent_cell, &
+                                        nedges_per_2d_cell, &
+                                        self%cell_next, &
+                                        nfaces, &
+                                        self%ncells_2d_with_ghost )
 
   end function mesh_constructor
 
@@ -1750,6 +1762,57 @@ contains
 
   end function get_mesh_map
 
+  !============================================================================
+  !> @details Compute the local id of each face in the adjacent cells
+  subroutine calc_face_id_in_adjacent_cell( face_id_in_adjacent_cell, &
+                                            num_face_per_cell, & 
+                                            cell_next, nfaces, &
+                                            ncells )
+
+    implicit none
+
+    integer(i_def), intent(in)  :: num_face_per_cell, ncells, nfaces
+    integer(i_def), intent(in)  :: cell_next(nfaces,ncells)
+    integer(i_def), intent(out) :: face_id_in_adjacent_cell(num_face_per_cell,ncells)
+
+    integer(i_def) :: cell, face, next_cell, next_face
+
+    do cell = 1, ncells
+      do face = 1,num_face_per_cell
+        if ( cell_next(face,cell) > 0_i_def ) then
+          next_cell = cell_next(face,cell)
+          do next_face = 1, num_face_per_cell
+            if ( cell_next(next_face,next_cell) == cell ) then
+              ! We have found the local id in next_cell that takes us back to 
+              ! the original cell, so store this value in the array
+              face_id_in_adjacent_cell(face,cell) = next_face
+            end if
+          end do
+        else
+          ! There are no neighbour cells so put a negative number in the
+          ! adjacency array
+          face_id_in_adjacent_cell(face,cell) = mod(face+2_i_def,4_i_def)
+        end if
+      end do
+    end do
+
+  end subroutine calc_face_id_in_adjacent_cell
+
+  !> @details This function returns the local id of faces in 
+  !> horizontally adjacent faces
+  !> @return adjacent_face local id of faces in neighbouring cells  
+  !============================================================================
+  function get_adjacent_face(self) result (adjacent_face)
+
+  implicit none
+  class(mesh_type), target, intent(in) :: self
+  integer(i_def),   pointer            :: adjacent_face(:,:)
+
+  adjacent_face => self%face_id_in_adjacent_cell(:,:)
+
+  end function get_adjacent_face
+  !============================================================================
+
   !-----------------------------------------------------------------------------
   !  Function to clear up objects - called by destructor
   !-----------------------------------------------------------------------------
@@ -2492,6 +2555,15 @@ contains
     if (.not. allocated(self%mesh_maps)) &
         allocate ( self%mesh_maps,       &
                    source = mesh_map_collection_type() )
+
+    if ( .not. allocated( self%face_id_in_adjacent_cell ) ) &
+        allocate ( self%face_id_in_adjacent_cell(4, self%ncells_2d) )
+
+    call calc_face_id_in_adjacent_cell( self%face_id_in_adjacent_cell, &
+                                        4, &
+                                        self%cell_next, &
+                                        6, &
+                                        self%ncells_2d )
 
   end function mesh_constructor_unit_test_data
 

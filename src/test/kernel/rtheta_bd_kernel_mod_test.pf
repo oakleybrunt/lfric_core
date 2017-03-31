@@ -145,7 +145,7 @@ contains
 
     use rtheta_bd_kernel_mod,          only : rtheta_bd_code
     use reference_element_mod,         only : nfaces_h
-
+    use mesh_mod,                      only : mesh_type
 
     implicit none
 
@@ -174,8 +174,8 @@ contains
     real(kind=r_def), pointer :: wh(:)   => null(), &
                                  wv(:)   => null()
 
-    integer, allocatable    :: adjacent_face(:)
-
+    integer(i_def), pointer :: adjacent_face(:,:) => null()
+    type(mesh_type), pointer :: mesh => null()
     ! Test kernel
     theta   = field_type( vector_space = this%wtheta_fs )
 
@@ -196,8 +196,6 @@ contains
     nqp_h_1d = int(nqp_h**(1./2.))
 
     allocate(xp_f(nfaces_h, nqp_h_1d, 2))
-
-    allocate(adjacent_face(nfaces_h))
 
     ndf_w2      = u_proxy%vspace%get_ndf( )
     undf_w2     = u_proxy%vspace%get_undf()
@@ -234,35 +232,28 @@ contains
     theta_proxy%data(:) = 3000.0_r_def
     u_proxy%data(:) = 20.0_r_def
 
-    do cell = 1, r_theta_bd_proxy%vspace%get_ncell()
+    mesh => this%r_theta_bd%get_mesh()
+    adjacent_face => mesh%get_adjacent_face()
+    cell = 5
 
-      do ii = 1, nfaces_h
-        do jj = 1, nfaces_h
-
-          if(this%cross_stencil_w2_map(ii, 1, cell) == this%cross_stencil_w2_map(jj, ii+1, cell)) adjacent_face(ii) = jj
-
-        end do
-      end do
-
-      call rtheta_bd_code( nlayers,                                 &
-                           ndf_w2, undf_w2,                         &
-                           this%cross_stencil_w2_map(:,:,cell),     &
-                           this%cross_stencil_w2_size,              &
-                           ndf_wtheta, undf_wtheta,                 &
-                           this%cross_stencil_wtheta_map(:,:,cell), &
-                           this%cross_stencil_wtheta_size,          &
-                           r_theta_bd_proxy%data,                   &
-                           theta_proxy%data,                        &
-                           u_proxy%data,                            &
-                           nqp_v, nqp_h_1d, wv,                     &
-                           this%basis_w2_face,                      &
-                           this%basis_wtheta_face, adjacent_face )
-    end do
+    call rtheta_bd_code( nlayers,                                 &
+                         ndf_w2, undf_w2,                         &
+                         this%cross_stencil_w2_map(:,:,cell),     &
+                         this%cross_stencil_w2_size,              &
+                         ndf_wtheta, undf_wtheta,                 &
+                         this%cross_stencil_wtheta_map(:,:,cell), &
+                         this%cross_stencil_wtheta_size,          &
+                         r_theta_bd_proxy%data,                   &
+                         theta_proxy%data,                        &
+                         u_proxy%data,                            &
+                         nqp_v, nqp_h_1d, wv,                     &
+                         this%basis_w2_face,                      &
+                         this%basis_wtheta_face, adjacent_face(:,cell) )
 
     ! Simple test, check that when theta=constant, the code inputs no increment
     @assertEqual( answer, r_theta_bd_proxy%data(:), tol )
 
-    deallocate(adjacent_face, xp_f)
+    deallocate(xp_f)
 
   end subroutine test_all
 

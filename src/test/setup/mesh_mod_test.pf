@@ -397,6 +397,8 @@ contains
 
     type (mesh_type) :: mesh_1
 
+    integer(i_def), pointer :: adjacency(:,:) => null()
+
     real(r_def) :: test_real_array1_2d(3,8)
     real(r_def) :: test_real_array2_2d(3,8)
     mesh_1 = mesh_type( this%global_mesh, &
@@ -433,6 +435,12 @@ contains
 
     call mesh_1%get_cell_coords(23, test_real_array1_2d)
     @assertEqual ( test_real_array2_2d, test_real_array1_2d, 1.0e-2_r_def )
+
+    adjacency => mesh_1%get_adjacent_face()  
+    @assertEqual ( 3, adjacency(1,5) )
+    @assertEqual ( 4, adjacency(2,5) )
+    @assertEqual ( 1, adjacency(3,5) )
+    @assertEqual ( 2, adjacency(4,5) )
 
   end subroutine test_get_2d_array
 

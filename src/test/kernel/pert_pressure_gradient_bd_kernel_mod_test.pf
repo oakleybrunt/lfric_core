@@ -192,7 +192,7 @@ contains
 
     use pert_pressure_gradient_bd_kernel_mod, only : pert_pressure_gradient_bd_code
     use reference_element_mod,                only : nfaces_h
-
+    use mesh_mod,                             only : mesh_type
     implicit none
 
     class(pert_pressure_gradient_bd_test_type), intent(inout) :: this
@@ -220,7 +220,8 @@ contains
     integer(i_def)           :: undf_wtheta, undf_w2, undf_w3
     integer(i_def), pointer  :: map_w2(:), map_w0(:) => null()
 
-    integer, allocatable    :: adjacent_face(:)
+    integer,         pointer :: adjacent_face(:,:) => null()
+    type(mesh_type), pointer :: mesh => null()
 
     integer                 :: ff, ii, jj, k, i, j
 
@@ -275,8 +276,6 @@ contains
 
     allocate(xp_f(nfaces_h, nqp_h_1d, 2))
 
-    allocate(adjacent_face(nfaces_h))
-
     ndf_w3  = rho_proxy%vspace%get_ndf( )
     undf_w3 = rho_proxy%vspace%get_undf()
 
@@ -313,7 +312,7 @@ contains
 
     end do
 
-    cell = 1
+    cell = 5
 
     map_w2 => r_u_bd_proxy%vspace%get_cell_dofmap( cell )
 
@@ -324,15 +323,8 @@ contains
     rho_ref_proxy%data(:) = 0.8_r_def
     theta_ref_proxy%data(:) = 300.0_r_def
 
-    do ii = 1, nfaces_h
-      do jj = 1, nfaces_h
-
-        if(this%cross_stencil_w2_map(ii, 1, cell) == this%cross_stencil_w2_map(jj, ii+1, cell)) adjacent_face(ii) = jj
-
-      end do
-    end do
-
-
+    mesh => this%r_u_bd%get_mesh()
+    adjacent_face => mesh%get_adjacent_face()
     call pert_pressure_gradient_bd_code( nlayers,                                 &
                                          ndf_w2, undf_w2,                         &
                                          map_w2,                                  &
@@ -351,7 +343,7 @@ contains
                                          this%basis_w2_face,                      &
                                          this%basis_w3_face,                      &
                                          this%basis_wtheta_face,                  &
-                                         adjacent_face)
+                                         adjacent_face(:,cell))
 
     ! Test there is no contribution on the horizontal faces
     k = 1
@@ -361,7 +353,7 @@ contains
     ! Test there is no contribution on the horizontal faces
     @assertEqual(answer_h, r_u_bd_proxy%data(map_w2(2)+k), tol_h)
 
-    deallocate(adjacent_face, xp_f)
+    deallocate(xp_f)
 
   end subroutine test_all
 
