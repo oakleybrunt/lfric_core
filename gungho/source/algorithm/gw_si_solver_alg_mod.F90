@@ -46,7 +46,8 @@ module gw_si_solver_alg_mod
   use derived_config_mod,      only: bundle_size
   use solver_config_mod,       only: helmholtz_solve
   use field_indices_mod,       only: igw_u, igw_p, igw_b
-
+  use output_config_mod,       only: subroutine_timers 
+  use timer_mod,               only: timer
   implicit none
 
   private
@@ -126,6 +127,8 @@ contains
 
     type(field_type),             intent(inout) :: x0(bundle_size)
     type(field_type),             intent(in)    :: rhs0(bundle_size)
+  
+    if ( subroutine_timers ) call timer('gw_si_solver_alg')
 
     call rhs0(igw_u)%log_minmax(LOG_LEVEL_INFO,'max/min r_u = ')
     call rhs0(igw_p)%log_minmax(LOG_LEVEL_INFO,'max/min r_p = ')
@@ -137,6 +140,7 @@ contains
     else
       call gmres(x0, rhs0)
     end if
+    if ( subroutine_timers ) call timer('gw_si_solver_alg')
  
   end subroutine gw_si_solver_alg
 

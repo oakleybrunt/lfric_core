@@ -58,6 +58,9 @@ module advection_alg_mod
   use timestepping_config_mod,        only: dt
   use runge_kutta_init_mod,           only: num_rk_stage, ak
   use field_indices_mod,              only: igh_u, igh_t, igh_d
+  use output_config_mod,              only: subroutine_timers 
+  use timer_mod,                      only: timer
+
   implicit none
 
   private
@@ -108,7 +111,7 @@ contains
         flux_stencil_extent      = int(real(fv_flux_order+1)/2.0,i_def)
         advective_stencil_extent = int(real(fv_advective_order+1)/2.0,i_def)
       else
-        call log_event( "Dynamo: subgrid mappings needed for FV MoL with high order elements", LOG_LEVEL_ERROR )
+        call log_event( "Gungho: subgrid mappings needed for FV MoL with high order elements", LOG_LEVEL_ERROR )
       end if
 
       allocate ( mr_prediction(nstage_adv) )
@@ -158,6 +161,7 @@ contains
   type(field_type), pointer          :: m1_lumped_inv => null()
   integer(i_def)                     :: stage, st
 
+  if ( subroutine_timers ) call timer('advection_alg')
   chi    => get_coordinates()
 
   u     => state(igh_u)
@@ -300,6 +304,7 @@ contains
   call invoke_multiply_field(-1.0_r_def, r_rho, r_rho)
   call invoke( dg_matrix_vector_kernel_type(advection(3), r_rho, mm_w3_inv) )
 
+  if ( subroutine_timers ) call timer('advection_alg')
   end subroutine advection_alg
 
 !>@details A wrapper algorithm for computing the advection of the moisture prognostic
@@ -321,6 +326,7 @@ contains
 
     integer :: imr, stage, st
 
+    if ( subroutine_timers ) call timer('advection_mr_alg')
     call log_event( "Computing moisture advection...", LOG_LEVEL_INFO)
 
     theta_fs => mr(1)%get_function_space()
@@ -347,6 +353,7 @@ contains
         call invoke_axpy(dt, mr_inc, mr_n, mr(imr))
       end do
     end do
+    if ( subroutine_timers ) call timer('advection_mr_alg')
 
   end subroutine advection_mr_alg
 

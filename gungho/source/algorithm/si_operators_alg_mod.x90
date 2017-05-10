@@ -17,6 +17,9 @@ module si_operators_alg_mod
   use solver_config_mod,         only: si_pressure_preconditioner, &
                                        solver_si_pressure_preconditioner_tridiagonal, &
                                        normalise
+  use output_config_mod,         only: subroutine_timers 
+  use timer_mod,                 only: timer
+
   implicit none
   private
 
@@ -66,7 +69,8 @@ subroutine create_si_operators(mesh_id)
   type(function_space_type), pointer     :: w3_fs => null()
   type(function_space_type), pointer     :: wt_fs => null()
 
-  call log_event( "Dynamo: creating si_operators", LOG_LEVEL_INFO )
+  if ( subroutine_timers ) call timer('si_operators_alg:create')
+  call log_event( "Gungho: creating si_operators", LOG_LEVEL_INFO )
 
   w2_fs     => function_space_collection%get_fs( mesh_id, element_order, W2 )
   w3_fs     => function_space_collection%get_fs( mesh_id, element_order, W3 )
@@ -97,6 +101,7 @@ subroutine create_si_operators(mesh_id)
     tri_precon(3) = field_type(vector_space = w3_fs)
   end if
   helm_diag = field_type(vector_space = w3_fs)
+  if ( subroutine_timers ) call timer('si_operators_alg:create')
 
 end subroutine create_si_operators
 
@@ -140,7 +145,8 @@ subroutine compute_si_operators(ref_state)
   type(field_type)                     :: ones, w2_multiplicity
   type(function_space_type),   pointer :: u_fs => null()
 
-  call log_event( "Dynamo: computing si_operators", LOG_LEVEL_INFO )
+  if ( subroutine_timers ) call timer('si_operators_alg:compute')
+  call log_event( "Gungho: computing si_operators", LOG_LEVEL_INFO )
 
   qr = quadrature_type(element_order+3, GAUSSIAN)
   theta  => ref_state(igh_t)
@@ -206,6 +212,7 @@ subroutine compute_si_operators(ref_state)
   else
     call invoke( set_field_scalar(1.0_r_def, Helm_diag) )
   end if
+  if ( subroutine_timers ) call timer('si_operators_alg:compute')
 
 end subroutine compute_si_operators
 

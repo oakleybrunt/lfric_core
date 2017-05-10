@@ -70,6 +70,9 @@ module rk_alg_timestep_mod
   ! Field indices
   use field_indices_mod,                 only: igh_u, igh_t, igh_d
 
+  use output_config_mod,                   only: subroutine_timers 
+  use timer_mod,                           only: timer
+
   implicit none
 
   private
@@ -133,7 +136,7 @@ contains
 
     call advection_alg_init(mesh_id)
 
-    call log_event( "Dynamo: initialised timestepping algorithm", LOG_LEVEL_INFO )
+    call log_event( "Gungho: initialised timestepping algorithm", LOG_LEVEL_INFO )
 
   end subroutine rk_alg_init
 
@@ -168,7 +171,7 @@ contains
     type( field_type ), pointer :: chi(:) => null()
 
     integer(i_def) :: st, stage
-
+    if ( subroutine_timers ) call timer('rk_alg')
     qr = get_qr()
 
     ! Get geopotential field from runtime_constants
@@ -243,6 +246,7 @@ contains
     call invoke( copy_field(state(igh_u), u),     &
                  copy_field(state(igh_t), theta), &
                  copy_field(state(igh_d), rho) )
+    if ( subroutine_timers ) call timer('rk_alg')
 
   end subroutine rk_alg_step
 

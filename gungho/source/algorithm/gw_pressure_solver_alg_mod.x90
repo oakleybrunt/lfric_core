@@ -24,7 +24,8 @@ module gw_pressure_solver_alg_mod
                                                 gw_miniapp_constants_b_space_wtheta
   use operator_mod,                       only: operator_type
   use field_indices_mod,                  only: igw_u, igw_p, igw_b
-
+  use output_config_mod,                  only: subroutine_timers 
+  use timer_mod,                          only: timer
   implicit none
 
   private
@@ -175,6 +176,7 @@ contains
     type(field_type), intent(inout) :: x0(bundle_size)
     type(field_type), intent(in)    :: rhs0(bundle_size)
 
+    if ( subroutine_timers ) call timer('gw_pressure_solver_alg')
     ! Build Helmholtz RHS
     call build_gw_pressure_rhs(pressure_rhs, rhs0)
 
@@ -183,6 +185,7 @@ contains
 
     ! Back substitution to obtain other fields
     call back_substitute(x0, rhs0)
+    if ( subroutine_timers ) call timer('gw_pressure_solver_alg')
 
   end subroutine gw_pressure_solver_alg
 

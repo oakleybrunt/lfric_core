@@ -1,0 +1,90 @@
+!-------------------------------------------------------------------------------
+! (c) The copyright relating to this work is owned jointly by the Crown,
+! Met Office and NERC 2014.
+! However, it has been created with the help of the GungHo Consortium,
+! whose members are identified at https://puma.nerc.ac.uk/trac/GungHo/wiki
+!-------------------------------------------------------------------------------
+!> @brief Test the functionality of timer_mod
+!>
+!> @details A pFUnit test module to exercise the timer facilities.
+!>
+module timer_mod_test
+
+  use pFUnit_Mod
+  use timer_mod
+  use constants_mod, only: r_def, i_def, str_def
+
+  implicit none
+
+  private
+
+  public test_timer
+
+  @TestCase
+  type, extends(TestCase), public :: timer_test_type
+    private
+  contains
+    procedure setUp
+    procedure tearDown
+    procedure test_timer
+  end type timer_test_type
+
+contains
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  subroutine setUp( this )
+
+    class(timer_test_type), intent(inout) :: this
+
+    ! Nothing to do
+
+  end subroutine setUp
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  subroutine tearDown( this )
+
+    class(timer_test_type), intent(inout) :: this
+
+    ! Nothing to do
+
+  end subroutine tearDown
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  @test
+  subroutine test_timer(this)
+
+    use timer_mod, only: timer, output_timer
+
+    class(timer_test_type), intent(inout) :: this
+
+    integer(i_def)         :: i
+    real(r_def)            :: a, b, c
+    character(len=str_def) :: nme
+
+    call timer('SECTION 1')
+    c = 0.0_r_def
+    do i = 1, 100
+      a = real(i,r_def)
+      b = c + 1.0_r_def
+      c = 10.0_r_def*exp(-b)
+    end do
+    call timer('section 1')
+
+    do i = 1, 10
+      call timer('section 2')
+      a = cos(real(i,r_def))*exp(-real(i,r_def))
+      call timer('section 2')
+    end do
+    b = a
+
+    nme = get_routine_name(1)
+    @assertEqual('section 1',trim(nme))
+    nme = get_routine_name(2)
+    @assertEqual('section 2',trim(nme))
+    i = get_routine_total_calls(1)
+    @assertEqual(1_i_def,i)
+    i = get_routine_total_calls(2)
+    @assertEqual(10_i_def,i)
+   
+  end subroutine test_timer
+
+end module timer_mod_test

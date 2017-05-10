@@ -59,7 +59,7 @@ program gungho
                                              LOG_LEVEL_TRACE
   use restart_config_mod,             only : restart_filename => filename
   use restart_control_mod,            only : restart_type
-  use output_config_mod,              only : diagnostic_frequency
+  use output_config_mod,              only : diagnostic_frequency, subroutine_timers
   use output_alg_mod,                 only : output_alg
   use timestepping_config_mod,        only : method, &
                                            timestepping_method_semi_implicit, &
@@ -71,7 +71,7 @@ program gungho
                                              imr_nr, nummr
   use set_rho_alg_mod,                only : set_rho_alg
   use runtime_constants_mod,          only : get_cell_orientation
-
+  use timer_mod,                      only : timer, output_timer
   implicit none
 
   character(:), allocatable :: filename
@@ -118,7 +118,7 @@ program gungho
 
   ! Currently log_event can only use ESMF so it cannot be used before ESMF is
   ! initialised.
-  call log_event( 'Dynamo running...', LOG_LEVEL_INFO )
+  call log_event( 'gungho running...', LOG_LEVEL_INFO )
 
   allocate( filename, source='dynamo_configuration.nml' )
   call get_initial_filename( filename )
@@ -131,7 +131,7 @@ program gungho
   !-----------------------------------------------------------------------------
   ! model init
   !-----------------------------------------------------------------------------
-
+  if ( subroutine_timers ) call timer('gungho')
   ! Create the mesh and function space collection
   call init_gungho(mesh_id, local_rank, total_ranks)
 
@@ -317,7 +317,12 @@ program gungho
     call rk_transport_final( rho, theta)
   end if
 
-  call log_event( 'Dynamo completed', LOG_LEVEL_INFO )
+  if ( subroutine_timers ) then
+    call timer('gungho')
+    call output_timer()
+  end if
+  
+  call log_event( 'gungho completed', LOG_LEVEL_INFO )
 
   !-----------------------------------------------------------------------------
   ! Driver layer finalise

@@ -36,9 +36,10 @@ program gravity_wave
   use restart_config_mod,             only : restart_filename => filename
   use restart_control_mod,            only : restart_type
   use derived_config_mod,             only : set_derived_config
-  use output_config_mod,              only : diagnostic_frequency
+  use output_config_mod,              only : diagnostic_frequency, subroutine_timers
   use output_alg_mod,                 only : output_alg
   use checksum_alg_mod,               only : checksum_alg
+  use timer_mod,                      only : timer, output_timer
   implicit none
 
   character(:), allocatable :: filename
@@ -83,7 +84,7 @@ program gravity_wave
   !-----------------------------------------------------------------------------
   ! model init
   !-----------------------------------------------------------------------------
-
+  if ( subroutine_timers ) call timer('gravity wave')
 
   ! Create the mesh and function space collection
   call init_gungho(mesh_id, local_rank, total_ranks)
@@ -129,6 +130,10 @@ program gravity_wave
   call checksum_alg('gravity_wave', wind, 'wind', buoyancy, 'buoyancy', pressure, 'pressure')
 
   call log_event( 'Gravity wave simulation completed', LOG_LEVEL_INFO )
+  if ( subroutine_timers ) then
+    call timer('gravity wave')
+    call output_timer()
+  end if
 
   !-----------------------------------------------------------------------------
   ! Driver layer finalise

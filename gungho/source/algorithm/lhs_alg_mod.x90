@@ -20,6 +20,8 @@ module lhs_alg_mod
   use transport_config_mod,              only: operators, &
                                                transport_operators_fv
   use field_indices_mod,                 only: igh_u, igh_t, igh_d, igh_p
+  use output_config_mod,                 only: subroutine_timers 
+  use timer_mod,                         only: timer
 
   implicit none
 
@@ -102,11 +104,13 @@ contains
   type(field_type),        optional, intent(in)    :: ref_state(bundle_size)
   real(kind=r_def),                  intent(in)    :: tau_dt
 
+  if ( subroutine_timers ) call timer('lhs_alg')
   if ( use_operators ) then
     call operator_lhs_alg(lhs, state, tau_dt)
   else
     call on_the_fly_lhs_alg(lhs, state, ref_state, tau_dt)
   end if
+  if ( subroutine_timers ) call timer('lhs_alg')
 
   end subroutine lhs_alg
   !============================================================================!

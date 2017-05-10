@@ -96,7 +96,7 @@ contains
 
     if (.not.restart%read_file()) then           ! No check point to start from
 
-      call log_event( "Dynamo: Initialising prognostic fields", LOG_LEVEL_INFO )
+      call log_event( "Gungho: Initialising prognostic fields", LOG_LEVEL_INFO )
 
       ! Initialise Xi
       call invoke( set_field_scalar(0.0_r_def, xi) )
@@ -118,12 +118,12 @@ contains
         call invoke( set_rho_kernel_type ( rho, chi, initial_time, qr ) )
       end if
 
-      call log_event( "Dynamo: Mapping rho->rho_in_wth in same space as theta..", LOG_LEVEL_INFO )
+      call log_event( "Gungho: Mapping rho->rho_in_wth in same space as theta..", LOG_LEVEL_INFO )
 
       call map_rho_to_theta(rho, theta, rho_in_wth)      
       if (use_moisture) call invoke_initial_mr_kernel( theta, rho_in_wth, mr(:), chi )
 
-      call log_event( "Dynamo: Initialised prognostic fields", LOG_LEVEL_INFO )
+      call log_event( "Gungho: Initialised prognostic fields", LOG_LEVEL_INFO )
 
     else                                   ! Recorded check point to start from
 
@@ -189,10 +189,10 @@ contains
 
       deallocate(state)
 
-      call log_event( "Dynamo: Mapping rho->rho_in_wth in same space as theta..", LOG_LEVEL_INFO )
+      call log_event( "Gungho: Mapping rho->rho_in_wth in same space as theta..", LOG_LEVEL_INFO )
       call map_rho_to_theta(rho, theta, rho_in_wth)
 
-      call log_event( "Dynamo: Read prognostic fields from files", LOG_LEVEL_INFO )
+      call log_event( "Gungho: Read prognostic fields from files", LOG_LEVEL_INFO )
     end if
 
     !==========================================================================!

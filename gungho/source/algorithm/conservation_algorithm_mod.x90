@@ -28,6 +28,8 @@ module conservation_algorithm_mod
   use quadrature_mod,                  only: quadrature_type, GAUSSIAN
   use runtime_constants_mod,           only: get_geopotential, &
                                              get_coordinates
+  use output_config_mod,               only: subroutine_timers 
+  use timer_mod,                       only: timer
 
 implicit none
 
@@ -67,6 +69,8 @@ contains
     type( field_type ) :: mass, pv, aam, energy
     real(kind=r_def) :: total_mass, total_pv, total_aam, total_energy 
     integer(i_def)   :: mesh 
+
+    if ( subroutine_timers ) call timer('conservation_alg')
 
     geopotential => get_geopotential()
     chi          => get_coordinates()
@@ -110,6 +114,7 @@ contains
               tstep, total_mass, total_energy, total_pv, total_aam
     end if
     call log_event( log_scratch_space, LOG_LEVEL_INFO )
+    if ( subroutine_timers ) call timer('conservation_alg')
 
   end subroutine conservation_algorithm
 

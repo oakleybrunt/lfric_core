@@ -29,6 +29,8 @@ module helmholtz_solver_alg_mod
   use solver_config_mod,         only: normalise
   use derived_config_mod,        only: si_bundle_size, bundle_size
   use field_indices_mod,         only: igh_u, igh_t, igh_d, igh_p
+  use output_config_mod,         only: subroutine_timers 
+  use timer_mod,                 only: timer
   implicit none
 
   private 
@@ -131,6 +133,7 @@ contains
     type(field_type), intent(inout) :: x0(si_bundle_size)
     type(field_type), intent(in)    :: rhs0(si_bundle_size)
 
+    if ( subroutine_timers ) call timer('helmholtz_solver_alg')
     ! Build Helmholtz RHS
     call build_helmholtz_rhs(helmholtz_rhs, rhs0)
 
@@ -139,6 +142,7 @@ contains
 
     ! Back substitution to obtain other fields
     call back_substitute(x0, exner_increment, rhs0)
+    if ( subroutine_timers ) call timer('helmholtz_solver_alg')
 
   end subroutine helmholtz_solver_alg
 

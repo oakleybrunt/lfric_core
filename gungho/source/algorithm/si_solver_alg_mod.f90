@@ -47,6 +47,8 @@ module si_solver_alg_mod
   use timestepping_config_mod,   only: dt
   use derived_config_mod,        only: si_bundle_size, bundle_size
   use field_indices_mod,         only: igh_u, igh_t, igh_d, igh_p
+  use output_config_mod,         only: subroutine_timers 
+  use timer_mod,                 only: timer
 
   implicit none
   type(field_type), allocatable, private :: mm_diagonal(:)
@@ -81,6 +83,7 @@ contains
                                                        ! (probably the same place as alpha)
     integer(kind=i_def)                      :: i
 
+    if ( subroutine_timers ) call timer('si_solver_alg')
     ! Set up tau_dt: to be used here and in subsequent algorithms
     tau_dt = 0.5_r_def*dt
 
@@ -107,6 +110,7 @@ contains
       end do
     end if
 
+    if ( subroutine_timers ) call timer('si_solver_alg')
 
   end subroutine si_solver_alg
 !=============================================================================!

@@ -29,7 +29,7 @@ contains
 
     Ax_u  = field_type( vector_space = u%get_function_space() )
     Ax_xi = field_type( vector_space = xi%get_function_space() )
-    call log_event( "Dynamo: initialised boundary test algorithm", LOG_LEVEL_INFO )
+    call log_event( "Boundary test: initialised boundary test algorithm", LOG_LEVEL_INFO )
 
   end subroutine boundary_test_alg_init
 
@@ -69,7 +69,7 @@ contains
     call invoke_times_field(Ax_u,  u,  u)
     call invoke_times_field(Ax_xi, xi, xi)
 
-    call log_event( "Dynamo: finished boundary test algorithm", LOG_LEVEL_INFO )
+    call log_event( "Boundary test: finished boundary test algorithm", LOG_LEVEL_INFO )
 
   end subroutine boundary_test_alg
 

@@ -63,6 +63,7 @@
   write_nodal_output        = .true.
   diagnostic_frequency      = 3
   output_projections_on_w3  = .false.
+  subroutine_timers         = .true.
 /
 
 &planet

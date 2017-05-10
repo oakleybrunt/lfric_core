@@ -18,7 +18,7 @@ module iter_timestep_alg_mod
   ! Configuration options
   use restart_control_mod,       only: restart_type
   use formulation_config_mod,    only: use_moisture
-  use output_config_mod,         only: diagnostic_frequency
+  use output_config_mod,         only: diagnostic_frequency, subroutine_timers
   use solver_config_mod,         only: method, helmholtz_solve, use_operators
   use timestepping_config_mod,   only: dt, alpha, &
                                        outer_iterations, inner_iterations, &
@@ -66,6 +66,9 @@ use psykal_lite_mod,                   only: invoke_axpby, &
 
   ! Mixing settings
   use mixing_config_mod,                 only: viscosity
+
+  use timer_mod,                         only: timer
+
   implicit none
 
   private
@@ -182,6 +185,7 @@ contains
     real(kind=r_def)   :: varalpha, varbeta ! alpha, beta weight to use
                                             ! these may differ from input values
                                             ! during the spinup period
+    if ( subroutine_timers ) call timer('iter_timestep_alg')
 
     qr = get_qr()
     chi => get_coordinates()
@@ -257,6 +261,8 @@ contains
 
     call invoke( copy_field(state(igh_t), theta), &
                  copy_field(state(igh_d), rho) )
+
+    if ( subroutine_timers ) call timer('iter_timestep_alg')
 
   end subroutine iter_alg_step
 

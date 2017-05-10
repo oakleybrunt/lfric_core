@@ -47,6 +47,8 @@ module solver_mod
                                         get_mass_matrix, &
                                         get_mass_matrix_diagonal, &
                                         w3inv_id, w0_id, w1_id, w2_id, wt_id
+  use output_config_mod,         only : subroutine_timers 
+  use timer_mod,                 only : timer
   implicit none
 
   private
@@ -79,6 +81,8 @@ contains
     type(field_type),    pointer :: mmd => null()
 
     integer(i_def) :: fs_l, fs_r
+
+    if ( subroutine_timers ) call timer('solver_alg')
 
     fs_l = lhs%which_function_space()
     fs_r = rhs%which_function_space()
@@ -123,6 +127,7 @@ contains
           call log_event( log_scratch_space, LOG_LEVEL_ERROR )
       end select
     end if
+    if ( subroutine_timers ) call timer('solver_alg')
 
   end subroutine solver_algorithm
 

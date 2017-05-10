@@ -25,6 +25,8 @@ module output_alg_mod
   use mesh_mod,                          only: mesh_type
   use mesh_collection_mod,               only: mesh_collection
   use runtime_constants_mod,             only: get_coordinates
+  use output_config_mod,                 only: subroutine_timers 
+  use timer_mod,                         only: timer
 
   implicit none
 
@@ -63,6 +65,8 @@ contains
     integer(kind=i_def)                :: d, dir, fs_handle
     type(function_space_type), pointer :: fs
     character(len=1)                   :: uchar
+
+    if ( subroutine_timers ) call timer('output_alg')
 
     ! Determine the rank and set rank_name
     ! No rank name appended for a serial run
@@ -130,6 +134,7 @@ contains
     end if
 
     if (allocated(projected_field))deallocate( projected_field )
+    if ( subroutine_timers ) call timer('output_alg')
 
   end subroutine output_alg
 

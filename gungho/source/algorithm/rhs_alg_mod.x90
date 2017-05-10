@@ -34,6 +34,9 @@ module rhs_alg_mod
   use solver_mod,                          only: solver_algorithm
   use derived_config_mod,                  only: bundle_size
   use field_indices_mod,                   only: igh_u, igh_t, igh_d
+  use output_config_mod,                   only: subroutine_timers 
+  use timer_mod,                           only: timer
+
   implicit none
 
   private
@@ -73,6 +76,8 @@ contains
   type(field_type), pointer :: u ,theta, rho => null()
   type(field_type)          :: rhs_tmp(bundle_size)
 
+  if ( subroutine_timers ) call timer('rhs_alg')
+
   geopotential => get_geopotential()
   mm_w2        => get_mass_matrix(w2_id)
   mm_w3_inv    => get_mass_matrix(w3inv_id)
@@ -111,6 +116,7 @@ contains
 
   ! Compute rhs_rho
   call invoke( copy_field(rho, rhs(igh_d)) )
+  if ( subroutine_timers ) call timer('rhs_alg')
 
   end subroutine rhs_alg
 
