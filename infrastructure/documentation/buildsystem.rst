@@ -320,6 +320,33 @@ If a file ``optimisation/<platform id>/<algorithm>.py`` exists it will be used
 in preference to the global script. The algorithm name is taken from
 ``gungho/source/algorithms/<algorithm>.x90``.
 
+UM physics codes
+~~~~~~~~~~~~~~~~
+
+We attempt to develop LFric with single source physics taken from the UM
+repository.  In order to build in the UM code, fcm make is used to extract
+and preprocess the code; this is then rsync'd with the working build directory
+such that the LFRic build system can proceed with analysing and building this 
+code.  Since this process results in the build system analysing a considerable
+amount of additional code, the variable  ``UM_PHYSICS`` is passed to the make
+invocation to indicate this process is wanted, e.g.
+
+  ``make UM_PHYSICS=1 build-gungho``
+
+The make procedure will then carry out the ``fcm make`` invocation and then 
+subsequently rsync the extracted and preprocessed code to the ``working`` directory 
+tree. It is the intention that the UM code for the build is kept separate from the main
+ LFRic source and any modifications on the UM side should be made through the branches
+ incorporated at the fcm make stage (these could be a separate working copy). To change the 
+UM branches incorporated into the build, modify the ``um_sources`` environment variable in the 
+``set_environment.sh`` file.
+
+Since the UM code will continue to evolve and we will want to source difference 
+versions/branches from the UM repository, the environment variables needed by the fcm make
+command (including the paths to the repository/branches/working) are set in 
+``um_physics/set_environment.sh``.  Typically, this script will be maintained in the
+ LFRic repository in but can be overridden if a different UM source/configuration is required.
+
 fcm-make
 ~~~~~~~~
 

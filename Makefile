@@ -27,6 +27,8 @@
 # OPTIMISATION_PROFILE: PSyclone will use optimisation scripts for this
 #                       platform.
 #
+# UM_PHYSICS: Build in the UM physics codes.
+#
 ##############################################################################
 
 export IGNORE_DEPENDENCIES = netcdf MPI ESMF pfunit_mod
@@ -34,6 +36,13 @@ export EXTERNAL_DYNAMIC_LIBRARIES = esmf netcdff netcdf hdf5
 
 export ROOT := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 
+ifdef UM_PHYSICS
+  export UMPHYSICS_TARGETS = extract-um-physics
+  export UMPHYSICS_CLEAN   = clean-um-physics
+  export UM_PHYS_DIR=$(ROOT)/um_physics
+  export UM_ENV=$(UM_PHYS_DIR)/set_environment.sh
+  export UM_FCM=$(UM_PHYS_DIR)/
+endif
 ifdef OPTIMISATION_PROFILE
   export OPTIMISATION_PATH = gungho/optimisation/$(OPTIMISATION_PROFILE)
 endif
@@ -174,9 +183,21 @@ build-gungho: export PROGRAMS    := $(basename $(notdir $(shell find $(SOURCE_DI
 build-gungho: generate-configuration-gungho generate-psykal-gungho
 	$(MAKE) -f $(LFRIC_BUILD)/lfric.mk compile
 
+.PHONY: extract-um-physics
+extract-um-physics:
+	$(call MESSAGE,Building with, UM physics codes)
+	# Retrieve and preprocess the UM, Jules and Socrates code
+	# The UM_ENV file contains the appropriate locations and UM side environment variables
+	$(Q)source $(UM_ENV); fcm make -C $(UM_PHYS_DIR) -f  $(UM_PHYS_DIR)/fcm-make.cfg
+	# Copy (sync)  extracted, preprocessed code to somewhere in the gungho working directory
+	# Note that if wanting to modify UM source this should be done via the UM
+	# repository either through a working copy or branch 
+	$(Q)rsync -r $(UM_PHYS_DIR)/preprocess-atmos/src $(WORKING_DIR)/um_physics
+	$(call MESSAGE,Done building with, UM physics codes)
+
 .PHONY: generate-configuration-gungho
 generate-configuration-gungho: export SOURCE_DIR = gungho/source
-generate-configuration-gungho: extract-gungho extract-infrastructure
+generate-configuration-gungho: extract-gungho extract-infrastructure $(UMPHYSICS_TARGETS)
 	$(MAKE) -f $(LFRIC_BUILD)/lfric.mk configuration
 
 .PHONY: generate-psykal-gungho
@@ -321,7 +342,7 @@ extract-unit-test-mesh_tools:
 # Remove working files
 #
 .PHONY: clean
-clean: ALWAYS
+clean: $(UMPHYSICS_CLEAN)
 	$(call MESSAGE,Removing,work space)
 	$(Q)-rm -rf $(WORKING_DIR)
 	$(call MESSAGE,Removing,binaries)
@@ -330,3 +351,13 @@ clean: ALWAYS
 	$(Q)-rm -rf documentation
 	$(call MESSAGE,Removing,tests)
 	$(Q)-rm -rf tests
+
+.PHONY: clean-um-physics
+clean-um-physics: ALWAYS
+	$(call MESSAGE,Removing,preprocessed UM physics)
+	$(Q)-rm -rf $(UM_PHYS_DIR)/preprocess-atmos
+	$(call MESSAGE,Removing,extracted UM physics)
+	$(Q)-rm -rf $(UM_PHYS_DIR)/extract
+	$(call MESSAGE,Removing,.fcm-make files for UM physics)
+	$(Q)-rm -rf $(UM_PHYS_DIR)/.fcm-make
+
