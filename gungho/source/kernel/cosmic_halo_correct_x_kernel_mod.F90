@@ -8,11 +8,11 @@
 
 !> @brief Kernel which performs halo exchange dependent on halo cell orientation
 !>        when the exchange is in the x direction relative to the cubed-sphere
-!>        panel's orientation
-module cosmic_halo_exchange_x_kernel_mod
+!>        panel's orientation.
+module cosmic_halo_correct_x_kernel_mod
 
 use argument_mod,  only : arg_type, func_type,                  &
-                          GH_FIELD, GH_WRITE, GH_READ, GH_INC ,          &
+                          GH_FIELD, GH_WRITE, GH_READ, GH_INC,  &
                           W3, CELLS
 use constants_mod, only : r_def
 use kernel_mod,    only : kernel_type
@@ -22,8 +22,8 @@ implicit none
 !-------------------------------------------------------------------------------
 ! Public types
 !-------------------------------------------------------------------------------
-!> The type declaration for the kernel. Contains the metadata needed by the Psy layer
-type, public, extends(kernel_type) :: cosmic_halo_exchange_x_kernel_type
+!> The type declaration for the kernel. Contains the metadata needed by the Psy layer.
+type, public, extends(kernel_type) :: cosmic_halo_correct_x_kernel_type
   private
   type(arg_type) :: meta_args(4) = (/                                  &
        arg_type(GH_FIELD,   GH_WRITE,  W3),                            &
@@ -33,48 +33,48 @@ type, public, extends(kernel_type) :: cosmic_halo_exchange_x_kernel_type
        /)
   integer :: iterates_over = CELLS
 contains
-  procedure, nopass ::cosmic_halo_exchange_x_code
+  procedure, nopass ::cosmic_halo_correct_x_code
 end type
 
 !-------------------------------------------------------------------------------
 ! Constructors
 !-------------------------------------------------------------------------------
 
-! overload the default structure constructor for function space
-interface cosmic_halo_exchange_x_kernel_type
-   module procedure cosmic_halo_exchange_x_kernel_constructor
+! Overload the default structure constructor for function space
+interface cosmic_halo_correct_x_kernel_type
+   module procedure cosmic_halo_correct_x_kernel_constructor
 end interface
 
 !-------------------------------------------------------------------------------
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
-public cosmic_halo_exchange_x_code
+public cosmic_halo_correct_x_code
 contains
 
-type(cosmic_halo_exchange_x_kernel_type) function cosmic_halo_exchange_x_kernel_constructor() result(self)
+type(cosmic_halo_correct_x_kernel_type) function cosmic_halo_correct_x_kernel_constructor() result(self)
   return
-end function cosmic_halo_exchange_x_kernel_constructor
+end function cosmic_halo_correct_x_kernel_constructor
 
 !! @param[in] nlayers           The number of layers
+!! @param[in] rho_out           Density field after halo exchange
 !! @param[in] rho_x_in          Density field created by the x-direction Cosmic update
 !! @param[in] rho_y_in          Density field created by the y-direction Cosmic update
-!! @param[in] rho_out           Density field after halo exchange
 !! @param[in] cell_orientation  Orientation of cells, in particular halo cells
 !! @param[in] ndf_w3            The number of degrees of freedom per cell
 !! @param[in] undf_w3           The number of unique degrees of freedom
 !! @param[in] map_w3            Array holding the W3 dofmap
-subroutine cosmic_halo_exchange_x_code( nlayers,              &
-                                      rho_out,              &
-                                      rho_x_in,             &
-                                      rho_y_in,             &
-                                      cell_orientation,     &
-                                      ndf_w3,               &
-                                      undf_w3,              &
-                                      map_w3 )
+subroutine cosmic_halo_correct_x_code( nlayers,              &
+                                       rho_out,              &
+                                       rho_x_in,             &
+                                       rho_y_in,             &
+                                       cell_orientation,     &
+                                       ndf_w3,               &
+                                       undf_w3,              &
+                                       map_w3 )
 
   use log_mod, only : log_event, LOG_LEVEL_ERROR
 
-  !Arguments
+  ! Arguments
   integer, intent(in)                                   :: nlayers
   integer, intent(in)                                   :: ndf_w3
   integer, intent(in)                                   :: undf_w3
@@ -101,6 +101,6 @@ subroutine cosmic_halo_exchange_x_code( nlayers,              &
 
   end do
 
-end subroutine cosmic_halo_exchange_x_code
+end subroutine cosmic_halo_correct_x_code
 
-end module cosmic_halo_exchange_x_kernel_mod
+end module cosmic_halo_correct_x_kernel_mod

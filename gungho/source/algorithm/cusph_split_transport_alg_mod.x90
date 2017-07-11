@@ -5,9 +5,9 @@
 !-------------------------------------------------------------------------------
 !> @brief Algorithm which calculates the mass fluxes using the symmetric COSMIC
 !>        method.
-!>        The algorithm below outputs the mass fluxes at timestep n+1 (np1)
-!>        given the wind fields at timestep n and n+1 and the density field at
-!>        timestep n.
+!> @details The algorithm below outputs the mass fluxes at timestep n+1 (np1)
+!>          given the wind fields at timestep n and n+1 and the density field at
+!>          timestep n.
 module cusph_split_transport_alg_mod
 
   use constants_mod,                     only: r_def, i_def
@@ -24,8 +24,6 @@ module cusph_split_transport_alg_mod
 
   use oned_advective_density_update_alg_mod,  only: oned_advective_density_update_alg
   use oned_conservative_flux_alg_mod,         only: oned_conservative_flux_alg
-  use cosmic_halo_exchange_x_kernel_mod,      only: cosmic_halo_exchange_x_kernel_type
-  use cosmic_halo_exchange_y_kernel_mod,      only: cosmic_halo_exchange_y_kernel_type
 
   implicit none
 
@@ -36,16 +34,17 @@ contains
 
 !> @brief Algorithm which calculates the mass fluxes using the symmetric COSMIC
 !>        method.
-!>        The algorithm below outputs the mass fluxes at timestep n+1 (np1)
-!>        given the wind fields at timestep n and n+1 and the density field at
-!>        timestep n.
-!> @param[in] u_n               Winds at time level n
-!> @param[in] u_np1             Winds at time level n+1
-!> @param[in] rho               Density at time level n
-!> @param[in] chi               Coordinate field array
-!> @param[in] cell_orientation  Orientation of cells held in W3 field
-!> @param[in] mesh_id           mesh id
-!> @param[out] mass_flux        Mass fluxes in 2D used to update density
+!> @details The algorithm below outputs the mass fluxes at timestep n+1 (np1)
+!>          given the wind fields at timestep n and n+1 and the density field at
+!>          timestep n.
+!> @param[in]  u_n               Winds at time level n
+!> @param[in]  u_np1             Winds at time level n+1
+!> @param[in]  rho               Density at time level n
+!> @param[in]  chi               Coordinate field array
+!> @param[in]  cell_orientation  Orientation of cells held in W3 field
+!> @param[in]  mesh_id           mesh id
+!> @param[out] mass_flux         Mass fluxes in 2D used to update density
+!> @param[in]  detj_at_w2        Detj values at W2 dof locations
   subroutine cusph_split_transport_alg( u_n,                &
                                         u_np1,              &
                                         rho,                &
@@ -95,8 +94,8 @@ contains
     rho_y              = field_type( vector_space = w3_fs )
 
     ! Calculate the departure wind used for calculating departure points
-    call invoke_calc_departure_wind(departure_wind_n,u_n,chi)
-    call invoke_calc_departure_wind(departure_wind_np1,u_np1,chi)
+    call invoke_calc_departure_wind(departure_wind_n, u_n, chi)
+    call invoke_calc_departure_wind(departure_wind_np1, u_np1, chi)
 
     ! Separate finite-element wind field into x and y components
     call invoke( set_field_scalar(0.0_r_def,u_x_fem), &
@@ -104,35 +103,35 @@ contains
     call invoke_extract_xy(u_x_fem,u_y_fem,u_n,cell_orientation)
 
     ! Calculate the departure points for W2 nodal points at lowest order
-    call invoke( set_field_scalar(0.0_r_def,dep_pts_x), &
-                 set_field_scalar(0.0_r_def,dep_pts_y) )
-    call invoke_calc_deppts(departure_wind_n,departure_wind_np1,dep_pts_x,cell_orientation,x_direction,method,dep_pt_stencil_extent)
-    call invoke_calc_deppts(departure_wind_n,departure_wind_np1,dep_pts_y,cell_orientation,y_direction,method,dep_pt_stencil_extent)
+    call invoke( set_field_scalar(0.0_r_def, dep_pts_x), &
+                 set_field_scalar(0.0_r_def, dep_pts_y) )
+    call invoke_calc_deppts(departure_wind_n, departure_wind_np1, dep_pts_x,   &
+                   cell_orientation, x_direction, method, dep_pt_stencil_extent)
+    call invoke_calc_deppts(departure_wind_n, departure_wind_np1, dep_pts_y,   &
+                   cell_orientation, y_direction, method, dep_pt_stencil_extent)
 
     ! Perform two 1D advective updates in the x and y directions (horizontal)
-    call oned_advective_density_update_alg(x_direction,u_n, dep_pts_x, cell_orientation, detj_at_w2, rho, rho_adv_x)
-    call oned_advective_density_update_alg(y_direction,u_n, dep_pts_y, cell_orientation, detj_at_w2, rho, rho_adv_y)
+    call oned_advective_density_update_alg(x_direction, u_n, dep_pts_x,       &
+                                  cell_orientation, detj_at_w2, rho, rho_adv_x)
+    call oned_advective_density_update_alg(y_direction, u_n, dep_pts_y,       &
+                                  cell_orientation, detj_at_w2, rho, rho_adv_y)
 
     ! Average the two advective density updates with the density at timestep level n
-    call invoke_axpby(0.5_r_def,rho,0.5_r_def,rho_adv_x,rho_hat_adv_x)
-    call invoke_axpby(0.5_r_def,rho,0.5_r_def,rho_adv_y,rho_hat_adv_y)
-
-    ! Halo exchange density fields
-    call invoke( cosmic_halo_exchange_x_kernel_type(rho_x,rho_hat_adv_x,rho_hat_adv_y,     &
-                   cell_orientation),                                                      &
-                 cosmic_halo_exchange_y_kernel_type(rho_y,rho_hat_adv_x,rho_hat_adv_y,     &
-                   cell_orientation) )
+    call invoke_axpby(0.5_r_def, rho, 0.5_r_def, rho_adv_x, rho_hat_adv_x)
+    call invoke_axpby(0.5_r_def, rho, 0.5_r_def, rho_adv_y, rho_hat_adv_y)
 
     ! Calculate separately the conservative fluxes in the x and y directions (horizontal)
-    call invoke( set_field_scalar(0.0_r_def,mass_flux_x), &
-                 set_field_scalar(0.0_r_def,mass_flux_y), &
-                 set_field_scalar(0.0_r_def,mass_flux) )
+    call invoke( set_field_scalar(0.0_r_def, mass_flux_x), &
+                 set_field_scalar(0.0_r_def, mass_flux_y), &
+                 set_field_scalar(0.0_r_def, mass_flux) )
 
-    call oned_conservative_flux_alg(x_direction,u_n, dep_pts_x, cell_orientation, rho_y, mass_flux_x)
-    call oned_conservative_flux_alg(y_direction,u_n, dep_pts_y, cell_orientation, rho_x, mass_flux_y)
+    call oned_conservative_flux_alg(x_direction, u_n, dep_pts_x, cell_orientation,  &
+                                                                  rho_hat_adv_x, rho_hat_adv_y, mass_flux_x)
+    call oned_conservative_flux_alg(y_direction, u_n, dep_pts_y, cell_orientation,  &
+                                                                  rho_hat_adv_x, rho_hat_adv_y, mass_flux_y)
 
     ! Combine the mass fluxes in the x and y directions
-    call invoke_plus_field_data(mass_flux_x,mass_flux_y,mass_flux)
+    call invoke_plus_field_data(mass_flux_x, mass_flux_y, mass_flux)
 
   end subroutine cusph_split_transport_alg
 

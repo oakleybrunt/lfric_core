@@ -2662,6 +2662,204 @@ subroutine invoke_subgrid_coeffs(a0,a1,a2,rho,cell_orientation,direction,rho_app
   end subroutine invoke_subgrid_coeffs
 
 
+!-------------------------------------------------------------------------------  
+!> invoke_subgrid_coeffs: Invoke the calculation of subgrid rho coefficients
+!>                        The routine also includes a special type of halo
+!>                        exchange where the values in the halos need to be
+!>                        corrected. This is due to 1D direction updates of the
+!>                        density field and the panels of the cubed-sphere having
+!>                        different orientation.
+subroutine invoke_subgrid_coeffs_conservative( a0,                               &
+                                               a1,                               &
+                                               a2,                               &
+                                               rho_x,                            &
+                                               rho_y,                            &
+                                               rho_x_halos_corrected,            &
+                                               rho_y_halos_corrected,            &
+                                               cell_orientation,                 &
+                                               direction,                        &
+                                               rho_approximation_stencil_extent, &
+                                               halo_depth_to_compute  )
+
+    use flux_direction_mod,               only: x_direction, y_direction
+    use stencil_dofmap_mod,               only: stencil_dofmap_type, &
+                                                STENCIL_1DX,         &
+                                                STENCIL_1DY
+    use subgrid_coeffs_kernel_mod,        only: subgrid_coeffs_code
+    use subgrid_config_mod,               only: rho_approximation
+    use mesh_mod,                         only: mesh_type
+    use log_mod,                          only: log_event, LOG_LEVEL_ERROR
+    use cosmic_halo_correct_x_kernel_mod, only: cosmic_halo_correct_x_code
+    use cosmic_halo_correct_y_kernel_mod, only: cosmic_halo_correct_y_code
+
+    implicit none
+
+    type( field_type ), intent( inout ) :: a0
+    type( field_type ), intent( inout ) :: a1
+    type( field_type ), intent( inout ) :: a2
+    type( field_type ), intent( in )    :: rho_x
+    type( field_type ), intent( in )    :: rho_y
+    type( field_type ), intent( inout ) :: rho_x_halos_corrected
+    type( field_type ), intent( inout ) :: rho_y_halos_corrected
+    type( field_type ), intent( in )    :: cell_orientation
+    integer, intent(in)                 :: direction
+    integer, intent(in)                 :: rho_approximation_stencil_extent
+    integer, intent(in)                 :: halo_depth_to_compute
+
+    type( field_proxy_type )            :: rho_x_proxy
+    type( field_proxy_type )            :: rho_y_proxy
+    type( field_proxy_type )            :: rho_x_halos_corrected_proxy
+    type( field_proxy_type )            :: rho_y_halos_corrected_proxy
+    type( field_proxy_type )            :: a0_proxy
+    type( field_proxy_type )            :: a1_proxy
+    type( field_proxy_type )            :: a2_proxy
+    type( field_proxy_type )            :: cell_orientation_proxy
+
+    type(stencil_dofmap_type), pointer  :: map => null()
+    integer, pointer                    :: stencil_map(:,:) => null()
+    integer                             :: rho_stencil_size
+    integer                             :: cell
+    integer                             :: nlayers
+    integer                             :: ndf_w3
+    integer                             :: undf_w3
+    type(mesh_type), pointer            :: mesh => null()
+    integer                             :: d
+    logical                             :: swap
+    integer                             :: ncells_to_iterate
+    integer, pointer                    :: map_w3(:,:) => null()
+
+    a0_proxy   = a0%get_proxy()
+    a1_proxy   = a1%get_proxy()
+    a2_proxy   = a2%get_proxy()
+    rho_x_proxy  = rho_x%get_proxy()
+    rho_y_proxy  = rho_y%get_proxy()
+    rho_x_halos_corrected_proxy = rho_x_halos_corrected%get_proxy()
+    rho_y_halos_corrected_proxy = rho_y_halos_corrected%get_proxy()
+
+    cell_orientation_proxy = cell_orientation%get_proxy()
+
+    undf_w3 = rho_x_proxy%vspace%get_undf()
+    ndf_w3  = rho_x_proxy%vspace%get_ndf()
+    nlayers = rho_x_proxy%vspace%get_nlayers()
+
+    map_w3 => rho_x_proxy%vspace%get_whole_dofmap()
+
+    ! Note stencil grid types are of the form:
+    !                                   |5|
+    !                                   |3|
+    ! 1DX --> |4|2|1|3|5|  OR  1DY -->  |1|
+    !                                   |2|
+    !                                   |4|
+    if (direction == x_direction) then
+      map => rho_x_proxy%vspace%get_stencil_dofmap(STENCIL_1DX,rho_approximation_stencil_extent)
+    elseif (direction == y_direction) then
+      map => rho_x_proxy%vspace%get_stencil_dofmap(STENCIL_1DY,rho_approximation_stencil_extent)
+    end if
+    rho_stencil_size = map%get_size()
+    
+    swap = .false.
+    do d = 1,halo_depth_to_compute
+      if (rho_x_proxy%is_dirty(depth=d)) swap = .true.
+    end do
+    if ( swap ) call rho_x_proxy%halo_exchange(depth=halo_depth_to_compute)
+
+    swap = .false.
+    do d = 1,halo_depth_to_compute
+      if (rho_y_proxy%is_dirty(depth=d)) swap = .true.
+    end do
+    if ( swap ) call rho_y_proxy%halo_exchange(depth=halo_depth_to_compute)
+
+    mesh => a0%get_mesh()
+
+    do cell=1,mesh%get_last_edge_cell()
+
+      call cosmic_halo_correct_x_code(  nlayers,                            &
+                                        rho_x_halos_corrected_proxy%data,   &
+                                        rho_x_proxy%data,                   &
+                                        rho_y_proxy%data,                   &
+                                        cell_orientation_proxy%data,        &
+                                        ndf_w3,                             &
+                                        undf_w3,                            &
+                                        map_w3(:,cell))
+    end do
+
+    do cell=1,mesh%get_last_edge_cell()
+
+      call cosmic_halo_correct_y_code(  nlayers,                            &
+                                        rho_y_halos_corrected_proxy%data,   &
+                                        rho_x_proxy%data,                   &
+                                        rho_y_proxy%data,                   &
+                                        cell_orientation_proxy%data,        &
+                                        ndf_w3,                             &
+                                        undf_w3,                            &
+                                        map_w3(:,cell))
+    end do
+
+    if (halo_depth_to_compute==0) then
+      ncells_to_iterate = mesh%get_last_edge_cell()
+    elseif (halo_depth_to_compute > 0) then
+      ncells_to_iterate = mesh%get_last_halo_cell(halo_depth_to_compute)
+    else
+      call log_event( "Error: negative halo_depth_to_compute value in subgrid coeffs call", LOG_LEVEL_ERROR )
+    endif
+
+    !NOTE: The default looping limits for this type of field would be 
+    ! mesh%get_last_halo_cell(1) but this kernel requires a modified loop limit
+    ! inorder to function correctly. See ticket #1058.
+    ! The kernel loops over all core and some halo cells.
+
+    if (direction == x_direction) then
+      do cell = 1, ncells_to_iterate
+
+      stencil_map => map%get_dofmap(cell)
+
+      call subgrid_coeffs_code( nlayers,                                  &
+                                rho_approximation,                        &
+                                undf_w3,                                  &
+                                rho_y_halos_corrected_proxy%data,         &
+                                cell_orientation_proxy%data,              &
+                                ndf_w3,                                   &
+                                rho_stencil_size,                         &
+                                stencil_map,                              &
+                                direction,                                &
+                                a0_proxy%data,                            &
+                                a1_proxy%data,                            &
+                                a2_proxy%data                             &
+                                )
+
+      end do
+    elseif (direction == y_direction) then
+      do cell = 1, ncells_to_iterate
+
+      stencil_map => map%get_dofmap(cell)
+
+      call subgrid_coeffs_code( nlayers,                                  &
+                                rho_approximation,                        &
+                                undf_w3,                                  &
+                                rho_x_halos_corrected_proxy%data,         &
+                                cell_orientation_proxy%data,              &
+                                ndf_w3,                                   &
+                                rho_stencil_size,                         &
+                                stencil_map,                              &
+                                direction,                                &
+                                a0_proxy%data,                            &
+                                a1_proxy%data,                            &
+                                a2_proxy%data                             &
+                                )
+
+      end do
+
+    else
+        call log_event( "Direction not specified in subgrid_coeffs ", LOG_LEVEL_ERROR )
+    end if
+
+    call a0_proxy%set_dirty()
+    call a1_proxy%set_dirty()
+    call a2_proxy%set_dirty()
+
+  end subroutine invoke_subgrid_coeffs_conservative
+
+
 !------------------------------------------------------------------------------- 
 subroutine invoke_conservative_fluxes(    rho,          &
                                           dep_pts,      &
