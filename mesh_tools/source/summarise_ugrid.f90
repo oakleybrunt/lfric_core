@@ -3,25 +3,26 @@
 ! For further details please refer to the file LICENCE.original which you
 ! should have received as part of this distribution.
 !-----------------------------------------------------------------------------
-!
-! Load a UGRID format file and print some summary information.
-!
-! Usage:
-!     summarise_ugrid <filename>
-!
-!     filename - UGRID file
-!
+!> @mainpage Summarise UGRID
+!>
+!> @brief   Utility to summarise of each mesh contained if NetCDF file which
+!>          conforms to UGRID format convention.
+!> @details Usage:
+!>
+!>          summarise_ugrid <filename>
+!>          filename - UGRID file
+!>
+!-----------------------------------------------------------------------------
 program summarise_ugrid
 
   use cli_mod,         only : get_initial_filename
-  use constants_mod,   only : i_def, str_def
+  use constants_mod,   only : i_def, str_def, str_long
   use iso_fortran_env, only : output_unit
   use ncdf_quad_mod,   only : ncdf_quad_type
   use ugrid_2d_mod,    only : ugrid_2d_type
   use ugrid_file_mod,  only : ugrid_file_type
   use log_mod,         only : log_event, log_scratch_space, &
                               LOG_LEVEL_ERROR, LOG_LEVEL_INFO
-
 
   use ESMF
 
@@ -35,6 +36,12 @@ program summarise_ugrid
   integer(i_def) :: n_meshes, i
   character(str_def), allocatable :: mesh_names(:)
 
+  character(str_def)  :: mesh_name
+  character(str_def)  :: mesh_class
+  character(str_long) :: generator_inputs
+
+  character(str_def)  :: fmt_str
+
   integer(i_def) :: nodes, edges, faces
   integer(i_def) :: nodes_per_face, edges_per_face
   integer(i_def) :: nodes_per_edge, max_faces_per_node
@@ -42,21 +49,22 @@ program summarise_ugrid
   type(ESMF_VM)  :: vm
   integer        :: rc
 
-  CALL ESMF_Initialize(vm=vm, defaultlogfilename="summarise.Log", &
-                  logkindflag=ESMF_LOGKIND_MULTI, rc=rc)
+  ! Start up ESMF
+  CALL ESMF_Initialize( vm=vm, defaultlogfilename="summarise.Log", &
+                        logkindflag=ESMF_LOGKIND_MULTI, rc=rc )
   if (rc /= ESMF_SUCCESS) call log_event( 'Failed to initialise ESMF.', &
                                           LOG_LEVEL_ERROR )
 
 
-
+  ! Get filename from command line
   call get_initial_filename( filename, 'UGRID mesh file' )
 
+  ! Create object to manipulate UGRID conforming NetCDF file
   allocate(ncdf_quad_type::ugrid_file)
-
   call infile%set_file_handler(ugrid_file)
 
+  ! Get the names of all mesh topologies in the UGRID file
   call infile%get_nmeshes( trim(filename), n_meshes )
-
   allocate( mesh_names(n_meshes) )
   call infile%get_mesh_names( trim(filename), mesh_names )
 
@@ -70,47 +78,66 @@ program summarise_ugrid
       '================================================================', &
       LOG_LEVEL_INFO )
 
+
   do i=1, n_meshes
 
+    ! Load in specified mesh from UGRID file into ugrid file object
     call infile%set_from_file_read( trim(mesh_names(i)), &
                                     trim(adjustl(filename)) )
+
+    ! Extract data on the current mesh in the ugrid file object
+    call infile%get_metadata( mesh_name, mesh_class, generator_inputs )
 
     call infile%get_dimensions( nodes, edges, faces, nodes_per_face, &
                                 edges_per_face, nodes_per_edge,      &
                                 max_faces_per_node )
 
+    ! Write extracted data and log output
     write (log_scratch_space, '(A)') &
-      trim(mesh_names(i))//', with dimensions:'
+      '"'//trim(mesh_names(i))//'":'
     call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
 
-    write ( log_scratch_space, '(A,19X,I0)' ) '  Nodes: ', nodes
+    fmt_str='(A,T24,A)'
+    write ( log_scratch_space, fmt_str ) &
+        '  Class: ', trim(mesh_class)
     call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
 
-    write ( log_scratch_space, '(A,19X,I0)' ) '  Edges: ', edges
+    write ( log_scratch_space, fmt_str ) &
+        '  Generator inputs: ', trim(generator_inputs)
     call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
 
-    write ( log_scratch_space, '(A,19X,I0)' ) '  Faces: ', faces
+    fmt_str='(A,T24,I0)'
+    write ( log_scratch_space, fmt_str ) '  Nodes:', nodes
     call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
 
-    write ( log_scratch_space, '(A,10X,I0)' ) &
-        '  Nodes per face: ', nodes_per_face
+    write ( log_scratch_space, fmt_str ) '  Edges:', edges
     call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
 
-    write ( log_scratch_space, '(A,10X,I0)' ) &
-        '  Edges per face: ', edges_per_face
+    write ( log_scratch_space, fmt_str ) '  Faces:', faces
     call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
 
-    write ( log_scratch_space, '(A,10X,I0)' ) &
-        '  Nodes per edge: ', nodes_per_edge
+    write ( log_scratch_space, fmt_str ) &
+        '  Nodes per face:', nodes_per_face
     call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
 
-    write ( log_scratch_space, '(A,2X,I0)' ) &
-        '  Maximum facese per node: ', max_faces_per_node
+    write ( log_scratch_space, fmt_str ) &
+        '  Edges per face:', edges_per_face
+    call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
+
+    write ( log_scratch_space, fmt_str ) &
+        '  Nodes per edge:', nodes_per_edge
+    call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
+
+    write ( log_scratch_space, fmt_str ) &
+        '  Max. faces per node:', max_faces_per_node
     call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
 
   end do
 
-  deallocate( mesh_names )
+  call log_event(                                                         &
+      '================================================================', &
+      LOG_LEVEL_INFO )
 
+  deallocate( mesh_names )
 
 end program summarise_ugrid

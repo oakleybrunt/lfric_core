@@ -26,7 +26,7 @@ module runtime_constants_mod
   use field_mod,                         only: field_type
   use function_space_mod,                only: function_space_type
   use function_space_collection_mod,     only: function_space_collection
-  use fs_continuity_mod,                 only: W0, W1, W2, W2H, W3, Wtheta, Wchi
+  use fs_continuity_mod,                 only: W0, W1, W2, W3, Wtheta, Wchi
   use mesh_mod,                          only: mesh_type
   use operator_mod,                      only: operator_type
   use quadrature_mod,                    only: quadrature_type, GAUSSIAN
@@ -38,10 +38,7 @@ module runtime_constants_mod
                                                invoke_raise_field,                      &
                                                invoke_mpi_calc_cell_orientation,        &
                                                invoke_get_height_kernel,                &
-                                               invoke_mpi_detj_at_w2,                   &
-                                               invoke_divide_field
-
-  use multiplicity_kernel_mod,           only: multiplicity_kernel_type
+                                               invoke_mpi_detj_at_w2
 
   ! PsyKAl PSYClone kernels
   use compute_mass_matrix_kernel_w0_mod,     only: compute_mass_matrix_kernel_w0_type
@@ -56,6 +53,7 @@ module runtime_constants_mod
   use compute_curl_operator_kernel_mod,      only: compute_curl_operator_kernel_type
   use compute_div_operator_kernel_mod,       only: compute_div_operator_kernel_type
   use matrix_vector_kernel_mod,              only: matrix_vector_kernel_type
+  use matrix_vector_nobc_kernel_mod,         only: matrix_vector_nobc_kernel_type
   use get_height_kernel_mod,                 only: get_height_kernel_type
 
   use output_config_mod,                     only: subroutine_timers 
@@ -90,10 +88,6 @@ module runtime_constants_mod
   type(field_type), target        :: mt_lumped_inv
   type(field_type), target, dimension(3) :: chi
   type(field_type), target        :: height_wth, height_w3
-  type(field_type), target        :: nodal_rmultiplicity_w1
-  type(field_type), target        :: nodal_rmultiplicity_w2
-  type(field_type), target        :: nodal_rmultiplicity_w2h
-  type(field_type), target        :: nodal_rmultiplicity_w0
 
   ! Enumerated types
   integer(i_def), parameter, public :: w0_id    = 0_i_def
@@ -119,7 +113,6 @@ module runtime_constants_mod
   public :: get_curl
   public :: get_div
   public :: get_qr
-  public :: get_rmultiplicity
   public :: get_inverse_lumped_mass_matrix
   public :: get_height
 
@@ -134,7 +127,6 @@ contains
     type(function_space_type), pointer :: w0_fs     => null()
     type(function_space_type), pointer :: w1_fs     => null()
     type(function_space_type), pointer :: w2_fs     => null()
-    type(function_space_type), pointer :: w2h_fs    => null()
     type(function_space_type), pointer :: w3_fs     => null()
     type(function_space_type), pointer :: wtheta_fs => null()
     type(function_space_type), pointer :: wth_k0_fs => null() ! lowest order wth fs 
@@ -142,13 +134,6 @@ contains
     type(field_type)                   :: ones
     integer(i_def)                     :: chi_space
     integer(i_def)                     :: coord
-
-    ! Temporary fields
-    type(field_type) :: nodal_multiplicity_w1
-    type(field_type) :: nodal_multiplicity_w2
-    type(field_type) :: nodal_multiplicity_w2h
-    type(field_type) :: nodal_multiplicity_w0
-
 
     if ( subroutine_timers ) call timer('runtime_constants_alg')
     call log_event( "Gungho: creating runtime_constants", LOG_LEVEL_INFO )
@@ -159,7 +144,6 @@ contains
     w0_fs     => function_space_collection%get_fs( mesh_id, element_order, W0 )
     w1_fs     => function_space_collection%get_fs( mesh_id, element_order, W1 )
     w2_fs     => function_space_collection%get_fs( mesh_id, element_order, W2 )
-    w2h_fs    => function_space_collection%get_fs( mesh_id, element_order, W2H )
     w3_fs     => function_space_collection%get_fs( mesh_id, element_order, W3 )
     wtheta_fs => function_space_collection%get_fs( mesh_id, element_order, Wtheta )
     w3_k0_fs  => function_space_collection%get_fs( mesh_id,             0, W3 )
@@ -263,7 +247,10 @@ contains
     m1_lumped_inv  = field_type( vector_space = w1_fs )
     call invoke( set_field_scalar(1.0_r_def, ones), &
                  set_field_scalar(0.0_r_def, m1_lumped_inv) )
-    call invoke( matrix_vector_kernel_type( m1_lumped_inv, ones, mm_w1 ) )
+    ! Use a special version of matrix vector to avoid psyclone generating the
+    ! enforce_bc call, otherwise the invoke_divide_field below will divide by zero
+    ! See #678
+    call invoke( matrix_vector_nobc_kernel_type( m1_lumped_inv, ones, mm_w1 ) )
     call invoke_raise_field( m1_lumped_inv, -1_i_def)
 
     ones           = field_type( vector_space = w0_fs )
@@ -291,41 +278,6 @@ contains
     call invoke_get_height_kernel(height_w3, chi) 
     call invoke_get_height_kernel(height_wth, chi) 
     
-
-    !=== Create multiplicity for horizontally continuous fields ===!
-    ! NB most of the time we want 1/multiplicity
-    
-    nodal_multiplicity_w1  = field_type( vector_space = w1_fs )
-    nodal_multiplicity_w2  = field_type( vector_space = w2_fs )
-    nodal_multiplicity_w2h = field_type( vector_space = w2h_fs )
-    nodal_multiplicity_w0  = field_type( vector_space = w0_fs )
-    call invoke( set_field_scalar(0.0_r_def, nodal_multiplicity_w1) )
-    call invoke( multiplicity_kernel_type(nodal_multiplicity_w1) )
-    call invoke( set_field_scalar(0.0_r_def, nodal_multiplicity_w2) )
-    call invoke( multiplicity_kernel_type(nodal_multiplicity_w2) )
-    call invoke( set_field_scalar(0.0_r_def, nodal_multiplicity_w2h) )
-    call invoke( multiplicity_kernel_type(nodal_multiplicity_w2h) )
-    call invoke( set_field_scalar(0.0_r_def, nodal_multiplicity_w0) )
-    call invoke( multiplicity_kernel_type(nodal_multiplicity_w0) )
-
-    ! Calculate the reciprocals
-    nodal_rmultiplicity_w1  = field_type( vector_space = w1_fs )
-    nodal_rmultiplicity_w2  = field_type( vector_space = w2_fs )
-    nodal_rmultiplicity_w2h = field_type( vector_space = w2h_fs )
-    nodal_rmultiplicity_w0  = field_type( vector_space = w0_fs )
-    ones = field_type( vector_space = w1_fs )
-    call invoke( set_field_scalar(1.0_r_def, ones))
-    call invoke_divide_field(ones, nodal_multiplicity_w1, nodal_rmultiplicity_w1)
-    ones = field_type( vector_space = w2_fs )
-    call invoke( set_field_scalar(1.0_r_def, ones))
-    call invoke_divide_field(ones, nodal_multiplicity_w2, nodal_rmultiplicity_w2)
-    ones = field_type( vector_space = w2h_fs )
-    call invoke( set_field_scalar(1.0_r_def, ones))
-    call invoke_divide_field(ones, nodal_multiplicity_w2h, nodal_rmultiplicity_w2h)
-    ones = field_type( vector_space = w0_fs )
-    call invoke( set_field_scalar(1.0_r_def, ones))
-    call invoke_divide_field(ones, nodal_multiplicity_w0, nodal_rmultiplicity_w0)
-
     call log_event( "Gungho: created runtime_constants", LOG_LEVEL_INFO )
     if ( subroutine_timers ) call timer('runtime_constants_alg')
 
@@ -528,29 +480,5 @@ contains
     end select
 
   end function get_inverse_lumped_mass_matrix
-
-  !> Function to return a pointer to the reciprocal of the multiplicity field
-  !> @return The geopotential field
-  function get_rmultiplicity(space) result(rmultiplicity)
-    integer, intent(in) :: space
-    type(field_type), pointer :: rmultiplicity
-
-    select case (space)
-      case (W0)
-        rmultiplicity => nodal_rmultiplicity_w0
-      case (W1)
-        rmultiplicity => nodal_rmultiplicity_w1
-      case (W2)
-        rmultiplicity => nodal_rmultiplicity_w2
-      case (W2H)
-        rmultiplicity => nodal_rmultiplicity_w2h
-      case default
-        rmultiplicity => null()
-        call log_event( "RMultiplicity does not exist for given space", &
-           LOG_LEVEL_ERROR)
-        stop
-    end select
-
-  end function get_rmultiplicity
 
 end module runtime_constants_mod

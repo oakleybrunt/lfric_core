@@ -3,122 +3,127 @@
 ! For further details please refer to the file LICENCE.original which you
 ! should have received as part of this distribution.
 !-----------------------------------------------------------------------------
-!>  @brief      Module to define the gencube_ps_type, a subclass of the
-!!              ugrid_generator_type which generates a cubed-sphere mesh in a
-!!              format suitable for storage as a ugrid file.
-!!
-!!  @details    Type implements the ugrid_generator_type interface to
-!!              construct a cubed-sphere mesh.  All required connectivity is
-!!              calculated and made available to the ugrid writer.
-!!
-!!      +---+
-!!      | 5 |
-!!  +---+---+---+---+
-!!  | 1 | 2 | 3 | 4 |
-!!  +---+---+---+---+
-!!      | 6 |
-!!      +---+
-!!
+!> @brief   Module to define the gencube_ps_type, a subclass of the
+!>          ugrid_generator_type which generates a cubed-sphere mesh in a
+!>          format suitable for storage as a ugrid file.
+!> @details Type implements the ugrid_generator_type interface to
+!>          construct a cubed-sphere mesh.  All required connectivity is
+!>          calculated and made available to the ugrid writer.
+!>
+!>      +---+
+!>      | 5 |
+!>  +---+---+---+---+
+!>  | 1 | 2 | 3 | 4 |
+!>  +---+---+---+---+
+!>      | 6 |
+!>      +---+
+!>
 !-------------------------------------------------------------------------------
 module gencube_ps_mod
 !-------------------------------------------------------------------------------
-use ugrid_generator_mod,   only : ugrid_generator_type
-use constants_mod,         only : r_def, i_def, str_def
-use log_mod,               only : log_event, LOG_LEVEL_ERROR
-use reference_element_mod, only : W, S, E, N, SWB, SEB, NWB, NEB
+  use ugrid_generator_mod,   only : ugrid_generator_type
+  use constants_mod,         only : r_def, i_def, str_def, str_long
+  use log_mod,               only : log_event, LOG_LEVEL_ERROR
+  use reference_element_mod, only : W, S, E, N, SWB, SEB, NWB, NEB
 
-implicit none
-
-private
-
-!-------------------------------------------------------------------------------
-! Mesh Vertex directions: local aliases for reference_element_mod values
-integer(i_def), parameter :: NW = NWB
-integer(i_def), parameter :: NE = NEB
-integer(i_def), parameter :: SE = SEB
-integer(i_def), parameter :: SW = SWB
-
-! Prefix for error messages
-character(len=*), parameter       :: prefix = "[Cubed-Sphere Mesh] "
-character(len=str_def), parameter :: MESH_CLASS = "sphere"
-
-! flag to print out mesh data for debugging purposes
-logical, parameter :: debug = .false.
-!-------------------------------------------------------------------------------
-type, extends(ugrid_generator_type), public :: gencube_ps_type
+  implicit none
 
   private
 
-  character(str_def)          :: mesh_name
-  character(str_def)          :: mesh_class
-  integer(i_def)              :: ndivs
-  integer(i_def)              :: nsmooth
-  integer(i_def), allocatable :: cell_next(:,:)
-  integer(i_def), allocatable :: verts_on_cell(:,:)
-  integer(i_def), allocatable :: edges_on_cell(:,:)
-  integer(i_def), allocatable :: verts_on_edge(:,:)
-  real(r_def),    allocatable :: vert_coords(:,:)
+!-------------------------------------------------------------------------------
+  ! Mesh Vertex directions: local aliases for reference_element_mod values
+  integer(i_def), parameter :: NW = NWB
+  integer(i_def), parameter :: NE = NEB
+  integer(i_def), parameter :: SE = SEB
+  integer(i_def), parameter :: SW = SWB
+
+  ! Prefix for error messages
+  character(len=*), parameter       :: prefix = "[Cubed-Sphere Mesh] "
+  character(len=str_def), parameter :: MESH_CLASS = "sphere"
+
+  ! flag to print out mesh data for debugging purposes
+  logical, parameter :: debug = .false.
+!-------------------------------------------------------------------------------
+
+  type, extends(ugrid_generator_type), public :: gencube_ps_type
+
+    private
+
+    character(str_def)          :: mesh_name
+    character(str_def)          :: mesh_class
+    character(str_long)         :: generator_inputs
+    integer(i_def)              :: edge_cells
+    integer(i_def)              :: nsmooth
+    integer(i_def), allocatable :: cell_next(:,:)
+    integer(i_def), allocatable :: verts_on_cell(:,:)
+    integer(i_def), allocatable :: edges_on_cell(:,:)
+    integer(i_def), allocatable :: verts_on_edge(:,:)
+    real(r_def),    allocatable :: vert_coords(:,:)
+  contains
+    procedure :: calc_adjacency
+    procedure :: calc_face_to_vert
+    procedure :: calc_edges
+    procedure :: calc_coords
+    procedure :: generate
+    procedure :: get_metadata
+    procedure :: get_dimensions
+    procedure :: get_coordinates
+    procedure :: get_connectivity
+    procedure :: write_mesh
+    procedure :: orient_lfric
+    procedure :: smooth
+  end type gencube_ps_type
+
+!-------------------------------------------------------------------------------
+  interface gencube_ps_type
+    module procedure gencube_ps_constructor
+  end interface gencube_ps_type
+!-------------------------------------------------------------------------------
 contains
-  procedure :: calc_adjacency
-  procedure :: calc_face_to_vert
-  procedure :: calc_edges
-  procedure :: calc_coords
-  procedure :: generate
-  procedure :: get_metadata
-  procedure :: get_dimensions
-  procedure :: get_coordinates
-  procedure :: get_connectivity
-  procedure :: write_mesh
-  procedure :: orient_lfric
-  procedure :: smooth
-end type gencube_ps_type
 !-------------------------------------------------------------------------------
-interface gencube_ps_type
-  module procedure gencube_ps_constructor
-end interface gencube_ps_type
+!> @brief   Constructor for gencube_ps_type
+!> @details Accepts mesh dimension for initialisation and validation.
+!>
+!> @param[in]  mesh_name  Name of this mesh topology
+!> @param[in]  edge_cells Number of cells per panel edge of the cubed-sphere.
+!>                        Each panel will contain edge_cells*edge_cells faces.
+!>
+!> @return  self  Instance of gencube_ps_type 
 !-------------------------------------------------------------------------------
-contains
-!-------------------------------------------------------------------------------
-!>  @brief     Constructor for gencube_ps_type
-!!
-!!  @details   Accepts mesh dimension for initialisation and validation.
-!!
-!!  @param[in] mesh_name  Name of this mesh topology
-!!  @param[in] ndivs      Number of subdivisions per panale of the cubed-sphere.
-!!                        Each panel will contain ndivs*ndivs faces.
-!-------------------------------------------------------------------------------
-function gencube_ps_constructor( mesh_name, ndivs, nsmooth )  &
+function gencube_ps_constructor( mesh_name, edge_cells, nsmooth )  &
                          result( self )
 
   implicit none
 
   character(len=*), intent(in) :: mesh_name
-  integer(i_def),   intent(in) :: ndivs
+  integer(i_def),   intent(in) :: edge_cells
   integer(i_def),   intent(in) :: nsmooth
 
   type( gencube_ps_type ) :: self
 
-  if(ndivs < 3) then
-    call log_event(prefix//"Invalid dimension argument.", LOG_LEVEL_ERROR)
+  if (edge_cells < 3) then
+    call log_event( prefix//"Invalid dimension argument.", LOG_LEVEL_ERROR )
   end if
 
   self%mesh_name  = (trim(mesh_name))
   self%mesh_class = (trim(MESH_CLASS))
-  self%ndivs      = ndivs
+  self%edge_cells = edge_cells
   self%nsmooth    = nsmooth
+  write(self%generator_inputs,'(2(A,I0))')       &
+      'edge_cells=',    self%edge_cells,  ';' // &
+      'smooth_passes=', self%nsmooth
 
   return
 end function gencube_ps_constructor
+
 !-------------------------------------------------------------------------------
-!>  @brief       For each cell, calculates the set of cells to which it is
-!!               adjacent.
-!!
-!!  @details     Allocates and populates the instance's cell_next(:,:) array
-!!               with the id of each cell to which the index cell is adjacent.
-!!
-!!  @param[in]   self      The gencube_ps_type instance reference.
-!!  @param[out]  cell_next A rank 2 (4,ncells)-sized array containing the
-!!                         adjacency map.
+!> @brief   For each cell, calculates the set of cells to which it is adjacent.
+!> @details Allocates and populates the instance's cell_next(:,:) array
+!>          with the id of each cell to which the index cell is adjacent.
+!>
+!> @param[in]   self       The gencube_ps_type instance reference.
+!> @param[out]  cell_next  A rank 2 (4,ncells)-sized array containing the
+!>                         adjacency map.
 !-------------------------------------------------------------------------------
 subroutine calc_adjacency(self, cell_next)
 
@@ -127,164 +132,165 @@ subroutine calc_adjacency(self, cell_next)
   class(gencube_ps_type),      intent(in)  :: self
   integer(i_def), allocatable, intent(out) :: cell_next(:,:)
 
-  integer(i_def) :: ndivs, ncells, cpp
+  integer(i_def) :: edge_cells, ncells, cpp
   integer(i_def) :: cell, astat
 
 
-  ndivs = self%ndivs
-  cpp = self%ndivs*self%ndivs
-  ncells = 6*self%ndivs*self%ndivs
+  edge_cells = self%edge_cells
+  cpp = self%edge_cells*self%edge_cells
+  ncells = 6*self%edge_cells*self%edge_cells
 
   allocate(cell_next(4, ncells), stat=astat)
 
-  if(astat.ne.0) call log_event(prefix//"Failure to allocate cell_next.", &
-                                        LOG_LEVEL_ERROR)
+  if (astat /= 0)                                               &
+      call log_event( prefix//"Failure to allocate cell_next.", &
+                      LOG_LEVEL_ERROR )
 
   cell_next = 0
 
   ! Panel I
   do cell = 1, cpp
     ! Default: W, S, E, N
-    cell_next(:, cell) = (/ cell-1, cell+ndivs, cell+1, cell-ndivs /)
+    cell_next(:, cell) = (/ cell-1, cell+edge_cells, cell+1, cell-edge_cells /)
     ! Top edge
-    if(cell <= ndivs) then
-      cell_next(N, cell) = 4*cpp+1+(cell-1)*ndivs
+    if (cell <= edge_cells) then
+      cell_next(N, cell) = 4*cpp+1+(cell-1)*edge_cells
     end if
     ! Right edge
-    if(mod(cell, ndivs) == 0) then
-      cell_next(E, cell) = cpp+1+cell-ndivs
+    if (mod(cell, edge_cells) == 0) then
+      cell_next(E, cell) = cpp+1+cell-edge_cells
     end if
     ! Bottom edge
-    if(cell > cpp-ndivs) then
-      cell_next(S, cell) = 5*cpp+1+(cpp-cell)*ndivs
+    if (cell > cpp-edge_cells) then
+      cell_next(S, cell) = 5*cpp+1+(cpp-cell)*edge_cells
     end if
     ! Left edge
-    if(mod(cell, ndivs) == 1) then
-      cell_next(W, cell) = 3*cpp+(cell/ndivs+1)*ndivs
+    if (mod(cell, edge_cells) == 1) then
+      cell_next(W, cell) = 3*cpp+(cell/edge_cells+1)*edge_cells
     end if
   end do
 
   ! Panel II
   do cell = cpp+1, 2*cpp
     ! Default: W, S, E, N
-    cell_next(:, cell) = (/ cell-1, cell+ndivs, cell+1, cell-ndivs /)
+    cell_next(:, cell) = (/ cell-1, cell+edge_cells, cell+1, cell-edge_cells /)
     ! Top edge
-    if(cell <= cpp+ndivs) then
-      cell_next(N, cell) = 5*cpp-ndivs+cell-cpp
+    if (cell <= cpp+edge_cells) then
+      cell_next(N, cell) = 5*cpp-edge_cells+cell-cpp
     end if
     ! Right edge
-    if(mod(cell, ndivs) == 0) then
-      cell_next(E, cell) = 2*cpp+1+(cell-cpp-ndivs)
+    if (mod(cell, edge_cells) == 0) then
+      cell_next(E, cell) = 2*cpp+1+(cell-cpp-edge_cells)
     end if
     ! Bottom edge
-    if(cell > 2*cpp-ndivs) then
-      cell_next(S, cell) = 5*cpp+(cell-(2*cpp-ndivs))
+    if (cell > 2*cpp-edge_cells) then
+      cell_next(S, cell) = 5*cpp+(cell-(2*cpp-edge_cells))
     end if
     ! Left edge
-    if(mod(cell, ndivs) == 1) then
-      cell_next(W, cell) = cell-(cpp+1)+ndivs
+    if (mod(cell, edge_cells) == 1) then
+      cell_next(W, cell) = cell-(cpp+1)+edge_cells
     end if
   end do
 
   ! Panel III
   do cell = 2*cpp+1, 3*cpp
     ! Default: W, S, E, N
-    cell_next(:, cell) = (/ cell-1, cell+ndivs, cell+1, cell-ndivs /)
+    cell_next(:, cell) = (/ cell-1, cell+edge_cells, cell+1, cell-edge_cells /)
     ! Top edge
-    if(cell <= 2*cpp+ndivs) then
-      cell_next(N, cell) = 5*cpp-(cell-1-2*cpp)*ndivs
+    if (cell <= 2*cpp+edge_cells) then
+      cell_next(N, cell) = 5*cpp-(cell-1-2*cpp)*edge_cells
     end if
     ! Right edge
-    if(mod(cell, ndivs) == 0) then
-      cell_next(E, cell) = 3*cpp+1+(cell-2*cpp-ndivs)
+    if (mod(cell, edge_cells) == 0) then
+      cell_next(E, cell) = 3*cpp+1+(cell-2*cpp-edge_cells)
     end if
     ! Bottom edge
-    if(cell > 3*cpp-ndivs) then
-      cell_next(S, cell) = 5*cpp+(cell-(3*cpp-ndivs))*ndivs
+    if (cell > 3*cpp-edge_cells) then
+      cell_next(S, cell) = 5*cpp+(cell-(3*cpp-edge_cells))*edge_cells
     end if
     ! Left edge
-    if(mod(cell, ndivs) == 1) then
-      cell_next(W, cell) = cell-(cpp+1)+ndivs
+    if (mod(cell, edge_cells) == 1) then
+      cell_next(W, cell) = cell-(cpp+1)+edge_cells
     end if
   end do
 
   ! Panel IV
   do cell = 3*cpp+1, 4*cpp
     ! Default: W, S, E, N
-    cell_next(:, cell) = (/ cell-1, cell+ndivs, cell+1, cell-ndivs /)
+    cell_next(:, cell) = (/ cell-1, cell+edge_cells, cell+1, cell-edge_cells /)
     ! Top edge
-    if(cell <= 3*cpp+ndivs) then
-      cell_next(N, cell) = 4*cpp+1+ndivs-(cell-3*cpp)
+    if (cell <= 3*cpp+edge_cells) then
+      cell_next(N, cell) = 4*cpp+1+edge_cells-(cell-3*cpp)
     end if
     ! Right edge
-    if(mod(cell, ndivs) == 0) then
-      cell_next(E, cell) = (cell-ndivs)-3*cpp+1
+    if (mod(cell, edge_cells) == 0) then
+      cell_next(E, cell) = (cell-edge_cells)-3*cpp+1
     end if
     ! Bottom edge
-    if(cell > 4*cpp-ndivs) then
-      cell_next(S, cell) = 6*cpp-(cell-1-(4*cpp-ndivs))
+    if (cell > 4*cpp-edge_cells) then
+      cell_next(S, cell) = 6*cpp-(cell-1-(4*cpp-edge_cells))
     end if
     ! Left edge
-    if(mod(cell, ndivs) == 1) then
-      cell_next(W, cell) = cell-(cpp+1)+ndivs
+    if (mod(cell, edge_cells) == 1) then
+      cell_next(W, cell) = cell-(cpp+1)+edge_cells
     end if
   end do
 
   ! Panel V
   do cell = 4*cpp+1, 5*cpp
     ! Default: W, S, E, N
-    cell_next(:, cell) = (/ cell-1, cell+ndivs, cell+1, cell-ndivs /)
+    cell_next(:, cell) = (/ cell-1, cell+edge_cells, cell+1, cell-edge_cells /)
     ! Top edge
-    if(cell <= 4*cpp+ndivs) then
-      cell_next(N, cell) = 3*cpp+ndivs-(cell-1-4*cpp)
+    if (cell <= 4*cpp+edge_cells) then
+      cell_next(N, cell) = 3*cpp+edge_cells-(cell-1-4*cpp)
     end if
     ! Right edge
-    if(mod(cell, ndivs) == 0) then
-      cell_next(E, cell) = (5*cpp-cell)/ndivs + 2*cpp+1
+    if (mod(cell, edge_cells) == 0) then
+      cell_next(E, cell) = (5*cpp-cell)/edge_cells + 2*cpp+1
     end if
     ! Bottom edge
-    if(cell > 5*cpp-ndivs) then
-      cell_next(S, cell) = cell - (5*cpp-ndivs) + cpp
+    if (cell > 5*cpp-edge_cells) then
+      cell_next(S, cell) = cell - (5*cpp-edge_cells) + cpp
     end if
     ! Left edge
-    if(mod(cell, ndivs) == 1) then
-      cell_next(W, cell) = (cell-4*cpp)/ndivs + 1
+    if (mod(cell, edge_cells) == 1) then
+      cell_next(W, cell) = (cell-4*cpp)/edge_cells + 1
     end if
   end do
 
   ! Panel VI
   do cell = 5*cpp+1, 6*cpp
     ! Default: W, S, E, N
-    cell_next(:, cell) = (/ cell-1, cell+ndivs, cell+1, cell-ndivs /)
+    cell_next(:, cell) = (/ cell-1, cell+edge_cells, cell+1, cell-edge_cells /)
     ! Top edge
-    if(cell <= 5*cpp+ndivs) then
-      cell_next(N, cell) = 2*cpp-ndivs + cell-5*cpp
+    if (cell <= 5*cpp+edge_cells) then
+      cell_next(N, cell) = 2*cpp-edge_cells + cell-5*cpp
     end if
     ! Right edge
-    if(mod(cell, ndivs) == 0) then
-      cell_next(E, cell) = 3*cpp-ndivs + (cell-5*cpp)/ndivs
+    if (mod(cell, edge_cells) == 0) then
+      cell_next(E, cell) = 3*cpp-edge_cells + (cell-5*cpp)/edge_cells
     end if
     ! Bottom edge
-    if(cell > 6*cpp-ndivs) then
-      cell_next(S, cell) = 4*cpp - (cell-(6*cpp-ndivs+1))
+    if (cell > 6*cpp-edge_cells) then
+      cell_next(S, cell) = 4*cpp - (cell-(6*cpp-edge_cells+1))
     end if
     ! Left edge
-    if(mod(cell, ndivs) == 1) then
-      cell_next(W, cell) = cpp - (cell-5*cpp)/ndivs
+    if (mod(cell, edge_cells) == 1) then
+      cell_next(W, cell) = cpp - (cell-5*cpp)/edge_cells
     end if
   end do
 
-
+  return
 end subroutine calc_adjacency
+
 !-------------------------------------------------------------------------------
-!>  @brief       For each cell, calculates the four vertices which comprise it.
-!!
-!!  @details     Allocates and populates the instance's verts_on_cell(:,:) array with
-!!               the vertices which form each cell.
-!!
-!!  @param[in]   self The gencube_ps_type instance reference.
-!!  @param[out]  verts_on_cell A rank 2 (4,ncells)-sized integer array of vertices
-!!                    which constitute each cell.
+!> @brief   For each cell, calculates the four vertices which comprise it.
+!> @details Allocates and populates the instance's verts_on_cell(:,:) array with
+!>          the vertices which form each cell.
+!>
+!> @param[in]   self           The gencube_ps_type instance reference.
+!> @param[out]  verts_on_cell  A rank 2 (4,ncells)-sized integer array of vertices
+!>                             which constitute each cell.
 !-------------------------------------------------------------------------------
 subroutine calc_face_to_vert(self, verts_on_cell)
 
@@ -293,17 +299,18 @@ subroutine calc_face_to_vert(self, verts_on_cell)
   class(gencube_ps_type),      intent(in)  :: self
   integer(i_def), allocatable, intent(out) :: verts_on_cell(:,:)
 
-  integer(i_def) :: ndivs, ncells, cpp
+  integer(i_def) :: edge_cells, ncells, cpp
   integer(i_def) :: cell, idx, panel, nxf, astat
 
-  ndivs = self%ndivs
-  cpp = self%ndivs*self%ndivs
-  ncells = 6*self%ndivs*self%ndivs
+  edge_cells = self%edge_cells
+  cpp = self%edge_cells*self%edge_cells
+  ncells = 6*self%edge_cells*self%edge_cells
 
   allocate(verts_on_cell(4, 6*cpp), stat=astat)
 
-  if(astat.ne.0) call log_event(prefix//"Failure to allocate verts_on_cell.", &
-                                        LOG_LEVEL_ERROR)
+  if (astat /= 0)                                                   &
+      call log_event( prefix//"Failure to allocate verts_on_cell.", &
+                      LOG_LEVEL_ERROR )
 
   verts_on_cell = 0
   cell = 1
@@ -323,21 +330,22 @@ subroutine calc_face_to_vert(self, verts_on_cell)
 
   ! Copy from S for non-S-edge rows of panels 1:4
   do panel = 1, 4
-    do cell = (panel-1)*cpp+1, panel*cpp-ndivs
+    do cell = (panel-1)*cpp+1, panel*cpp-edge_cells
       verts_on_cell(SW, cell) = verts_on_cell(NW, self%cell_next(S, cell))
       verts_on_cell(SE, cell) = verts_on_cell(NE, self%cell_next(S, cell))
     end do
   end do
 
   ! SE internals panel 5
-  do idx = 0, ndivs-2
-    do cell = 4*cpp+(idx*ndivs)+1, 4*cpp+(idx*ndivs)+ndivs-1
+  do idx = 0, edge_cells-2
+    do cell = 4*cpp+(idx*edge_cells)+1, 4*cpp+(idx*edge_cells)+edge_cells-1
       verts_on_cell(SE, cell) = nxf
       nxf = nxf+1
       verts_on_cell(SW, self%cell_next(E, cell)) = verts_on_cell(SE, cell)
       verts_on_cell(NE, self%cell_next(S, cell)) = verts_on_cell(SE, cell)
       ! Transitive is valid here
-      verts_on_cell(NW, self%cell_next(E, self%cell_next(S, cell))) = verts_on_cell(SE, cell)
+      verts_on_cell(NW, self%cell_next(E, self%cell_next(S, cell))) &
+                                                 = verts_on_cell(SE, cell)
     end do
   end do
 
@@ -348,24 +356,24 @@ subroutine calc_face_to_vert(self, verts_on_cell)
   end do
 
   ! Copy SW from S neighbour for non-S-edge rows of panel 6
-  do cell = 5*cpp+1, 6*cpp-ndivs
+  do cell = 5*cpp+1, 6*cpp-edge_cells
     verts_on_cell(SW, cell) = verts_on_cell(NW, self%cell_next(S, cell))
   end do
 
   ! SW verts of bottom row, panel 6
-  do cell = 6*cpp-ndivs+1, 6*cpp
+  do cell = 6*cpp-edge_cells+1, 6*cpp
     verts_on_cell(SW, cell) = nxf
     nxf = nxf+1
   end do
 
   ! SW verts of bottom row, panel 3
-  do cell = 3*cpp-ndivs+1, 3*cpp
+  do cell = 3*cpp-edge_cells+1, 3*cpp
     verts_on_cell(SW, cell) = nxf
     verts_on_cell(SE, self%cell_next(W, cell)) = verts_on_cell(SW, cell)
     nxf = nxf+1
   end do
 
-  ! vert at SE of panel 3
+  ! Vert at SE of panel 3
   cell = 3*cpp
   verts_on_cell(SE, cell) = nxf
   verts_on_cell(SW, self%cell_next(E, cell)) = verts_on_cell(SE, cell)
@@ -373,75 +381,75 @@ subroutine calc_face_to_vert(self, verts_on_cell)
   ! Panel boundary joins...
 
   ! S=>W join, I=>VI
-  do cell = cpp-ndivs+1, cpp
+  do cell = cpp-edge_cells+1, cpp
     verts_on_cell(SW, cell) = verts_on_cell(SW, self%cell_next(S, cell))
     verts_on_cell(SE, cell) = verts_on_cell(NW, self%cell_next(S, cell))
   end do
 
   ! N=>W join, I=>V
-  do cell = 1, ndivs
+  do cell = 1, edge_cells
     verts_on_cell(NW, self%cell_next(N, cell)) = verts_on_cell(NW, cell)
     verts_on_cell(SW, self%cell_next(N, cell)) = verts_on_cell(NE, cell)
   end do
 
   ! N=>E join, III=>V
-  do cell = 2*cpp+1, 2*cpp+ndivs
+  do cell = 2*cpp+1, 2*cpp+edge_cells
     verts_on_cell(SE, self%cell_next(N, cell)) = verts_on_cell(NW, cell)
     verts_on_cell(NE, self%cell_next(N, cell)) = verts_on_cell(NE, cell)
   end do
 
   ! E=>S join, III=>VI
-  do cell = 3*cpp-ndivs+1, 3*cpp
+  do cell = 3*cpp-edge_cells+1, 3*cpp
      verts_on_cell(NE, self%cell_next(S, cell)) = verts_on_cell(SW, cell)
      verts_on_cell(SE, self%cell_next(S, cell)) = verts_on_cell(SE, cell)
   end do
 
   ! N=>N join, IV=>V
-  do cell = 3*cpp+1, 3*cpp+ndivs
+  do cell = 3*cpp+1, 3*cpp+edge_cells
     verts_on_cell(NE, self%cell_next(N, cell)) = verts_on_cell(NW, cell)
     verts_on_cell(NW, self%cell_next(N, cell)) = verts_on_cell(NE, cell)
   end do
 
   ! Copy NE,SE from E neighbour for non-E-edge cells of panel 6
-  do idx = 0, ndivs-1
-    do cell = 5*cpp+1+(idx*ndivs), 5*cpp+1+(idx*ndivs)+ndivs-2
+  do idx = 0, edge_cells-1
+    do cell = 5*cpp+1+(idx*edge_cells), 5*cpp+1+(idx*edge_cells)+edge_cells-2
       verts_on_cell(NE, cell) = verts_on_cell(NW, self%cell_next(E, cell))
       verts_on_cell(SE, cell) = verts_on_cell(SW, self%cell_next(E, cell))
     end do
   end do
 
   ! S=>S join, VI=>IV
-  do cell = 6*cpp-ndivs+1, 6*cpp
+  do cell = 6*cpp-edge_cells+1, 6*cpp
     verts_on_cell(SW, self%cell_next(S, cell)) = verts_on_cell(SE, cell)
     verts_on_cell(SE, self%cell_next(S, cell)) = verts_on_cell(SW, cell)
   end do
 
   ! S=>N join, II=>VI
-  do cell = 2*cpp-ndivs+1, 2*cpp
+  do cell = 2*cpp-edge_cells+1, 2*cpp
     verts_on_cell(SW, cell) = verts_on_cell(NW, self%cell_next(S, cell))
     verts_on_cell(SE, cell) = verts_on_cell(NE, self%cell_next(S, cell))
   end do
 
   ! N=>S join, II=>V
-  do cell = cpp+1, cpp+ndivs
+  do cell = cpp+1, cpp+edge_cells
     verts_on_cell(SW, self%cell_next(N, cell)) = verts_on_cell(NW, cell)
     verts_on_cell(SE, self%cell_next(N, cell)) = verts_on_cell(NE, cell)
   end do
 
-
+  return
 end subroutine calc_face_to_vert
+
 !-------------------------------------------------------------------------------
-!>  @brief       Calculates the edges which are found on each cell and the
-!!               pair of vertices which are found on each edge.
-!!
-!!  @details     Allocates and populates both the edges_on_cell and
-!!               verts_on_edge arrays for the instance.
-!!
-!!  @param[in]   self          The gencube_ps_type instance reference.
-!!  @param[out]  edges_on_cell A rank-2 (4,ncells)-sized integer array of
-!!                             the edges found on each cell.
-!!  @param[out]  verts_on_edge A rank-2 (2,2*ncells)-sized integer array
-!!                             of the vertices found on each edge.
+!> @brief   Calculates the edges which are found on each cell and the
+!>          pair of vertices which are found on each edge.
+!> @details Allocates and populates both the edges_on_cell and
+!>          verts_on_edge arrays for the instance.
+!>
+!> @param[in]   self           The gencube_ps_type instance reference.
+!> @param[out]  edges_on_cell  A rank-2 (4,ncells)-sized integer array of
+!>                             the edges found on each cell.
+!> @param[out]  verts_on_edge  A rank-2 (2,2*ncells)-sized integer array
+!>                             of the vertices found on each edge.
 !-------------------------------------------------------------------------------
 subroutine calc_edges(self, edges_on_cell, verts_on_edge)
 
@@ -451,22 +459,24 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
   integer(i_def), allocatable, intent(out) :: edges_on_cell(:,:)
   integer(i_def), allocatable, intent(out) :: verts_on_edge(:,:)
 
-  integer(i_def) :: ndivs, ncells, cpp
+  integer(i_def) :: edge_cells, ncells, cpp
   integer(i_def) :: cell, panel, idx, nxf, astat
 
-  ndivs = self%ndivs
-  cpp = self%ndivs*self%ndivs
-  ncells = 6*self%ndivs*self%ndivs
+  edge_cells = self%edge_cells
+  cpp = self%edge_cells*self%edge_cells
+  ncells = 6*self%edge_cells*self%edge_cells
 
   allocate(edges_on_cell(4, ncells), stat=astat)
 
-  if(astat.ne.0) call log_event(prefix//"Failure to allocate edges_on_cell.", &
-                                        LOG_LEVEL_ERROR)
+  if (astat /= 0)                                                   &
+      call log_event( prefix//"Failure to allocate edges_on_cell.", &
+                      LOG_LEVEL_ERROR )
 
   allocate(verts_on_edge(2, 2*ncells), stat=astat)
 
-  if(astat.ne.0) call log_event(prefix//"Failure to allocate verts_on_edge.", &
-                                        LOG_LEVEL_ERROR)
+  if (astat /= 0)                                                   &
+      call log_event( prefix//"Failure to allocate verts_on_edge.", &
+                      LOG_LEVEL_ERROR )
 
   edges_on_cell = 0
   verts_on_edge = 0
@@ -475,7 +485,7 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
 
   do panel = 1, 4
     ! Top row of panel
-    do cell = (panel-1)*cpp + 1, (panel-1)*cpp + ndivs
+    do cell = (panel-1)*cpp + 1, (panel-1)*cpp + edge_cells
       edges_on_cell(N, cell) = nxf
       edges_on_cell(W, cell) = nxf+1
       edges_on_cell(S, cell) = nxf+2
@@ -490,7 +500,7 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
       edges_on_cell(E, self%cell_next(W, cell)) = edges_on_cell(W, cell)
     end do
     ! Remainder of panel
-    do cell = (panel-1)*cpp+1+ndivs, panel*cpp
+    do cell = (panel-1)*cpp+1+edge_cells, panel*cpp
       edges_on_cell(W, cell) = nxf
       edges_on_cell(S, cell) = nxf+1
       verts_on_edge(1, nxf) = self%verts_on_cell(SW, cell)
@@ -506,7 +516,7 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
   end do
 
   ! Panel V non-S-edge rows
-  do cell = 4*cpp+1, 5*cpp-ndivs
+  do cell = 4*cpp+1, 5*cpp-edge_cells
     edges_on_cell(S, cell) = nxf
     verts_on_edge(1, nxf) = self%verts_on_cell(SE, cell)
     verts_on_edge(2, nxf) = self%verts_on_cell(SW, cell)
@@ -516,8 +526,8 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
   end do
 
   ! Panel V non-E-edge columns
-  do idx = 0, ndivs-1
-    do cell = 4*cpp+1+idx*ndivs, 4*cpp+(idx+1)*ndivs-1
+  do idx = 0, edge_cells-1
+    do cell = 4*cpp+1+idx*edge_cells, 4*cpp+(idx+1)*edge_cells-1
       edges_on_cell(E, cell) = nxf
       verts_on_edge(1, nxf) = self%verts_on_cell(NE, cell)
       verts_on_edge(2, nxf) = self%verts_on_cell(SE, cell)
@@ -528,7 +538,7 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
   end do
 
   ! Panel VI non-S-edge rows
-  do cell = 5*cpp+1, 6*cpp-ndivs
+  do cell = 5*cpp+1, 6*cpp-edge_cells
     edges_on_cell(S, cell) = nxf
     verts_on_edge(1, nxf) = self%verts_on_cell(SE, cell)
     verts_on_edge(2, nxf) = self%verts_on_cell(SW, cell)
@@ -538,8 +548,8 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
   end do
 
   ! Panel VI non-E-edge columns
-  do idx = 0, ndivs-1
-    do cell = 5*cpp+1+idx*ndivs, 5*cpp+(idx+1)*ndivs-1
+  do idx = 0, edge_cells-1
+    do cell = 5*cpp+1+idx*edge_cells, 5*cpp+(idx+1)*edge_cells-1
       edges_on_cell(E, cell) = nxf
       verts_on_edge(1, nxf) = self%verts_on_cell(NE, cell)
       verts_on_edge(2, nxf) = self%verts_on_cell(SE, cell)
@@ -550,62 +560,62 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
   end do
 
   ! Panel VI S-edge row copy in N
-  do cell = 6*cpp-ndivs+1, 6*cpp
+  do cell = 6*cpp-edge_cells+1, 6*cpp
     edges_on_cell(N, cell) = edges_on_cell(S, self%cell_next(N, cell))
   end do
 
   ! Join edges on panel boundaries...
   ! N=>W join, I=>V
-  do cell = 1, ndivs
+  do cell = 1, edge_cells
     edges_on_cell(W, self%cell_next(N, cell)) = edges_on_cell(N, cell)
   end do
 
   ! S=>W join, I=>VI
-  do cell = cpp-ndivs+1, cpp
+  do cell = cpp-edge_cells+1, cpp
     edges_on_cell(W, self%cell_next(S, cell)) = edges_on_cell(S, cell)
   end do
 
   ! N=>E join, III=>V
-  do cell = 2*cpp+1, 2*cpp+ndivs
+  do cell = 2*cpp+1, 2*cpp+edge_cells
     edges_on_cell(E, self%cell_next(N, cell)) = edges_on_cell(N, cell)
   end do
 
   ! E=>S join, III=>VI
-  do cell = 3*cpp-ndivs+1, 3*cpp
+  do cell = 3*cpp-edge_cells+1, 3*cpp
     edges_on_cell(E, self%cell_next(S, cell)) = edges_on_cell(S, cell)
   end do
 
   ! N=>N join, IV=>V
-  do cell = 3*cpp+1, 3*cpp+ndivs
+  do cell = 3*cpp+1, 3*cpp+edge_cells
     edges_on_cell(N, self%cell_next(N, cell)) = edges_on_cell(N, cell)
   end do
 
   ! S=>N join, II=>VI
-  do cell = 2*cpp-ndivs+1, 2*cpp
+  do cell = 2*cpp-edge_cells+1, 2*cpp
     edges_on_cell(N, self%cell_next(S, cell)) = edges_on_cell(S, cell)
   end do
 
   ! N=>S join, II=>V
-  do cell = cpp+1, cpp+ndivs
+  do cell = cpp+1, cpp+edge_cells
     edges_on_cell(S, self%cell_next(N, cell)) = edges_on_cell(N, cell)
   end do
 
   ! S=>S join, IV=>VI
-  do cell = 4*cpp-ndivs+1, 4*cpp
+  do cell = 4*cpp-edge_cells+1, 4*cpp
     edges_on_cell(S, self%cell_next(S, cell)) = edges_on_cell(S, cell)
   end do
 
-
+  return
 end subroutine calc_edges
+
 !-------------------------------------------------------------------------------
-!>  @brief       Calculates the coordinates of vertices in the mesh.
-!!
-!!  @details     Assigns an (x,y) lat-long coordinate to each mesh
-!!               vertex according to its Cartesian position in the mesh.
-!!
-!!  @param[in]   self        The gencube_ps_type instance reference.
-!!  @param[out]  vert_coords A rank 2 (2,ncells)-sized real array of long and
-!!                           lat coordinates respectively for each vertex.
+!> @brief   Calculates the coordinates of vertices in the mesh.
+!> @details Assigns an (x,y) lat-long coordinate to each mesh
+!>          vertex according to its Cartesian position in the mesh.
+!>
+!> @param[in]   self         The gencube_ps_type instance reference.
+!> @param[out]  vert_coords  A rank 2 (2,ncells)-sized real array of long and
+!>                           lat coordinates respectively for each vertex.
 !-------------------------------------------------------------------------------
 subroutine calc_coords(self, vert_coords)
 
@@ -617,7 +627,7 @@ subroutine calc_coords(self, vert_coords)
   class(gencube_ps_type),   intent(in)  :: self
   real(r_def), allocatable, intent(out) :: vert_coords(:,:)
 
-  integer(i_def) :: ncells, ndivs, nverts
+  integer(i_def) :: ncells, edge_cells, nverts
   integer(i_def) :: cell, x, y, astat, cpp, vert, vert0
   real(r_def)    :: lat, long
   real(r_def)    :: x0, y0, z0
@@ -626,25 +636,26 @@ subroutine calc_coords(self, vert_coords)
 
   real(r_def), parameter :: pio4 = PI/4.0_r_def
 
-  ndivs = self%ndivs
-  ncells = 6*ndivs*ndivs
+  edge_cells = self%edge_cells
+  ncells = 6*edge_cells*edge_cells
   nverts = ncells+2
-  cpp = self%ndivs*self%ndivs
+  cpp = self%edge_cells*self%edge_cells
 
   allocate(vert_coords(2, nverts), stat=astat)
 
-  if(astat.ne.0) call log_event(prefix//"Failure to allocate vert_coords.", &
-                                        LOG_LEVEL_ERROR)
+  if (astat /= 0)                                                 &
+      call log_event( prefix//"Failure to allocate vert_coords.", &
+                      LOG_LEVEL_ERROR )
 
   vert_coords = 0.0_r_def
-  dlambda = 0.5_r_def*PI/ndivs
+  dlambda = 0.5_r_def*PI/edge_cells
   vert = 1
 
 ! Panels I-IV
-  do y=1,ndivs
+  do y=1,edge_cells
     lambda2 = (y-1)*dlambda - pio4
     t2 = tan(lambda2)
-    do x=1,ndivs
+    do x=1,edge_cells
       lambda1 = (x-1)*dlambda - pio4
       t1 = tan(lambda1)
 
@@ -695,10 +706,10 @@ subroutine calc_coords(self, vert_coords)
 ! NB Change to cell-based vert lookup from here
   cell = 4*cpp
 
-  do y=1, ndivs-1
+  do y=1, edge_cells-1
     lambda2 = y*dlambda - pio4 ! NB not y-1
     t2 = tan(lambda2)
-    do x=1, ndivs-1
+    do x=1, edge_cells-1
       lambda1 = x*dlambda - pio4 ! NB not x-1
       t1 = tan(lambda1)
 
@@ -717,16 +728,16 @@ subroutine calc_coords(self, vert_coords)
       vert_coords(2, vert0) = -lat
 
     end do
-    cell = cell + ndivs
+    cell = cell + edge_cells
   end do
 
 ! Panel VI
   cell = 5*cpp + 1
 
-  do y=1, ndivs
+  do y=1, edge_cells
     lambda2 = (y-1)*dlambda - pio4
     t2 = tan(lambda2)
-    do x=1, ndivs
+    do x=1, edge_cells
       lambda1 = (x-1)*dlambda - pio4
       t1 = tan(lambda1)
 
@@ -749,12 +760,12 @@ subroutine calc_coords(self, vert_coords)
   end do
 
 ! Panel VI: Bottom edge
-  cell = 6*cpp-ndivs+1
+  cell = 6*cpp-edge_cells+1
 
   ! y constant
-  lambda2 = ndivs*dlambda - pio4
+  lambda2 = edge_cells*dlambda - pio4
   t2 = tan(lambda2)
-  do x=1, ndivs
+  do x=1, edge_cells
     lambda1 = (x-1)*dlambda - pio4
     t1 = tan(lambda1)
 
@@ -776,12 +787,12 @@ subroutine calc_coords(self, vert_coords)
   end do
 
 ! Panel VI: Right edge
-  cell = 5*cpp+ndivs
+  cell = 5*cpp+edge_cells
 
   ! x constant
-  lambda1 = ndivs*dlambda - pio4
+  lambda1 = edge_cells*dlambda - pio4
   t1 = tan(lambda1)
-  do y=1, ndivs
+  do y=1, edge_cells
     lambda2 = (y-1)*dlambda - pio4
     t2 = tan(lambda2)
 
@@ -799,13 +810,13 @@ subroutine calc_coords(self, vert_coords)
     vert_coords(1, vert0) = long
     vert_coords(2, vert0) = -lat
 
-    cell = cell + ndivs  ! NB Step size
+    cell = cell + edge_cells  ! NB Step size
   end do
 
-! 6*ndivs*ndivs+2
-  lambda1 = ndivs*dlambda - pio4
+! 6*edge_cells*edge_cells+2
+  lambda1 = edge_cells*dlambda - pio4
   t1 = tan(lambda1)
-  lambda2 = ndivs*dlambda - pio4
+  lambda2 = edge_cells*dlambda - pio4
   t2 = tan(lambda2)
 
   xs = 1.0_r_def/sqrt(1.0_r_def + t1*t1 + t2*t2)
@@ -821,25 +832,25 @@ subroutine calc_coords(self, vert_coords)
   vert_coords(1, vert0) = long
   vert_coords(2, vert0) = -lat
 
+  return
 end subroutine calc_coords
 
 !-------------------------------------------------------------------------------
-!>  @brief       Populates the arguments with the dimensions defining
-!!               the mesh.
-!!
-!!  @details
-!!
-!!  @param[in]   self                 The gencube_ps_type instance reference.
-!!  @param[out]  num_nodes            The number of nodes on the mesh.
-!!  @param[out]  num_edges            The number of edges on the mesh.
-!!  @param[out]  num_faces            The number of faces on the mesh.
-!!  @param[out]  num_nodes_per_face   The number of nodes around each face.
-!!  @param[out]  num_edges_per_face   The number of edges around each face.
-!!  @param[out]  num_nodes_per_edge   The number of nodes around each edge.
+!> @brief Populates the arguments with the dimensions defining
+!>        the mesh.
+!>
+!> @param[in]   self                The gencube_ps_type instance reference.
+!> @param[out]  num_nodes           The number of nodes on the mesh.
+!> @param[out]  num_edges           The number of edges on the mesh.
+!> @param[out]  num_faces           The number of faces on the mesh.
+!> @param[out]  num_nodes_per_face  The number of nodes around each face.
+!> @param[out]  num_edges_per_face  The number of edges around each face.
+!> @param[out]  num_nodes_per_edge  The number of nodes around each edge.
 !-------------------------------------------------------------------------------
 subroutine get_dimensions(self, num_nodes, num_edges, num_faces,        &
                                 num_nodes_per_face, num_edges_per_face, &
                                 num_nodes_per_edge)
+
   implicit none
 
   class(gencube_ps_type), intent(in) :: self
@@ -851,9 +862,9 @@ subroutine get_dimensions(self, num_nodes, num_edges, num_faces,        &
   integer(i_def), intent(out) :: num_edges_per_face
   integer(i_def), intent(out) :: num_nodes_per_edge
 
-  num_faces =   6*self%ndivs*self%ndivs
-  num_nodes =   6*self%ndivs*self%ndivs+2
-  num_edges = 2*6*self%ndivs*self%ndivs
+  num_faces =   6*self%edge_cells*self%edge_cells
+  num_nodes =   6*self%edge_cells*self%edge_cells+2
+  num_edges = 2*6*self%edge_cells*self%edge_cells
 
   num_nodes_per_face = 4
   num_edges_per_face = 4
@@ -861,16 +872,17 @@ subroutine get_dimensions(self, num_nodes, num_edges, num_faces,        &
 
   return
 end subroutine get_dimensions
+
 !-------------------------------------------------------------------------------
-!>  @brief       Populates the argument array with the coordinates of the
-!!               mesh's vertices.
-!!
-!!  @details     Exposes the instance's vert_coords array to the caller.
-!!
-!!  @param[in]   self             The gencube_ps_type instance reference.
-!!  @param[out]  node_coordinates The argument to receive the vert_coords data.
+!> @brief   Populates the argument array with the coordinates of
+!>          the mesh's vertices.
+!> @details Exposes the instance's vert_coords array to the caller.
+!>
+!> @param[in]   self              The gencube_ps_type instance reference.
+!> @param[out]  node_coordinates  The argument to receive the vert_coords data.
 !-------------------------------------------------------------------------------
 subroutine get_coordinates(self, node_coordinates)
+
   implicit none
 
   class(gencube_ps_type), intent(in)  :: self
@@ -878,20 +890,20 @@ subroutine get_coordinates(self, node_coordinates)
 
   node_coordinates = self%vert_coords
 
+  return
 end subroutine get_coordinates
+
 !-------------------------------------------------------------------------------
-!>  @brief       Populates the argument arrays with the corresponding mesh
-!!               connectivity information.
-!!
-!!  @details     Implements the connectivity-providing interface required
-!!               by the ugrid writer.
-!!
-!!
-!!  @param[in]   self
-!!  @param[out]  face_node_connectivity   Face-node connectivity.
-!!  @param[out]  edge_node_connectivity   Edge-node connectivity.
-!!  @param[out]  face_edge_connectivity   Face-edge connectivity.
-!!  @param[out]  face_face_connectivity   Face-face connectivity.
+!> @brief   Populates the argument arrays with the corresponding mesh
+!>          connectivity information.
+!> @details Implements the connectivity-providing interface required
+!>          by the ugrid writer.
+!>
+!>  @param[in]   self
+!>  @param[out]  face_node_connectivity  Face-node connectivity.
+!>  @param[out]  edge_node_connectivity  Edge-node connectivity.
+!>  @param[out]  face_edge_connectivity  Face-edge connectivity.
+!>  @param[out]  face_face_connectivity  Face-face connectivity.
 !-------------------------------------------------------------------------------
 subroutine get_connectivity(self, face_node_connectivity,   &
                                   edge_node_connectivity,   &
@@ -906,26 +918,26 @@ subroutine get_connectivity(self, face_node_connectivity,   &
   integer(i_def), intent(out) :: face_edge_connectivity(:,:)
   integer(i_def), intent(out) :: face_face_connectivity(:,:)
 
-
   face_node_connectivity = self%verts_on_cell
   edge_node_connectivity = self%verts_on_edge
   face_edge_connectivity = self%edges_on_cell
   face_face_connectivity = self%cell_next
 
+  return
 end subroutine get_connectivity
+
 !-------------------------------------------------------------------------------
-!>  @brief          Generates the mesh and connectivity.
-!!
-!!  @details        Calls each of the instance methods which calculate the
-!!                  specified mesh and populate the arrays.
-!!
-!!  @param[in,out]  self The gencube_ps_type instance reference.
+!> @brief   Generates the mesh and connectivity.
+!> @details Calls each of the instance methods which calculate the
+!>          specified mesh and populate the arrays.
+!>
+!> @param[in,out]  self  The gencube_ps_type instance reference.
 !-------------------------------------------------------------------------------
 subroutine generate(self)
+
   implicit none
 
   class(gencube_ps_type), intent(inout) :: self
-
 
   call calc_adjacency(self, self%cell_next)
   call calc_face_to_vert(self, self%verts_on_cell)
@@ -935,13 +947,13 @@ subroutine generate(self)
   if (self%nsmooth > 0_i_def) call smooth(self)
   if (debug) call write_mesh(self)
 
+  return
 end subroutine generate
+
 !-------------------------------------------------------------------------------
-!>  @brief      Writes out the mesh and connectivity for debugging purposes.
-!!
-!!  @details
-!!
-!!  @param[in]  self The gencube_ps_type instance reference.
+!> @brief Writes out the mesh and connectivity for debugging purposes.
+!>
+!> @param[in]  self  The gencube_ps_type instance reference.
 !-------------------------------------------------------------------------------
 subroutine write_mesh(self)
 
@@ -954,7 +966,7 @@ subroutine write_mesh(self)
 
   integer(i_def) :: i, cell, vert, ncells
 
-  ncells = 6*self%ndivs*self%ndivs
+  ncells = 6*self%edge_cells*self%edge_cells
 
   write(stdout,*) "cell_next"
   do cell=1, ncells
@@ -985,14 +997,15 @@ subroutine write_mesh(self)
     write(stdout,*) vert, self%vert_coords(:,vert)
   end do
 
+  return
 end subroutine write_mesh
+
 !-------------------------------------------------------------------------------
-!>  @brief          Reorients the cubed-sphere to be compatible with
-!!                  the orientation assumed by the LFRic infrastructure.
-!!
-!!  @details        Performs circular shifts on appropriate panels.
-!!
-!!  @param[in,out]  self The gencube_ps_type instance reference.
+!> @brief   Reorients the cubed-sphere to be compatible with
+!>          the orientation assumed by the LFRic infrastructure.
+!> @details Performs circular shifts on appropriate panels.
+!>
+!> @param[in,out]  self  The gencube_ps_type instance reference.
 !-------------------------------------------------------------------------------
 subroutine orient_lfric(self)
 
@@ -1002,7 +1015,7 @@ subroutine orient_lfric(self)
 
   integer(i_def) :: cpp, p0, p1
 
-  cpp = self%ndivs*self%ndivs
+  cpp = self%edge_cells*self%edge_cells
 
   ! Panel III - rotate left 1
   p0 = 2*cpp+1
@@ -1034,16 +1047,19 @@ subroutine orient_lfric(self)
   ! edges
   self%edges_on_cell(:, p0:p1) = cshift(self%edges_on_cell(:, p0:p1), -1, 1)
 
-
+  return
 end subroutine orient_lfric
 
-!>  @brief  Smooth the cube grid
-!>  @details Smooth the grid by iteratively computing the face centres as
-!!           barycentres of the surrounding vertices and then the vertices
-!!           as  barycentres of the surrounding faces
-!!  @param[in,out]  self The gencube_ps_type instance reference.
-!!  @param[in]      nsmooth Number of smoothing iterations to perform
+!-------------------------------------------------------------------------------
+!> @brief   Smooth the cube grid
+!> @details Smooth the grid by iteratively computing the face centres as
+!>          barycentres of the surrounding vertices and then the vertices
+!>          as barycentres of the surrounding faces
+!>
+!> @param[in,out]  self     The gencube_ps_type instance reference.
+!-------------------------------------------------------------------------------
 subroutine smooth(self)
+
   use coord_transform_mod, only : ll2xyz, xyz2ll
 
   implicit none
@@ -1066,7 +1082,7 @@ subroutine smooth(self)
   ! Counters
   integer(i_def) :: i, j, smooth_pass, cell, vert
 
-  ncells = 6*self%ndivs*self%ndivs
+  ncells = 6*self%edge_cells*self%edge_cells
   nverts = ncells + 2
 
   allocate( cell_on_vert(4,nverts) )
@@ -1132,27 +1148,32 @@ subroutine smooth(self)
 
   end do
 
+  return
 end subroutine smooth
 
 !-----------------------------------------------------------------------------
 !> @brief Returns mesh metadata information.
-!!
-!! @param[in]     self           The generator strategy object.
-!! @param[out]    mesh_name      The name of this mesh instance
-!! @param[out]    mesh_class     Primitive shape, i.e. sphere
+!>
+!> @param[in]   self              The generator strategy object.
+!> @param[out]  mesh_name         The name of this mesh instance
+!> @param[out]  mesh_class        Primitive shape, i.e. sphere
+!> @param[out]  generator_inputs  Inputs used to create this mesh from the
+!>                                mesh_generator
 !-----------------------------------------------------------------------------
-subroutine get_metadata( self, mesh_name, mesh_class )
+subroutine get_metadata( self, mesh_name, mesh_class, generator_inputs )
 
   implicit none
 
-  class(gencube_ps_type), intent(in) :: self
-  character(str_def), intent(out)    :: mesh_name
-  character(str_def), intent(out)    :: mesh_class
+  class(gencube_ps_type), intent(in)  :: self
+  character(str_def),  intent(out) :: mesh_name
+  character(str_def),  intent(out) :: mesh_class
+  character(str_long), intent(out) :: generator_inputs
 
-  mesh_name  = trim(self%mesh_name)
-  mesh_class = trim(self%mesh_class)
+  mesh_name        = trim(self%mesh_name)
+  mesh_class       = trim(self%mesh_class)
+  generator_inputs = trim(self%generator_inputs)
 
   return
-end subroutine  get_metadata
+end subroutine get_metadata
 
 end module gencube_ps_mod

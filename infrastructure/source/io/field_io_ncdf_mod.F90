@@ -57,9 +57,9 @@ end type
 contains
 
 !-------------------------------------------------------------------------------
-!>  @brief   Open an existing netCDF file.  
+!>  @brief   Open an existing NetCDF file.  
 !!
-!!  @param[in,out]  self         The netcdf file object.
+!!  @param[in,out]  self         The NetCDF file object.
 !!  @param[in]      file_name    Name of the file to open.
 !-------------------------------------------------------------------------------
 
@@ -89,9 +89,9 @@ subroutine file_open(self, file_name)
 end subroutine file_open
 
 !-------------------------------------------------------------------------------
-!>  @brief   Closes a netCDF file.
+!>  @brief   Closes a NetCDF file.
 !!
-!!  @param[in]  self   The netcdf file object.
+!!  @param[in]  self   The NetCDF file object.
 !-------------------------------------------------------------------------------
 
 subroutine file_close(self)
@@ -112,12 +112,12 @@ subroutine file_close(self)
 end subroutine file_close
 
 !-------------------------------------------------------------------------------
-!>  @brief          Create a new netCDF file.
+!>  @brief          Create a new NetCDF file.
 !!
-!!  @description    Creates an opens a new, clean netCDF file. If a file of the
+!!  @description    Creates an opens a new, clean NetCDF file. If a file of the
 !!                  same name already exists, this routine will clobber it.
 !!
-!!  @param[in,out]  self      The netcdf file object.
+!!  @param[in,out]  self      The NetCDF file object.
 !!  @param[in]      file_name The name of the file to create/open.
 !-------------------------------------------------------------------------------
 
@@ -146,13 +146,13 @@ subroutine file_new(self, file_name)
 end subroutine file_new
 
 !-------------------------------------------------------------------------------
-!>  @brief   Defines netCDF dimensions in the netCDF file.
+!>  @brief   Defines NetCDF dimensions in the NetCDF file.
 !!
-!!  @details Sets dimension lengths in the netCDF file, and sets the associated
-!!           dimension ids in the netCDF file object. The dimension lengths are
-!!           used for sizes of other arrays within the netCDF file.
+!!  @details Sets dimension lengths in the NetCDF file, and sets the associated
+!!           dimension ids in the NetCDF file object. The dimension lengths are
+!!           used for sizes of other arrays within the NetCDF file.
 !!
-!!  @param[in,out]  self   The netCDF file object.
+!!  @param[in,out]  self   The NetCDF file object.
 !-------------------------------------------------------------------------------
 
 subroutine define_dimensions(self)
@@ -173,13 +173,13 @@ subroutine define_dimensions(self)
 end subroutine define_dimensions
 
 !-------------------------------------------------------------------------------
-!>  @brief    Defines netCDF variables in the netCDF file.
+!>  @brief    Defines NetCDF variables in the NetCDF file.
 !!
-!!  @details  Tells netCDF what variables are going to be in the file.
-!!            Array lengths are specified via the pre-existing netCDF dimension
+!!  @details  Tells NetCDF what variables are going to be in the file.
+!!            Array lengths are specified via the pre-existing NetCDF dimension
 !!            IDs, which were obtained elsewhere in this module.
 !!
-!!  @param[in,out]  self   The netCDF file object.
+!!  @param[in,out]  self   The NetCDF file object.
 !-------------------------------------------------------------------------------
 
 subroutine define_variables(self)
@@ -199,13 +199,13 @@ subroutine define_variables(self)
 end subroutine define_variables
 
 !-------------------------------------------------------------------------------
-!>  @brief    Assigns attributes to the netCDF variables.
+!>  @brief    Assigns attributes to the NetCDF variables.
 !!
-!!  @details  Adds additional information to netCDF variables that should have
+!!  @details  Adds additional information to NetCDF variables that should have
 !!            already been defined elsewhere in this module.  Attributes include
 !!            variable names and descriptions.
 !!
-!!  @param[in]   self   The netCDF file object.
+!!  @param[in]   self   The NetCDF file object.
 !-------------------------------------------------------------------------------
 
 subroutine assign_attributes(self)
@@ -225,14 +225,14 @@ subroutine assign_attributes(self)
 end subroutine assign_attributes
 
 !-------------------------------------------------------------------------------
-!>  @brief    Gets dimension ids and variable ids from the open netCDF file.
+!>  @brief    Gets dimension ids and variable ids from the open NetCDF file.
 !!
-!!  @details  netCDF files refer to dimensions and variables by an id, the value
-!!            of which is determined by the netCDF library. This routine finds
+!!  @details  NetCDF files refer to dimensions and variables by an id, the value
+!!            of which is determined by the NetCDF library. This routine finds
 !!            dimension and variable ids for all variables of interest in the
-!!            open netCDF file.
+!!            open NetCDF file.
 !!
-!!  @param[in,out]   self   The netCDF file object.
+!!  @param[in,out]   self   The NetCDF file object.
 !-------------------------------------------------------------------------------
 
 subroutine inquire_ids(self)
@@ -257,7 +257,7 @@ end subroutine inquire_ids
 !-------------------------------------------------------------------------------
 !>  @brief    Calls logger on error.
 !!
-!!  @details  Checks the error code returned by the netCDF file. If an error is
+!!  @details  Checks the error code returned by the NetCDF file. If an error is
 !!            detected, the relevant error message is passed to the logger.
 !!
 !!  @param[in] ierr   The error code to check.
@@ -301,12 +301,12 @@ subroutine fatal(message)
 end subroutine fatal
 
 !-------------------------------------------------------------------------------
-!>  @brief    Gets dimension information from the netCDF file, as integers.
+!>  @brief    Gets dimension information from the NetCDF file, as integers.
 !!
-!!  @details  Calls netCDF inquiry functions to determine array lengths, such as
+!!  @details  Calls NetCDF inquiry functions to determine array lengths, such as
 !!            the number of nodes.
 !!
-!!  @param[in,out]   self           The netCDF file object.
+!!  @param[in,out]   self           The NetCDF file object.
 !!  @param[out]      field_size     The size of the field data array.
 !-------------------------------------------------------------------------------
 
@@ -331,11 +331,11 @@ subroutine get_dimensions(self, field_size)
 end subroutine get_dimensions
 
 !-------------------------------------------------------------------------------
-!>  @brief    Reads data from the netCDF file.
+!>  @brief    Reads data from the NetCDF file.
 !!
-!!  @details  Reads coordinate and connectivity information from the netCDF file.
+!!  @details  Reads coordinate and connectivity information from the NetCDF file.
 !!
-!!  @param[in,out]  self                     The netCDF file object.
+!!  @param[in,out]  self                     The NetCDF file object.
 !!  @param[out]     field_data               Field data read from the file.
 !-------------------------------------------------------------------------------
 
@@ -357,12 +357,12 @@ subroutine read_field_data(self, field_data)
 end subroutine read_field_data
 
 !-------------------------------------------------------------------------------
-!>  @brief    Writes data to the netCDF file.
+!>  @brief    Writes data to the NetCDF file.
 !!
 !!  @details  Writes dimension, coordinate and connectivity information
-!!            to the netCDF file.
+!!            to the NetCDF file.
 !!
-!!  @param[in,out]  self                     The netCDF file object.
+!!  @param[in,out]  self                     The NetCDF file object.
 !!  @param[in]      field_data               The field data to write.
 !-------------------------------------------------------------------------------
 
@@ -379,7 +379,7 @@ subroutine write_field_data(self, field_data)
   !Set array lengths
   self%field_size = size(field_data)
 
-  !Set up netCDF header
+  !Set up NetCDF header
   call define_dimensions (self)
   call define_variables  (self)
   call assign_attributes (self)

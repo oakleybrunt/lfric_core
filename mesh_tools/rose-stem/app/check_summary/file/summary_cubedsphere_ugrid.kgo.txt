@@ -1,0 +1,10 @@
+"Mesh2":
+  Class:               sphere
+  Generator inputs:    edge_cells=4;smooth_passes=0
+  Nodes:               98
+  Edges:               192
+  Faces:               96
+  Nodes per face:      4
+  Edges per face:      4
+  Nodes per edge:      2
+  Max. faces per node: 4

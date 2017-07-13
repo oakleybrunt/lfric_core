@@ -4,8 +4,7 @@
 ! should have received as part of this distribution.
 !-----------------------------------------------------------------------------
 !>  @brief   File handler for NetCDF ugrid files.
-!!
-!!  @details Implementation of the ugrid file class for quads in netCDF format.
+!>  @details Implementation of the ugrid file class for quads in NetCDF format.
 !-------------------------------------------------------------------------------
 module ncdf_quad_mod
 
@@ -33,7 +32,7 @@ private
 integer(i_def), parameter :: TWO  = 2                  !< Two
 integer(i_def), parameter :: FOUR = 4                  !< Four
 
-!Ranks for each variable.
+! Ranks for each variable.
 integer(i_def), parameter :: MESH_RANK            = 0
 integer(i_def), parameter :: MESH_FACE_NODES_RANK = 2  !< Rank of face-node connectivity arrays
 integer(i_def), parameter :: MESH_EDGE_NODES_RANK = 2  !< Rank of edge-node connectivity arrays
@@ -44,9 +43,8 @@ integer(i_def), parameter :: MESH_NODE_Y_RANK     = 1  !< Rank of node latitude 
 
 
 !-------------------------------------------------------------------------------
-!> @brief    NetCDF quad file type
-!!
-!! @details  Implements the ugrid file type for NetCDF files storing 2D quads.
+!> @brief   NetCDF quad file type
+!> @details Implements the ugrid file type for NetCDF files storing 2D quads.
 !-------------------------------------------------------------------------------
 
 type, public, extends(ugrid_file_type) :: ncdf_quad_type
@@ -58,6 +56,8 @@ type, public, extends(ugrid_file_type) :: ncdf_quad_type
   character(nf90_max_name) :: mesh_name
   character(str_def)       :: mesh_class  !< Primitive class of mesh,
                                           !< i.e. sphere, plane
+
+  character(str_long) :: generator_inputs !< Inputs to generator for this mesh
 
   ! Dimension values
   integer(i_def) :: nmesh_nodes          !< Number of nodes
@@ -82,9 +82,9 @@ type, public, extends(ugrid_file_type) :: ncdf_quad_type
 
 contains
 
-  procedure :: read
-  procedure :: write
-  procedure :: append
+  procedure :: read_mesh
+  procedure :: write_mesh
+  procedure :: append_mesh
   procedure :: get_dimensions
   procedure :: get_mesh_names
   procedure :: get_nmeshes
@@ -101,20 +101,20 @@ end type ncdf_quad_type
 contains
 
 !-------------------------------------------------------------------------------
-!>  @brief   Open an existing netCDF file.
-!!
-!!  @param[in,out]  self      The netcdf file object.
-!!  @param[in]      file_name Name of the file to open.
+!>  @brief Open an existing NetCDF file.
+!>
+!>  @param[in,out]  self      The NetCDF file object.
+!>  @param[in]      file_name Name of the file to open.
 !-------------------------------------------------------------------------------
 
 subroutine file_open(self, file_name)
   implicit none
 
-  !Arguments
+  ! Arguments
   class(ncdf_quad_type), intent(inout) :: self
   character(len=*),      intent(in)    :: file_name
 
-  !Internal variables
+  ! Internal variables
   integer(i_def) :: ierr
 
   self%file_name = file_name
@@ -131,18 +131,18 @@ end subroutine file_open
 
 
 !-------------------------------------------------------------------------------
-!>  @brief   Closes a netCDF file.
-!!
-!!  @param[in]  self   The netcdf file object.
+!>  @brief Closes a NetCDF file.
+!>
+!>  @param[in]  self   The NetCDF file object.
 !-------------------------------------------------------------------------------
 
 subroutine file_close(self)
   implicit none
 
-  !Arguments
+  ! Arguments
   class(ncdf_quad_type), intent(inout) :: self
 
-  !Internal variables
+  ! Internal variables
   integer(i_def) :: ierr
 
   ierr = nf90_close( self%ncid )
@@ -156,23 +156,22 @@ subroutine file_close(self)
 end subroutine file_close
 
 !-------------------------------------------------------------------------------
-!>  @brief          Create a new netCDF file.
-!!
-!!  @description    Creates an opens a new, clean netCDF file. If a file of the
-!!                  same name already exists, this routine will clobber it.
-!!
-!!  @param[in,out]  self      The netcdf file object.
-!!  @param[in]      file_name The name of the file to create/open.
+!>  @brief       Create a new NetCDF file.
+!>  @description Creates an opens a new, clean NetCDF file. If a file of the
+!>               same name already exists, this routine will clobber it.
+!>
+!>  @param[in,out]  self      The NetCDF file object.
+!>  @param[in]      file_name The name of the file to create/open.
 !-------------------------------------------------------------------------------
 
 subroutine file_new(self, file_name)
   implicit none
 
-  !Arguments
+  ! Arguments
   class(ncdf_quad_type), intent(inout) :: self
   character(len=*),      intent(in)    :: file_name
 
-  !Internal variables
+  ! Internal variables
   integer(i_def) :: ierr
 
   self%file_name = file_name
@@ -192,22 +191,21 @@ subroutine file_new(self, file_name)
 end subroutine file_new
 
 !-------------------------------------------------------------------------------
-!>  @brief   Defines netCDF dimensions in the netCDF file.
-!!
-!!  @details Sets dimension lengths in the netCDF file, and sets the associated
-!!           dimension ids in the netCDF file object. The dimension lengths are
-!!           used for sizes of other arrays within the netCDF file.
-!!
-!!  @param[in,out]  self   The netCDF file object.
+!>  @brief   Defines NetCDF dimensions in the NetCDF file.
+!>  @details Sets dimension lengths in the NetCDF file, and sets the associated
+!>           dimension ids in the NetCDF file object. The dimension lengths are
+!>           used for sizes of other arrays within the NetCDF file.
+!>
+!>  @param[in,out]  self   The NetCDF file object.
 !-------------------------------------------------------------------------------
 
 subroutine define_dimensions(self)
   implicit none
 
-  !Arguments
+  ! Arguments
   class(ncdf_quad_type), intent(inout) :: self
 
-  !Internal variables
+  ! Internal variables
   integer(i_def) :: ierr
 
   character(str_long) :: routine
@@ -259,27 +257,26 @@ end subroutine define_dimensions
 
 
 !-------------------------------------------------------------------------------
-!>  @brief    Defines netCDF variables in the netCDF file.
-!!
-!!  @details  Tells netCDF what variables are going to be in the file.
-!!            Array lengths are specified via the pre-existing netCDF dimension
-!!            IDs, which were obtained elsewhere in this module.
-!!
-!!  @param[in,out]  self   The netCDF file object.
+!>  @brief   Defines NetCDF variables in the netCDF file.
+!>  @details Tells NetCDF what variables are going to be in the file.
+!>           Array lengths are specified via the pre-existing NetCDF dimension
+!>           IDs, which were obtained elsewhere in this module.
+!>
+!>  @param[in,out]  self   The NetCDF file object.
 !-------------------------------------------------------------------------------
 
 subroutine define_variables(self)
 
   implicit none
 
-  !Arguments
+  ! Arguments
   class(ncdf_quad_type), intent(inout) :: self
 
-  !Internal variables
+  ! Internal variables
   integer(i_def) :: ierr
   integer(i_def) :: zero_sized(0)
 
-  !Variable shapes
+  ! Variable shapes
   integer(i_def) :: mesh_face_nodes_dims(MESH_FACE_NODES_RANK)
   integer(i_def) :: mesh_edge_nodes_dims(MESH_EDGE_NODES_RANK)
   integer(i_def) :: mesh_face_edges_dims(MESH_FACE_EDGES_RANK)
@@ -357,22 +354,21 @@ subroutine define_variables(self)
 end subroutine define_variables
 
 !-------------------------------------------------------------------------------
-!>  @brief    Assigns attributes to the netCDF variables.
-!!
-!!  @details  Adds additional information to netCDF variables that should have
-!!            already been defined elsewhere in this module.  Attributes include
-!!            variable names and descriptions.
-!!
-!!  @param[in]   self   The netCDF file object.
+!>  @brief   Assigns attributes to the NetCDF variables.
+!>  @details Adds additional information to NetCDF variables that should have
+!>           already been defined elsewhere in this module.  Attributes include
+!>           variable names and descriptions.
+!>
+!>  @param[in]   self   The NetCDF file object.
 !-------------------------------------------------------------------------------
 
 subroutine assign_attributes(self)
   implicit none
 
-  !Arguments
+  ! Arguments
   class(ncdf_quad_type), intent(in) :: self
 
-  !Internal variables
+  ! Internal variables
   integer(i_def) :: ierr, id
 
   character(str_def)  :: std_x_name
@@ -394,22 +390,39 @@ subroutine assign_attributes(self)
   id = self%mesh_id
   ierr = nf90_inquire_variable( ncid=self%ncid, varid=id, name=var_name )
   call check_err(ierr, routine, cmess)
+
   !===================================================================
   attname = 'cf_role'
-  cmess   = 'Adding attribute '//trim(attname)// &
+  cmess   = 'Adding attribute "'//trim(attname)// &
             '" to variable "'//trim(var_name)//'"'
   ierr = nf90_put_att( self%ncid, id, trim(attname), 'mesh_topology')
   call check_err(ierr, routine, cmess)
 
+
+  attname = 'mesh_class'
+  cmess   = 'Adding attribute "'//trim(attname)// &
+            '" to variable "'//trim(var_name)//'"'
+  ierr = nf90_put_att( self%ncid, id, trim(attname), &
+                       trim(self%mesh_class))
+  call check_err(ierr, routine, cmess)
+
+  attname = 'generator_inputs'
+  cmess   = 'Adding attribute "'//trim(attname)// &
+            '" to variable "'//trim(var_name)//'"'
+  ierr = nf90_put_att( self%ncid, id, trim(attname), &
+                       trim(self%generator_inputs) )
+
+  call check_err(ierr, routine, cmess)
+
   attname = 'long_name'
-  cmess   = 'Adding attribute '//trim(attname)// &
-            '" to variable 2'//trim(var_name)//'"'
+  cmess   = 'Adding attribute "'//trim(attname)// &
+            '" to variable "'//trim(var_name)//'"'
   ierr = nf90_put_att( self%ncid, id, trim(attname), &
                        'Topology data of 2D unstructured mesh')
   call check_err(ierr, routine, cmess)
 
   attname = 'topology_dimension'
-  cmess   = 'Adding attribute '//trim(attname)// &
+  cmess   = 'Adding attribute "'//trim(attname)// &
             '" to variable "'//trim(var_name)//'"'
   ierr = nf90_put_att( self%ncid, id, trim(attname), [2])
   call check_err(ierr, routine, cmess)
@@ -637,26 +650,26 @@ subroutine assign_attributes(self)
 end subroutine assign_attributes
 
 !-------------------------------------------------------------------------------
-!>  @brief    Gets dimension ids and variable ids from the open netCDF file.
-!!
-!!  @details  netCDF files refer to dimensions and variables by an id, the value
-!!            of which is determined by the netCDF library. This routine finds
-!!            dimension and variable ids for all variables of interest in the
-!!            open netCDF file.
-!!
-!!  @param[in,out] self      The netCDF file object.
-!!  @param[in]     mesh_name Name of mesh topology to get ids for
+!>  @brief   Gets dimension ids and variable ids from the open NetCDF file.
+!>  @details NetCDF files refer to dimensions and variables by an id, the value
+!>           of which is determined by the NetCDF library. This routine finds
+!>           dimension and variable ids for all variables of interest in the
+!>           open NetCDF file.
+!>
+!>  @param[in,out] self      The NetCDF file object.
+!>  @param[in]     mesh_name Name of mesh topology to get ids for
 !-------------------------------------------------------------------------------
 
 subroutine inquire_ids(self, mesh_name)
+
   implicit none
 
-  !Arguments
+  ! Arguments
   type(ncdf_quad_type), intent(inout) :: self
 
   character(str_def), intent(in) :: mesh_name
 
-  !Internal variables
+  ! Internal variables
   integer(i_def) :: ierr
 
   character(nf90_max_name) :: dim_name
@@ -677,6 +690,8 @@ subroutine inquire_ids(self, mesh_name)
          'Mesh '//trim(mesh_name)//' not present in file'
     call log_event(trim(log_scratch_space), LOG_LEVEL_ERROR)
   end if
+
+  ierr = nf90_inq_varid( self%ncid, trim(mesh_name), self%mesh_id )
 
   ! Numbers of entities
   dim_name = 'n'//trim(mesh_name)//'_node'
@@ -754,21 +769,20 @@ subroutine inquire_ids(self, mesh_name)
 end subroutine inquire_ids
 
 !-------------------------------------------------------------------------------
-!>  @brief    Calls logger on error.
-!!
-!!  @details  Checks the error code returned by the netCDF file. If an error is
-!!            detected, the relevant error message is passed to the logger.
-!!
-!!  @param[in] ierr    The error code to check.
-!!  @param[in] routine The routine name that call the error check
-!!  @param[in] cmess   Comment message for the error report
+!>  @brief   Calls logger on error.
+!>  @details Checks the error code returned by the NetCDF file. If an error is
+!>           detected, the relevant error message is passed to the logger.
+!>
+!>  @param[in] ierr    The error code to check.
+!>  @param[in] routine The routine name that call the error check
+!>  @param[in] cmess   Comment message for the error report
 !-------------------------------------------------------------------------------
 
 subroutine check_err(ierr, routine, cmess)
   implicit none
 
-  !Arguments
-  integer(i_def), intent(in) :: ierr
+  ! Arguments
+  integer(i_def),      intent(in) :: ierr
   character(str_long), intent(in) :: routine
   character(str_long), intent(in) :: cmess
 
@@ -782,13 +796,11 @@ subroutine check_err(ierr, routine, cmess)
 end subroutine check_err
 
 !-------------------------------------------------------------------------------
-!>  @brief    Returns the number of mesh topologies described in this file.
+!>  @brief   Returns the number of mesh topologies described in this file.
+!>  @details Scans the variable attributes for cf_role = mesh_topology as
+!>           a flag that the variable name relates to a mesh.
 !>
-!>  @details  Scans the variable attributes for cf_role = mesh_topology as
-!>            a flag that the variable name relates to a mesh.
-!>
-!>  @param[out] nmeshes    Integer, The number of mesh topologies
-!>                         in the NetCDf file
+!>  @return nmeshes    Integer, The number of mesh topologies in the NetCDf file
 !-------------------------------------------------------------------------------
 function get_nmeshes(self) result (nmeshes)
 
@@ -811,7 +823,7 @@ function get_nmeshes(self) result (nmeshes)
 end function get_nmeshes
 
 !-------------------------------------------------------------------------------
-!>  @brief    Returns the names of mesh topologies described in this file.
+!>  @brief Returns the names of mesh topologies described in this file.
 !>
 !>  @param[out] mesh_names  Character[:], Names of the mesh_topologies
 !>                          in the NetCDF file
@@ -831,20 +843,19 @@ subroutine get_mesh_names(self, mesh_names)
 end subroutine get_mesh_names
 
 !-------------------------------------------------------------------------------
-!>  @brief    Gets dimension information from the netCDF file, as integers.
-!!
-!!  @details  Calls netCDF inquiry functions to determine array lengths, such as
-!!            the number of nodes.
-!!
-!!  @param[in,out]   self                   The netCDF file object.
-!!  @param[in]       mesh_name              Name of the mesh topology
-!!  @param[out]      num_nodes              The number of nodes on the mesh.
-!!  @param[out]      num_edges              The number of edges on the mesh.
-!!  @param[out]      num_faces              The number of faces on the mesh.
-!!  @param[out]      num_nodes_per_face     The number of nodes per face.
-!!  @param[out]      num_edges_per_face     The number of edges per face.
-!!  @param[out]      num_nodes_per_face     The number of nodes per face.
-!!  @param[out]      max_num_faces_per_node The maximum number of faces surrounding a node.
+!>  @brief   Gets dimension information from the NetCDF file, as integers.
+!>  @details Calls NetCDF inquiry functions to determine array lengths, such as
+!>           the number of nodes.
+!>
+!>  @param[in,out]   self                   The NetCDF file object.
+!>  @param[in]       mesh_name              Name of the mesh topology
+!>  @param[out]      num_nodes              The number of nodes on the mesh.
+!>  @param[out]      num_edges              The number of edges on the mesh.
+!>  @param[out]      num_faces              The number of faces on the mesh.
+!>  @param[out]      num_nodes_per_face     The number of nodes per face.
+!>  @param[out]      num_edges_per_face     The number of edges per face.
+!>  @param[out]      num_nodes_per_edge     The number of nodes per edge.
+!>  @param[out]      max_num_faces_per_node The maximum number of faces surrounding a node.
 !-------------------------------------------------------------------------------
 
 subroutine get_dimensions( self,               &
@@ -858,7 +869,7 @@ subroutine get_dimensions( self,               &
                            max_num_faces_per_node )
   implicit none
 
-  !Arguments
+  ! Arguments
   class(ncdf_quad_type),  intent(inout) :: self
 
   character(str_def), intent(in)  :: mesh_name
@@ -881,7 +892,7 @@ subroutine get_dimensions( self,               &
   routine='get_dimensions'
   cmess=''
 
-  !Get dimension lengths
+  ! Get dimension lengths
   ierr = nf90_inquire_dimension( self%ncid,               &
                                  self%nmesh_nodes_dim_id, &
                                  len=self%nmesh_nodes )
@@ -910,35 +921,39 @@ subroutine get_dimensions( self,               &
 end subroutine get_dimensions
 
 !-------------------------------------------------------------------------------
-!>  @brief    Read data from the netCDF file.
-!!
-!!  @details  Reads coordinate and connectivity information from the netCDF file.
-!!
-!!  @param[in,out]  self                     The netCDF file object.
-!!  @param[in]      mesh_name                Name of the mesh topology
-!!  @param[out]     node_coordinates         long/lat coordinates of each node.
-!!  @param[out]     face_node_connectivity   Nodes adjoining each face.
-!!  @param[out]     edge_node_connectivity   Nodes adjoining each edge.
-!!  @param[out]     face_edge_connectivity   Edges adjoining each face.
-!!  @param[out]     face_face_connectivity   Faces adjoining each face (links).
+!>  @brief   Read data from the NetCDF file.
+!>  @details Reads coordinate and connectivity information from the NetCDF file.
+!>
+!>  @param[in,out]  self                     The NetCDF file object.
+!>  @param[in]      mesh_name                Name of the mesh topology
+!>  @param[in]      mesh_class               Primitive class of mesh
+!>  @param[in]      generator_inputs         Inputs used to generate mesh
+!>  @param[out]     node_coordinates         long/lat coordinates of each node.
+!>  @param[out]     face_node_connectivity   Nodes adjoining each face.
+!>  @param[out]     edge_node_connectivity   Nodes adjoining each edge.
+!>  @param[out]     face_edge_connectivity   Edges adjoining each face.
+!>  @param[out]     face_face_connectivity   Faces adjoining each face (links).
 !-------------------------------------------------------------------------------
 
-subroutine read( self, mesh_name, node_coordinates,              &
-                 face_node_connectivity, edge_node_connectivity, &
-                 face_edge_connectivity, face_face_connectivity )
+subroutine read_mesh( self, mesh_name, mesh_class, generator_inputs,  &
+                      node_coordinates,                               &
+                      face_node_connectivity, edge_node_connectivity, &
+                      face_edge_connectivity, face_face_connectivity )
   implicit none
 
-  !Arguments
+  ! Arguments
   class(ncdf_quad_type),  intent(inout) :: self
 
-  character(str_def), intent(in)  :: mesh_name
-  real(r_def),        intent(out) :: node_coordinates(:,:)
-  integer(i_def),     intent(out) :: face_node_connectivity(:,:)
-  integer(i_def),     intent(out) :: edge_node_connectivity(:,:)
-  integer(i_def),     intent(out) :: face_edge_connectivity(:,:)
-  integer(i_def),     intent(out) :: face_face_connectivity(:,:)
+  character(str_def),  intent(in)  :: mesh_name
+  character(str_def),  intent(out) :: mesh_class
+  character(str_long), intent(out) :: generator_inputs
+  real(r_def),         intent(out) :: node_coordinates(:,:)
+  integer(i_def),      intent(out) :: face_node_connectivity(:,:)
+  integer(i_def),      intent(out) :: edge_node_connectivity(:,:)
+  integer(i_def),      intent(out) :: face_edge_connectivity(:,:)
+  integer(i_def),      intent(out) :: face_face_connectivity(:,:)
 
-  !Internal variables
+  ! Internal variables
   integer(i_def) :: ierr
 
   character(str_long) :: routine
@@ -946,10 +961,19 @@ subroutine read( self, mesh_name, node_coordinates,              &
 
   call inquire_ids(self, mesh_name)
 
-  routine = 'read'
+  routine = 'read_mesh'
   cmess   = ''
 
-  !Node coordinates
+
+  ! Mesh class
+  ierr = nf90_get_att( self%ncid, self%mesh_id, &
+                       'mesh_class', mesh_class )
+
+  ! Generator inputs
+  ierr = nf90_get_att( self%ncid, self%mesh_id, &
+                       'generator_inputs', generator_inputs )
+
+  ! Node coordinates
   ierr = nf90_get_var( self%ncid, self%mesh_node_x_id, &
                        node_coordinates(1,:))
   call check_err(ierr, routine, cmess)
@@ -960,138 +984,140 @@ subroutine read( self, mesh_name, node_coordinates,              &
 
 
 
-  !Face node connectivity
+  ! Face node connectivity
   ierr = nf90_get_var( self%ncid, self%mesh_face_nodes_id, &
                        face_node_connectivity(:,:) )
   call check_err(ierr, routine, cmess)
 
 
 
-  !Edge node connectivity
+  ! Edge node connectivity
   ierr = nf90_get_var( self%ncid, self%mesh_edge_nodes_id, &
                        edge_node_connectivity(:,:) )
   call check_err(ierr, routine, cmess)
 
 
 
-  !Face edge connectivity
+  ! Face edge connectivity
   ierr = nf90_get_var( self%ncid, self%mesh_face_edges_id, &
                        face_edge_connectivity(:,:) )
   call check_err(ierr, routine, cmess)
 
 
 
-  !Face face connectivity
+  ! Face face connectivity
   ierr = nf90_get_var( self%ncid, self%mesh_face_links_id, &
                        face_face_connectivity(:,:))
   call check_err(ierr, routine, cmess)
 
   return
-end subroutine read
+end subroutine read_mesh
 
 !-------------------------------------------------------------------------------
-!>  @brief    Writes data to the netCDF file.
-!!
-!!  @details  Writes dimension, coordinate and connectivity information
-!!            to the netCDF file.
-!!
-!!  @param[in,out]  self                     The netCDF file object.
-!!  @param[in]      mesh_name                Name of the mesh topology.
-!!  @param[in]      mesh_class               Primitive class of mesh.
-!!  @param[in]      num_nodes                The number of nodes on the mesh.
-!!  @param[in]      num_edges                The number of edges on the mesh.
-!!  @param[in]      num_faces                The number of faces on the mesh.
-!!  @param[in]      node_coordinates         long/lat coordinates of each node.
-!!  @param[in]      face_node_connectivity   Nodes adjoining each face.
-!!  @param[in]      edge_node_connectivity   Nodes adjoining each edge.
-!!  @param[in]      face_edge_connectivity   Edges adjoining each face.
-!!  @param[in]      face_face_connectivity   Faces adjoining each face (links).
+!>  @brief   Writes data to the NetCDF file.
+!>  @details Writes dimension, coordinate and connectivity information
+!>           to the NetCDF file.
+!>
+!>  @param[in,out]  self                     The NetCDF file object.
+!>  @param[in]      mesh_name                Name of the mesh topology.
+!>  @param[in]      mesh_class               Primitive class of mesh.
+!>  @param[in]      generator_inputs         Inputs used to create this mesh
+!>                                           from the mesh_generator
+!>  @param[in]      num_nodes                The number of nodes on the mesh.
+!>  @param[in]      num_edges                The number of edges on the mesh.
+!>  @param[in]      num_faces                The number of faces on the mesh.
+!>  @param[in]      node_coordinates         long/lat coordinates of each node.
+!>  @param[in]      face_node_connectivity   Nodes adjoining each face.
+!>  @param[in]      edge_node_connectivity   Nodes adjoining each edge.
+!>  @param[in]      face_edge_connectivity   Edges adjoining each face.
+!>  @param[in]      face_face_connectivity   Faces adjoining each face (links).
 !-------------------------------------------------------------------------------
 
-subroutine write( self, mesh_name, mesh_class,                       &
-                  num_nodes, num_edges, num_faces, node_coordinates, &
-                  face_node_connectivity, edge_node_connectivity,    &
-                  face_edge_connectivity, face_face_connectivity )
+subroutine write_mesh( self, mesh_name, mesh_class, generator_inputs,     &
+                       num_nodes, num_edges, num_faces, node_coordinates, &
+                       face_node_connectivity, edge_node_connectivity,    &
+                       face_edge_connectivity, face_face_connectivity )
   implicit none
 
-  !Arguments
+  ! Arguments
   class(ncdf_quad_type),  intent(inout) :: self
 
-  character(str_def), intent(in) :: mesh_name
-  character(str_def), intent(in) :: mesh_class
-  integer(i_def),     intent(in) :: num_nodes
-  integer(i_def),     intent(in) :: num_edges
-  integer(i_def),     intent(in) :: num_faces
-  real(r_def),        intent(in) :: node_coordinates(:,:)
-  integer(i_def),     intent(in) :: face_node_connectivity(:,:)
-  integer(i_def),     intent(in) :: edge_node_connectivity(:,:)
-  integer(i_def),     intent(in) :: face_edge_connectivity(:,:)
-  integer(i_def),     intent(in) :: face_face_connectivity(:,:)
+  character(str_def),  intent(in) :: mesh_name
+  character(str_def),  intent(in) :: mesh_class
+  character(str_long), intent(in) :: generator_inputs
+  integer(i_def),      intent(in) :: num_nodes
+  integer(i_def),      intent(in) :: num_edges
+  integer(i_def),      intent(in) :: num_faces
+  real(r_def),         intent(in) :: node_coordinates(:,:)
+  integer(i_def),      intent(in) :: face_node_connectivity(:,:)
+  integer(i_def),      intent(in) :: edge_node_connectivity(:,:)
+  integer(i_def),      intent(in) :: face_edge_connectivity(:,:)
+  integer(i_def),      intent(in) :: face_face_connectivity(:,:)
 
-  !Internal variables
+  ! Internal variables
   integer(i_def) :: ierr
   character(str_long) :: routine
   character(str_long) :: cmess
 
 
-  routine='write'
-  cmess=''
+  routine = 'write_mesh'
+  cmess   = ''
 
-  self%mesh_name   = mesh_name
-  self%mesh_class  = mesh_class
+  self%mesh_name        = mesh_name
+  self%mesh_class       = mesh_class
+  self%generator_inputs = generator_inputs
 
   self%nmesh_nodes = num_nodes
   self%nmesh_edges = num_edges
   self%nmesh_faces = num_faces
 
 
-  !Set up netCDF header
+  ! Set up NetCDF header
   call define_dimensions (self)
   call define_variables  (self)
   call assign_attributes (self)
 
 
-  !End definitions before putting data in.
+  ! End definitions before putting data in.
   ierr = nf90_enddef(self%ncid)
   call check_err(ierr, routine, cmess)
 
 
-  !Node coordinates
+  ! Node coordinates
   ierr = nf90_put_var( self%ncid, self%mesh_node_x_id, node_coordinates(1,:) )
   call check_err(ierr, routine, cmess)
 
   ierr = nf90_put_var( self%ncid, self%mesh_node_y_id, node_coordinates(2,:) )
   call check_err(ierr, routine, cmess)
 
-  !Face node connectivity
+  ! Face node connectivity
   ierr = nf90_put_var( self%ncid, self%mesh_face_nodes_id, &
                        face_node_connectivity(:,:) )
   call check_err(ierr, routine, cmess)
 
-  !Edge node connectivity
+  ! Edge node connectivity
   ierr = nf90_put_var( self%ncid, self%mesh_edge_nodes_id, &
                        edge_node_connectivity(:,:) )
   call check_err(ierr, routine, cmess)
 
-  !Face edge connectivity
+  ! Face edge connectivity
   ierr = nf90_put_var( self%ncid, self%mesh_face_edges_id, &
                        face_edge_connectivity(:,:) )
   call check_err(ierr, routine, cmess)
 
-  !Face face connectivity
+  ! Face face connectivity
   ierr = nf90_put_var( self%ncid, self%mesh_face_links_id, &
                        face_face_connectivity(:,:) )
   call check_err(ierr, routine, cmess)
 
   return
-end subroutine write
+end subroutine write_mesh
 
 !-------------------------------------------------------------------------------
-!>  @brief    Function to determine if mesh is present in NetCDF ugrid file
-!!
-!!  @param[in,out]   self        The netCDF file object.
-!!  @param[in]       mesh_name   Name of the mesh topology
-!!  @return          logical     .True. if mesh_name is present in file
+!>  @brief Function to determine if mesh is present in NetCDF ugrid file
+!>
+!>  @param[in]       mesh_name   Name of the mesh topology
+!>  @return          answer      .True. if mesh_name is present in file
 !-------------------------------------------------------------------------------
 function is_mesh_present(self, mesh_name) result(answer)
 
@@ -1128,30 +1154,33 @@ function is_mesh_present(self, mesh_name) result(answer)
 end function is_mesh_present
 
 !-------------------------------------------------------------------------------
-!>  @brief    Adds a mesh to an existing NetCDF ugrid file
-!!
-!!  @param[in,out]  self                     The netCDF file object.
-!!  @param[in]      mesh_name                Name of the mesh topology
-!!  @param[in]      mesh_class               Primitive class of mesh.
-!!  @param[in]      num_nodes                The number of nodes on the mesh.
-!!  @param[in]      num_edges                The number of edges on the mesh.
-!!  @param[in]      num_faces                The number of faces on the mesh.
-!!  @param[in]      node_coordinates         long/lat coordinates of each node.
-!!  @param[in]      face_node_connectivity   Nodes adjoining each face.
-!!  @param[in]      edge_node_connectivity   Nodes adjoining each edge.
-!!  @param[in]      face_edge_connectivity   Edges adjoining each face.
-!!  @param[in]      face_face_connectivity   Faces adjoining each face (links).
+!>  @brief Adds a mesh to an existing NetCDF ugrid file
+!>
+!>  @param[in,out]  self                     The NetCDF file object.
+!>  @param[in]      mesh_name                Name of the mesh topology
+!>  @param[in]      mesh_class               Primitive class of mesh.
+!>  @param[in]      generator_inputs         Inputs used to create this mesh
+!>                                           from the mesh_generator
+!>  @param[in]      num_nodes                The number of nodes on the mesh.
+!>  @param[in]      num_edges                The number of edges on the mesh.
+!>  @param[in]      num_faces                The number of faces on the mesh.
+!>  @param[in]      node_coordinates         long/lat coordinates of each node.
+!>  @param[in]      face_node_connectivity   Nodes adjoining each face.
+!>  @param[in]      edge_node_connectivity   Nodes adjoining each edge.
+!>  @param[in]      face_edge_connectivity   Edges adjoining each face.
+!>  @param[in]      face_face_connectivity   Faces adjoining each face (links).
 !-------------------------------------------------------------------------------
-subroutine append( self, mesh_name, mesh_class,                       &
-                   num_nodes, num_edges, num_faces, node_coordinates, &
-                   face_node_connectivity, edge_node_connectivity,    &
-                   face_edge_connectivity, face_face_connectivity)
+subroutine append_mesh( self, mesh_name, mesh_class, generator_inputs,     &
+                        num_nodes, num_edges, num_faces, node_coordinates, &
+                        face_node_connectivity, edge_node_connectivity,    &
+                        face_edge_connectivity, face_face_connectivity)
   implicit none
 
-  !Arguments
+  ! Arguments
   class(ncdf_quad_type), intent(inout) :: self
   character(str_def),    intent(in)    :: mesh_class
   character(str_def),    intent(in)    :: mesh_name
+  character(str_long),   intent(in)    :: generator_inputs
   integer(i_def),        intent(in)    :: num_nodes
   integer(i_def),        intent(in)    :: num_edges
   integer(i_def),        intent(in)    :: num_faces
@@ -1161,7 +1190,7 @@ subroutine append( self, mesh_name, mesh_class,                       &
   integer(i_def),        intent(in)    :: face_edge_connectivity(:,:)
   integer(i_def),        intent(in)    :: face_face_connectivity(:,:)
 
-  !Internal variables
+  ! Internal variables
   integer(i_def) :: ierr
 
   character(str_long) :: routine
@@ -1169,7 +1198,7 @@ subroutine append( self, mesh_name, mesh_class,                       &
 
   logical(l_def) :: mesh_present
 
-  routine='append'
+  routine='append_mesh'
   cmess=''
 
   mesh_present = self%is_mesh_present(mesh_name)
@@ -1184,9 +1213,10 @@ subroutine append( self, mesh_name, mesh_class,                       &
   ierr = nf90_redef(self%ncid)
   call check_err(ierr, routine, cmess)
 
-  call self%write(                                     &
+  call self%write_mesh(                                &
       mesh_name  = mesh_name,                          &
       mesh_class = mesh_class,                         &
+      generator_inputs = generator_inputs,             &
       num_nodes  = num_nodes,                          &
       num_edges  = num_edges,                          &
       num_faces  = num_faces,                          &
@@ -1197,14 +1227,15 @@ subroutine append( self, mesh_name, mesh_class,                       &
       face_face_connectivity = face_face_connectivity )
 
   return
-end subroutine append
+end subroutine append_mesh
 
 !-------------------------------------------------------------------------------
-!>  @brief    Returns the NetCDF variable names in the NetCDF file which are
-!>            ugrid mesh topologies.
+!>  @brief   Returns the NetCDF variable names in the NetCDF file which are
+!>           ugrid mesh topologies.
+!>  @details Scans the variable attributes for cf_role = mesh_topology as
+!>           a flag that the variable name relates to a mesh.
 !>
-!>  @details  Scans the variable attributes for cf_role = mesh_topology as
-!>            a flag that the variable name relates to a mesh.
+!>  @param[in]  self        ncdf_quad_type object associated with NetCDF file
 !>
 !>  @param[out] mesh_names  Character[:], Names of the mesh_topologies
 !>                          in the NetCDF file
@@ -1251,7 +1282,7 @@ subroutine scan_for_topologies(self, mesh_names, nmeshes)
                                   natts=var_n_attributes(i) )
     write(cmess,'(2(A,I0))')       &
         'Invalid variable id:', i, &
-        'or netcdf file id:', self%ncid
+        'or NetCDF file id:', self%ncid
     call check_err (ierr, routine, cmess)
     do j=1, var_n_attributes(i)
       ierr = nf90_inq_attname( ncid=self%ncid,    &

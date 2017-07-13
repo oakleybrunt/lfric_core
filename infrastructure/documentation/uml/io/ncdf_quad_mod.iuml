@@ -8,6 +8,7 @@ class ncdf_quad_mod::ncdf_quad_type {
   -file_name: string
   -mesh_name: string
   -mesh_class: string
+  -generator_inputs: string
 
   -nmesh_nodes: integer
   -nmesh_edges: integer
@@ -28,9 +29,9 @@ class ncdf_quad_mod::ncdf_quad_type {
   -mesh_node_x_id: integer
   -mesh_node_y_id: integer
 
-  +read( ... )
-  +write( ... )
-  +append( ... )
+  +read_mesh( ... )
+  +write_mesh( ... )
+  +append_mesh( ... )
   +get_dimensions( ... )
   +get_mesh_names( ... )
   +get_nmeshes( ... )

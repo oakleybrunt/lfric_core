@@ -211,14 +211,14 @@ contains
 !=============================================================================!
 !>@brief Compute the lumped inverse H_B operator
   subroutine compute_inv_hb
-    use timestepping_config_mod,  only: dt
-    use planet_config_mod,        only: cp
-    use psykal_lite_mod,          only: invoke_inc_X_times_Y, &
-                                        invoke_inc_axpy,      &
-                                        invoke_raise_field
-    use matrix_vector_kernel_mod, only: matrix_vector_kernel_type
-    use operator_mod,             only: operator_type
-    use enforce_bc_kernel_mod,    only: enforce_bc_kernel_type
+    use timestepping_config_mod,       only: dt
+    use planet_config_mod,             only: cp
+    use psykal_lite_mod,               only: invoke_inc_X_times_Y, &
+                                             invoke_inc_axpy,      &
+                                             invoke_raise_field
+    use matrix_vector_nobc_kernel_mod, only: matrix_vector_nobc_kernel_type
+    use operator_mod,                  only: operator_type
+    use enforce_bc_kernel_mod,         only: enforce_bc_kernel_type
 
     implicit none
     type(operator_type), pointer                   :: m2, p2theta,         &
@@ -240,11 +240,11 @@ contains
                 set_field_scalar(0.0_r_def, hb_inv), &
                 set_field_scalar(0.0_r_def, m2_u), &
                 set_field_scalar(0.0_r_def, theta_adv_term) )
-    call invoke( matrix_vector_kernel_type(m2_u, ones, m2), &
-                 matrix_vector_kernel_type(theta_adv_term, ones, ptheta2) )
+    call invoke( matrix_vector_nobc_kernel_type(m2_u, ones, m2), &
+                 matrix_vector_nobc_kernel_type(theta_adv_term, ones, ptheta2) )
     call invoke_inc_X_times_Y(theta_adv_term, mt_lumped_inv)
 
-    call invoke( matrix_vector_kernel_type(hb_inv, theta_adv_term, p2theta) )  
+    call invoke( matrix_vector_nobc_kernel_type(hb_inv, theta_adv_term, p2theta) )  
     call invoke_inc_axpy( timestep_term, hb_inv, m2_u )
     call invoke_raise_field(hb_inv, -1_i_def)
 

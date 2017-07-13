@@ -61,15 +61,10 @@ all:
 	$(MAKE) test
 
 .PHONY: build
-build:
-	$(MAKE) build-gungho
-	$(MAKE) build-mesh_tools
+build: build-gungho build-mesh_tools
 
 .PHONY: test
-test:
-	$(MAKE) test-infrastructure
-	$(MAKE) test-gungho
-	$(MAKE) test-mesh_tools
+test: test-infrastructure test-gungho test-mesh_tools
 
 .PHONY: documentation doc docs
 documentation doc docs: document-infrastructure document-gungho
@@ -79,10 +74,10 @@ documentation doc docs: document-infrastructure document-gungho
 test-suite: SUITE_GROUP ?= developer
 test-suite:
 	$(Q)if [ -z "$(TEST_SUITE_TARGETS)" ] ; then \
-	    echo *** Please set the TEST_SUITE_TARGETS environment variable. ; \
+	    echo *** Please set the DYNAMO_TEST_SUITE_TARGETS environment variable. ; \
 	    exit 1 ; \
 	fi
-	$(Q)umask 022; for target in $(TEST_SUITE_TARGETS) ; do \
+	$(Q)umask 022; for target in $(DYNAMO_TEST_SUITE_TARGETS) ; do \
 	    echo Launching test suite against $$target ; \
 	    rose stem --name=$(shell basename `pwd`)-infrastructure-$$target-$(SUITE_GROUP) --config=infrastructure/rose-stem --opt-conf-key=$$target --group=$(SUITE_GROUP); \
 	    rose stem --name=$(shell basename `pwd`)-gungho-$$target-$(SUITE_GROUP) --config=gungho/rose-stem --opt-conf-key=$$target --group=$(SUITE_GROUP); \
@@ -93,10 +88,10 @@ test-suite:
 test-umphysics: SUITE_GROUP ?= csar-umbuild
 test-umphysics: 
 	$(Q)if [ -z "$(TEST_SUITE_TARGETS)" ] ; then \
-	    echo *** Please set the TEST_SUITE_TARGETS environment variable. ; \
+	    echo *** Please set the DYNAMO_TEST_SUITE_TARGETS environment variable. ; \
 	    exit 1 ; \
 	fi
-	$(Q)umask 022; for target in $(TEST_SUITE_TARGETS) ; do \
+	$(Q)umask 022; for target in $(DYNAMO_TEST_SUITE_TARGETS) ; do \
 	    echo Launching test suite against $$target ; \
 	    export UM_ENV=$(UM_PHYS_DIR)/set_environment-$$target.sh; \
 	    rose stem --name=$(shell basename `pwd`)-gungho-$$target-$(SUITE_GROUP) --config=gungho/rose-stem --opt-conf-key=$$target --group=$(SUITE_GROUP) --opt-conf-key=umphysics; \

@@ -226,14 +226,14 @@ subroutine map_global_meshes( self,                   &
   integer(i_def) :: coarse_id
   integer(i_def) :: fine_id
 
-  integer(i_def) :: coarse_ndiv
-  integer(i_def) :: fine_ndiv
+  integer(i_def) :: coarse_edge_cells
+  integer(i_def) :: fine_edge_cells
   integer(i_def) :: coarse_ncells
   integer(i_def) :: fine_ncells
   integer(i_def) :: source_ncells
   integer(i_def) :: target_ncells
 
-  integer(i_def) :: factor ! ratio of ndivs
+  integer(i_def) :: factor ! ratio of edge_cells
 
   integer(i_def) :: start_x
   integer(i_def) :: start_y
@@ -305,12 +305,12 @@ subroutine map_global_meshes( self,                   &
   ! Now we know which of the source and target are the
   ! coarser and finer meshes, generate a coarse_to_fine
   ! and fine_to_coarse map per panel
-  coarse_ndiv = INT(SQRT( real(coarse_ncells/self%npanels, r_def) ), i_def)
-  fine_ndiv   = INT(SQRT( real(fine_ncells/self%npanels,   r_def) ), i_def)
-  factor      = fine_ndiv/coarse_ndiv
+  coarse_edge_cells = int(sqrt(real(coarse_ncells/self%npanels, r_def)), i_def)
+  fine_edge_cells   = int(sqrt(real(fine_ncells/self%npanels,   r_def)), i_def)
+  factor            = fine_edge_cells/coarse_edge_cells
 
-  allocate( coarse_panel_ids ( coarse_ndiv, coarse_ndiv ))
-  allocate( fine_panel_ids   ( fine_ndiv,   fine_ndiv   ))
+  allocate( coarse_panel_ids ( coarse_edge_cells, coarse_edge_cells ))
+  allocate( fine_panel_ids   ( fine_edge_cells,   fine_edge_cells   ))
   allocate( coarse_to_fine_gid_map( factor**2, coarse_ncells ) )
   allocate( fine_to_coarse_gid_map( 1, fine_ncells ))
 
@@ -333,7 +333,8 @@ subroutine map_global_meshes( self,                   &
       count=count+1
     end do
 
-    coarse_panel_ids = reshape(tmp_panel_ids,(/coarse_ndiv,coarse_ndiv/))
+    coarse_panel_ids = reshape( tmp_panel_ids,(/coarse_edge_cells, &
+                                                coarse_edge_cells/) )
     deallocate(tmp_panel_ids)
 
     ! For fine mesh
@@ -344,7 +345,7 @@ subroutine map_global_meshes( self,                   &
       tmp_panel_ids(count) = i
       count=count+1
     end do
-    fine_panel_ids = reshape(tmp_panel_ids,(/fine_ndiv,fine_ndiv/))
+    fine_panel_ids = reshape(tmp_panel_ids,(/fine_edge_cells,fine_edge_cells/))
     deallocate(tmp_panel_ids)
 
     ! ===============================
@@ -352,10 +353,10 @@ subroutine map_global_meshes( self,                   &
     ! ===============================
 
     ! Coarse to Fine
-    do j=1, coarse_ndiv
+    do j=1, coarse_edge_cells
       start_y = ((j-1)*factor) + 1
       end_y   = start_y + factor - 1
-      do i=1, coarse_ndiv
+      do i=1, coarse_edge_cells
         start_x = ((i-1)*factor) + 1
         end_x   = start_x + factor - 1
 

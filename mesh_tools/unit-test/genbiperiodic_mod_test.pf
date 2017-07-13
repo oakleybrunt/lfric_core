@@ -15,7 +15,7 @@
 !>
 module genbiperiodic_mod_test
 
-  use constants_mod,     only: i_def, r_def, str_def
+  use constants_mod,     only: i_def, r_def, str_def, str_long
   use genbiperiodic_mod, only: genbiperiodic_type
   use pFUnit_Mod
 
@@ -87,15 +87,18 @@ contains
     integer(i_def)           :: nodes_per_face, edges_per_face
     integer(i_def)           :: nodes_per_edge, max_faces_per_node
 
-    character(len=str_def)   :: test_str1, test_str2
+    character(str_def)  :: test_str1, test_str2
+    character(str_long) :: test_str3
 
     bpgen = genbiperiodic_type(mesh_name, nx, ny)
 
     ! Test metadata retrieval
-    call bpgen%get_metadata( mesh_name  = test_str1, &
-                             mesh_class = test_str2 )
-    @assertEqual( trim(test_str1), mesh_name )
-    @assertEqual( trim(test_str2), 'plane')
+    call bpgen%get_metadata( mesh_name        = test_str1, &
+                             mesh_class       = test_str2, &
+                             generator_inputs = test_str3 )
+    @assertEqual( mesh_name, trim(test_str1) )
+    @assertEqual( 'plane', trim(test_str2) )
+    @assertEqual( 'cells_in_x=5;cells_in_y=4;cell_width=6000.00;cell_height=2000.00', trim(test_str3) )
 
     ! Generate the mesh and connectivity
     call bpgen%generate()

@@ -394,7 +394,7 @@ contains
     real(kind=r_def), pointer :: xp(:,:) => null()
     real(kind=r_def), pointer :: xp_f(:,:,:) => null()
     real(kind=r_def), pointer :: zp(:) => null()
-    real(kind=r_def), pointer :: wh(:) => null(), wv(:) => null()
+    real(kind=r_def), pointer :: wh(:), wv(:) => null()
 
     mesh => theta%get_mesh()
 
@@ -2032,16 +2032,16 @@ contains
 !> (not quadrature) will be removed and the functionality will be implemented via
 !> PSY using kernal meta data. 
 !> PSyclone support is required - documented in #942
-  subroutine invoke_sample_flux_kernel(flux, u, rmultiplicity, q )
+  subroutine invoke_sample_flux_kernel(flux, u, multiplicity, q )
     use sample_flux_kernel_mod, only: sample_flux_code
     use mesh_mod,               only: mesh_type
 
     implicit none
 
-    type(field_type), intent(in)         :: u, rmultiplicity, q
+    type(field_type), intent(in)         :: u, multiplicity, q
     type(field_type), intent(inout)      :: flux
 
-    type(field_proxy_type)          :: u_p, rm_p, q_p, flux_p
+    type(field_proxy_type)          :: u_p, m_p, q_p, flux_p
     
     integer                 :: cell, nlayers
     integer                 :: ndf_f, ndf_q
@@ -2059,7 +2059,7 @@ contains
 
     u_p    = u%get_proxy()
     q_p    = q%get_proxy()
-    rm_p    = rmultiplicity%get_proxy()
+    m_p    = multiplicity%get_proxy()
     flux_p = flux%get_proxy()
 
     nlayers = flux_p%vspace%get_nlayers()
@@ -2082,7 +2082,7 @@ contains
 
     mesh => flux%get_mesh()
     if (flux_p%is_dirty(depth=1)) call flux_p%halo_exchange(depth=1)
-    if (  rm_p%is_dirty(depth=1)) call    rm_p%halo_exchange(depth=1)
+    if (   m_p%is_dirty(depth=1)) call    m_p%halo_exchange(depth=1)
     if (   u_p%is_dirty(depth=1)) call    u_p%halo_exchange(depth=1)
     if (   q_p%is_dirty(depth=1)) call    q_p%halo_exchange(depth=1)
 
@@ -2092,7 +2092,7 @@ contains
        map_q => q_p%vspace%get_cell_dofmap( cell )
        call sample_flux_code(nlayers, &
                              flux_p%data, & 
-                             rm_p%data, &
+                             m_p%data, &
                              u_p%data, &
                              q_p%data, &
                              ndf_f, & 
@@ -2660,204 +2660,6 @@ subroutine invoke_subgrid_coeffs(a0,a1,a2,rho,cell_orientation,direction,rho_app
     call a2_proxy%set_dirty()
 
   end subroutine invoke_subgrid_coeffs
-
-
-!-------------------------------------------------------------------------------  
-!> invoke_subgrid_coeffs: Invoke the calculation of subgrid rho coefficients
-!>                        The routine also includes a special type of halo
-!>                        exchange where the values in the halos need to be
-!>                        corrected. This is due to 1D direction updates of the
-!>                        density field and the panels of the cubed-sphere having
-!>                        different orientation.
-subroutine invoke_subgrid_coeffs_conservative( a0,                               &
-                                               a1,                               &
-                                               a2,                               &
-                                               rho_x,                            &
-                                               rho_y,                            &
-                                               rho_x_halos_corrected,            &
-                                               rho_y_halos_corrected,            &
-                                               cell_orientation,                 &
-                                               direction,                        &
-                                               rho_approximation_stencil_extent, &
-                                               halo_depth_to_compute  )
-
-    use flux_direction_mod,               only: x_direction, y_direction
-    use stencil_dofmap_mod,               only: stencil_dofmap_type, &
-                                                STENCIL_1DX,         &
-                                                STENCIL_1DY
-    use subgrid_coeffs_kernel_mod,        only: subgrid_coeffs_code
-    use subgrid_config_mod,               only: rho_approximation
-    use mesh_mod,                         only: mesh_type
-    use log_mod,                          only: log_event, LOG_LEVEL_ERROR
-    use cosmic_halo_correct_x_kernel_mod, only: cosmic_halo_correct_x_code
-    use cosmic_halo_correct_y_kernel_mod, only: cosmic_halo_correct_y_code
-
-    implicit none
-
-    type( field_type ), intent( inout ) :: a0
-    type( field_type ), intent( inout ) :: a1
-    type( field_type ), intent( inout ) :: a2
-    type( field_type ), intent( in )    :: rho_x
-    type( field_type ), intent( in )    :: rho_y
-    type( field_type ), intent( inout ) :: rho_x_halos_corrected
-    type( field_type ), intent( inout ) :: rho_y_halos_corrected
-    type( field_type ), intent( in )    :: cell_orientation
-    integer, intent(in)                 :: direction
-    integer, intent(in)                 :: rho_approximation_stencil_extent
-    integer, intent(in)                 :: halo_depth_to_compute
-
-    type( field_proxy_type )            :: rho_x_proxy
-    type( field_proxy_type )            :: rho_y_proxy
-    type( field_proxy_type )            :: rho_x_halos_corrected_proxy
-    type( field_proxy_type )            :: rho_y_halos_corrected_proxy
-    type( field_proxy_type )            :: a0_proxy
-    type( field_proxy_type )            :: a1_proxy
-    type( field_proxy_type )            :: a2_proxy
-    type( field_proxy_type )            :: cell_orientation_proxy
-
-    type(stencil_dofmap_type), pointer  :: map => null()
-    integer, pointer                    :: stencil_map(:,:) => null()
-    integer                             :: rho_stencil_size
-    integer                             :: cell
-    integer                             :: nlayers
-    integer                             :: ndf_w3
-    integer                             :: undf_w3
-    type(mesh_type), pointer            :: mesh => null()
-    integer                             :: d
-    logical                             :: swap
-    integer                             :: ncells_to_iterate
-    integer, pointer                    :: map_w3(:,:) => null()
-
-    a0_proxy   = a0%get_proxy()
-    a1_proxy   = a1%get_proxy()
-    a2_proxy   = a2%get_proxy()
-    rho_x_proxy  = rho_x%get_proxy()
-    rho_y_proxy  = rho_y%get_proxy()
-    rho_x_halos_corrected_proxy = rho_x_halos_corrected%get_proxy()
-    rho_y_halos_corrected_proxy = rho_y_halos_corrected%get_proxy()
-
-    cell_orientation_proxy = cell_orientation%get_proxy()
-
-    undf_w3 = rho_x_proxy%vspace%get_undf()
-    ndf_w3  = rho_x_proxy%vspace%get_ndf()
-    nlayers = rho_x_proxy%vspace%get_nlayers()
-
-    map_w3 => rho_x_proxy%vspace%get_whole_dofmap()
-
-    ! Note stencil grid types are of the form:
-    !                                   |5|
-    !                                   |3|
-    ! 1DX --> |4|2|1|3|5|  OR  1DY -->  |1|
-    !                                   |2|
-    !                                   |4|
-    if (direction == x_direction) then
-      map => rho_x_proxy%vspace%get_stencil_dofmap(STENCIL_1DX,rho_approximation_stencil_extent)
-    elseif (direction == y_direction) then
-      map => rho_x_proxy%vspace%get_stencil_dofmap(STENCIL_1DY,rho_approximation_stencil_extent)
-    end if
-    rho_stencil_size = map%get_size()
-    
-    swap = .false.
-    do d = 1,halo_depth_to_compute
-      if (rho_x_proxy%is_dirty(depth=d)) swap = .true.
-    end do
-    if ( swap ) call rho_x_proxy%halo_exchange(depth=halo_depth_to_compute)
-
-    swap = .false.
-    do d = 1,halo_depth_to_compute
-      if (rho_y_proxy%is_dirty(depth=d)) swap = .true.
-    end do
-    if ( swap ) call rho_y_proxy%halo_exchange(depth=halo_depth_to_compute)
-
-    mesh => a0%get_mesh()
-
-    do cell=1,mesh%get_last_edge_cell()
-
-      call cosmic_halo_correct_x_code(  nlayers,                            &
-                                        rho_x_halos_corrected_proxy%data,   &
-                                        rho_x_proxy%data,                   &
-                                        rho_y_proxy%data,                   &
-                                        cell_orientation_proxy%data,        &
-                                        ndf_w3,                             &
-                                        undf_w3,                            &
-                                        map_w3(:,cell))
-    end do
-
-    do cell=1,mesh%get_last_edge_cell()
-
-      call cosmic_halo_correct_y_code(  nlayers,                            &
-                                        rho_y_halos_corrected_proxy%data,   &
-                                        rho_x_proxy%data,                   &
-                                        rho_y_proxy%data,                   &
-                                        cell_orientation_proxy%data,        &
-                                        ndf_w3,                             &
-                                        undf_w3,                            &
-                                        map_w3(:,cell))
-    end do
-
-    if (halo_depth_to_compute==0) then
-      ncells_to_iterate = mesh%get_last_edge_cell()
-    elseif (halo_depth_to_compute > 0) then
-      ncells_to_iterate = mesh%get_last_halo_cell(halo_depth_to_compute)
-    else
-      call log_event( "Error: negative halo_depth_to_compute value in subgrid coeffs call", LOG_LEVEL_ERROR )
-    endif
-
-    !NOTE: The default looping limits for this type of field would be 
-    ! mesh%get_last_halo_cell(1) but this kernel requires a modified loop limit
-    ! inorder to function correctly. See ticket #1058.
-    ! The kernel loops over all core and some halo cells.
-
-    if (direction == x_direction) then
-      do cell = 1, ncells_to_iterate
-
-      stencil_map => map%get_dofmap(cell)
-
-      call subgrid_coeffs_code( nlayers,                                  &
-                                rho_approximation,                        &
-                                undf_w3,                                  &
-                                rho_y_halos_corrected_proxy%data,         &
-                                cell_orientation_proxy%data,              &
-                                ndf_w3,                                   &
-                                rho_stencil_size,                         &
-                                stencil_map,                              &
-                                direction,                                &
-                                a0_proxy%data,                            &
-                                a1_proxy%data,                            &
-                                a2_proxy%data                             &
-                                )
-
-      end do
-    elseif (direction == y_direction) then
-      do cell = 1, ncells_to_iterate
-
-      stencil_map => map%get_dofmap(cell)
-
-      call subgrid_coeffs_code( nlayers,                                  &
-                                rho_approximation,                        &
-                                undf_w3,                                  &
-                                rho_x_halos_corrected_proxy%data,         &
-                                cell_orientation_proxy%data,              &
-                                ndf_w3,                                   &
-                                rho_stencil_size,                         &
-                                stencil_map,                              &
-                                direction,                                &
-                                a0_proxy%data,                            &
-                                a1_proxy%data,                            &
-                                a2_proxy%data                             &
-                                )
-
-      end do
-
-    else
-        call log_event( "Direction not specified in subgrid_coeffs ", LOG_LEVEL_ERROR )
-    end if
-
-    call a0_proxy%set_dirty()
-    call a1_proxy%set_dirty()
-    call a2_proxy%set_dirty()
-
-  end subroutine invoke_subgrid_coeffs_conservative
 
 
 !------------------------------------------------------------------------------- 
@@ -4540,153 +4342,5 @@ end subroutine invoke_sample_poly_adv
     deallocate(diff_basis_chi)
 
   end subroutine invoke_mpi_detj_at_w2
-
-
-  !-------------------------------------------------------------------------------
-  !> This routine is called from psykal_lite due to the variable cell_orientation
-  !> being passed into the kernel.
-  !> The cell_orientation field should not be halo exchanged across panels as the
-  !> orientation of cells is local to its own panel on the cubed-sphere.
-  subroutine invoke_fv_divergence( mass_divergence,     &
-                                   mass_flux,           &
-                                   cell_orientation,    &
-                                   direction )
-
-    use mesh_mod,                   only : mesh_type
-    use fv_divergence_kernel_mod,   only : fv_divergence_code
-
-    implicit none
-
-    type(field_type), intent(out)   :: mass_divergence
-    type(field_type), intent(in)    :: mass_flux
-    type(field_type), intent(in)    :: cell_orientation
-    integer, intent(in)             :: direction
-
-    type(mesh_type)                 :: mesh
-
-    integer, pointer                :: map_w3(:,:) => null()
-    integer, pointer                :: map_w2(:,:) => null()
-
-    type(field_proxy_type)          :: cell_orientation_proxy
-    type(field_proxy_type)          :: mass_flux_proxy
-    type(field_proxy_type)          :: mass_divergence_proxy
-
-    integer                         :: cell, nlayers
-    integer                         :: ndf_w3, undf_w3
-    integer                         :: ndf_w2, undf_w2
-
-    cell_orientation_proxy           = cell_orientation%get_proxy()
-    mass_divergence_proxy            = mass_divergence%get_proxy()
-    mass_flux_proxy                  = mass_flux%get_proxy()
-
-    nlayers = cell_orientation_proxy%vspace%get_nlayers()
-    ndf_w3  = cell_orientation_proxy%vspace%get_ndf( )
-    undf_w3 = cell_orientation_proxy%vspace%get_undf()
-    ndf_w2  = mass_flux_proxy%vspace%get_ndf( )
-    undf_w2 = mass_flux_proxy%vspace%get_undf()
-
-    mesh    = mass_flux%get_mesh()
-
-    map_w3 => cell_orientation_proxy%vspace%get_whole_dofmap()
-    map_w2 => mass_flux_proxy%vspace%get_whole_dofmap()
-
-    do cell=1,mesh%get_last_edge_cell() ! Loop over core cells only
-
-      call  fv_divergence_code(  nlayers,                             &
-                                 mass_divergence_proxy%data,          &
-                                 undf_w3,                             &
-                                 ndf_w3,                              &
-                                 map_w3(:,cell),                      &
-                                 cell_orientation_proxy%data,         &
-                                 undf_w2,                             &
-                                 ndf_w2,                              &
-                                 map_w2(:,cell),                      &
-                                 mass_flux_proxy%data,                &
-                                 direction )
-
-    end do
-
-  end subroutine invoke_fv_divergence
-
-  !-------------------------------------------------------------------------------
-  !> This kernel routine is in psykal_lite due to the use of cell_orientation
-  !> variable which cannot be halo exchanged and also the depth of the halos to
-  !> loop over includes all halo depths, i.e. all cells in the core and halo.
-  subroutine invoke_extract_xy(x_field_out,y_field_out,w2_field_in,cell_orientation)
-
-    use extract_x_kernel_mod,        only : extract_x_code
-    use extract_y_kernel_mod,        only : extract_y_code
-    use log_mod,                     only : log_event, log_scratch_space,     &
-                                            LOG_LEVEL_INFO
-    use mesh_mod,                    only : mesh_type
-
-    implicit none
-
-    type(field_type), intent(inout)    :: x_field_out
-    type(field_type), intent(inout)    :: y_field_out
-    type(field_type), intent(in)       :: w2_field_in
-    type(field_type), intent(in)       :: cell_orientation
-
-    type(field_proxy_type)             :: cell_orientation_proxy
-    type(field_proxy_type)             :: x_field_out_proxy
-    type(field_proxy_type)             :: y_field_out_proxy
-    type(field_proxy_type)             :: w2_field_in_proxy
-
-    integer                            :: cell, nlayers
-    integer                            :: ndf_w3, undf_w3
-    integer                            :: ndf_w2, undf_w2
-    integer, pointer                   :: map_w3(:,:) => null()
-    integer, pointer                   :: map_w2(:,:) => null()
-
-    type(mesh_type), pointer           :: mesh => null()
-
-    cell_orientation_proxy = cell_orientation%get_proxy()
-    x_field_out_proxy      = x_field_out%get_proxy()
-    y_field_out_proxy      = y_field_out%get_proxy()
-    w2_field_in_proxy      = w2_field_in%get_proxy()
-
-    nlayers = cell_orientation_proxy%vspace%get_nlayers()
-    ndf_w3  = cell_orientation_proxy%vspace%get_ndf( )
-    undf_w3 = cell_orientation_proxy%vspace%get_undf()
-    ndf_w2  = x_field_out_proxy%vspace%get_ndf( )
-    undf_w2 = x_field_out_proxy%vspace%get_undf()
-
-    mesh   => x_field_out%get_mesh()
-    map_w2 => x_field_out_proxy%vspace%get_whole_dofmap()
-    map_w3 => cell_orientation_proxy%vspace%get_whole_dofmap()
-
-    ! Do not perform a halo exchange on purpose
-
-    ! Extract the x-component of the W2 field
-    do cell = 1, mesh%get_ncells_2d() ! Loop over core and halo cells
-
-      call extract_x_code(  nlayers,                             &
-                            cell_orientation_proxy%data,         &
-                            w2_field_in_proxy%data,              &
-                            x_field_out_proxy%data,              &
-                            undf_w3,                             &
-                            ndf_w3,                              &
-                            map_w3(:,cell),                      &
-                            undf_w2,                             &
-                            ndf_w2,                              &
-                            map_w2(:,cell) )
-    end do
-
-    ! Extract the y-component of the W2 field
-    do cell = 1, mesh%get_ncells_2d() ! Loop over core and halo cells
-
-      call extract_y_code(  nlayers,                             &
-                            cell_orientation_proxy%data,         &
-                            w2_field_in_proxy%data,              &
-                            y_field_out_proxy%data,              &
-                            undf_w3,                             &
-                            ndf_w3,                              &
-                            map_w3(:,cell),                      &
-                            undf_w2,                             &
-                            ndf_w2,                              &
-                            map_w2(:,cell) )
-    end do
-
-  end subroutine invoke_extract_xy
 
 end module psykal_lite_mod

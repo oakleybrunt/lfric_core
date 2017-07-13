@@ -30,7 +30,7 @@ suitible namelist.
 '''.strip() )
   parser.add_argument( '-help', '-h', '--help', action='help', \
                        help='Display this message' )
-  parser.add_argument( '-ndivs', metavar='INTEGER', default=4, \
+  parser.add_argument( '-edge_cells', metavar='INTEGER', default=4, \
                        help='Elements on a panel side' )
   parser.add_argument( '-nsmooth', metavar='INTEGER', default=0, \
                        help='Smoothing iterations to perform' )
@@ -40,7 +40,7 @@ suitible namelist.
 
   namelist = '''
 &cubedsphere_mesh_generator
-  edge_cells = {ndiv}
+  edge_cells = {edge_cells}
   smooth_passes = {nsmooth}
   mesh_filename = '{filename}'
   mesh_name = 'Mesh2'
@@ -52,9 +52,9 @@ suitible namelist.
     with os.fdopen( handle, 'w' ) as temporaryFile:
       # GFortran doesn't like namelist files which do not have a newline after
       # the last namelist. Hence we add one, just in case.
-      print( namelist.format( ndiv=arguments.ndivs,          \
-                              nsmooth=arguments.nsmooth,     \
-                              filename=arguments.o ) + '\n', \
+      print( namelist.format( edge_cells=arguments.edge_cells, \
+                              nsmooth=arguments.nsmooth,       \
+                              filename=arguments.o ) + '\n',   \
              file=temporaryFile )
 
     command = [os.path.join( os.path.dirname(sys.argv[0]), \

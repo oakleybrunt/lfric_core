@@ -4,12 +4,12 @@
 ! should have received as part of this distribution.
 !-----------------------------------------------------------------------------
 !>  @brief Abstract ugrid file type.
-!!
-!!  @details Provides an abstract ugrid file type, together with abstract
-!!           procedure interfaces. Used to implement the OO strategy pattern.
+!>
+!>  @details Provides an abstract ugrid file type, together with abstract
+!>           procedure interfaces. Used to implement the OO strategy pattern.
 !-------------------------------------------------------------------------------
 module ugrid_file_mod
-use constants_mod, only : i_def, r_def, str_def, l_def
+use constants_mod, only : i_def, r_def, str_def, str_long, l_def
 use file_mod, only      : file_type
 
 implicit none
@@ -17,17 +17,17 @@ private
 
 !-------------------------------------------------------------------------------
 !> @brief Abstract ugrid file type
-!!
-!! @details  Defines the interface for a whole family of ugrid
-!!           strategies, which extend this abstract type.
+!>
+!> @details  Defines the interface for a whole family of ugrid
+!>           strategies, which extend this abstract type.
 !-------------------------------------------------------------------------------
 
 type, abstract, public, extends(file_type) :: ugrid_file_type
   private
 contains
-  procedure (read_interface ),           deferred :: read
-  procedure (write_interface),           deferred :: write
-  procedure (write_interface),           deferred :: append
+  procedure (read_mesh_interface ),      deferred :: read_mesh
+  procedure (write_mesh_interface),      deferred :: write_mesh
+  procedure (write_mesh_interface),      deferred :: append_mesh
   procedure (get_dimensions_interface),  deferred :: get_dimensions
   procedure (get_mesh_names_interface),  deferred :: get_mesh_names
   procedure (get_nmeshes_interface),     deferred :: get_nmeshes
@@ -42,17 +42,19 @@ abstract interface
 
   !-----------------------------------------------------------------------------
   !> @brief  Interface: Gets numbers of nodes etc. for array dimensions.
-  !!
-  !! @param[in,out]  self                   The ugrid file strategy object.
-  !! @param[out]     num_nodes              Number of nodes
-  !! @param[out]     num_edges              Number of edges
-  !! @param[out]     num_faces              Number of faces
-  !! @param[out]     num_nodes_per_face     Number of nodes per face
-  !! @param[out]     num_edges_per_face     Number of edges per face
-  !! @param[out]     num_nodes_per_edge     Number of nodes per edge
+  !>
+  !> @param[in,out]  self                   The ugrid file strategy object.
+  !> @param[in]      mesh_name              Mesh to get dimensions from
+  !> @param[out]     num_nodes              Number of nodes
+  !> @param[out]     num_edges              Number of edges
+  !> @param[out]     num_faces              Number of faces
+  !> @param[out]     num_nodes_per_face     Number of nodes per face
+  !> @param[out]     num_edges_per_face     Number of edges per face
+  !> @param[out]     num_nodes_per_edge     Number of nodes per edge
+  !> @param[out]     max_num_faces_per_node Maximum number of faces per node
   !-----------------------------------------------------------------------------
-
-  subroutine get_dimensions_interface( self, mesh_name,    &
+  subroutine get_dimensions_interface( self,               &
+                                       mesh_name,          &
                                        num_nodes,          &
                                        num_edges,          &
                                        num_faces,          &
@@ -63,7 +65,7 @@ abstract interface
 
     import :: ugrid_file_type, i_def, str_def
 
-    !Arguments
+    ! Arguments
     class(ugrid_file_type), intent(inout) :: self
 
     character(str_def), intent(in)  :: mesh_name
@@ -78,10 +80,10 @@ abstract interface
   end subroutine get_dimensions_interface
 
   !-----------------------------------------------------------------------------
-  !> @brief  Interface: Querys the file for the names of meshes it content.
-  !!
-  !! @param[in]  self        The ugrid file object.
-  !! @param[out] mesh_names  Character[:], Names of mesh topologies in file
+  !> @brief  Interface: Queries the file for the names of meshes it content.
+  !>
+  !> @param[in]  self        The ugrid file object.
+  !> @param[out] mesh_names  Character[:], Names of mesh topologies in file
   !-----------------------------------------------------------------------------
   subroutine get_mesh_names_interface( self, mesh_names )
 
@@ -94,10 +96,10 @@ abstract interface
   end subroutine get_mesh_names_interface
 
   !-----------------------------------------------------------------------------
-  !> @brief  Interface: Querys the file for the names of meshes it content.
-  !!
-  !! @param[in]  self        The ugrid file object.
-  !! @return     nmeshes     Integer, Number of mesh topologies in file
+  !> @brief  Interface: Queries the file for the names of meshes it content.
+  !>
+  !> @param[in]  self        The ugrid file object.
+  !> @return     nmeshes     Integer, Number of mesh topologies in file
   !-----------------------------------------------------------------------------
   function get_nmeshes_interface( self ) result( nmeshes )
 
@@ -110,84 +112,97 @@ abstract interface
   end function get_nmeshes_interface
 
   !-----------------------------------------------------------------------------
-  !> @brief  Interface: Populates arguments with data from the read file.
-  !!
-  !! @param[in,out] self                   The ugrid file strategy object.
-  !! @param[out]    node_coordinates       Node coordinates
-  !! @param[out]    face_node_connectivity Nodes around each face
-  !! @param[out]    edge_node_connectivity Nodes defining each edge
-  !! @param[out]    face_edge_connectivity Edges bounding each face
-  !! @param[out]    face_face_connectivity Faces adjacent to each face.
+  !> @brief  Interface: Populates arguments with data from the mesh given
+  !>         by `mesh_name` in the file to be read.
+  !>
+  !> @param[in,out] self                   The ugrid file strategy object.
+  !> @param[in]     mesh_name              Name of mesh to read
+  !> @param[out]    mesh_class             Primitive class of mesh.
+  !> @param[out]    generator_inputs       Inputs used to create this mesh
+  !>                                       from the mesh_generator
+  !> @param[out]    node_coordinates       Node coordinates
+  !> @param[out]    face_node_connectivity Nodes around each face
+  !> @param[out]    edge_node_connectivity Nodes defining each edge
+  !> @param[out]    face_edge_connectivity Edges bounding each face
+  !> @param[out]    face_face_connectivity Faces adjacent to each face.
   !-----------------------------------------------------------------------------
 
-  subroutine read_interface( self,                                           &
-                             mesh_name, node_coordinates,                    &
-                             face_node_connectivity, edge_node_connectivity, &
-                             face_edge_connectivity, face_face_connectivity)
+  subroutine read_mesh_interface( self, mesh_name, mesh_class,        &
+                                  generator_inputs, node_coordinates, &
+                                  face_node_connectivity,             &
+                                  edge_node_connectivity,             &
+                                  face_edge_connectivity,             &
+                                  face_face_connectivity )
 
-    import :: ugrid_file_type, i_def, r_def, str_def
+    import :: ugrid_file_type, i_def, r_def, str_def, str_long
 
-    !Arguments
+    ! Arguments
     class(ugrid_file_type), intent(inout) :: self
 
-    character(str_def), intent(in)  :: mesh_name
+    character(str_def),  intent(in)  :: mesh_name
+    character(str_def),  intent(out) :: mesh_class
+    character(str_long), intent(out) :: generator_inputs
+
     real(r_def),        intent(out) :: node_coordinates(:,:)
     integer(i_def),     intent(out) :: face_node_connectivity(:,:)
     integer(i_def),     intent(out) :: edge_node_connectivity(:,:)
     integer(i_def),     intent(out) :: face_edge_connectivity(:,:)
     integer(i_def),     intent(out) :: face_face_connectivity(:,:)
 
-  end subroutine read_interface
+  end subroutine read_mesh_interface
 
   !-----------------------------------------------------------------------------
-  !> @brief  Interface: Writes data in arguments to a file.
-  !!
-  !! @param[inout]   self                    The ugrid file strategy object.
-  !! @param[in]      mesh_name               Name of this mesh instance
-  !! @param[in]      mesh_class              Primitive class of mesh
-  !! @param[in]      num_nodes               Number of nodes
-  !! @param[in]      num_edges               Number of edges
-  !! @param[in]      num_faces               Number of faces
-  !! @param[in]      node_coordinates        Node coordinates
-  !! @param[in]      face_node_connectivity  Nodes around each face
-  !! @param[in]      edge_node_connectivity  Nodes defining each edge
-  !! @param[in]      face_edge_connectivity  Edges bounding each face
-  !! @param[in]      face_face_connectivity  Faces adjacent to each face.
+  !> @brief  Interface: Writes mesh data in arguments to file.
+  !>
+  !> @param[inout]   self                    The ugrid file strategy object.
+  !> @param[in]      mesh_name               Name of this mesh instance
+  !> @param[in]      mesh_class              Primitive class of mesh
+  !> @param[in]      generator_inputs        Inputs used to generate mesh
+  !> @param[in]      num_nodes               Number of nodes
+  !> @param[in]      num_edges               Number of edges
+  !> @param[in]      num_faces               Number of faces
+  !> @param[in]      node_coordinates        Node coordinates
+  !> @param[in]      face_node_connectivity  Nodes around each face
+  !> @param[in]      edge_node_connectivity  Nodes defining each edge
+  !> @param[in]      face_edge_connectivity  Edges bounding each face
+  !> @param[in]      face_face_connectivity  Faces adjacent to each face.
   !-----------------------------------------------------------------------------
 
-  subroutine write_interface( self, mesh_name, mesh_class,     &
-                              num_nodes, num_edges, num_faces, &
-                              node_coordinates,                &
-                              face_node_connectivity,          &
-                              edge_node_connectivity,          &
-                              face_edge_connectivity,          &
-                              face_face_connectivity )
+  subroutine write_mesh_interface( self, mesh_name, mesh_class,     &
+                                   generator_inputs,                &
+                                   num_nodes, num_edges, num_faces, &
+                                   node_coordinates,                &
+                                   face_node_connectivity,          &
+                                   edge_node_connectivity,          &
+                                   face_edge_connectivity,          &
+                                   face_face_connectivity )
 
-    import :: ugrid_file_type, i_def, r_def, str_def
+    import :: ugrid_file_type, i_def, r_def, str_def, str_long
 
-    !Arguments
+    ! Arguments
     class(ugrid_file_type), intent(inout) :: self
 
-    character(str_def), intent(in) :: mesh_name
-    character(str_def), intent(in) :: mesh_class
-    integer(i_def),     intent(in) :: num_nodes
-    integer(i_def),     intent(in) :: num_edges
-    integer(i_def),     intent(in) :: num_faces
-    real(r_def),        intent(in) :: node_coordinates(:,:)
-    integer(i_def),     intent(in) :: face_node_connectivity(:,:)
-    integer(i_def),     intent(in) :: edge_node_connectivity(:,:)
-    integer(i_def),     intent(in) :: face_edge_connectivity(:,:)
-    integer(i_def),     intent(in) :: face_face_connectivity(:,:)
+    character(str_def),  intent(in) :: mesh_name
+    character(str_def),  intent(in) :: mesh_class
+    character(str_long), intent(in) :: generator_inputs
+    integer(i_def),      intent(in) :: num_nodes
+    integer(i_def),      intent(in) :: num_edges
+    integer(i_def),      intent(in) :: num_faces
+    real(r_def),         intent(in) :: node_coordinates(:,:)
+    integer(i_def),      intent(in) :: face_node_connectivity(:,:)
+    integer(i_def),      intent(in) :: edge_node_connectivity(:,:)
+    integer(i_def),      intent(in) :: face_edge_connectivity(:,:)
+    integer(i_def),      intent(in) :: face_face_connectivity(:,:)
 
-  end subroutine write_interface
+  end subroutine write_mesh_interface
 
   !-----------------------------------------------------------------------------
   !>  @brief    Interface: Function to determine if a given mesh is present
   !>            in NetCDF ugrid file
   !>
-  !>  @param[in,out]   self        The netCDF file object.
-  !>  @param[in]       mesh_name   Name of the mesh topology
-  !>  @return          logical     .True. if mesh_name is present in file
+  !>  @param[in] self        The netCDF file object.
+  !>  @param[in] mesh_name   Name of the mesh topology
+  !>  @return    answer      .True. if mesh_name is present in file
   !-----------------------------------------------------------------------------
   function is_mesh_present_interface(self, mesh_name) result(answer)
 

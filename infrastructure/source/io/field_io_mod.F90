@@ -6,9 +6,9 @@
 !>  @brief Field IO
 !!
 !!  @details Two demo methods of writing field data to file.
-!!           one plain text, the other netcdf.
+!!           one plain text, the other NetCDF.
 !!           Included are two subroutines, which are actually identical.
-!!           The differences are one is using a netcdf file strategy and the
+!!           The differences are one is using a NetCDF file strategy and the
 !!           other a plain text file strategy.
 !!           Once dynamo has a 'state' object this would more sensibly be a
 !!           method of the state object into which a feild io strategy was
@@ -23,9 +23,9 @@ implicit none
 contains
 
 !-------------------------------------------------------------------------------
-!>  @brief   Creates a netcdf file
+!>  @brief   Creates a NetCDF file
 !!
-!!  @details Writes field data to a netcdf file.
+!!  @details Writes field data to a NetCDF file.
 !!
 !!  @param[in]   n_fields  The number of fields in the model 'state'
 !!  @param[in]   state     An array of field types

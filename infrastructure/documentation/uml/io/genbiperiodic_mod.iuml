@@ -7,6 +7,7 @@ class genbiperiodic_mod::genbiperiodic_type {
 
   -mesh_name: string
   -mesh_class: string
+  -generator_inputs: string
   -nx: integer
   -ny: integer
   -dx: real

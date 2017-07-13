@@ -3,13 +3,15 @@
 ! For further details please refer to the file LICENCE.original which you
 ! should have received as part of this distribution.
 !-----------------------------------------------------------------------------
-! Generate a cubed-sphere mesh and write it to a UGRID format file.
-!
-! Usage:
-!     cubedsphere_mesh_generator <filename>
-!
-!     filename - Controlling namelist file
-!
+!> @mainpage Cubedsphere mesh generator
+!> @brief   Utility to generate a cubedsphere surface mesh and write to a file
+!>          which conforms to the UGRID format convention.
+!> @details Usage:
+!>
+!>          cubedsphere_mesh_generator <filename>
+!>          filename - Controlling namelist file
+!>
+!-----------------------------------------------------------------------------
 program cubedsphere_mesh_generator
 
   use cli_mod,         only : get_initial_filename
@@ -40,27 +42,39 @@ program cubedsphere_mesh_generator
   class(ugrid_file_type), allocatable :: ugrid_file
   integer(i_def)                      :: fsize
 
-
+  ! Start up ESMF
   call ESMF_Initialize(vm=vm, defaultlogfilename="cubedsphere.log", &
                        logkindflag=ESMF_LOGKIND_SINGLE, rc=rc)
   if (rc /= ESMF_SUCCESS) call log_event( 'Failed to initialise ESMF.', &
                                           LOG_LEVEL_ERROR )
 
+  ! Read mesh generation namelist from file
   call get_initial_filename( filename )
   namelist_unit = open_file( filename )
   call read_cubedsphere_mesh_generator_namelist( namelist_unit, vm, 0 )
   call close_file( namelist_unit )
   deallocate( filename )
 
+  ! Create object to manipulate UGRID conforming NetCDF file
   allocate(ncdf_quad_type::ugrid_file)
   call ugrid_2d%set_file_handler(ugrid_file)
 
-
+  ! Create object which can generate the cubedsphere mesh from
+  ! specified inputs.
   csgen = gencube_ps_type( mesh_name, edge_cells, smooth_passes )
-  call log_event( "Generating cubed-sphere mesh with...", LOG_LEVEL_INFO )
-  write(log_scratch_space, "(A,I0)") "  ndivs: ", edge_cells
+  call log_event( 'Generating cubed-sphere mesh, "' // trim(mesh_name)// &
+                  '", with...', LOG_LEVEL_INFO )
+
+  write(log_scratch_space, "(A,T17,I0)") "  Edge cells:",   edge_cells
   call log_event( log_scratch_space, LOG_LEVEL_INFO )
+  write(log_scratch_space, "(A,T17,I0)") "  Smooth passes:", smooth_passes
+  call log_event( log_scratch_space, LOG_LEVEL_INFO )
+
+  ! Mesh for the UGRID conforming NetCDF file is
+  ! set by the generator passed to it
   call ugrid_2d%set_by_generator( csgen )
+
+  ! Now the write out mesh to the NetCDF file
   call ugrid_2d%write_to_file(trim( mesh_filename) )
 
   call log_event( "...generation complete.", LOG_LEVEL_INFO )

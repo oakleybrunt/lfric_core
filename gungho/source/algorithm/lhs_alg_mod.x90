@@ -12,12 +12,10 @@ module lhs_alg_mod
   use runtime_constants_mod,             only: get_coordinates, &
                                                get_div, &
                                                get_mass_matrix, &
-					       get_rmultiplicity, &
                                                w2_id, w3inv_id, theta_space_id
   use field_mod,                         only: field_type
   use function_space_mod,                only: function_space_type
   use finite_element_config_mod,         only: element_order, wtheta_on
-  use fs_continuity_mod,                 only: W2
   use transport_config_mod,              only: operators, &
                                                transport_operators_fv
   use field_indices_mod,                 only: igh_u, igh_t, igh_d, igh_p
@@ -26,7 +24,7 @@ module lhs_alg_mod
 
   implicit none
 
-  type(field_type), private              :: f_star, r_rho
+  type(field_type),              private :: w2_multiplicity, f_star, r_rho
   type(field_type), allocatable, private :: lhs_tmp(:)
   type(field_type)                       :: mt_lumped
   type( field_type ), target             :: exner_inc
@@ -42,6 +40,7 @@ contains
 !>@brief Initialise fields to be used for computing the lhs
   subroutine lhs_init(state)
     use field_bundle_mod,          only: clone_bundle
+    use multiplicity_kernel_mod,   only: multiplicity_kernel_type
     use derived_config_mod,        only: si_bundle_size
     use matrix_vector_kernel_mod,  only: matrix_vector_kernel_type
     use operator_mod,              only: operator_type
@@ -64,6 +63,9 @@ contains
 
     ! for computing lhs rho
     u_fs => state(igh_u)%get_function_space()
+    w2_multiplicity = field_type( vector_space = u_fs )
+    call invoke( set_field_scalar(0.0_r_def, w2_multiplicity) )
+    call invoke( multiplicity_kernel_type(w2_multiplicity) )
     f_star = field_type( vector_space = u_fs )
 
     ! For computing lhs u with operators and diagnostic exner
@@ -145,17 +147,9 @@ contains
 
   type(quadrature_type)        :: qr
   type(field_type),    pointer :: chi(:)=> null()
-  type(operator_type), pointer :: mm_w2 => null(),     &
-                                  mm_w3_inv => null(), &
-                                  mm_wtheta => null()
+  type(operator_type), pointer :: mm_w2, mm_w3_inv, mm_wtheta => null()
   type(operator_type), pointer :: div => null()
-  type(field_type),    pointer :: u => null()
-  type(field_type),    pointer :: theta => null()	
-  type(field_type),    pointer :: rho => null()	
-  type(field_type),    pointer :: exner => null()	
-  type(field_type),    pointer :: theta_ref => null()
-  type(field_type),    pointer :: rho_ref => null()
-  type(field_type),    pointer :: w2_rmultiplicity => null()
+  type(field_type),    pointer :: u ,theta, rho, exner, theta_ref, rho_ref => null()
 
   ! Get operators from runtime constants
   mm_w2     => get_mass_matrix(w2_id)
@@ -163,7 +157,6 @@ contains
   mm_wtheta => get_mass_matrix(theta_space_id)
   chi       => get_coordinates()
   div       => get_div()
-  w2_rmultiplicity => get_rmultiplicity( W2 )
 
   ! dereference state
   u     => state(igh_u)
@@ -225,7 +218,7 @@ contains
   call invoke( set_field_scalar(0.0_r_def, f_star), &
                set_field_scalar(0.0_r_def, r_rho),  &
                set_field_scalar(0.0_r_def, lhs_tmp(igh_d)) )
-  call invoke_sample_flux_kernel( f_star, u, w2_rmultiplicity, rho_ref )
+  call invoke_sample_flux_kernel( f_star, u, w2_multiplicity, rho_ref )
   call invoke( matrix_vector_kernel_type(r_rho, f_star, div) )
   call invoke_scale_field_data(-1.0_r_def, r_rho) 
   call invoke( matrix_vector_kernel_type( lhs_tmp(igh_d), r_rho, mm_w3_inv) )

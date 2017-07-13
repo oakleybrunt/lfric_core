@@ -3,15 +3,14 @@
 ! For further details please refer to the file LICENCE.original which you
 ! should have received as part of this distribution.
 !-----------------------------------------------------------------------------
-!>  @brief Abstract mesh generator type.
-!!
-!!  @details Provides an abstract mesh generator type, together with abstract
-!!           procedure interfaces.  Used to implement the OO strategy pattern.
+!> @brief   Abstract mesh generator type.
+!> @details Provides an abstract mesh generator type, together with abstract
+!>          procedure interfaces.  Used to implement the OO strategy pattern.
 !-------------------------------------------------------------------------------
 
 module ugrid_generator_mod
 
-use constants_mod, only : r_def, i_def, str_def
+use constants_mod, only : r_def, i_def, str_def, str_long
 
 implicit none
 
@@ -39,8 +38,8 @@ abstract interface
 
   !-----------------------------------------------------------------------------
   !> @brief Interface: runs the mesh generator strategy.
-  !!
-  !! @param[in,out] self  The generator strategy object.
+  !>
+  !> @param[in,out] self  The generator strategy object.
   !-----------------------------------------------------------------------------
 
   subroutine generate_interface (self)
@@ -50,32 +49,35 @@ abstract interface
 
 
   !-----------------------------------------------------------------------------
-  !> @brief Interface: returns mesh metadata information.
-  !!
-  !! @param[in]     self           The generator strategy object.
-  !! @param[out]    mesh_name      Name of mesh instance to generate
-  !! @param[out]    mesh_class     Primitive shape, i.e. sphere, plane
+  !> @brief Interface: Returns mesh metadata information.
+  !>
+  !> @param[in]   self              The generator strategy object.
+  !> @param[out]  mesh_name         Name of mesh instance to generate
+  !> @param[out]  mesh_class        Primitive shape, i.e. sphere, plane
+  !> @param[out]  generator_inputs  Inputs used to create this mesh from the
+  !>                                mesh_generator
   !-----------------------------------------------------------------------------
-  subroutine get_metadata_interface ( self, mesh_name, mesh_class )
+  subroutine get_metadata_interface ( self, mesh_name, mesh_class, generator_inputs )
 
-    import :: ugrid_generator_type, str_def
+    import :: ugrid_generator_type, str_def, str_long
 
     class(ugrid_generator_type), intent(in)  :: self
     character(str_def),          intent(out) :: mesh_name
     character(str_def),          intent(out) :: mesh_class
+    character(str_long),         intent(out) :: generator_inputs
 
   end subroutine get_metadata_interface
 
   !-----------------------------------------------------------------------------
-  !> @brief Interface: returns mesh dimension information.
-  !!
-  !! @param[in]     self                   The generator strategy object.
-  !! @param[out]    num_nodes              Number of nodes
-  !! @param[out]    num_edges              Number of edges
-  !! @param[out]    num_faces              Number of faces
-  !! @param[out]    num_nodes_per_face     Number of nodes per face
-  !! @param[out]    num_edges_per_face     Number of edges per face
-  !! @param[out]    num_nodes_per_edge     Number of nodes per edge
+  !> @brief Interface: Returns mesh dimension information.
+  !>
+  !> @param[in]     self                   The generator strategy object.
+  !> @param[out]    num_nodes              Number of nodes
+  !> @param[out]    num_edges              Number of edges
+  !> @param[out]    num_faces              Number of faces
+  !> @param[out]    num_nodes_per_face     Number of nodes per face
+  !> @param[out]    num_edges_per_face     Number of edges per face
+  !> @param[out]    num_nodes_per_edge     Number of nodes per edge
   !-----------------------------------------------------------------------------
 
   subroutine get_dimensions_interface (self, num_nodes, num_edges, num_faces,  &
@@ -96,8 +98,8 @@ abstract interface
 
   !-----------------------------------------------------------------------------
   !> @brief Interface: Gets coordinates of nodes, edges and faces.
-  !! @param[in]     self                   The generator strategy object.
-  !! @param[out]    node_coordinates       Node coordinates
+  !> @param[in]     self                   The generator strategy object.
+  !> @param[out]    node_coordinates       Node coordinates
   !-----------------------------------------------------------------------------
 
   subroutine get_coordinates_interface (self, node_coordinates)
@@ -111,12 +113,13 @@ abstract interface
   end subroutine get_coordinates_interface
 
   !-----------------------------------------------------------------------------
-  !> @brief Interface: gets a selection of connectivity information from the
-  !!                   mesh generator.
-  !! @param[in]     self                   The generator strategy object.
-  !! @param[out]    face_node_connectivity Nodes around each face
-  !! @param[out]    edge_node_connectivity Nodes defining each edge
-  !! @param[out]    face_face_connectivity Faces adjacent to each face.
+  !> @brief Interface: Gets a selection of connectivity information from the
+  !>                   mesh generator.
+  !> @param[in]     self                   The generator strategy object.
+  !> @param[out]    face_node_connectivity Nodes around each face
+  !> @param[out]    edge_node_connectivity Nodes defining each edge
+  !> @param[out]    face_edge_connectivity Edges around each face.
+  !> @param[out]    face_face_connectivity Faces adjacent to each face.
   !-----------------------------------------------------------------------------
 
   subroutine get_connectivity_interface (self,                         &

@@ -69,6 +69,7 @@ contains
     use finite_element_config_mod,     only: element_order
     use quadrature_mod,                only: quadrature_type, GAUSSIAN
     use compute_q_operator_kernel_mod, only: compute_q_operator_type
+    use matrix_vector_nobc_kernel_mod, only: matrix_vector_nobc_kernel_type
     use matrix_vector_kernel_mod,      only: matrix_vector_kernel_type
     use transpose_matrix_vector_kernel_mod, &
                                        only: transpose_matrix_vector_kernel_type
@@ -152,9 +153,9 @@ contains
                  set_field_scalar(0.0_r_def, QT1) )
     call invoke( transpose_matrix_vector_kernel_type(QT1, ones, Q) )
     call invoke_inc_X_times_Y(QT1, Mb_lumped_inv)
-    call invoke( matrix_vector_kernel_type(M_lumped, QT1, Q) )
+    call invoke( matrix_vector_nobc_kernel_type(M_lumped, QT1, Q) )
     call invoke_scale_field_data(tau_u*tau_b*dt**2*bvf_square,M_lumped)    
-    call invoke( matrix_vector_kernel_type(M_lumped, ones, Mu) )
+    call invoke( matrix_vector_nobc_kernel_type(M_lumped, ones, Mu) )
     call invoke_divide_field(ones, M_lumped, HB_lumped_inv)
 
     call log_event( 'done', LOG_LEVEL_INFO )
@@ -201,7 +202,7 @@ contains
     type(field_type),                intent(inout) :: gw_pressure_rhs
     type(field_type),                intent(in)    :: rhs0(bundle_size)
 
-    type(operator_type), pointer :: div => null(), M3_inv => null()
+    type(operator_type), pointer :: div, M3_inv => null()
 
     ! rhs = Rp - tau_p * dt * cs^2 * M3^-1 * D * HB^-1 * rhs_u
     ! rhs_u = Ru + tau_u * dt * Q * Mb^-1 * Rb
@@ -239,7 +240,7 @@ contains
     type(field_type),                intent(inout) :: Hp
     type(field_type),                intent(inout) :: p
 
-    type(operator_type), pointer :: div => null(), M3_inv => null()
+    type(operator_type), pointer :: div, M3_inv => null()
 
     ! lhs = (I + tau_p*tau_u*dt^2*cs^2*M3^-1 * D * HB^-1 * D^T)*p
     div    => get_div()

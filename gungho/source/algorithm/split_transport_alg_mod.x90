@@ -116,8 +116,8 @@ contains
                  set_field_scalar(0.0_r_def,mass_flux_y), &
                  set_field_scalar(0.0_r_def,mass_flux) )
 
-    call oned_conservative_flux_alg(x_direction,u_n, dep_pts_x, cell_orientation, rho_hat_adv_x, rho_hat_adv_y, mass_flux_x)
-    call oned_conservative_flux_alg(y_direction,u_n, dep_pts_y, cell_orientation, rho_hat_adv_x, rho_hat_adv_y, mass_flux_y)
+    call oned_conservative_flux_alg(x_direction,u_n, dep_pts_x, cell_orientation, rho_hat_adv_y, mass_flux_x)
+    call oned_conservative_flux_alg(y_direction,u_n, dep_pts_y, cell_orientation, rho_hat_adv_x, mass_flux_y)
 
     ! Combine the mass fluxes in the x and y directions
     call invoke_plus_field_data(mass_flux_x,mass_flux_y,mass_flux)

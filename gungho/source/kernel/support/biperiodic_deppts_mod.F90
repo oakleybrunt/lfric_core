@@ -10,7 +10,7 @@
 module biperiodic_deppts_mod
 
 use constants_mod, only : r_def
-use log_mod,       only : log_event, LOG_LEVEL_ERROR, log_scratch_space
+use log_mod,       only : log_event, LOG_LEVEL_ERROR
 use biperiodic_deppt_config_mod, only : biperiodic_deppt_method_euler,       &
                                         biperiodic_deppt_method_midpoint,    &
                                         biperiodic_deppt_method_trapezoidal
@@ -155,8 +155,7 @@ contains
     real(kind=r_def), intent(in) ::   right_limit
 
     if (x_in < left_limit .OR. x_in > right_limit) then
-      write(log_scratch_space, '(A,E12.4E3,A,2E12.4E3)') 'Departure distance ', x_in,' is out of bounds. Limits are ', left_limit, right_limit
-      call log_event( log_scratch_space, LOG_LEVEL_ERROR )
+      call log_event( " Departure point out of stencil bounds ", LOG_LEVEL_ERROR )
     end if
 
   end subroutine test_value_in_limits

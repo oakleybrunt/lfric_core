@@ -28,10 +28,11 @@
 {%- macro publish_commit() %}
             PUBLISH:finish-all => publish_index
             publish_index      => mirror_results_local
-{%- if MIRROR_UPLOAD_URL %}
+{%-   if MIRROR_UPLOAD_URL %}
             publish_index      => mirror_results_remote
-{%- endif %}
+{%-   endif %}
 {%- endmacro %}
+
 {#- #########################################################################}
 {%- macro check_compilers( build, publish=False ) %}
 {%-   for compiler in compiler_setup.keys() %}
@@ -49,6 +50,8 @@
 {%-         if compiler in TARGET_PERFORM_KGO_TESTS %}
             generate_mesh_{{mesh}}_{{label}} => check_mesh_{{mesh}}_{{label}}
 {%-         endif %}
+            generate_mesh_{{mesh}}_{{label}} => summarise_{{mesh}}_{{label}}
+            summarise_{{mesh}}_{{label}} => check_summary_{{mesh}}_{{label}}
 {%-       endfor %}
 {%-       if compiler in TARGET_PERFORM_UNIT_TESTS %}
             compile_with_{{label}} => unit_test_with_{{label}}
@@ -56,21 +59,22 @@
 {%-     endif %}
 {%-   endfor %}
 {%- endmacro %}
+
 {#- #########################################################################}
 {%- macro schedule() %}
 {%-   for group in groupsToRun %}
-{%-       for mission in groups[group] %}
-{{          mission | executeMacro() }}
-{%-       endfor %}
+{%-     for mission in groups[group] %}
+{{        mission | executeMacro() }}
+{%-     endfor %}
 {%-   endfor %}
 {%- endmacro %}
-{#- #########################################################################}
 
-{% macro ensureDestination() -%}
+{#- #########################################################################}
+{%  macro ensureDestination() -%}
 mkdir -p $DESTINATION
 {%- endmacro %}
 
-{% macro deleteDirectory( directory ) -%}
+{%  macro deleteDirectory( directory ) -%}
 test -w "{{directory}}" -o ! -e "{{directory}}" && rm -rf {{directory}} || ( echo ** Unable to delete "{{directory}}", not writable >&2; false )
 {%- endmacro %}
 
@@ -93,7 +97,7 @@ test -w "{{directory}}" -o ! -e "{{directory}}" && rm -rf {{directory}} || ( ech
       members = root
     [[dependencies]]
 {%- set scheduledTasks = schedule() | deduplicateSchedule()%}
-{{    scheduledTasks}}
+      {{scheduledTasks}}
 
 [runtime]
   [[root]]
@@ -258,9 +262,12 @@ test -w "{{directory}}" -o ! -e "{{directory}}" && rm -rf {{directory}} || ( ech
                  mkdir -p $DESTINATION_DIRECTORY
                  RELATIVE_DESTINATION_DIRECTORY=`echo $DESTINATION_DIRECTORY | sed "s|$HOME/||"`
                  scp {{TARGET_HOST}}:$RELATIVE_DESTINATION_DIRECTORY/lfric.mesher.{{compiler}}.log .
-                 scp {{TARGET_HOST}}:`cat lfric.mesher.{{compiler}}.log`.status $DESTINATION_DIRECTORY/lfric.mesher.{{compiler}}.status
-                 scp {{TARGET_HOST}}:`cat lfric.mesher.{{compiler}}.log`.out $DESTINATION_DIRECTORY/lfric.mesher.{{compiler}}.out
-                 scp {{TARGET_HOST}}:`cat lfric.mesher.{{compiler}}.log`.err $DESTINATION_DIRECTORY/lfric.mesher.{{compiler}}.err
+                 scp {{TARGET_HOST}}:`cat lfric.mesher.{{compiler}}.log`.status \
+                     $DESTINATION_DIRECTORY/lfric.mesher.{{compiler}}.status
+                 scp {{TARGET_HOST}}:`cat lfric.mesher.{{compiler}}.log`.out \
+                     $DESTINATION_DIRECTORY/lfric.mesher.{{compiler}}.out
+                 scp {{TARGET_HOST}}:`cat lfric.mesher.{{compiler}}.log`.err \
+                     $DESTINATION_DIRECTORY/lfric.mesher.{{compiler}}.err
                  """
     script = rose task-run --debug --app-key=publish --command-key=compile
     [[[environment]]]
@@ -275,12 +282,17 @@ test -w "{{directory}}" -o ! -e "{{directory}}" && rm -rf {{directory}} || ( ech
   [[unit_test_with_{{label}}]]
     inherit = {{family}}, TARGET
     pre-script = """
-                 {{'\n'|commandList(TARGET_BASE_SETUP, compiler_setup[compiler], TARGET_BUILD_SETUP, TARGET_REVEAL_SETUP, "mkdir -p $WORKING_DIR", "cp -rp $SOURCE_DIRECTORY/build/* $WORKING_DIR")}}
+                 {{'\n'|commandList( TARGET_BASE_SETUP,
+                                     compiler_setup[compiler],
+                                     TARGET_BUILD_SETUP,
+                                     TARGET_REVEAL_SETUP, 
+                                     "mkdir -p $WORKING_DIR",
+                                     "cp -rp $SOURCE_DIRECTORY/build/* $WORKING_DIR" )}}
                  """
     script = make -C $SOURCE_DIRECTORY test-mesh_tools PROFILE={{build}}
     post-script = """
-                  {{'\n'|commandList("cp -rp $WORKING_DIR/* $SOURCE_DIRECTORY/build",
-                                      deleteDirectory('$WORKING_DIR'))}}
+                  {{'\n'|commandList( "cp -rp $WORKING_DIR/* $SOURCE_DIRECTORY/build",
+                                      deleteDirectory('$WORKING_DIR') )}}
                   """
     [[[environment]]]
       WORKING_DIR = {{TARGET_BUILD_ROOT}}/{{label}}
@@ -295,7 +307,10 @@ test -w "{{directory}}" -o ! -e "{{directory}}" && rm -rf {{directory}} || ( ech
   [[generate_mesh_{{mesh}}_{{label}}]]
     inherit = {{family}}, TARGET
     pre-script = """
-                 {{'\n'|commandList(TARGET_BASE_SETUP, compiler_setup[compiler], TARGET_BUILD_SETUP, TARGET_REVEAL_SETUP)}}
+                 {{'\n'| commandList( TARGET_BASE_SETUP,
+                                      compiler_setup[compiler],
+                                      TARGET_BUILD_SETUP,
+                                      TARGET_REVEAL_SETUP )}}
                  """
     script = "rose task-run --app-key=mesh --opt-conf-key={{mesh}}"
     [[[environment]]]
@@ -306,13 +321,79 @@ test -w "{{directory}}" -o ! -e "{{directory}}" && rm -rf {{directory}} || ( ech
 {%-         endfor %}
 {%-       endif %} {#- 'generate_mesh_' + mesh + '_' + label in scheduledTasks #}
 
+{%-       if 'summarise_' + mesh + '_' + label in scheduledTasks %}
+{%- set command_key = '' %}
+{%- if PLATFORM_OPT == 'meto-xc40' %}
+{%-   set command_key = '--command-key=aprun' %}
+{%- endif %}
+
+  [[summarise_{{mesh}}_{{label}}]]
+    inherit = {{family}}, TARGET
+    pre-script = """
+                 {{'\n'|commandList( TARGET_BASE_SETUP,
+                                     compiler_setup[compiler],
+                                     TARGET_REVEAL_SETUP )}}
+                 cp $DESTINATION_DIRECTORY/{{mesh}}.nc $SOURCE_DIRECTORY/bin
+                 """
+    script = rose task-run --app-key=summarise_ugrid {{command_key}}
+
+    post-script = """
+                  cat $SUMMARY_FILE
+
+                  """
+
+    [[[environment]]]
+      MESH_FILE    = $DESTINATION_DIRECTORY/{{mesh}}.nc
+      SUMMARY_FILE = $DESTINATION_DIRECTORY/summary_{{mesh}}_ugrid.txt
+
+    [[[directives]]]
+
+{%- if PLATFORM_OPT == 'meto-xc40' %}
+      -l select=1
+      -l walltime=00:05:00
+      -q=normal
+{%- else %}
+{%-         for DIRECTIVE in TARGET_RUN_BATCHER_DIRECTIVES %}
+      {{DIRECTIVE}}
+{%-         endfor %}
+{%- endif %}
+
+  [[check_summary_{{mesh}}_{{label}}]]
+    inherit = {{family}}, TARGET
+    pre-script = """
+                 {{'\n'|commandList( TARGET_BASE_SETUP,
+                                     compiler_setup[compiler],
+                                     TARGET_REVEAL_SETUP )}}
+                 sed -e 's/.*INFO : //' -e 's/===*//'      \
+                     -e '/File.*contains ugrid mesh(es)/d' \
+                     -e '/^\s*Application.*resources/d'    \
+                     -e '/^\s*$/d'                         \
+                     <$SUMMARY_FILE >${SUMMARY_FILE}.stripped
+                 """
+    script = rose task-run --app-key=check_summary
+
+    [[[environment]]]
+      SUMMARY_KGO  = summary_{{mesh}}_ugrid.kgo.txt
+      SUMMARY_FILE = $DESTINATION_DIRECTORY/summary_{{mesh}}_ugrid.txt
+
+
+    [[[directives]]]
+{%-         for DIRECTIVE in TARGET_TECHNICAL_BATCHER_DIRECTIVES %}
+      {{DIRECTIVE}}
+{%-         endfor %}
+
+{%-       endif %} {#- 'summarise_' + mesh + '_' + label in scheduledTasks #}
+
 {%-       if 'check_mesh_' + mesh + '_' + label in scheduledTasks %}
   [[check_mesh_{{mesh}}_{{label}}]]
     inherit = {{family}}, TARGET
     pre-script = """
-                 {{'\n'|commandList(TARGET_BASE_SETUP, compiler_setup[compiler], TARGET_REVEAL_SETUP)}}
+                 {{'\n'| commandList(TARGET_BASE_SETUP,
+                         compiler_setup[compiler],
+                         TARGET_REVEAL_SETUP)}}
                  """
     script = rose task-run --app-key=check_{{mesh}}
+
     [[[environment]]]
       MESH_FILE = $DESTINATION_DIRECTORY/{{mesh}}.nc
     [[[directives]]]

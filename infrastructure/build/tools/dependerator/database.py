@@ -16,7 +16,7 @@ import sqlite3
 ##############################################################################
 # Databases throw this exception.
 #
-class DatabaseException(Exception):
+class DatabaseException( Exception ):
     pass
 
 ##############################################################################
@@ -74,42 +74,25 @@ class SQLiteDatabase(_Database):
         self._database.close()
 
     ###########################################################################
-    # Creates a table if it does not already exist.
-    #
-    # Arguments:
-    #   name    - String by which table will be identified.
-    #   columns - List of lists of column definition clauses.
-    #             e.g. [['foo', 'integer', 'primary key'],
-    #                   ['bar', 'integer']]
-    #
     def ensureTable( self, name, columns ):
         columnDefinitions = []
         for columnDetails in columns:
             columnDefinitions.append( ' '.join( columnDetails ) )
         query = 'CREATE TABLE IF NOT EXISTS {} ( {} )'
         with self._database:
-            columnList = ', '.join( columnDefinitions )
-            self._database.execute( query.format( name, columnList ) )
+            self._database.execute(query.format( name, \
+                                              ', '.join( columnDefinitions ) ) )
 
     ###########################################################################
-    # Execute an SQL query against the database.
-    #
-    # Arguments:
-    #   query - Either a string continaing a single SQL instruction or a list
-    #           of strings, each containing a single SQL instruction.
-    #
     def query( self, query ):
-      try:
         cursor = self._database.cursor()
-        if not isinstance( query, list ):
+        if not isinstance( query, list):
             query = query.strip().replace( '\n', ' ' )
             cursor.execute( query )
         else:
             query = ';\n'.join( query ) + ';'
             cursor.executescript( query )
         return cursor.fetchall()
-      except sqlite3.IntegrityError as ex:
-        raise DatabaseException( ex )
 
 ###############################################################################
 # Basic file dependencies.
@@ -123,28 +106,16 @@ class FileDependencies(object):
     #
     def __init__( self, database ):
         self._database = database
-        self._database.ensureTable( 'file_dependency',
-                                    (('file', 'TEXT', 'NOT NULL'),
+        self._database.ensureTable( 'file_dependency',                \
+                                    (('file', 'TEXT', 'NOT NULL'), \
                                      ('prerequisite', 'TEXT', 'NOT NULL')) )
 
     ###########################################################################
-    # Remove a file and all its dependencies from the database.
-    #
-    # Arguments:
-    #   filename - The filename as it appears in the database.
-    #
     def removeFile( self, filename ):
         query = 'DELETE FROM file_dependency WHERE file="{}"'.format( filename )
         self._database.query( query )
 
     ###########################################################################
-    # Add a dependency relationship to the database.
-    #
-    # Arguments:
-    #   filename     - A filename string.
-    #   prerequisite - The filename string of a file which the first depends
-    #                  on.
-    #
     def addFileDependency( self, filename, prerequisite ):
         query = "INSERT INTO file_dependency VALUES ('{}', '{}')"
         self._database.query( query.format( filename, prerequisite ) )
@@ -207,23 +178,14 @@ class FortranDependencies(object):
                                      ('type', 'REFERENCES fortran_dependency_type(type)')) )
 
     ###########################################################################
-    # Remove a Fortran source file and all its dependencies.
-    #
-    # Arguments:
-    #   filename - Filename string as it appears in the database.
-    #
     def removeFile( self, filename ):
-      query = ['''
-               CREATE TEMPORARY TABLE _units AS SELECT unit
-               FROM fortran_program_unit
-               WHERE file="{filename}"
-               '''.format( filename=filename ),
-               'DELETE FROM fortran_unit_dependency WHERE unit IN _units',
-               'DROP TABLE _units',
-               '''
-               DELETE FROM fortran_program_unit WHERE file="{filename}"
-               '''.format( filename=filename )]
-      self._database.query( query )
+        query = ['CREATE TEMPORARY TABLE _units AS SELECT unit '              \
+                 + 'FROM fortran_program_unit '                               \
+                 + 'WHERE file="{}"'.format( filename ),                      \
+                 'DELETE FROM fortran_unit_dependency WHERE unit IN _units', \
+                 'DROP TABLE _units',                                         \
+                 'DELETE FROM fortran_program_unit WHERE file="{}"'.format( filename )]
+        self._database.query( query )
 
     ###########################################################################
     # Add a program to the database.
@@ -246,17 +208,8 @@ class FortranDependencies(object):
     #   filename - The source file in which the modules was found.
     #
     def addModule( self, name, filename ):
-      try:
         query = "INSERT INTO fortran_program_unit VALUES ( '{}', '{}', 'module' )"
         self._database.query( query.format( name, filename ) )
-      except DatabaseException as ex:
-        message = 'Unable to add module "{name}" from "{filename}": {ex}'
-        newException = DatabaseException( message.format( name=name,
-                                                          filename=filename,
-                                                          ex=ex ) )
-        newException.module = name
-        newException.filename = filename
-        raise newException
 
     ###########################################################################
     # Add a compile dependency to the database.
@@ -305,8 +258,7 @@ class FortranDependencies(object):
     #   programUnit - Discover prerequisites for this.
     #
     # Return:
-    #   Yields (unit, unit filename, prerequisite, prerequisite filename)
-    #   tuples
+    #   Yields (unit, unit filename, prerequisite, prerequisite filename) tuples
     #
     def getLinkDependencies( self, programUnit ):
       query = 'SELECT * FROM fortran_program_unit WHERE unit=\'{}\''
@@ -333,22 +285,14 @@ class FortranDependencies(object):
     # Arguments:
     #
     # Return:
-    #   Yields (unit, unit filename, prerequisite, prerequisite filename)
-    #   tuples
+    #   Yields (unit, unit filename, prerequisite, prerequisite filename) tuples
     #
     def getCompileDependencies( self ):
         query = '''
-                SELECT d.unit,
-                       df.file AS unit_file,
-                       d.prerequisite,
-                       pf.file AS prerequisite_file
-                FROM fortran_unit_dependency AS d,
-                     fortran_program_unit AS df,
-                     fortran_program_unit as pf
-                WHERE df.unit=d.unit
-                      AND pf.unit=d.prerequisite
-                      AND d.type='compile'
-                ORDER BY d.unit
+SELECT d.unit, df.file AS unit_file, d.prerequisite, pf.file AS prerequisite_file
+FROM fortran_unit_dependency AS d, fortran_program_unit AS df, fortran_program_unit as pf
+WHERE df.unit=d.unit AND pf.unit=d.prerequisite AND d.type='compile'
+ORDER BY d.unit
                 '''.strip()
         rows = self._database.query( query )
 

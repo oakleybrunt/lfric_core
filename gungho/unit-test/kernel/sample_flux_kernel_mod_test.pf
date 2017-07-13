@@ -130,7 +130,7 @@ contains
     integer, pointer          :: map_rho(:)      => null()
     integer, pointer          :: map_u(:)        => null() 
 
-    type(field_proxy_type)    :: flux_p, rho_p, u_p, rm_p
+    type(field_proxy_type)    :: flux_p, rho_p, u_p, m_p
 
     ! Test flux computation
     flux = field_type( vector_space = this%w2_fs )
@@ -139,7 +139,7 @@ contains
     flux_p    = flux%get_proxy()
     rho_p     = this%rho%get_proxy()
     u_p       = this%u%get_proxy()
-    rm_p       = m%get_proxy()
+    m_p       = m%get_proxy()
 
     ndf_u  = u_p%vspace%get_ndf( )
     undf_u = u_p%vspace%get_undf( )
@@ -165,7 +165,7 @@ contains
     flux_p%data(:) = 0.0_r_def
     u_p%data(:) = 0.0_r_def
     rho_p%data(:) = 2.0_r_def
-    rm_p%data(:) = 0.5_r_def
+    m_p%data(:) = 2.0_r_def
 
     u_p%data(map_u(5)+0) = 0.0_r_def
     u_p%data(map_u(5)+1) = 1.0_r_def
@@ -176,7 +176,7 @@ contains
 
     call sample_flux_code(flux_p%vspace%get_nlayers(), &
                           flux_p%data, & 
-                          rm_p%data, &
+                          m_p%data, &
                           u_p%data, &
                           rho_p%data, &
                           ndf_u, & 

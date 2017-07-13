@@ -10,7 +10,6 @@ module si_operators_alg_mod
   use operator_mod,              only: operator_type
   use field_mod,                 only: field_type
   use finite_element_config_mod, only: wtheta_on
-  use fs_continuity_mod,         only: W2
   use log_mod,                   only: log_event,      &
                                        LOG_LEVEL_INFO, &
                                        LOG_LEVEL_ERROR
@@ -126,13 +125,13 @@ subroutine compute_si_operators(ref_state)
                                              invoke_weighted_proj_2theta_bd_kernel_type, &
                                              invoke_weighted_proj_theta2_bd_kernel_type, &
                                              invoke_raise_field
+  use multiplicity_kernel_mod,         only: multiplicity_kernel_type
   use finite_element_config_mod,       only: element_order, wtheta_on
   use function_space_mod,              only: function_space_type
   use runtime_constants_mod,           only: get_coordinates, &
                                              get_div, &
                                              get_mass_matrix, &
-                                             w3inv_id, theta_space_id, &
-                                             get_rmultiplicity
+                                             w3inv_id, theta_space_id
   use derived_config_mod,              only: bundle_size
   use invert_local_operator_kernel_mod,only: invert_local_operator_kernel_type
   use field_indices_mod,               only: igh_u, igh_t, igh_d
@@ -144,8 +143,7 @@ subroutine compute_si_operators(ref_state)
   type(quadrature_type)                :: qr
   type(field_type),            pointer :: chi(:) => null()
   type(operator_type),         pointer :: m3_inv => null(), div => null()
-  type(field_type)                     :: ones
-  type(field_type), pointer            :: w2_rmultiplicity => null()
+  type(field_type)                     :: ones, w2_multiplicity
   type(function_space_type),   pointer :: u_fs => null()
 
   if ( subroutine_timers ) call timer('si_operators_alg:compute')
@@ -157,7 +155,6 @@ subroutine compute_si_operators(ref_state)
   chi    => get_coordinates()
   m3_inv => get_mass_matrix(w3inv_id)
   div    => get_div()
-  w2_rmultiplicity => get_rmultiplicity( W2 )
 
   call invoke( weighted_m3_rho_kernel_type(m3_rho_star, rho, chi, qr) )
   call invoke( weighted_m3_exner_kernel_type(m3_exner_star, rho, theta, chi, qr), &
@@ -188,12 +185,15 @@ subroutine compute_si_operators(ref_state)
 
   ! Compute rho^ref at u nodal points
   u_fs => ref_state(igh_u)%get_function_space()
-  ones             = field_type( vector_space = u_fs )
+  w2_multiplicity = field_type( vector_space = u_fs )
+  ones            = field_type( vector_space = u_fs )
   ! Initialise fields
-  call invoke( set_field_scalar(1.0_r_def, ones),            &
+  call invoke( set_field_scalar(0.0_r_def, w2_multiplicity), &
+               set_field_scalar(1.0_r_def, ones),            &
                set_field_scalar(0.0_r_def, rho_at_u) )
   ! Calculate rho^ref
-  call invoke_sample_flux_kernel( rho_at_u, ones, w2_rmultiplicity, rho)
+  call invoke( multiplicity_kernel_type(w2_multiplicity) )
+  call invoke_sample_flux_kernel( rho_at_u, ones, w2_multiplicity, rho)
 
   call invoke( compound_operator_kernel_type(compound_div, m3_rho_star, m3_inv, div, &
                                              rho_at_u, tau_r) )

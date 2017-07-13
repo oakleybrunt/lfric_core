@@ -9,16 +9,17 @@ use fs_continuity_mod,             only: W0, W1, W2, W3
 use log_mod,                       only: log_event,         &
                                          log_scratch_space, &
                                          LOG_LEVEL_INFO
+use multiplicity_kernel_mod,       only: multiplicity_kernel_type
 use psykal_lite_mod,               only: invoke_nodal_coordinates_kernel,   &
                                          invoke_convert_hcurl_field,        &
                                          invoke_convert_hdiv_field,         &
-                                         invoke_inc_X_times_Y,              &
+                                         invoke_divide_field_data,          &
                                          invoke_convert_cart2sphere_vector, &
                                          invoke_pointwise_convert_xyz2llr,  &
                                          invoke_compute_dof_level_kernel,   &
                                          invoke_write_fields
 use function_space_mod,            only: function_space_type
-use runtime_constants_mod,         only: get_coordinates, get_rmultiplicity
+use runtime_constants_mod,         only: get_coordinates
 implicit none
 
 contains
@@ -31,8 +32,7 @@ subroutine nodal_output_alg(field, fname )
     ! Local variables
     type(field_type), pointer          :: chi(:) => null()
     type(field_type)                   :: nodal_output(3), nodal_coordinates(3)
-    type(field_type), pointer          :: nodal_rmultiplicity
-    type(field_type)                   :: level
+    type(field_type)                   :: nodal_multiplicity, level
     integer, parameter                 :: nodal_output_unit = 21
     integer                            :: i, output_fs, output_dim
     type(function_space_type), pointer :: output_field_fs   => null()
@@ -47,6 +47,10 @@ subroutine nodal_output_alg(field, fname )
       nodal_coordinates(i) = field_type( vector_space = output_field_fs )
       call invoke( set_field_scalar(0.0_r_def, nodal_output(i)) )
     end do
+    nodal_multiplicity = field_type( vector_space = output_field_fs )
+
+    call invoke( set_field_scalar(0.0_r_def, nodal_multiplicity) )
+    call invoke( multiplicity_kernel_type(nodal_multiplicity) )
 
     !(2) Convert field to physical nodal output & sample chi on nodal points
     ! If the field is a vector space we provide the 3 components as separate
@@ -81,9 +85,8 @@ subroutine nodal_output_alg(field, fname )
     ! (longitude, latitude, radius)
     if ( geometry == base_mesh_geometry_spherical ) then
       if ( output_fs == W1 .or. output_fs == W2) then
-        nodal_rmultiplicity => get_rmultiplicity( output_fs ) 
         do i = 1,output_dim
-          call invoke_inc_X_times_Y( nodal_output(i), nodal_rmultiplicity ) 
+          call invoke_divide_field_data( nodal_output(i), nodal_multiplicity ) 
         end do
         call invoke_convert_cart2sphere_vector(nodal_output, nodal_coordinates)         
       end if

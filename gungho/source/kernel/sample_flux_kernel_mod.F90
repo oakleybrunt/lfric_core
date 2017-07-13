@@ -71,7 +71,7 @@ end function sample_flux_kernel_constructor
 !! @param[in] undf_f Number of unique degrees of freedom for w2
 !! @param[in] map_f Dofmap for the cell at the base of the column for w2
 !! @param[inout] flux Field to contain the right hand side to be computed
-!! @param[in] rmultiplicity Reciprocal of How many times the dof has been visited in total
+!! @param[in] multiplicity How many times the dof has been visited in total
 !! @param[in] u Advecting wind
 !! @param[in] ndf_q Number of degrees of freedom per cell for the field to be advected
 !! @param[in] undf_q  Number of unique degrees of freedom for the advected field
@@ -79,7 +79,7 @@ end function sample_flux_kernel_constructor
 !! @param[in] basis_q Basis functions evaluated at gaussian quadrature points 
 !! @param[in] q Advected field
 subroutine sample_flux_code(nlayers,                                           &
-                            flux, rmultiplicity, u, q,                          &
+                            flux, multiplicity, u, q,                          &
                             ndf_f, undf_f, map_f,                              &
                             ndf_q, undf_q, map_q, basis_q                      &
                             )
@@ -91,7 +91,7 @@ subroutine sample_flux_code(nlayers,                                           &
   integer, dimension(ndf_q), intent(in) :: map_q
   real(kind=r_def), dimension(1,ndf_q,ndf_f), intent(in)    :: basis_q
   real(kind=r_def), dimension(undf_f),        intent(inout) :: flux
-  real(kind=r_def), dimension(undf_f),        intent(in)    :: u, rmultiplicity
+  real(kind=r_def), dimension(undf_f),        intent(in)    :: u, multiplicity
   real(kind=r_def), dimension(undf_q),        intent(in)    :: q
 
   !Internal variables
@@ -110,7 +110,7 @@ subroutine sample_flux_code(nlayers,                                           &
         q_at_node = q_at_node + q_cell(df_q)*basis_q(1,df_q,df)
       end do
       loc = map_f(df) + k
-      flux( loc ) = flux( loc ) + u( loc )*q_at_node*rmultiplicity( loc )
+      flux( loc ) = flux( loc ) + u( loc )*q_at_node/multiplicity( loc )
     end do
   end do
 
