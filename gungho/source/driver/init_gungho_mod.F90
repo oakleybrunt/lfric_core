@@ -22,6 +22,7 @@ module init_gungho_mod
   use mesh_collection_mod,            only : mesh_collection_type, &
                                              mesh_collection
   use set_up_mod,                     only : set_up
+  use orography_control_mod,          only : set_orography_option
 
 
   implicit none
@@ -47,6 +48,8 @@ module init_gungho_mod
 
     ! Set up mesh
     call set_up(local_rank, total_ranks, mesh_id)
+    ! Set up analytic orography parameters
+    call set_orography_option()
 
     ! Full global meshes no longer required, so reclaim the memory
     ! from global_mesh_collection

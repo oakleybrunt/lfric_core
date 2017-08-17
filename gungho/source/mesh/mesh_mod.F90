@@ -39,12 +39,14 @@ module mesh_mod
 
   use mesh_colouring_mod, only : set_colours
 
-  use mesh_constructor_helper_functions_mod,          &
-                            only : domain_size_type,  &
-                                   mesh_extruder,     &
-                                   mesh_connectivity, &
-                                   set_domain_size,   &
-                                   set_vertical_coordinate
+  use mesh_constructor_helper_functions_mod,                &
+                            only : domain_size_type,        &
+                                   mesh_extruder,           &
+                                   mesh_connectivity,       &
+                                   set_domain_size,         &
+                                   set_base_z,              &
+                                   set_vertical_coordinate, &
+                                   set_dz
 
   implicit none
 
@@ -382,12 +384,16 @@ contains
     allocate( self%eta ( 0:self%nlayers ) )
     allocate( self%dz  ( self%nlayers   ) )
 
-    ! Calculate vertical coordinates eta[0,1] and dz
-    call set_vertical_coordinate( self%eta,        &
-                                  self%dz,         &
-                                  self%nlayers,    &
-                                  self%domain_top, &
+    ! Calculate non-dimensional vertical coordinate eta[0,1] 
+    call set_vertical_coordinate( self%eta,     &
+                                  self%nlayers, &
                                   vgrid_option )
+    ! Calculate layer depth dz for flat planet surface
+    call set_dz( self%dz,      &
+                 self%eta,     &
+                 self%nlayers, &
+                 0.0_r_def,    &
+                 self%domain_top )
 
     ! Calculate next-to cells and vertices on cells
     allocate ( self%cell_next    ( nfaces, self%ncells_with_ghost ) )
@@ -573,6 +579,8 @@ contains
       vert_gid = vert_lid_gid_map(i)
       call global_mesh%get_vert_coords(vert_gid,vertex_coords_2d(:,i))
     end do
+    ! Set base surface height
+    call set_base_z(vertex_coords_2d, n_uniq_verts)
 
     deallocate( vert_lid_gid_map )
 
@@ -1996,10 +2004,8 @@ contains
     ! Calculate vertical coordinates eta[0,1] and dz in a separate subroutine
     ! for the unit tests.
     ! Uniform vertical grid is used for pFunit tests (hard-wired).
-    call set_vertical_coordinate( self%eta,        &
-                                  self%dz,         &
-                                  self%nlayers,    &
-                                  self%domain_top, &
+    call set_vertical_coordinate( self%eta,     &
+                                  self%nlayers, &
                                   extrusion_method_uniform )
 
     self%vert_cell_owner (:,:) = reshape( [ &
@@ -2583,7 +2589,18 @@ contains
       self%face_on_cell(:,8) = [29, 22, 32,  7, 33, 34]
       self%face_on_cell(:,9) = [32, 25, 28, 12, 35, 36]
 
+      ! Vertical domain limits
+      self%domain_size%minimum%z =  0.0_r_def
+      self%domain_size%maximum%z =  self%domain_top
+
     end if
+
+    ! Calculate layer depth dz for flat planet surface
+    call set_dz( self%dz,                    &
+                 self%eta,                   &
+                 self%nlayers,               &
+                 self%domain_size%minimum%z, &
+                 self%domain_size%maximum%z )
 
 
     if (.not. allocated(self%mesh_maps)) &

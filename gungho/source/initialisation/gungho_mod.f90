@@ -38,20 +38,25 @@ contains
     character(*), intent(in) :: filename
 
     character(*), parameter :: &
-                            required_configuration(14) = ['finite_element   ', &
-                                                          'formulation      ', &
-                                                          'base_mesh        ', &
-                                                          'initial_wind     ', &
-                                                          'planet           ', &
-                                                          'restart          ', &
-                                                          'solver           ', &
-                                                          'subgrid          ', &
-                                                          'timestepping     ', &
-                                                          'biperiodic_deppt ', &
-                                                          'extrusion        ', &
-                                                          'transport        ', &
-                                                          'domain_size      ', &
-                                                          'mixing           ']
+                  required_configuration(19) = ['finite_element             ', &
+                                                'formulation                ', &
+                                                'base_mesh                  ', &
+                                                'initial_wind               ', &
+                                                'planet                     ', &
+                                                'restart                    ', &
+                                                'solver                     ', &
+                                                'subgrid                    ', &
+                                                'timestepping               ', &
+                                                'biperiodic_deppt           ', &
+                                                'extrusion                  ', &
+                                                'transport                  ', &
+                                                'domain_size                ', &
+                                                'mixing                     ', &
+                                                'orography                  ', &
+                                                'orography_agnesi_cartesian ', &
+                                                'orography_agnesi_spherical ', &
+                                                'orography_schar_cartesian  ', &
+                                                'orography_schar_spherical  ']
 
     logical              :: okay
     logical, allocatable :: success_map(:)

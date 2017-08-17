@@ -146,3 +146,46 @@
   viscosity = .false.
   viscosity_mu = 0.0
 /
+
+&orography
+  profile   = 'none'
+/
+
+&orography_agnesi_cartesian
+  mountain_height = 100.0
+  half_width_x    = 10.0
+  half_width_y    = 10.0
+  x_centre        = 0.0
+  y_centre        = 0.0
+  direction       = 'x'
+/
+
+&orography_agnesi_spherical
+  mountain_height   = 100.0
+  half_width        = 2500.0
+  lambda_centre_dec = 1.5
+  phi_centre_dec    = 0.0
+  lambda_focus_dec  = 1.5
+  phi_focus_dec     = 0.3333
+/
+
+&orography_schar_cartesian
+  mountain_height = 250.0
+  half_width_x    = 20.0
+  half_width_y    = 20.0
+  wavelength      = 20.0
+  x_centre        = 0.0
+  y_centre        = 0.0
+  direction       = 'x'
+/
+
+&orography_schar_spherical
+  mountain_height   = 250.0
+  half_width        = 5000.0
+  wavelength        = 4000.0
+  lambda_centre_dec = 0.25
+  phi_centre_dec    = 0.0
+/
+
+
+

@@ -32,6 +32,7 @@ module runtime_constants_mod
   use quadrature_mod,                    only: quadrature_type, GAUSSIAN
 
   use assign_coordinate_field_mod,       only: assign_coordinate_field
+  use assign_orography_field_mod,        only: assign_orography_field
 
   ! PsyKAl-lite kernels
   use psykal_lite_mod,                   only: invoke_compute_geopotential_kernel_type, &
@@ -179,6 +180,7 @@ contains
                    function_space_collection%get_fs(mesh_id, coordinate_order, chi_space) )
     end do
     call assign_coordinate_field(chi, mesh_id)
+    call assign_orography_field(chi, mesh_id)
 
     !================= Create quadrature object =====================!
     qr = quadrature_type(element_order+3, GAUSSIAN)

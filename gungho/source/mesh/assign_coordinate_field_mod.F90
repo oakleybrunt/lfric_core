@@ -173,7 +173,7 @@ contains
           ! spherical shells
           if ( geometry == base_mesh_geometry_spherical ) then
              radius_correction = scaled_radius + &
-                                 (real(k) + chi_hat_node(3,df))*dz(k+1)
+                                 sum(dz(1:k)) + chi_hat_node(3,df)*dz(k+1)
              radius_correction = radius_correction/sqrt(x*x + y*y + z*z)
           end if
           dfk = map(df)+k 

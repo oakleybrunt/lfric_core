@@ -27,10 +27,12 @@ implicit none
 
 private
 
-public :: mesh_extruder, &
-          mesh_connectivity, &
-          set_domain_size, &
-          set_vertical_coordinate
+public :: mesh_extruder,           &
+          mesh_connectivity,       &
+          set_domain_size,         &
+          set_base_z,              &
+          set_vertical_coordinate, &
+          set_dz
 
 ! Declare type definitions used in this module
 type, private :: coordinate_type
@@ -39,40 +41,40 @@ end type coordinate_type
 
 type, public :: domain_size_type
   type(coordinate_type) :: minimum, maximum
+  real(r_def) :: base_height
 end type domain_size_type
 
 contains
 
-  !----------------------------------------------------------------------------
-  ! Helper function to extrude the a surface 2D-mesh into the 3D-mesh.
-  ! (Called from the mesh constructor)
-  ! @param[out] cell_next Cell ids of adjacent cells
-  ! @param[out] vert_on_cell Vertex ids on cell
-  ! @param[out] vertex_coords Vertex Coordinates
-  ! @param[in]  vertex_coords_2d Local 2d cell connectivity.
-  ! @param[in]  nverts_2d No. of vertices in a 2d layer
-  ! @param[in]  nverts_3d No. of vertices in 3d mesh
-  ! @param[in]  ncells_2d No. of cells in a 2d layer
-  ! @param[in]  ncells_3d No. of cells in 3d mesh
-  ! @param[in]  nlayers No. of layers
-  ! @param[in]  dz Array of vertical grid spacing
-  subroutine mesh_extruder(cell_next, &
-                           vert_on_cell, &
-                           vertex_coords, &
-                           cell_next_2d, &
-                           vert_on_cell_2d, &
-                           vertex_coords_2d, &
+  !=============================================================================
+  !> @brief Helper function to extrude the a surface 2D-mesh into the 3D-mesh.
+  !> (called from the mesh constructor)
+  !> @param[out] cell_next        Cell ids of adjacent cells
+  !> @param[out] vert_on_cell     Vertex ids on cell
+  !> @param[out] vertex_coords    Vertex Coordinates
+  !> @param[in]  vertex_coords_2d Local 2d cell connectivity.
+  !> @param[in]  nverts_2d        No. of vertices in a 2d layer
+  !> @param[in]  nverts_3d        No. of vertices in 3d mesh
+  !> @param[in]  ncells_2d        No. of cells in a 2d layer
+  !> @param[in]  ncells_3d        No. of cells in 3d mesh
+  !> @param[in]  nlayers          No. of layers
+  !> @param[in]  dz               Array of vertical grid spacing
+  subroutine mesh_extruder(cell_next,          &
+                           vert_on_cell,       &
+                           vertex_coords,      &
+                           cell_next_2d,       &
+                           vert_on_cell_2d,    &
+                           vertex_coords_2d,   &
                            nverts_per_2d_cell, &
                            nedges_per_2d_cell, &
-                           nverts_2d, &
-                           nverts_3d, &
-                           ncells_2d, &
-                           ncells_3d, &
-                           nlayers, &
+                           nverts_2d,          &
+                           nverts_3d,          &
+                           ncells_2d,          &
+                           ncells_3d,          &
+                           nlayers,            &
                            dz)
 
     use coord_transform_mod,   only : llr2xyz
-    use planet_config_mod,     only : scaled_radius
     use reference_element_mod, only : W, S, E, N, B, T, &
                                       nfaces_h, nverts, nedges, nfaces, &
                                       SWB, SEB, NEB, NWB, SWT, SET, NET, NWT
@@ -109,9 +111,6 @@ contains
     ! lat/long coordinates
     real(r_def) :: long, lat, r
 
-    ! The height of the lowest z-level
-    real(r_def) :: base_z
-
     ! Reference element stats
     nverts_per_3d_cell = nverts
     nedges_per_3d_cell = nedges
@@ -144,7 +143,7 @@ contains
         id = i  + k*ncells_2d
         jd = id - ncells_2d
 
-        do j=1, nfaces_h ! only over vertical faces
+        do j=1, nfaces_h ! Only over vertical faces
           if (cell_next(j,jd) /= 0) &
                     cell_next(j,id) = cell_next(j,jd) + &
                                               ncells_2d
@@ -158,34 +157,22 @@ contains
       end do
     end do
 
-    ! NOTE: dz and domain top will depend on
-    !       the orography, vertical resolution file, top of model
-    !       and how vertical and horizontal smoothing is applied
-    !       after the application of orography. At present, the
-    !       vertical depth is hard-coded uniformly to 1.0
-
     ! The assumption is that the global mesh coords are provided in
-    ! [longitude, latitude, radius] (long/lat in rads)
+    ! [longitude, latitude, radius] (long/lat in rads).
+    ! Note that vertex_coords_2d(3,1:n_uniq_verts) are already populated
+    ! by set_base_z.
 
-    ! perform vertical extrusion for vertices
-    if( geometry == base_mesh_geometry_spherical )then
-      !> @todo We shouldn't be using earth_radius here - it should be
-      !!       some form of scaled planet radius - but that is a much
-      !!       bigger change for a different ticket.
-      base_z = scaled_radius
-    else
-      base_z = 0.0_r_def
-    end if
+    ! Perform vertical extrusion for vertices
     do j=1, nverts_2d
      ! k = 0
      vertex_coords(1,j) = vertex_coords_2d(1,j)
      vertex_coords(2,j) = vertex_coords_2d(2,j)
-     vertex_coords(3,j) = base_z
-     ! rest of k, upto nlayers
+     vertex_coords(3,j) = vertex_coords_2d(3,j)
+     ! Rest of k, up to nlayers
       do k=1, nlayers
         vertex_coords(1,j+k*nverts_2d) = vertex_coords_2d(1,j)
         vertex_coords(2,j+k*nverts_2d) = vertex_coords_2d(2,j)
-        vertex_coords(3,j+k*nverts_2d) = base_z + real(k)*dz(k)
+        vertex_coords(3,j+k*nverts_2d) = vertex_coords_2d(3,j) + sum(dz(1:k))
       end do
     end do
 
@@ -203,7 +190,7 @@ contains
       end do
     end if
 
-    ! assign vertices to cells
+    ! Assign vertices to cells
     ! Loop over lowest layer of cells first, to set the cell ids above
     ! the lowest layer
     do i=1, ncells_2d
@@ -225,7 +212,6 @@ contains
 
       end do
     end do
-
 
     ! Diagnostic information
     call log_event('grid connectivity', LOG_LEVEL_DEBUG)
@@ -256,214 +242,216 @@ contains
       call log_event(log_scratch_space, LOG_LEVEL_DEBUG)
     end do
 
+    return
   end subroutine mesh_extruder
 
-
-  !----------------------------------------------------------------------------
-  ! Helper function to Compute mesh connectivity.
-  ! @param[out] face_on_cell All face ids on any cell
-  ! @param[out] edge_on_cell All edge ids on any cell
-  ! @param[in]  nverts_2d No. of vertices in a 2d layer
-  ! @param[in]  nverts_3d No. of vertices in 3d mesh
-  ! @param[in]  nfaces_per_cell Number of faces on 3d-cell
-  ! @param[in]  nedges_per_cell Number of edges on 3d-cell
-  ! @param[in]  cell_next Cell ids of all cells adjacent to any cell
-  ! @param[in]  vert_on_cell Vertex ids on any cell
-
-  subroutine mesh_connectivity( face_on_cell, &
-                                edge_on_cell, &
-                                ncells_2d, &
-                                ncells_3d, &
+  !=============================================================================
+  !> @brief Helper function to compute mesh connectivity.
+  !> @param[out] face_on_cell    All face ids on any cell
+  !> @param[out] edge_on_cell    All edge ids on any cell
+  !> @param[in]  nverts_2d       No. of vertices in a 2d layer
+  !> @param[in]  nverts_3d       No. of vertices in 3d mesh
+  !> @param[in]  nfaces_per_cell Number of faces on 3d-cell
+  !> @param[in]  nedges_per_cell Number of edges on 3d-cell
+  !> @param[in]  cell_next       Cell ids of all cells adjacent to any cell
+  !> @param[in]  vert_on_cell    Vertex ids on any cell
+  subroutine mesh_connectivity( face_on_cell,    &
+                                edge_on_cell,    &
+                                ncells_2d,       &
+                                ncells_3d,       &
                                 nfaces_per_cell, &
                                 nedges_per_cell, &
-                                cell_next, &
+                                cell_next,       &
                                 vert_on_cell )
 
-  use reference_element_mod, only: W,   S,  E,  N,  B,  T, &
-                                   EB, ET, WB, WT, NB, NT, SB, ST, &
-                                   SW, SE, NW, NE, &
-                                   nfaces, nverts, &
-                                   nedges_h, nverts_h, nfaces_h, &
-                                   SWB, SEB, NEB, NWB, SWT, SET, NET, NWT
+    use reference_element_mod, only: W,   S,  E,  N,  B,  T,         &
+                                     EB, ET, WB, WT, NB, NT, SB, ST, &
+                                     SW, SE, NW, NE,                 &
+                                     nfaces, nverts,                 &
+                                     nedges_h, nverts_h, nfaces_h,   &
+                                     SWB, SEB, NEB, NWB, SWT, SET, NET, NWT
 
-  implicit none
+    implicit none
 
-  integer(i_def), intent(out) :: face_on_cell( nfaces_per_cell, ncells_2d )
-  integer(i_def), intent(out) :: edge_on_cell( nedges_per_cell, ncells_2d )
-  integer(i_def), intent(in)  :: ncells_2d
-  integer(i_def), intent(in)  :: ncells_3d
-  integer(i_def), intent(in)  :: nfaces_per_cell
-  integer(i_def), intent(in)  :: nedges_per_cell
-  integer(i_def), intent(in)  :: cell_next( nfaces, ncells_3d )
-  integer(i_def), intent(in)  :: vert_on_cell( nverts, ncells_3d )
+    integer(i_def), intent(out) :: face_on_cell( nfaces_per_cell, ncells_2d )
+    integer(i_def), intent(out) :: edge_on_cell( nedges_per_cell, ncells_2d )
+    integer(i_def), intent(in)  :: ncells_2d
+    integer(i_def), intent(in)  :: ncells_3d
+    integer(i_def), intent(in)  :: nfaces_per_cell
+    integer(i_def), intent(in)  :: nedges_per_cell
+    integer(i_def), intent(in)  :: cell_next( nfaces, ncells_3d )
+    integer(i_def), intent(in)  :: vert_on_cell( nverts, ncells_3d )
 
+    integer (i_def) :: cell          ! cell loop index
+    integer (i_def) :: face          ! face loop index
+    integer (i_def) :: edge          ! edge loop index
+    integer (i_def) :: vert          ! vert loop index
+    integer (i_def) :: face_id       ! unique face index
+    integer (i_def) :: edge_id       ! unique edge index
+    integer (i_def) :: edge_upper    ! index of edge on top face
+    integer (i_def) :: cell_nbr      ! cell index for a neightbour cell
+    integer (i_def) :: face_nbr      ! face index for a face on a neighbour cell
+    integer (i_def) :: edge_nbr      ! edge index for a edge on a neighbour cell
+    integer (i_def) :: vert_nbr      ! vert index for a edge on a neighbour cell
+    integer (i_def) :: cell_nbr_nbr  ! cell index for a neighbour cell of a neighbour cell
+    integer (i_def) :: vert_nbr_nbr  ! vert index for a neighbour cell of a neighbour cell
 
-  integer (i_def) :: cell          ! cell loop index
-  integer (i_def) :: face          ! face loop index
-  integer (i_def) :: edge          ! edge loop index
-  integer (i_def) :: vert          ! vert loop index
-  integer (i_def) :: face_id       ! unique face index
-  integer (i_def) :: edge_id       ! unique edge index
-  integer (i_def) :: edge_upper    ! index of edge on top face
-  integer (i_def) :: cell_nbr      ! cell index for a neightbour cell
-  integer (i_def) :: face_nbr      ! face index for a face on a neighbour cell
-  integer (i_def) :: edge_nbr      ! edge index for a edge on a neighbour cell
-  integer (i_def) :: vert_nbr      ! vert index for a edge on a neighbour cell
-  integer (i_def) :: cell_nbr_nbr  ! cell index for a neighbour cell of a neighbour cell
-  integer (i_def) :: vert_nbr_nbr  ! vert index for a neighbour cell of a neighbour cell
+    face_on_cell(:,:) = 0
+    edge_on_cell(:,:) = 0
 
-  face_on_cell(:,:) = 0
-  edge_on_cell(:,:) = 0
+    !==================================================
+    ! Compute index of faces on the cell
+    !==================================================
+    face_id = 1
+    do cell=1, ncells_2d
 
-  !==================================================
-  ! Compute index of faces on the cell
-  !==================================================
-  face_id = 1
-  do cell=1, ncells_2d
+      ! First do faces on E,S,W,N sides of cell
+      do face=1, nfaces_h
 
-    ! First do faces on E,S,W,N sides of cell
-    do face=1, nfaces_h
+        if ( face_on_cell(face,cell) == 0 ) then
+          ! Assign face_id to this face as it is not already assigned
 
-      if ( face_on_cell(face,cell) == 0 ) then
-        ! Assign face_id to this face as it is not already assigned
+          face_on_cell(face,cell) = face_id
 
-        face_on_cell(face,cell) = face_id
-
-        ! Find matching face on the neighbouring cell.
-        ! Note: The orientations of cells may not be the same,
-        !       e.g. Cubedsphere, for a so search all faces of
-        !       cell_next on the neighbouring cell
-        cell_nbr = cell_next(face,cell)
-        if (cell_nbr /= 0) then
-          do face_nbr=1, nfaces_h
-            if ( cell_next(face_nbr,cell_nbr) == cell ) then
-              ! Found matching face, assign in and increment count
-              face_on_cell(face_nbr,cell_nbr) = face_id
-            end if
-          end do
-        end if
-
-        face_id = face_id + 1
-
-      end if ! test for assigned face
-
-    end do  ! n_faces_h
-
-    ! Now do Faces on B and T of cell
-    do face=nfaces_h+1, nfaces_per_cell
-      face_on_cell(face, cell) = face_id
-      face_id = face_id + 1
-    end do
-
-  end do ! ncells_2d
-
-  ! Compute the index of edges on the cell
-  edge_id = 1
-  do cell=1, ncells_2d
-    ! horizontal edges ( edges on Bottom and Top faces)
-    ! This uses the fact that edges of the bottom face correspond to the
-    ! vertical faces, i.e edge i is the bottom edge of face i and hence
-    ! we can use cell_next array (which is addressed through faces) for
-    ! edge indexes
-    do edge=1, nedges_h
-      if ( edge_on_cell(edge,cell) == 0 ) then
-
-        ! Index of edge on bottom face
-        edge_on_cell(edge,cell) = edge_id
-
-        ! Corresponding index of edge on top face
-        edge_upper = edge + nedges_h + nverts_h
-        edge_on_cell(edge_upper,cell) = edge_id + 1
-
-        ! find matching edge in neighbouring cell
-        cell_nbr = cell_next(edge,cell)
-        if (cell_nbr /= 0) then
-          do edge_nbr = 1,nedges_h
-            if ( cell_next(edge_nbr,cell_nbr) == cell ) then
-              ! Found cell which shares edge
-              edge_on_cell(edge_nbr,cell_nbr) = edge_id
-              edge_upper = edge_nbr+nedges_h+nverts_h
-              edge_on_cell(edge_upper,cell_nbr) = edge_id + 1
-            end if
-          end do
-        end if
-
-        edge_id = edge_id + 2
-
-      end if
-    end do
-
-    ! vertical edges (edges not on Bottom and Top faces)
-    ! This uses the fact that vertical edges correspond to vertices of
-    ! the bottom face i.e edge i has the same index as vertex i and hence
-    ! we can use vert_on_cell array (which is addressed through verts) for
-    ! edge indexes
-    do edge = nedges_h+1,nedges_h+nverts_h
-      if ( edge_on_cell(edge,cell) == 0 ) then
-        edge_on_cell(edge,cell) = edge_id
-
-        ! Find matching edge on two neighbouring cells
-        ! this edge is an extrusion of the corresponding vertex
-        vert = vert_on_cell(edge-nedges_h,cell)
-        do face = 1,nfaces_h
+          ! Find matching face on the neighbouring cell.
+          ! Note: The orientations of cells may not be the same,
+          !       e.g. Cubedsphere, for a so search all faces of
+          !       cell_next on the neighbouring cell
           cell_nbr = cell_next(face,cell)
           if (cell_nbr /= 0) then
-            do vert_nbr = 1,nverts_h
-              if ( vert_on_cell(vert_nbr,cell_nbr) == vert ) then
-                ! Found matching vert in neighbour cell
-                edge_on_cell(vert_nbr+nedges_h,cell_nbr) = edge_id
-                do face_nbr = 1,nfaces_h
-                  ! Now find matching vert in neighbour of neighbour
-                  cell_nbr_nbr = cell_next(face_nbr,cell_nbr)
-                  if (cell_nbr_nbr /= 0) then
-                    do vert_nbr_nbr = 1,nverts_h
-                      if ( vert_on_cell(vert_nbr_nbr,cell_nbr_nbr) == &
-                           vert ) then
-                        edge_on_cell(vert_nbr_nbr+nedges_h, &
-                                          cell_nbr_nbr) = edge_id
-                      end if
-                    end do
-                  end if ! cell_nbr_nbr
-                end do
+            do face_nbr=1, nfaces_h
+              if ( cell_next(face_nbr,cell_nbr) == cell ) then
+                ! Found matching face, assign in and increment count
+                face_on_cell(face_nbr,cell_nbr) = face_id
               end if
             end do
           end if
-        end do
-        edge_id = edge_id + 1
-      end if
+
+          face_id = face_id + 1
+
+        end if ! Test for assigned face
+
+      end do  ! n_faces_h
+
+      ! Now do Faces on B and T of cell
+      do face=nfaces_h+1, nfaces_per_cell
+        face_on_cell(face, cell) = face_id
+        face_id = face_id + 1
+      end do
+
+    end do ! ncells_2d
+
+    ! Compute the index of edges on the cell
+    edge_id = 1
+    do cell=1, ncells_2d
+      ! horizontal edges ( edges on Bottom and Top faces)
+      ! This uses the fact that edges of the bottom face correspond to the
+      ! vertical faces, i.e edge i is the bottom edge of face i and hence
+      ! we can use cell_next array (which is addressed through faces) for
+      ! edge indexes
+      do edge=1, nedges_h
+        if ( edge_on_cell(edge,cell) == 0 ) then
+
+          ! Index of edge on bottom face
+          edge_on_cell(edge,cell) = edge_id
+
+          ! Corresponding index of edge on top face
+          edge_upper = edge + nedges_h + nverts_h
+          edge_on_cell(edge_upper,cell) = edge_id + 1
+
+          ! Find matching edge in neighbouring cell
+          cell_nbr = cell_next(edge,cell)
+          if (cell_nbr /= 0) then
+            do edge_nbr = 1,nedges_h
+              if ( cell_next(edge_nbr,cell_nbr) == cell ) then
+                ! Found cell which shares edge
+                edge_on_cell(edge_nbr,cell_nbr) = edge_id
+                edge_upper = edge_nbr+nedges_h+nverts_h
+                edge_on_cell(edge_upper,cell_nbr) = edge_id + 1
+              end if
+            end do
+          end if
+
+          edge_id = edge_id + 2
+
+        end if
+      end do
+
+      ! Vertical edges (edges not on Bottom and Top faces)
+      ! This uses the fact that vertical edges correspond to vertices of
+      ! the bottom face i.e edge i has the same index as vertex i and hence
+      ! we can use vert_on_cell array (which is addressed through verts) for
+      ! edge indexes
+      do edge = nedges_h+1,nedges_h+nverts_h
+        if ( edge_on_cell(edge,cell) == 0 ) then
+          edge_on_cell(edge,cell) = edge_id
+
+          ! Find matching edge on two neighbouring cells
+          ! This edge is an extrusion of the corresponding vertex
+          vert = vert_on_cell(edge-nedges_h,cell)
+          do face = 1,nfaces_h
+            cell_nbr = cell_next(face,cell)
+            if (cell_nbr /= 0) then
+              do vert_nbr = 1,nverts_h
+                if ( vert_on_cell(vert_nbr,cell_nbr) == vert ) then
+                  ! Found matching vert in neighbour cell
+                  edge_on_cell(vert_nbr+nedges_h,cell_nbr) = edge_id
+                  do face_nbr = 1,nfaces_h
+                    ! Now find matching vert in neighbour of neighbour
+                    cell_nbr_nbr = cell_next(face_nbr,cell_nbr)
+                    if (cell_nbr_nbr /= 0) then
+                      do vert_nbr_nbr = 1,nverts_h
+                        if ( vert_on_cell(vert_nbr_nbr,cell_nbr_nbr) == &
+                             vert ) then
+                          edge_on_cell(vert_nbr_nbr+nedges_h, &
+                                            cell_nbr_nbr) = edge_id
+                        end if
+                      end do
+                    end if ! cell_nbr_nbr
+                  end do
+                end if
+              end do
+            end if
+          end do
+          edge_id = edge_id + 1
+        end if
+      end do
     end do
-  end do
 
-  call log_event( 'faces on cells', LOG_LEVEL_DEBUG )
-  do cell = 1, ncells_2d
-    write( log_scratch_space, '(7i6)' ) cell, &
-           face_on_cell(S,cell), face_on_cell(E,cell), &
-           face_on_cell(N,cell), face_on_cell(W,cell), &
-           face_on_cell(B,cell), face_on_cell(T,cell)
-    call log_event( log_scratch_space, LOG_LEVEL_DEBUG )
-  end do
+    call log_event( 'faces on cells', LOG_LEVEL_DEBUG )
+    do cell = 1, ncells_2d
+      write( log_scratch_space, '(7i6)' ) cell, &
+             face_on_cell(S,cell), face_on_cell(E,cell), &
+             face_on_cell(N,cell), face_on_cell(W,cell), &
+             face_on_cell(B,cell), face_on_cell(T,cell)
+      call log_event( log_scratch_space, LOG_LEVEL_DEBUG )
+    end do
 
-  call log_event( 'edges on cells', LOG_LEVEL_DEBUG )
-  do cell = 1, ncells_2d
-    write( log_scratch_space, '(13i6)' ) cell, &
-           edge_on_cell(SB,cell), edge_on_cell(EB,cell), &
-           edge_on_cell(NB,cell), edge_on_cell(WB,cell), &
-           edge_on_cell(SW,cell), edge_on_cell(SE,cell), &
-           edge_on_cell(NE,cell), edge_on_cell(NW,cell), &
-           edge_on_cell(ST,cell), edge_on_cell(ET,cell), &
-           edge_on_cell(NT,cell), edge_on_cell(WT,cell)
-    call log_event( log_scratch_space, LOG_LEVEL_DEBUG )
-  end do
+    call log_event( 'edges on cells', LOG_LEVEL_DEBUG )
+    do cell = 1, ncells_2d
+      write( log_scratch_space, '(13i6)' ) cell, &
+             edge_on_cell(SB,cell), edge_on_cell(EB,cell), &
+             edge_on_cell(NB,cell), edge_on_cell(WB,cell), &
+             edge_on_cell(SW,cell), edge_on_cell(SE,cell), &
+             edge_on_cell(NE,cell), edge_on_cell(NW,cell), &
+             edge_on_cell(ST,cell), edge_on_cell(ET,cell), &
+             edge_on_cell(NT,cell), edge_on_cell(WT,cell)
+      call log_event( log_scratch_space, LOG_LEVEL_DEBUG )
+    end do
 
+    return
   end subroutine mesh_connectivity
 
-
-
-  !----------------------------------------------------------------------------
-  ! Helper function to compute the domain limits (x,y,z) for Cartesian
-  ! domains and (lambda,phi,r) for spherical domains
+  !============================================================================
+  !> @brief Helper function to compute the domain limits (x,y,z) for Cartesian
+  !> domains and (lambda,phi,r) for spherical domains.
+  !> @param[out] domain_size   Domain limits in 3d 
+  !> @param[in]  vertex_coords Vertex Coordinates
+  !> @param[in]  nverts        No. of vertices in 3d mesh
   subroutine set_domain_size( domain_size, domain_top, &
                               vertex_coords, nverts )
+
+    use planet_config_mod,     only : scaled_radius
 
     implicit none
 
@@ -473,38 +461,69 @@ contains
     integer(i_def),         intent(in)  :: nverts
 
     if ( geometry == base_mesh_geometry_spherical ) then
-      domain_size%minimum%x =  0.0_r_def
-      domain_size%maximum%x =  2.0_r_def*PI
-      domain_size%minimum%y = -0.5_r_def*PI
-      domain_size%maximum%y =  0.5_r_def*PI
-      domain_size%minimum%z =  0.0_r_def
-      domain_size%maximum%z =  domain_top
+      domain_size%minimum%x   =  0.0_r_def
+      domain_size%maximum%x   =  2.0_r_def*PI
+      domain_size%minimum%y   = -0.5_r_def*PI
+      domain_size%maximum%y   =  0.5_r_def*PI
+      domain_size%minimum%z   =  0.0_r_def
+      domain_size%maximum%z   =  domain_top
+      domain_size%base_height =  scaled_radius
     else
-      domain_size%minimum%x =  planar_domain_min_x
-      domain_size%maximum%x =  planar_domain_max_x
-      domain_size%minimum%y =  planar_domain_min_y
-      domain_size%maximum%y =  planar_domain_max_y
-      domain_size%minimum%z =  minval( vertex_coords(3,:))
-      domain_size%maximum%z =  maxval( vertex_coords(3,:))
+      domain_size%minimum%x   =  planar_domain_min_x
+      domain_size%maximum%x   =  planar_domain_max_x
+      domain_size%minimum%y   =  planar_domain_min_y
+      domain_size%maximum%y   =  planar_domain_max_y
+      domain_size%minimum%z   =  minval( vertex_coords(3,:))
+      domain_size%maximum%z   =  maxval( vertex_coords(3,:))
+      domain_size%base_height =  0.0_r_def
     end if
 
     !> @todo Need to do a global reduction of maxs and mins when the
     !> code is parallel
 
+    return
   end subroutine set_domain_size
 
+  !=============================================================================
+  !> @brief Helper function which assigns the values of base surace height to a
+  !> field of surface vertex coordinates (Called from the mesh constructor).
+  !> @param[in,out] vertex_coords_2d Local 2d surface coordinates (lat-lon-z)
+  !> @param[in]     nverts_2d        No. of vertices in a 2d layer
+  subroutine set_base_z(vertex_coords_2d, nverts_2d)
+
+    use planet_config_mod,     only : scaled_radius
+
+    implicit none
+
+    real(r_def),    intent(inout)  :: vertex_coords_2d( 3, nverts_2d )
+    integer(i_def), intent(in)     :: nverts_2d
+
+    ! The height of the lowest z-level
+    real(r_def) :: base_z
+
+    ! Set base surface height
+    if( geometry == base_mesh_geometry_spherical )then
+      !> @todo We shouldn't be using earth_radius here - it should be
+      !!       some form of scaled planet radius - but that is a much
+      !!       bigger change for a different ticket.
+      base_z = scaled_radius
+    else
+      base_z = 0.0_r_def
+    end if
+
+    vertex_coords_2d(3,:) = base_z
+
+    return
+  end subroutine set_base_z
 
   !============================================================================
-  ! Private helper function that calculates and stores vertical coordinate info
-  ! (Called from the mesh constructor).
-  ! @param [inout] eta           Non-dimensional vertical coordinate
-  ! @param [inout] dz            Depth of 3d-cell layer
-  ! @param [in]    nlayers       Number of layers
-  ! @param [in]    vgrid_option  Choice of vertical grid
-  subroutine set_vertical_coordinate( eta, &
-                                      dz, &
+  !> @brief Helper function that calculates and stores vertical coordinate info
+  !> (called from the mesh constructor).
+  !> @param[in,out] eta           Non-dimensional vertical coordinate
+  !> @param[in]     nlayers       Number of layers
+  !> @param[in]     vgrid_option  Choice of vertical grid
+  subroutine set_vertical_coordinate( eta,     &
                                       nlayers, &
-                                      domain_top, &
                                       vgrid_option )
 
     use extrusion_config_mod, only: extrusion_method_uniform,   &
@@ -515,9 +534,7 @@ contains
     implicit none
 
     real(r_def),       intent(out) :: eta(0:nlayers)
-    real(r_def),       intent(out) :: dz( nlayers )
     integer(i_def),    intent(in)  :: nlayers
-    real(r_def),       intent(in)  :: domain_top
     integer(i_native), intent(in)  :: vgrid_option
 
     integer(i_def) :: k
@@ -572,11 +589,45 @@ contains
         end do
       end select
 
-    ! Calculate dz
-    do k = 1, nlayers
-       dz(k) = ( eta(k) - eta(k-1) )*domain_top
-    end do
-
+    return
   end subroutine set_vertical_coordinate
+
+  !============================================================================
+  !> @brief Helper function that calculates and stores depth of layers in 
+  !> 3d_cell column given the suface height and the domain top (called from
+  !> the mesh constructor).
+  !> @param[in,out] dz                Depth of 3d-cell layer
+  !> @param[in]    eta                Non-dimensional vertical coordinate
+  !> @param[in]    nlayers            Number of layers
+  !> @param[in]    surface_height     Surface height above flat surface
+  !> @param[in]    domain_top         Top of atmosphere above flat surface
+  subroutine set_dz( dz,             &
+                     eta,            &
+                     nlayers,        &
+                     surface_height, &
+                     domain_top )
+
+    implicit none
+
+    real(r_def),    intent(inout) :: dz(nlayers)
+    real(r_def),    intent(in)    :: eta(0:nlayers)
+    integer(i_def), intent(in)    :: nlayers
+    real(r_def),    intent(in)    :: surface_height
+    real(r_def),    intent(in)    :: domain_top
+
+    real(r_def)    :: domain_depth
+
+    ! NOTE: dz and domain top will depend on
+    !       the orography, vertical resolution file, top of model
+    !       and how vertical and horizontal smoothing is applied
+    !       after the application of orography.
+
+    ! Calculate domain depth
+    domain_depth = domain_top - surface_height
+    ! Calculate dz
+    dz = ( eta(1:nlayers) - eta(0:nlayers-1) )*domain_depth
+
+    return
+  end subroutine set_dz
 
 end module mesh_constructor_helper_functions_mod

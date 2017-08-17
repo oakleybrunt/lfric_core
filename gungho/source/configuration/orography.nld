@@ -1,0 +1,8 @@
+namelist orography
+
+  profile  : enumeration[ none,   ! No orography (flat surface)
+                          schar,  ! Schar mountain profile
+                          agnesi  ! Witch-of-Agnesi mountain profile
+                                 ]
+
+end namelist orography
