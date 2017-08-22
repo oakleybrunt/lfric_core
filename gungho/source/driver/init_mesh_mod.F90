@@ -12,7 +12,7 @@
 
 ! There are no tests for this code as this will be replaced.
 
-module set_up_mod
+module init_mesh_mod
 
   use base_mesh_config_mod,       only : filename,        &
                                          prime_mesh_name, &
@@ -69,7 +69,7 @@ contains
 !> @param[in] local_rank Number of the MPI rank of this process
 !> @param[in] total_ranks Total number of MPI ranks in this job
 !> @param[out] prime_mesh_id id of paritioned prime mesh
-  subroutine set_up(local_rank, total_ranks, prime_mesh_id)
+  subroutine init_mesh(local_rank, total_ranks, prime_mesh_id)
 
     implicit none
 
@@ -270,5 +270,5 @@ contains
                                                   method )
 
     return
-  end subroutine set_up
-end module set_up_mod
+  end subroutine init_mesh
+end module init_mesh_mod

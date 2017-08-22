@@ -53,7 +53,7 @@ program cma_test
   use mesh_mod,                       only : mesh_type
   use mesh_collection_mod,            only : mesh_collection
   use planet_config_mod,              only : radius
-  use set_up_mod,                     only : reference_cube
+
 
   implicit none
 

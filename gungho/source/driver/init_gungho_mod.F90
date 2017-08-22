@@ -21,7 +21,7 @@ module init_gungho_mod
                                              global_mesh_collection
   use mesh_collection_mod,            only : mesh_collection_type, &
                                              mesh_collection
-  use set_up_mod,                     only : set_up
+  use init_mesh_mod,                  only : init_mesh
   use orography_control_mod,          only : set_orography_option
 
 
@@ -47,7 +47,7 @@ module init_gungho_mod
               source = function_space_collection_type() )
 
     ! Set up mesh
-    call set_up(local_rank, total_ranks, mesh_id)
+    call init_mesh(local_rank, total_ranks, mesh_id)
     ! Set up analytic orography parameters
     call set_orography_option()
 
