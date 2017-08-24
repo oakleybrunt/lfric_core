@@ -40,10 +40,9 @@
 
 &output
   diag_stem_name            = 'gravity_wave'
-  write_xios_output         = .false.
+  write_interpolated_output = .false.
   write_nodal_output        = .true.
-  diagnostic_frequency      = 10
-  output_projections_on_w3  = .true.
+  diagnostic_frequency      = 36
   subroutine_timers         = .true.
 /
 
@@ -69,7 +68,6 @@
   si_tolerance       = 1.0e-4
   si_preconditioner  = 'pressure'
   si_postconditioner = 'none'
-  si_pressure_preconditioner='diagonal'
   gcrk               = 4
   helmholtz_solve    = .false.
   use_operators      = .true.
