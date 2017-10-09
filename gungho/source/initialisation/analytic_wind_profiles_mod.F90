@@ -18,7 +18,11 @@ use initial_wind_config_mod, only : &
                                initial_wind_profile_dcmip301,               &
                                initial_wind_profile_deep_baroclinic_steady, &
                                initial_wind_profile_deep_baroclinic_perturbed, &
-                               initial_wind_profile_vortex
+                               initial_wind_profile_vortex,                 &
+                               initial_wind_profile_NL_case_1,              &
+                               initial_wind_profile_NL_case_2,              &
+                               initial_wind_profile_NL_case_3,              &
+                               initial_wind_profile_NL_case_4
 
 use planet_config_mod,  only : scaled_radius
 use log_mod,            only : log_event,                &
@@ -29,6 +33,10 @@ use deep_baroclinic_wave_mod, only : deep_baroclinic_wave
 implicit none
 
 private :: vortex_wind
+private :: NL_wind_case_1
+private :: NL_wind_case_2
+private :: NL_wind_case_3
+private :: NL_wind_case_4
 
 public :: analytic_wind
 
@@ -79,17 +87,96 @@ function vortex_wind(lat,long,radius) result(u)
   u(3) = 0.0_r_def
 end function vortex_wind
 
+function NL_wind_case_1(long,lat,time) result(u)
+  use initial_wind_config_mod, only : wind_time_period, NL_constant
+
+  implicit none
+  real(kind=r_def), intent(in)    :: long
+  real(kind=r_def), intent(in)    :: lat
+  real(kind=r_def), intent(in)    :: time
+  real(kind=r_def), dimension(3)  :: u
+  ! Equations below have been taken from Case 1 of Nair and Lauritzen, 2010
+  ! "A class of deformational flow test cases for linear transport problems on the sphere"
+
+  u(1) = NL_constant*sin(long/2.0_r_def)**2*sin(2.0_r_def*lat)*cos(pi*time/wind_time_period)
+  u(2) = (NL_constant/2.0_r_def)*sin(long)*cos(lat)*cos(pi*time/wind_time_period)
+  u(3) = 0.0_r_def
+
+end function NL_wind_case_1
+
+
+function NL_wind_case_2(long,lat,time) result(u)
+  use initial_wind_config_mod, only : wind_time_period, NL_constant
+
+  implicit none
+  real(kind=r_def), intent(in)    :: long
+  real(kind=r_def), intent(in)    :: lat
+  real(kind=r_def), intent(in)    :: time
+  real(kind=r_def), dimension(3)  :: u
+  ! Equations below have been taken from Case 2 of Nair and Lauritzen, 2010
+  ! "A class of deformational flow test cases for linear transport problems on the sphere"
+
+  u(1) = NL_constant*sin(long)**2*sin(2.0_r_def*lat)*cos(pi*time/wind_time_period)
+  u(2) = NL_constant*sin(2.0_r_def*long)*cos(lat)*cos(pi*time/wind_time_period)
+  u(3) = 0.0_r_def
+
+end function NL_wind_case_2
+
+
+function NL_wind_case_3(long,lat,time) result(u)
+  use initial_wind_config_mod, only : wind_time_period, NL_constant
+
+  implicit none
+  real(kind=r_def), intent(in)    :: long
+  real(kind=r_def), intent(in)    :: lat
+  real(kind=r_def), intent(in)    :: time
+  real(kind=r_def), dimension(3)  :: u
+  ! Equations below have been taken from Case 3 of Nair and Lauritzen, 2010
+  ! "A class of deformational flow test cases for linear transport problems on the sphere"
+
+  u(1) = -NL_constant*sin(long/2.0_r_def)**2*sin(2.0_r_def*lat)*cos(lat)**2*cos(pi*time/wind_time_period)
+  u(2) = (NL_constant/2.0_r_def)*sin(long)*cos(lat)**3*cos(pi*time/wind_time_period)
+  u(3) = 0.0_r_def
+
+end function NL_wind_case_3
+
+
+function NL_wind_case_4(long,lat,time) result(u)
+  use initial_wind_config_mod, only : wind_time_period, NL_constant
+
+  implicit none
+  real(kind=r_def), intent(in)    :: long
+  real(kind=r_def), intent(in)    :: lat
+  real(kind=r_def), intent(in)    :: time
+  real(kind=r_def), dimension(3)  :: u
+
+  real(kind=r_def) :: long_dash
+
+  ! Equations below have been taken from Case 4 of Nair and Lauritzen, 2010
+  ! "A class of deformational flow test cases for linear transport problems on the sphere"
+
+  long_dash = long-2.0_r_def*pi*time/wind_time_period
+
+  u(1) = NL_constant*sin(long_dash)**2*sin(2.0_r_def*lat)*cos(pi*time/wind_time_period) + (2.0_r_def*pi/wind_time_period)*cos(lat)
+  u(2) = NL_constant*sin(2.0_r_def*long_dash)*cos(lat)*cos(pi*time/wind_time_period)
+  u(3) = 0.0_r_def
+
+end function NL_wind_case_4
+
+
 !> @brief Compute an analytic wind field
 !> @param[in] chi Position in physical coordinates
+!> @param[in] time Time (timestep multiplied by dt)
 !> @param[in] choice Integer defining which specified formula to use
 !> @param[in] num_options Number of sclaer options to supply
 !> @param[in] option Array of real values used to generate the initial profile
 !> @result u Result wind field vector (u,v,w)
-function analytic_wind(chi, choice, num_options, option) result(u)
+function analytic_wind(chi, time, choice, num_options, option) result(u)
 
   implicit none
 
   real(kind=r_def), intent(in) :: chi(3)
+  real(kind=r_def), intent(in) :: time
   integer,          intent(in) :: choice, num_options
   real(kind=r_def), optional   :: option(num_options)
   real(kind=r_def)             :: u(3)
@@ -126,12 +213,20 @@ function analytic_wind(chi, choice, num_options, option) result(u)
                                 u(1), u(2), u(3)) 
     case ( initial_wind_profile_vortex )
       u = vortex_wind(chi(2),chi(1),chi(3))
+    case ( initial_wind_profile_NL_case_1 )
+      u = NL_wind_case_1(chi(1),chi(2),time)
+    case ( initial_wind_profile_NL_case_2 )
+      u = NL_wind_case_2(chi(1),chi(2),time)
+    case ( initial_wind_profile_NL_case_3 )
+      u = NL_wind_case_3(chi(1),chi(2),time)
+    case ( initial_wind_profile_NL_case_4 )
+      u = NL_wind_case_4(chi(1),chi(2),time)
 
     case default
       write( log_scratch_space, '(A)' )  'Invalid velocity profile choice, stopping'
       call log_event( log_scratch_space, LOG_LEVEL_ERROR )
   end select
 
-end function analytic_wind  
+end function analytic_wind
 
 end module analytic_wind_profiles_mod

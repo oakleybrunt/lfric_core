@@ -6,8 +6,14 @@ namelist initial_wind
                                dcmip301,
                                deep_baroclinic_steady,
                                deep_baroclinic_perturbed,
+                               NL_case_1,
+                               NL_case_2,
+                               NL_case_3,
+                               NL_case_4,
                                vortex]
-  u0             : real
-  v0             : real
-  rotation_angle : real
+  u0                : real
+  v0                : real
+  rotation_angle    : real
+  wind_time_period  : real
+  NL_constant       : real
 end namelist initial_wind

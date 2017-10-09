@@ -37,7 +37,8 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine setUp( this )
 
-    use gungho_feign_config_mod, only : feign_planet_config
+    use gungho_feign_config_mod, only : feign_planet_config, feign_initial_wind_config
+    use initial_wind_config_mod, only : initial_wind_profile_none
 
     implicit none
 
@@ -46,6 +47,11 @@ contains
     call feign_planet_config( gravity=gravity, radius=radius, omega=omega, &
                               rd=rd, cp=cp, p_zero=p_zero,                 &
                               scaling_factor=scaling )
+
+    call feign_initial_wind_config( initial_wind_profile_none,                &
+                          u0=0.0_r_def, v0=0.0_r_def, rotation_angle=0.0_r_def,     &
+                              nl_constant=2.0_r_def, wind_time_period=10.0_r_def)
+
 
   end subroutine setUp
 
@@ -59,7 +65,11 @@ contains
     use initial_wind_config_mod, &
                          only: initial_wind_profile_solid_body_rotation, &
                                initial_wind_profile_constant_shear_uv,   &
-                               initial_wind_profile_vortex
+                               initial_wind_profile_vortex,              &
+                               initial_wind_profile_NL_case_1,           &
+                               initial_wind_profile_NL_case_2,           &
+                               initial_wind_profile_NL_case_3,           &
+                               initial_wind_profile_NL_case_4
 
     implicit none
 
@@ -68,13 +78,16 @@ contains
     real(kind=r_def) :: u(3), v(3), llr(3), xyz(3)
     real(kind=r_def) :: u0, v0, a, h, s
     real(kind=r_def) :: tol
+    real(kind=r_def) :: initial_time
+
 
     llr = (/ PI, PI/4.0_r_def, radius + 10000.0_r_def /)
     xyz = (/ 1000.0_r_def, 75000.0_r_def, 5000.0_r_def /)
     u0 = 20.0_r_def
     a = 1.0_r_def/8.0_r_def
+    initial_time = 0.0_r_def
 
-    u = analytic_wind(llr, initial_wind_profile_solid_body_rotation, 2, (/ u0, a /))
+    u = analytic_wind(llr, initial_time, initial_wind_profile_solid_body_rotation, 2, (/ u0, a /))
     s = 0.5_r_def*(llr(3)/radius + 1.0_r_def)
     v(1) = u0 * s * ( cos(llr(2))*cos(a*PI) &
                     + sin(llr(1))*sin(llr(2))*sin(a*PI) )
@@ -85,7 +98,7 @@ contains
 
     v0 = 5.0_r_def
     h = 30000.0_r_def
-    u = analytic_wind(xyz, initial_wind_profile_constant_shear_uv, 3, (/ u0, v0, h /))
+    u = analytic_wind(xyz, initial_time, initial_wind_profile_constant_shear_uv, 3, (/ u0, v0, h /))
     v(1) = u0*xyz(3)/h
     v(2) = v0*xyz(3)/h
     v(3) = 0.0_r_def 
@@ -94,20 +107,62 @@ contains
 
     tol=10.0E-12_r_def
     llr = (/ 0.0_r_def, 0.0_r_def, 6371229.0_r_def /)
-    u = analytic_wind(llr,initial_wind_profile_vortex,0)
+    u = analytic_wind(llr,initial_time,initial_wind_profile_vortex,0)
     @assertEqual(0.0_r_def, u(1), tol)
 
     llr = (/ 0.0_r_def, PI/8.0_r_def, 6371229.0_r_def /)
-    u = analytic_wind(llr,initial_wind_profile_vortex,0)
+    u = analytic_wind(llr,initial_time,initial_wind_profile_vortex,0)
 
     @assertEqual(-9.08019127578551_r_def, u(1), tol)
     @assertEqual(0.0_r_def, u(2), tol)
 
     llr = (/ PI/8.0_r_def, 0.0_r_def, 6371229.0_r_def /)
-    u = analytic_wind(llr,initial_wind_profile_vortex,0)
+    u = analytic_wind(llr,initial_time,initial_wind_profile_vortex,0)
 
     @assertEqual(0.0_r_def, u(1), tol)
     @assertEqual(9.08019127578551_r_def, u(2), tol)
+
+    initial_time = 0.0_r_def
+    llr = (/ PI/8.0_r_def, 0.0_r_def, 6371229.0_r_def /)
+    u = analytic_wind(llr,initial_time,initial_wind_profile_nl_case_1,0)
+
+    @assertEqual(0.0_r_def, u(1), tol)
+    @assertEqual(0.382683432412462_r_def, u(2), tol)
+
+    initial_time = 1.0_r_def
+    llr = (/ PI/8.0_r_def, 0.0_r_def, 6371229.0_r_def /)
+    u = analytic_wind(llr,initial_time,initial_wind_profile_nl_case_1,0)
+
+    @assertEqual(0.0_r_def, u(1), tol)
+    @assertEqual(0.363953572069218_r_def, u(2), tol)
+
+    initial_time = 0.0_r_def
+    llr = (/ PI/8.0_r_def, 0.0_r_def, 6371229.0_r_def /)
+    u = analytic_wind(llr,initial_time,initial_wind_profile_nl_case_2,0)
+
+    @assertEqual(0.0_r_def, u(1), tol)
+    @assertEqual(1.41421356251813_r_def, u(2), tol)
+
+    initial_time = 0.0_r_def
+    llr = (/ PI/8.0_r_def, 0.0_r_def, 6371229.0_r_def /)
+    u = analytic_wind(llr,initial_time,initial_wind_profile_nl_case_3,0)
+
+    @assertEqual(0.0_r_def, u(1), tol)
+    @assertEqual(0.382683432412462_r_def, u(2), tol)
+
+    initial_time = 0.0_r_def
+    llr = (/ PI/8.0_r_def, 0.0_r_def, 6371229.0_r_def /)
+    u = analytic_wind(llr,initial_time,initial_wind_profile_nl_case_4,0)
+
+    @assertEqual(0.628318530800000_r_def, u(1), tol)
+    @assertEqual(1.41421356251813_r_def, u(2), tol)
+
+    initial_time = 1.0_r_def
+    llr = (/ PI/8.0_r_def, 0.0_r_def, 6371229.0_r_def /)
+    u = analytic_wind(llr,initial_time,initial_wind_profile_nl_case_4,0)
+
+    @assertEqual(0.628318530800000_r_def, u(1), tol)
+    @assertEqual(-0.863541246319551_r_def, u(2), tol)
 
   end subroutine test_all
 

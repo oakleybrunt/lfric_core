@@ -97,16 +97,17 @@ contains
       call invoke( set_field_scalar(0.0_r_def, xi) )
       ! Initialise theta
       call invoke_initial_theta_kernel( theta, chi )
-      
+
+      initial_time = 0.0_r_def
+
       ! Initialise U and Rho according to formulation
       r_u = field_type( vector_space =                                           &
                   function_space_collection%get_fs(mesh_id, element_order, W2) )
       call invoke( set_field_scalar(0.0_r_def, u), &
                    set_field_scalar(0.0_r_def, r_u) )
-      call invoke( initial_u_kernel_type(r_u, chi, qr) )
+      call invoke( initial_u_kernel_type(r_u, chi, initial_time, qr) )
       call solver_algorithm(u, r_u)
 
-      initial_time = 0.0_r_def
       if(sample_init_rho) then
         call invoke_initial_rho_sample_kernel( rho, chi, initial_time )
       else

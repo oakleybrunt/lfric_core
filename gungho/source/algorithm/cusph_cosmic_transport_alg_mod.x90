@@ -25,6 +25,10 @@ module cusph_cosmic_transport_alg_mod
   use cusph_split_transport_alg_mod,     only: cusph_split_transport_alg
   use cusph_fv_density_update_alg_mod,   only: cusph_fv_density_update_alg
   use flux_direction_mod,                only: x_direction, y_direction
+  use initial_u_kernel_mod,              only: initial_u_kernel_type
+  use quadrature_mod,                    only: quadrature_type, GAUSSIAN
+  use timestepping_config_mod,           only: dt
+  use solver_mod,                        only: solver_algorithm
 
   implicit none
 
@@ -32,7 +36,7 @@ module cusph_cosmic_transport_alg_mod
 
   ! 'State' items that need to be created once but used every step
   type( field_type ) :: u_n, u_np1, rho_n, rho_np1, mass_flux_x, mass_flux_y
-  type( field_type ) :: rho_temp
+  type( field_type ) :: rho_temp, r_u
 
   public :: cusph_cosmic_transport_init
   public :: cusph_cosmic_transport_step
@@ -42,19 +46,24 @@ contains
   !> @brief Init routine for cosmic transport timestepping algorithm.
   !> @details Rho and u fields are initialised before
   !>          this algorithm is called. State items are created.
-  !> @param[in]      mesh_id Mesh id of mesh on which the model runs
-  !> @param[inout]   u       3D wind field
-  subroutine cusph_cosmic_transport_init(mesh_id, u)
+  !> @param[in]      mesh_id   Mesh id of mesh on which the model runs
+  !> @param[inout]   u         3D wind field
+  !> @param[in]      timestep  Timestep
+  subroutine cusph_cosmic_transport_init(mesh_id, u, timestep)
 
     implicit none
 
     integer(i_def),      intent(in)    :: mesh_id
+    integer(i_def),      intent(in)    :: timestep
 
     ! Prognostic wind field
     type( field_type ), intent( inout ) :: u
 
     type(function_space_type), pointer :: w2_fs   => null()
     type(function_space_type), pointer :: w3_fs   => null()
+    type( quadrature_type )            :: qr
+    type(field_type),          pointer :: chi(:) => null()
+    real(r_def)                        :: time
 
     w2_fs   => function_space_collection%get_fs( mesh_id, element_order, W2 )
     w3_fs   => function_space_collection%get_fs( mesh_id, element_order, W3 )
@@ -66,6 +75,18 @@ contains
     u_np1       = field_type( vector_space = w2_fs )
     mass_flux_x = field_type( vector_space = w2_fs )
     mass_flux_y = field_type( vector_space = w2_fs )
+    r_u         = field_type( vector_space = w2_fs )
+
+    qr = quadrature_type(element_order+2, GAUSSIAN)
+    chi => get_coordinates()
+
+
+    time = dt*real(timestep,r_def)
+    call invoke( set_field_scalar(0.0_r_def, u), &
+                 set_field_scalar(0.0_r_def, r_u) )
+
+    call invoke( initial_u_kernel_type(r_u, chi, time, qr) )
+    call solver_algorithm(u, r_u)
 
     call invoke( copy_field(u,u_n), &
                  copy_field(u,u_np1) )

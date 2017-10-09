@@ -4,7 +4,11 @@
 ! should have received as part of this distribution.
 !-----------------------------------------------------------------------------
 
-!> @brief Kernel which projects the components of a vector field into a scalar space 
+!> @brief Kernel computes the rhs for the initialisation of the wind field.
+
+!> @details The kernel computes the rhs of the equation u = u0 where u0 is the
+!>          analytically defined wind field. The analytic wind field is projected
+!>          onto u using Galerkin projection.
 
 module initial_u_kernel_mod
 
@@ -13,7 +17,7 @@ use argument_mod,            only : arg_type, func_type,           &
                                     ANY_SPACE_9, W2,               &
                                     GH_BASIS, GH_DIFF_BASIS,       &
                                     CELLS, GH_QUADRATURE_XYoZ,     &
-                                    QUADRATURE_XYoZ
+                                    QUADRATURE_XYoZ, GH_REAL
 use constants_mod,           only : r_def, PI
 use kernel_mod,              only : kernel_type
 use initial_wind_config_mod, only : profile, rotation_angle, u0, v0
@@ -26,9 +30,10 @@ implicit none
 !> The type declaration for the kernel. Contains the metadata needed by the Psy layer
 type, public, extends(kernel_type) :: initial_u_kernel_type
   private
-  type(arg_type) :: meta_args(2) = (/                                  &
+  type(arg_type) :: meta_args(3) = (/                                  &
        arg_type(GH_FIELD,   GH_INC,  W2),                              &
-       ARG_TYPE(GH_FIELD*3, GH_READ, ANY_SPACE_9)                      &
+       ARG_TYPE(GH_FIELD*3, GH_READ, ANY_SPACE_9),                     &
+       arg_type(GH_REAL,    GH_READ)                                   &
        /)
   type(func_type) :: meta_funcs(2) = (/                                &
        func_type(W2, GH_BASIS),                                        &
@@ -60,35 +65,29 @@ type(initial_u_kernel_type) function initial_u_kernel_constructor() result(self)
   return
 end function initial_u_kernel_constructor
 
-!> @brief Computes the right-hand-side of the Galerkin projection for a vector
-!> field into a scalar space by decomposing the vector into orthogonal
-!> components in cartesian or spherical polar coordinates.
-!> @details Computes rhs_i = int (gamma * f_i dx) for a vector field f which  is
-!>          decomposed into orthogonal components and a separate right hand side
-!>          field is computed for each component, this allows a vector field to
-!>          be projected into three separate scalar fields suitable for further
-!>          manipulation
+!> @brief Compute the right hand side to initialise the wind field.
 !! @param[in] nlayers Number of layers
+!! @param[inout] rhs Right hand side field to compute
+!! @param[in] chi_1 X component of the coordinate field
+!! @param[in] chi_2 Y component of the coordinate field
+!! @param[in] chi_3 Z component of the coordinate field
+!> @param[in] time Time (timestep multiplied by dt)
 !! @param[in] ndf Number of degrees of freedom per cell
 !! @param[in] undf Total number of degrees of freedom
 !! @param[in] map Dofmap for the cell at the base of the column
 !! @param[in] basis Basis functions evaluated at gaussian quadrature points
-!! @param[inout] rhs Right hand side field to compute
 !! @param[in] ndf_chi Number of dofs per cell for the coordinate field
 !! @param[in] undf_chi Total number of degrees of freedom
 !! @param[in] map_chi Dofmap for the coordinate field
 !! @param[in] chi_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] chi_diff_basis Basis functions evaluated at gaussian quadrature points
-!! @param[in] chi_1 X component of the coordinate field
-!! @param[in] chi_2 Y component of the coordinate field
-!! @param[in] chi_3 Z component of the coordinate field
 !! @param[in] nqp_h Number of quadrature points in the horizontal
 !! @param[in] nqp_v Number of quadrature points in the vertical
 !! @param[in] wqp_h Horizontal quadrature weights
 !! @param[in] wqp_v Vertical quadrature weights
 subroutine initial_u_code(nlayers, &
                           rhs, & 
-                          chi_1, chi_2, chi_3, &
+                          chi_1, chi_2, chi_3, time, &
                           ndf, undf, &
                           map, basis, &
                           ndf_chi, undf_chi, &
@@ -116,6 +115,7 @@ subroutine initial_u_code(nlayers, &
 
   real(kind=r_def), dimension(undf),     intent(inout) :: rhs
   real(kind=r_def), dimension(undf_chi), intent(in)    :: chi_1, chi_2, chi_3
+  real(kind=r_def), intent(in)                         :: time
 
   real(kind=r_def), dimension(nqp_h), intent(in)      ::  wqp_h
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
@@ -156,11 +156,11 @@ subroutine initial_u_code(nlayers, &
         if ( geometry == base_mesh_geometry_spherical ) then
           call xyz2llr(xyz(1), xyz(2), xyz(3), llr(1), llr(2), llr(3))
           option = (/U0, rotation_angle/)
-          u_spherical = analytic_wind(llr, profile, 2, option)
+          u_spherical = analytic_wind(llr, time, profile, 2, option)
           u_physical = sphere2cart_vector(u_spherical,llr) 
         else
           option = (/U0, V0/)
-          u_physical = analytic_wind(xyz, profile, 2, option)
+          u_physical = analytic_wind(xyz, time, profile, 2, option)
         end if
         do df = 1, ndf 
           integrand = dot_product(matmul(jacobian(:,:,qp1,qp2),&

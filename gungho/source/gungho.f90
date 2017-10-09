@@ -290,16 +290,10 @@ program gungho
           end if
           call rk_transport_step( u, rho, theta)
         case ( transport_scheme_bip_cosmic)
-          if (timestep == restart%ts_start()) then 
-            ! Initialise and output initial conditions on first timestep
-            call cosmic_transport_init(mesh_id, u)
-          end if
+          call cosmic_transport_init(mesh_id, u, timestep)
           call cosmic_transport_step(rho,detj_at_w2)
         case ( transport_scheme_cusph_cosmic)
-          if (timestep == restart%ts_start()) then 
-            ! Initialise and output initial conditions on first timestep
-            call cusph_cosmic_transport_init(mesh_id, u)
-          end if
+          call cusph_cosmic_transport_init(mesh_id, u, timestep)
           call cusph_cosmic_transport_step(mesh_id, rho, cell_orientation, detj_at_w2)
           call density_diagnostic_alg(rho, timestep)
           call conservation_algorithm(timestep, rho, u, theta, xi)
