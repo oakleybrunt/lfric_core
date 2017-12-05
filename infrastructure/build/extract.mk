@@ -6,9 +6,18 @@
 #
 # Run this make file to copy a source tree from SOURCE_DIR to WORKING_DIR
 #
+# Set WITHOUT_PROGRAMS in order to prevent files containing program program
+# units from being extracted.
+#
 .PHONY: files-to-extract
+ifdef WITHOUT_PROGRAMS
+MODULE_FILES = $(shell find $(SOURCE_DIR) -path "$(SOURCE_DIR)/*/*" -name '*.[Ff]90' -printf '%P\n')
+files-to-extract: $(addprefix $(WORKING_DIR)/,$(MODULE_FILES))
+	$(Q)echo >/dev/null
+else
 files-to-extract: $(addprefix $(WORKING_DIR)/,$(shell find $(SOURCE_DIR) -name '*.[Ff]90' -printf '%P\n'))
 	$(Q)echo >/dev/null
+endif
 
 .PRECIOUS: $(WORKING_DIR)/%.F90
 $(WORKING_DIR)/%.F90: $(SOURCE_DIR)/%.F90 | $(WORKING_DIR)

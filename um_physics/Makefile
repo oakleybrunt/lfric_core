@@ -73,8 +73,10 @@ generate-psykal: extract-gungho
 
 .PHONY: extract-gungho
 extract-gungho: ALWAYS
-	$(MAKE) -C $(ROOT_DIR)/gungho extract \
-	        WORKING_DIR=$(abspath $(WORKING_DIR))
+	$(MAKE) -f $(LFRIC_BUILD)/extract.mk \
+	        SOURCE_DIR=$(PROJECT_DIR)/../gungho/source \
+	        WORKING_DIR=$(WORKING_DIR) \
+	        WITHOUT_PROGRAMS=1
 	$(MAKE) -C $(ROOT_DIR)/gungho -f $(LFRIC_BUILD)/psyclone.mk \
 	        SOURCE_DIR=source WORKING_DIR=$(abspath $(WORKING_DIR))
 	$(MAKE) -C $(ROOT_DIR)/gungho generate-configuration \

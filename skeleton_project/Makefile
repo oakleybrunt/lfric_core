@@ -6,8 +6,8 @@
 
 PROJECT_NAME = skeleton
 
-export IGNORE_DEPENDENCIES =
-export EXTERNAL_DYNAMIC_LIBRARIES =
+export IGNORE_DEPENDENCIES = ESMF
+export EXTERNAL_DYNAMIC_LIBRARIES = esmf
 export EXTERNAL_STATIC_LIBRARIES =
 
 LFRIC_TARGET_PLATFORM ?= generic-x86
@@ -85,8 +85,26 @@ document-api: api-documentation
 .PHONY: extract
 extract: SOURCE_DIR = source
 extract: ALWAYS
-	$(MAKE) -f $(LFRIC_BUILD)/extract.mk SOURCE_DIR=$(SOURCE_DIR) \
-	                                     WORKING_DIR=$(WORKING_DIR)
+	$(MAKE) -f $(LFRIC_BUILD)/extract.mk \
+	        SOURCE_DIR=$(SOURCE_DIR) \
+	        WORKING_DIR=$(abspath $(WORKING_DIR))
+
+.PHONY: extract-infrastructure
+extract-infrastructure: ALWAYS
+	$(MAKE) -f $(LFRIC_BUILD)/extract.mk \
+	        SOURCE_DIR=$(LFRIC_INFRASTRUCTURE)/source \
+	        WORKING_DIR=$(abspath $(WORKING_DIR))
+
+.PHONY: extract-gungho
+extract-gungho: ALWAYS
+	$(MAKE) -f $(LFRIC_BUILD)/extract.mk \
+	        SOURCE_DIR=$(ROOT_DIR)/gungho/source \
+	        WORKING_DIR=$(abspath $(WORKING_DIR)) \
+	        WITHOUT_PROGRAMS=1
+	$(MAKE) -C $(ROOT_DIR)/gungho -f $(LFRIC_BUILD)/psyclone.mk \
+	        SOURCE_DIR=source WORKING_DIR=$(abspath $(WORKING_DIR))
+	$(MAKE) -C $(ROOT_DIR)/gungho generate-configuration \
+	        PROJECT=$(PROJECT) WORKING_DIR=$(abspath $(WORKING_DIR))
 
 ##############################################################################
 # Build
@@ -97,8 +115,8 @@ build: SOURCE_DIR   = source
 build: WORKING_DIR := $(WORKING_DIR)/$(PROJECT_NAME)
 build: BIN_DIR     ?= $(PROJECT_DIR)/bin
 build: PROGRAMS    := $(basename $(notdir $(shell find $(SOURCE_DIR) -maxdepth 1 -name '*.[Ff]90' -print)))
-build: generate-configuration generate-psykal
-	$(MAKE) -C $(LFRIC_INFRASTRUCTURE) extract WORKING_DIR=$(realpath $(WORKING_DIR))
+build: extract extract-infrastructure extract-gungho \
+       generate-configuration generate-psykal
 	$(MAKE) -C $(WORKING_DIR) -f $(LFRIC_BUILD)/analyse.mk
 	$(MAKE) -C $(WORKING_DIR) -f $(LFRIC_BUILD)/compile.mk \
 	                             BIN_DIR=$(BIN_DIR) PROGRAMS="$(PROGRAMS)"
@@ -113,7 +131,6 @@ generate-configuration: ALWAYS
 .PHONY: generate-psykal
 generate-psykal: export SOURCE_DIR = source
 generate-psykal: ALWAYS
-	$(MAKE) extract
 	$(MAKE) -f $(LFRIC_BUILD)/psyclone.mk WORKING_DIR=$(WORKING_DIR)
 
 ##############################################################################
