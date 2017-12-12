@@ -6,9 +6,9 @@
 
 PROJECT_NAME = skeleton
 
-export IGNORE_DEPENDENCIES = ESMF
-export EXTERNAL_DYNAMIC_LIBRARIES = esmf
-export EXTERNAL_STATIC_LIBRARIES =
+export IGNORE_DEPENDENCIES = netcdf MPI ESMF pfunit_mod planet_constants_mod xios mod_wait
+export EXTERNAL_DYNAMIC_LIBRARIES = esmf netcdff netcdf hdf5
+export EXTERNAL_STATIC_LIBRARIES = xios
 
 LFRIC_TARGET_PLATFORM ?= generic-x86
 export OPTIMISATION_PATH ?= $(wildcard optimisation/$(LFRIC_TARGET_PLATFORM))

@@ -369,11 +369,14 @@ You may well want to take advantage of the existing LFRic build infrastructure.
 This is held in ``infrastructure/build`` and consists of a number of make files
 and tools.
 
-There is a skeleton project, called ``skeleton_project`` which you can use as
-a guide and potentially a template.
-
 If your project has a ``build`` directory at its top level then the LFRic
 build system will look in it for project specifics. In particular a
 ``build/fortran`` directory containing makefiles named after different
 compilers in which you can put compiler specifics. For general project related
 changes use the ``build/project.mk`` file.
+
+There is a skeleton project, called ``skeleton_project`` which you can use as
+a guide and potentially a template. This builds a skeleton ``mini-app`` and extracts
+gungho source code as well as the skeleton mini-app code as it makes use of the LFric
+field object. The project contains a ``run_example`` directory with a suitable
+input namelist and mesh.

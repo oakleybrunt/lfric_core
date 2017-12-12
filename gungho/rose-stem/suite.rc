@@ -14,7 +14,6 @@
                                                               'baroclinic','static_isentropic_x','static_isentropic_y',
                                                               'default' ],
                                        'gravity_wave'     : [ 'default' ],
-                                       'miniapp_skeleton' : [ 'default' ],
                                        'io_miniapp'       : [ 'default' ]
                                      } %}
 
@@ -49,7 +48,6 @@
     'run_application( gungho, transport-rk,           resolutions=[["C12",7200.0]] )',
     'run_application( gungho, weak_hs_short,          resolutions=[["C24",600.0]],
                       env={"crun":3, "nrun": {"default":3}, "directives":{"default":{"mpi_parts":6,"threads":1,"xios_nodes":1,"wallclock":"00:05:00"}}})',
-    'run_application( miniapp_skeleton, default,      resolutions=[["C24"]] )',
     'check_compilers( gungho, semi-implicit, fast-debug, resolutions=[["C12",10.0]], publish=False )',
     'canned_test(gravity_wave)',
     'canned_test(gungho)',

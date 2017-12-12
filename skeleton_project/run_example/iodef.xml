@@ -28,7 +28,7 @@
 
    <field_definition prec="8" >
      <!-- Main diagnostic group -->
-     <field_group freq_op="1s" enabled=".TRUE." operation="once" >   
+     <field_group freq_op="1ts" enabled=".TRUE." operation="once" >   
        <field id="skeleton_field" name="skeleton_field" long_name="skeleton_field" unit="1" grid_ref="face_grid" />
      </field_group>
 
@@ -41,7 +41,7 @@
       enabled=".TRUE.">
       
       
-      <file id="skeleton_field" name="skeleton_field" output_freq="1s" convention="UGRID">
+      <file id="skeleton_field" name="skeleton_field" output_freq="1ts" convention="UGRID">
         <field field_ref="skeleton_field"/>
       </file> 
       
