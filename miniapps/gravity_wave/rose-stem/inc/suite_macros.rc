@@ -1,3 +1,5 @@
+{# Macros used in the rose stem suite.rc #}
+
 {#- ######################################################################## #}
 {#- MACROS                                                                   #}
 {#- ######################################################################## #}
@@ -96,11 +98,12 @@
 {%-   endfor %} {# appConfigsCompilerRuns #}
 {%- endmacro %} {# run_application #}
 
-
-
 {#- #########################################################################}
 {%- macro canned_test(appName) %}
       [[[R1]]]
+{%-   if appName and appName not in appsToRun %}
+{%-     do appsToRun.append(appName) %}
+{%-   endif %}
 {%-   set label = TARGET_SCIENCE_COMPILER | lower + '_' + 'fast-debug' %}
 {%-   if TARGET_SCIENCE_COMPILER in TARGET_PERFORM_RUN %}
             purge_local => purge_target
@@ -110,29 +113,26 @@
 {%-   endif %}
 {%- endmacro %}
 
-
-
 {#- #########################################################################}
 {%- macro cleanliness() %}
       [[[R1]]]
+            purge_local => purge_target
 {%-   set label =  TARGET_TECHNICAL_COMPILER | lower + '_fast-debug' %}
 {%-   if 'cleanliness' in TECHNICAL_DEVELOPER_TESTS %}
-            purge_local => purge_target
             purge_target => export_source
             export_source => compile_{{projectName}}_with_{{label}}
 
 {#- The following line removed due to a bug brought to light by #730. #}
 {#- Ticket #762 has been created to fix this.                         #}
-{#-            compile_{{projectName}}_with_{{label}} => check_for_unused_source #}
+{#-         compile_{{projectName}}_with_{{label}} => check_for_unused_source #}
+
 {%-   endif %}
 {%- endmacro %}
 
-
-
 {#- Documentation, it's next to cleanliness ##################################}
+
 {%- macro godliness(publish=False) %}
       [[[R1]]]
-{%-   set label =  TARGET_TECHNICAL_COMPILER | lower + '_fast-debug' %}
 {%-   if 'documentation' in TECHNICAL_DEVELOPER_TESTS %}
             purge_local => purge_target
             purge_target => export_source
@@ -148,8 +148,6 @@
 {%-   endif %}
 {%- endmacro %}
 
-
-
 {#- #########################################################################}
 {%- macro publish_commit() %}
       [[[R1]]]
@@ -159,62 +157,6 @@
             publish_index      => mirror_results_remote
 {%-   endif %}
 {%- endmacro %}
-
-
-
-{#- #########################################################################}
-{%- macro check_compilers( appName, configuration, build, resolutions=[('')], publish=False ) %}
-      [[[R1]]]
-
-{%-   set perform_run = [] %}
-{%-   set appLabel = appName + '_' + configuration %}
-
-{%-   if build == 'fast-debug' %}
-{%-     do perform_run.extend( TARGET_PERFORM_RUN ) %}
-{%-   elif build == 'full-debug' %}
-{%-     do perform_run.extend( TARGET_PERFORM_DEBUG_RUN ) %}
-{%-   endif %}
-
-{%-   do appConfigsCompilerRuns.update({appLabel : compiler_setup.keys() }) %}
-
-{%-   for compiler in compiler_setup.keys() %}
-{%-     set label = compiler | lower + '_' + build | lower%}
-            purge_local => purge_target
-            purge_target => export_source
-{%-     if compiler in TARGET_PERFORM_INTEGRATION_TESTS %}
-            export_source => integration_test_with_{{label}}
-{%-     endif %}
-            export_source => compile_{{projectName}}_with_{{label}}
-            export_source => compile_mesh_tools_with_{{label}}
-{%-     if compiler in TARGET_PERFORM_UNIT_TESTS %}
-            export_source => unit_test_with_{{label}}
-{%-     endif %}
-{%-     if publish == True %}
-            compile_{{projectName}}_with_{{label}}:finish => publish_{{label}}_compile
-{%-     endif %}
-
-{%-     if compiler in perform_run %}
-{%-       for resolution in resolutions %}
-{%-         set res_value, dt_values, res_label, dt_labels, res_opt = resolution | getResolutionLabels() %}
-{%-         for i in range(0,dt_values|length) %}
-{%-           set appLabel_res = appLabel ~ res_label ~ dt_labels[i] %}
-            compile_mesh_tools_with_{{label}} => generate_mesh{{res_label}}_{{label}}
-            generate_mesh{{res_label}}_{{label}} => run_{{appLabel_res}}_{{label}}
-            compile_{{projectName}}_with_{{label}} => run_{{appLabel_res}}_{{label}}
-{%-           if publish == True %}
-            run_{{appLabel_res}}_{{label}}:finish => publish_{{appLabel_res}}_{{label}}
-{%-           endif %}
-{%-           if compiler in TARGET_PERFORM_KGO_TESTS %}
-            run_{{appLabel_res}}_{{label}}:finish => check_{{appLabel_res}}_{{label}}
-{%-           endif %}
-{%-         endfor %} {# i #}
-{%-       endfor %} {# resolution #}
-{%-     endif %}
-{%-   endfor %} {# compiler #}
-
-{%- endmacro %}
-
-
 
 {#- #########################################################################}
 {%- macro schedule() %}
@@ -227,11 +169,8 @@
 {%-   endfor %}
 {%- endmacro %}
 
-
-
 {#- #########################################################################}
 {%- macro setTaskEnv(scheduledTasksDict) %}
-
 {%-   for group in groupsToRun %}
 {%-     if group in groups.keys() %}
 {%-       for mission in groups[group] %}
@@ -246,10 +185,7 @@
 {%-       endfor %}
 {%-     endif %}
 {%-   endfor %}
-
 {%- endmacro %}
-
-
 
 {#- #########################################################################}
 {%- macro setCrunInfo(crunInfo,scheduledTasksDict) %}
@@ -261,8 +197,6 @@
 {%-     endif %}
 {%-   endfor %}
 {%- endmacro %}
-
-
 
 {#- #########################################################################}
 {%- macro setResolutions(resolution_choices, support_meshes) %}
@@ -302,23 +236,68 @@
 {%-   endfor %} {# group #}
 {%- endmacro %} {# setResolutions #}
 
-
-
 {#- #########################################################################}
 {%- macro deleteDirectory( directory ) %}
 test -w "{{directory}}" -o ! -e "{{directory}}" && rm -rf {{directory}} || ( echo ** Unable to delete "{{directory}}", not writable >&2; false )
 {%- endmacro %}
-
-
 
 {#- #########################################################################}
 {%- macro verboseMake() %}
 {%- if VERBOSE_TASKS is defined %}VERBOSE=1{% endif %}
 {%- endmacro %}
 
-
-
 {#- #########################################################################}
 {%- macro ensureDestination() %}
                      mkdir -p $DESTINATION
+{%- endmacro %}
+
+{#- #########################################################################}
+{%- macro check_compilers( appName, configuration, build, resolutions=[('')], publish=False ) %}
+      [[[R1]]]
+
+{%-   set perform_run = [] %}
+{%-   set appLabel = appName + '_' + configuration %}
+
+{%-   if build == 'fast-debug' %}
+{%-     do perform_run.extend( TARGET_PERFORM_RUN ) %}
+{%-   elif build == 'full-debug' %}
+{%-     do perform_run.extend( TARGET_PERFORM_DEBUG_RUN ) %}
+{%-   endif %}
+
+{%-   do appConfigsCompilerRuns.update({appLabel : compiler_setup.keys() }) %}
+
+{%-   for compiler in compiler_setup.keys() %}
+{%-     set label = compiler | lower + '_' + build | lower%}
+            purge_local => purge_target
+            purge_target => export_source
+{%-     if compiler in TARGET_PERFORM_INTEGRATION_TESTS %}
+            export_source => integration_test_with_{{label}}
+{%-     endif %}
+            export_source => compile_{{projectName}}_with_{{label}}
+            export_source => compile_mesh_tools_with_{{label}}
+{%-     if compiler in TARGET_PERFORM_UNIT_TESTS %}
+            compile_{{projectName}}_with_{{label}} => unit_test_with_{{label}}
+{%-     endif %}
+{%-     if publish == True %}
+            compile_{{projectName}}_with_{{label}}:finish => publish_{{label}}_compile
+{%-     endif %}
+
+{%-     if compiler in perform_run %}
+{%-       for resolution in resolutions %}
+{%-         set res_value, dt_values, res_label, dt_labels, res_opt = resolution | getResolutionLabels() %}
+{%-         for i in range(0,dt_values|length) %}
+{%-           set appLabel_res = appLabel ~ res_label ~ dt_labels[i] %}
+            compile_mesh_tools_with_{{label}} => generate_mesh{{res_label}}_{{label}}
+            generate_mesh{{res_label}}_{{label}} => run_{{appLabel_res}}_{{label}}
+            compile_{{projectName}}_with_{{label}} => run_{{appLabel_res}}_{{label}}
+{%-           if publish == True %}
+            run_{{appLabel_res}}_{{label}}:finish => publish_{{appLabel_res}}_{{label}}
+{%-           endif %}
+{%-           if compiler in TARGET_PERFORM_KGO_TESTS %}
+            run_{{appLabel_res}}_{{label}}:finish => check_{{appLabel_res}}_{{label}}
+{%-           endif %}
+{%-         endfor %} {# i #}
+{%-       endfor %} {# resolution #}
+{%-     endif %}
+{%-   endfor %} {# compiler #}
 {%- endmacro %}

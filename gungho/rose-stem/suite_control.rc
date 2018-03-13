@@ -1,3 +1,6 @@
+{%- set projectName = 'gungho' %}
+{%- set projectDir  = 'gungho' %}
+
 {%- set application_configurations = { 'gungho'           : [ 'runge-kutta', 'semi-implicit',
                                                               'transport-rk', 'transport-biperiodic',
                                                               'biperiodic_p0_gw', 'biperiodic_p1_gw',
@@ -15,12 +18,11 @@
                                                               'equator_cosine_hill', 'corner_cosine_hill',
                                                               'baroclinic', 'static_isentropic_x', 'static_isentropic_y',
                                                               'default' ],
-                                       'gravity_wave'     : [ 'default' ],
 				       'solver_miniapp'   : [ 'default' ],
                                        'io_miniapp'       : [ 'default' ]
                                      } %}
 
-{%- set canned_configurations  = ['gungho', 'gravity_wave'] %}
+{%- set canned_configurations  = ['gungho'] %}
 
 {%- set groups = {
 'developer': [
@@ -62,13 +64,10 @@
                            "directives":{"default":{"mpi_parts":6,"threads":1,"xios_nodes":1,"wallclock":"00:05:00"}}},
                       plotstr="plot_zonal.py $NODAL_DATA_DIR/lfric_averages.nc $PLOT_DIR")',
     'run_application( solver_miniapp, default,        resolutions=[["C24", 600.0 ]], checkkgo=True, run_with_compilers='~TARGET_SOLVER_COMPILER~' )',
-    'run_application( gravity_wave, default,          resolutions=[("C24",100.0)], support_meshes=["C12","C6","C3"],
-                      plotstr="slices.py gravity_wave $NODAL_DATA_DIR buoyancy T000036 150 0 6 $PLOT_DIR" )',
     'check_compilers( gungho, semi-implicit, fast-debug, resolutions=[("C12",10.0)], publish=False )',
-    'canned_test(gravity_wave)',
     'canned_test(gungho)',
-    'godlines',
-    'cleanlines'],
+    'godliness',
+    'cleanliness'],
 'nightly': [
     'run_application( gungho, agnesi_orog_cartesian_long,  resolutions=[("BiP180x4-800x800", 10.0)],
                       env={"crun":1, "nrun":100,
@@ -94,7 +93,7 @@
                               plotstr="warm3dbubble.py $NODAL_DATA_DIR 40 40 theta T000000:T000048:T000096 $PLOT_DIR" )',
     'run_application( io_miniapp, default,            resolutions=[("C12",)], checkkgo=False )',
     'check_compilers( gungho, semi-implicit, full-debug, resolutions=[("C12",10.0)], publish=True )',
-    'godlines(publish=True)',
+    'godliness(publish=True)',
     'publish_commit']} %}
 
 {# The csar groups are now included in the following #}

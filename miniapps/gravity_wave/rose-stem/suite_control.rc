@@ -1,0 +1,23 @@
+#!jinja2
+{%- set projectName = 'gravity_wave' %}
+{%- set projectDir  = 'gravity_wave' %}
+{%- set miniappFlag = True %}
+
+{%- set application_configurations = { 'gravity_wave' : ['multigrid_on',
+                                                         'multigrid_off',
+                                                         'default'] } %}
+
+{%- set canned_configurations  = ['gravity_wave'] %}
+
+{%- set groups = {
+'developer': [
+    'canned_test(gravity_wave)',
+    'run_application( gravity_wave, default, resolutions=[("C24",100.0)],
+                      plotstr="slices.py gravity_wave $NODAL_DATA_DIR buoyancy T000036 150 0 6 $PLOT_DIR" )',
+    'check_compilers( gravity_wave, default, fast-debug, resolutions=[("C24",100.0)] )',
+    'godliness',
+    'cleanliness'],
+'nightly': [
+    'cleanliness'] } %}
+
+#########################################################################################

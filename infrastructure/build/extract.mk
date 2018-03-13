@@ -10,12 +10,15 @@
 # units from being extracted.
 #
 .PHONY: files-to-extract
+NLD_FILES = $(shell find $(SOURCE_DIR) -path "$(SOURCE_DIR)/*/*" -name '*.nld' -printf '%P\n')
 ifdef WITHOUT_PROGRAMS
 MODULE_FILES = $(shell find $(SOURCE_DIR) -path "$(SOURCE_DIR)/*/*" -name '*.[Ff]90' -printf '%P\n')
-files-to-extract: $(addprefix $(WORKING_DIR)/,$(MODULE_FILES))
+files-to-extract: $(addprefix $(WORKING_DIR)/,$(MODULE_FILES)) \
+                  $(addprefix $(WORKING_DIR)/,$(NLD_FILES))
 	$(Q)echo >/dev/null
 else
-files-to-extract: $(addprefix $(WORKING_DIR)/,$(shell find $(SOURCE_DIR) -name '*.[Ff]90' -printf '%P\n'))
+files-to-extract: $(addprefix $(WORKING_DIR)/,$(shell find $(SOURCE_DIR) -name '*.[Ff]90' -printf '%P\n')) \
+                  $(addprefix $(WORKING_DIR)/,$(NLD_FILES))
 	$(Q)echo >/dev/null
 endif
 
@@ -27,6 +30,12 @@ $(WORKING_DIR)/%.F90: $(SOURCE_DIR)/%.F90 | $(WORKING_DIR)
 
 .PRECIOUS: $(WORKING_DIR)/%.f90
 $(WORKING_DIR)/%.f90: $(SOURCE_DIR)/%.f90 | $(WORKING_DIR)
+	$(call MESSAGE,Copying source,$<)
+	$(Q)mkdir -p $(dir $@)
+	$(Q)cp $< $@
+
+.PRECIOUS: $(WORKING_DIR)/%.nld
+$(WORKING_DIR)/%.nld: $(SOURCE_DIR)/%.nld | $(WORKING_DIR)
 	$(call MESSAGE,Copying source,$<)
 	$(Q)mkdir -p $(dir $@)
 	$(Q)cp $< $@

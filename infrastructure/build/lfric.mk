@@ -197,10 +197,11 @@ launch-test-suite:
 #
 .PHONY: run-unit-tests
 run-unit-tests: generate-unit-tests
-	$(MAKE) -C $(WORKING_DIR) -f $(LFRIC_BUILD)/analyse.mk
-	$(MAKE) -C $(WORKING_DIR) -f $(LFRIC_BUILD)/compile.mk
+	@$(MAKE) --quiet -C $(WORKING_DIR) -f $(LFRIC_BUILD)/analyse.mk
+	@$(MAKE) --quiet -C $(WORKING_DIR) -f $(LFRIC_BUILD)/compile.mk
 	$(call MESSAGE,Running,$(PROGRAMS))
 	$(Q)cd $(WORKING_DIR); mpiexec -n 1 $(BIN_DIR)/$(PROGRAMS) $(DOUBLE_VERBOSE_ARG)
+
 
 ##############################################################################
 # Run integration tests.
