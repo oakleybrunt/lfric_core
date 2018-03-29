@@ -8,8 +8,9 @@ PROJECT_NAME = gungho
 
 PROFILE ?= fast-debug
 
-export IGNORE_DEPENDENCIES = netcdf MPI ESMF pfunit_mod planet_constants_mod xios mod_wait
-export EXTERNAL_DYNAMIC_LIBRARIES = esmf netcdff netcdf hdf5
+export IGNORE_DEPENDENCIES = netcdf MPI ESMF pfunit_mod xios mod_wait
+export EXTERNAL_DYNAMIC_LIBRARIES = esmf netcdff netcdf hdf5 \
+                                    $(CXX_RUNTIME_LIBRARY)
 export EXTERNAL_STATIC_LIBRARIES = xios 
 
 

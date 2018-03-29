@@ -112,7 +112,7 @@ endif
 # Work out what to do with external libraries.
 #
 ifeq "$(LINK_TYPE)" "static"
-  override EXTERNAL_STATIC_LIBRARIES  := $(EXTERNAL_DYNAMIC_LIBRARIES) $(EXTERNAL_STATIC_LIBRARIES)
+  override EXTERNAL_STATIC_LIBRARIES  := $(EXTERNAL_STATIC_LIBRARIES) $(EXTERNAL_DYNAMIC_LIBRARIES)
   override EXTERNAL_DYNAMIC_LIBRARIES :=
 else ifeq "$(LINK_TYPE)" "dynamic"
   # Nothing further needs to be done.

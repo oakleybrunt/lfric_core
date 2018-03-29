@@ -95,6 +95,25 @@ export F_MOD_DESTINATION_ARG OPENMP_ARG
 FFLAGS += $(FFLAGS_COMPILER)
 export FFLAGS
 
+# As both ESMF and XIOS are written in C++ we have to concern ourselves with
+# compilers for that as well.
+#
+# We assume GCC is in use unless the CXX environment variable is set.
+#
+CXX ?= g++
+
+# Try to work out the compiler from CXX which may contain a full path and a
+# version number.
+#
+CXX_COMPILER := $(firstword $(subst -, ,$(notdir $(CXX))))
+
+# Of course Crays are different, they don't need this stuff
+#
+ifndef CRAY_ENVIRONMENT
+  include $(LFRIC_BUILD)/cxx/$(CXX_COMPILER).mk
+  export CXX_RUNTIME_LIBRARY
+endif
+
 # Set up verbose logging...
 #
 ifdef VERBOSE
@@ -214,7 +233,7 @@ run-unit-tests: generate-unit-tests
 # Run integration tests.
 #
 .PHONY: integration-test-run/%
-integration-test-run/%: PYTHONPATH := $(PYTHONPATH):$(LFRIC_BUILD)
+integration-test-run/%: export PYTHONPATH := $(PYTHONPATH):$(LFRIC_BUILD)
 integration-test-run/%: generate-integration-tests
 	@$(MAKE) --quiet -C $(WORKING_DIR) -f $(LFRIC_BUILD)/analyse.mk PROGRAMS=$(notdir $*)
 	@$(MAKE) --quiet -C $(WORKING_DIR) -f $(LFRIC_BUILD)/compile.mk \

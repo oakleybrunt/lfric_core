@@ -20,6 +20,7 @@ endif
 
 F_MOD_DESTINATION_ARG = -module$(SPACE)
 OPENMP_ARG            = -qopenmp
+FORTRAN_RUNTIME       = 
 
 FFLAGS_COMPILER           =
 FFLAGS_NO_OPTIMISATION    = -O0
