@@ -746,13 +746,13 @@
                       mkdir -p $DESTINATION_DIRECTORY/{{pathFragment}}/results
                       test -f gungho-checksums.txt && cp gungho-checksums.txt $DESTINATION_DIRECTORY/{{pathFragment}}/{{compiler}}.checksums
 
-                      # Copy nodal .m output
+                      # Move nodal .m output
                       touch $CYLC_TASK_WORK_DIR/tmp.m
-                      cp $CYLC_TASK_WORK_DIR/*.m $DESTINATION_DIRECTORY/{{pathFragment}}/results/
+                      mv $CYLC_TASK_WORK_DIR/*.m $DESTINATION_DIRECTORY/{{pathFragment}}/results/
 
-                      # Copy XIOS netCDF (if it exists)
-                      test -f $CYLC_TASK_WORK_DIR/lfric_diag.nc && cp $CYLC_TASK_WORK_DIR/lfric_diag.nc $DESTINATION_DIRECTORY/{{pathFragment}}/results/
-                      test -f $CYLC_TASK_WORK_DIR/lfric_initial.nc && cp $CYLC_TASK_WORK_DIR/lfric_initial.nc $DESTINATION_DIRECTORY/{{pathFragment}}/results/
+                      # Move XIOS netCDF (if it exists)
+                      test -f $CYLC_TASK_WORK_DIR/lfric_diag.nc && mv $CYLC_TASK_WORK_DIR/lfric_diag.nc $DESTINATION_DIRECTORY/{{pathFragment}}/results/
+                      test -f $CYLC_TASK_WORK_DIR/lfric_initial.nc && mv $CYLC_TASK_WORK_DIR/lfric_initial.nc $DESTINATION_DIRECTORY/{{pathFragment}}/results/
 
                       # Future publisher stages need this information
                       RELATIVE_LOG_ROOT=$(echo $CYLC_TASK_LOG_ROOT | sed "s|$HOME/||")
