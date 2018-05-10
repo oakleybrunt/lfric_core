@@ -70,7 +70,10 @@ contains
     use finite_element_config_mod, only : finite_element_cellshape_quadrilateral
     use gungho_feign_config_mod,   only : feign_base_mesh_config,           &
                                           feign_initial_temperature_config, &
-                                          feign_planet_config
+                                          feign_planet_config,              &
+                                          feign_idealised_config,           &
+                                          feign_initial_density_config
+    use idealised_config_mod,      only : idealised_test_gravity_wave
     use mesh_mod,                  only : PLANE_BI_PERIODIC
 
     implicit none
@@ -106,6 +109,14 @@ contains
     call feign_planet_config( gravity=gravity, radius=radius, omega=omega, &
                               rd=rd, cp=cp, p_zero=p_zero,                 &
                               scaling_factor=scaling )
+    call feign_initial_density_config( tracer_background=0.0_r_def,           &
+                                       tracer_max=1.0_r_def,                  &
+                                       r1=0.0_r_def, x1=0.0_r_def,            &
+                                       y1=0.0_r_def, z1=0.0_r_def,            &
+                                       r2=0.0_r_def, x2=0.0_r_def,            &
+                                       y2=0.0_r_def, z2=0.0_r_def,            &
+                                       sample_init_rho=.false.)
+    call feign_idealised_config( idealised_test_gravity_wave )
 
     ! Create top level mesh collection
     mesh_collection = mesh_collection_type()
