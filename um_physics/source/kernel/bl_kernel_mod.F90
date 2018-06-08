@@ -173,10 +173,10 @@ subroutine bl_code(nlayers, &
     integer :: co2_dim_len, co2_dim_row, rhc_row_length, rhc_rows,          &
          cloud_levels, n_cca_levels
     integer :: asteps_since_triffid
-    integer :: nscmdpkgs
+    integer, parameter :: nscmdpkgs=15
+    logical, parameter :: l_scmdiags(nscmdpkgs)=.false.
     logical :: l_scrn, l_aero_classic, l_spec_z0, l_plsp,        &
          l_mixing_ratio, l_extra_call, l_calc_at_p
-    logical :: l_scmdiags(0)
 
     ! profile fields from level 1 upwards
     real(r_double), dimension(row_length,rows,model_levels) ::              &
@@ -281,7 +281,6 @@ subroutine bl_code(nlayers, &
     ice_fract_ncat=0.0
     ! diagnostic flags
     l_scrn=.false.
-    nscmdpkgs=0
     error_code=0
     l_plsp=.false.
     ! other logicals
