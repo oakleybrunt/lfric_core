@@ -21,7 +21,8 @@ export PROJECT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR ?= ../..
 
 .PHONY: default
-default: build unit-tests integration-tests
+# The transport miniapp has no kernels so removing "unit-tests"
+default: build integration-tests
 	$(Q)echo > /dev/null
 
 .PHONY: documentation doc docs
