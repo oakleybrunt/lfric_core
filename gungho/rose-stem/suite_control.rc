@@ -191,8 +191,6 @@
 {# The csar groups are now included in the following #}
 %include inc/csar.rc
 {%- do groups.update(csar_groups) %}
-%include inc/cosmic.rc
-{%- do groups.update(cosmic_groups) %}
 %include inc/cartesian.rc
 {%- do groups.update(cartesian_groups) %}
 
