@@ -22,12 +22,7 @@ module iter_timestep_alg_mod
                                        dry_static_adjust,         &
                                        set_hydrostatic_init
   use output_config_mod,         only: diagnostic_frequency, subroutine_timers
-  use mixed_solver_config_mod,   only: si_preconditioner,                        &
-                                       si_postconditioner,                       &
-                                       mixed_solver_si_preconditioner_pressure,  &
-                                       mixed_solver_si_postconditioner_pressure, &
-                                       use_operators,                            &
-                                       guess_np1,                                &
+  use mixed_solver_config_mod,   only: guess_np1,                                &
                                        reference_reset_freq
   use timestepping_config_mod,   only: dt, alpha, &
                                        outer_iterations, inner_iterations, &
@@ -70,25 +65,24 @@ module iter_timestep_alg_mod
   use io_mod,                    only : output_xios_nodal
 
   ! Algorithms
-  use solver_alg_mod,              only: solver_algorithm
+  use mass_matrix_solver_alg_mod,  only: mass_matrix_solver_alg
   use rhs_alg_mod,                 only: rhs_alg
   use advection_alg_mod,           only: advection_alg,       &
                                          advection_alg_init,  &
                                          advection_alg_final, &
                                          advection_mr_alg
-  use si_solver_alg_mod,           only: si_solver_alg,  &
-                                         si_solver_init, &
-                                         si_solver_final
   use si_operators_alg_mod,        only: create_si_operators,  &
                                          compute_si_operators, &
                                          final_si_operators
-  use helmholtz_solver_alg_mod,    only: helmholtz_solver_init,  &
-                                         helmholtz_solver_final, &
-                                         compute_inv_hb
   use fast_physics_alg_mod,        only: fast_physics
   use slow_physics_alg_mod,        only: slow_physics
   use checks_and_balances_alg_mod, only: check_fields
- 
+
+  use semi_implicit_solver_alg_mod, only: semi_implicit_solver_alg_init, &
+                                          semi_implicit_solver_alg_step, &
+                                          semi_implicit_solver_alg_final
+  use field_vector_mod,             only: field_vector_type 
+
   ! Field mappings
   use map_physics_fields_alg_mod, only: map_physics_fields_alg
   use physics_mappings_alg_mod,   only: map_physics_winds, &
@@ -134,6 +128,9 @@ module iter_timestep_alg_mod
   type( field_type ) :: dtheta ! increment to theta
   type( field_type ) :: dtheta_cld ! increment to theta from cloud
   type( field_type ) :: du ! increment to u
+       
+  type( field_vector_type ) :: vector_state, vector_rhs
+ 
   type( field_type ) :: shear ! shear term
   logical            :: helmholtz_solve
 
@@ -226,14 +223,7 @@ contains
     !--------------------------------------------------------------------
     ! Operators for si solves
     !--------------------------------------------------------------------
-    if ( si_preconditioner  == mixed_solver_si_preconditioner_pressure .or. &
-         si_postconditioner == mixed_solver_si_postconditioner_pressure ) then
-      helmholtz_solve = .true.
-    else
-      helmholtz_solve = .false.
-    end if
-    if ( helmholtz_solve ) call helmholtz_solver_init(state)
-    if ( helmholtz_solve .or. use_operators ) call create_si_operators(mesh_id)
+    call create_si_operators(mesh_id)
 
     !--------------------------------------------------------------------
     ! Copy prognostic field data to state arrays
@@ -243,7 +233,6 @@ contains
                  setval_X(state(igh_t), theta),      &
                  setval_X(state(igh_d), rho  ),      &
                  setval_X(state(igh_p), exner) )
-    call si_solver_init(state)
     call advection_alg_init(mesh_id)
 
     call u%copy_field_properties( u_adv )
@@ -258,6 +247,15 @@ contains
       call bl_init(theta, twod_fields)
     end if
 #endif
+
+    ! Construct semi-implicit solver
+    vector_state = field_vector_type(bundle_size)
+    vector_rhs   = field_vector_type(bundle_size)
+    call vector_state%import_field(u,     igh_u)
+    call vector_state%import_field(theta, igh_t)
+    call vector_state%import_field(rho,   igh_d)
+    call vector_state%import_field(exner, igh_p)
+    call semi_implicit_solver_alg_init(vector_state)
 
     call log_event( "iter_timestep: initialised timestepping algorithm", LOG_LEVEL_INFO )
 
@@ -452,13 +450,13 @@ contains
         if (use_wavedynamics) then
           ! theta_star can be directly guessed from advection terms
           call invoke( X_plus_Y(inc(igh_t), rhs_adv(igh_t), rhs_n(igh_t)) )
-          call solver_algorithm(theta_star, inc(igh_t))
+          call mass_matrix_solver_alg(theta_star, inc(igh_t))
 
           ! Compute u_star = u_np1 + M^-1(-rhs_np1 + rhs_n + rhs_a)
           call rhs_alg(rhs_np1, -varalpha*dt, state, .false., dlayer_on)      
           call invoke( inc_aX_plus_Y(-1.0_r_def, rhs_np1(igh_u), rhs_n(igh_u)),&
                        inc_X_plus_Y(rhs_np1(igh_u), rhs_adv(igh_u)) )
-          call solver_algorithm(inc(igh_u), rhs_np1(igh_u) )
+          call mass_matrix_solver_alg(inc(igh_u), rhs_np1(igh_u) )
           call invoke( X_plus_Y(u_star, inc(igh_u), state(igh_u)) )
         else
           ! predictors are just the current state
@@ -512,7 +510,7 @@ contains
             ! rho^np1 and theta^np1 can be directly guessed from advection terms
             call invoke( X_plus_Y(state(igh_d), rhs_adv(igh_d), rhs_n(igh_d)), &
                          X_plus_Y(inc(igh_t), rhs_adv(igh_t), rhs_n(igh_t)) )
-            call solver_algorithm(state(igh_t), inc(igh_t))
+            call mass_matrix_solver_alg(state(igh_t), inc(igh_t))
             ! exner^np1 can be directly guessed from eos
             m3_inv => get_mass_matrix(w3inv_id)
 
@@ -524,8 +522,7 @@ contains
           if ( mod(iter-1_i_def,reference_reset_freq) == 0_i_def ) then
             call copy_bundle(state, reference_state, bundle_size) 
             if (dry_static_adjust)call invoke( sort_ref_kernel_type(reference_state(igh_t) ) )  
-            if ( helmholtz_solve .or. use_operators ) call compute_si_operators(reference_state)
-            if ( helmholtz_solve ) call compute_inv_hb()
+            call compute_si_operators(reference_state)
           end if
 
           call rhs_alg(rhs_np1, -varalpha*dt, state, .true., dlayer_on)
@@ -569,7 +566,20 @@ contains
             'Residual in equation of state:  ',sqrt(si_err(igh_p))
           call log_event( log_scratch_space, LOG_LEVEL_INFO )
 
-          call si_solver_alg(state, rhs_np1, reference_state)
+          call vector_rhs%import_field(rhs_np1(igh_u), igh_u)
+          call vector_rhs%import_field(rhs_np1(igh_t), igh_t)
+          call vector_rhs%import_field(rhs_np1(igh_d), igh_d)
+          call vector_rhs%import_field(rhs_np1(igh_p), igh_p)
+          call vector_state%import_field(state(igh_u), igh_u)
+          call vector_state%import_field(state(igh_t), igh_t)
+          call vector_state%import_field(state(igh_d), igh_d)
+          call vector_state%import_field(state(igh_p), igh_p)
+          call semi_implicit_solver_alg_step(vector_state, vector_rhs)
+          call vector_state%export_field(state(igh_u), igh_u)
+          call vector_state%export_field(state(igh_t), igh_t)
+          call vector_state%export_field(state(igh_d), igh_d)
+          call vector_state%export_field(state(igh_p), igh_p)
+
           if(.not. set_hydrostatic_init) then
             ! Recompute exner from eos
             m3_inv => get_mass_matrix(w3inv_id)
@@ -688,11 +698,10 @@ contains
 
     implicit none
 
-    call si_solver_final()
-    call helmholtz_solver_final()
+    call semi_implicit_solver_alg_final()
     call advection_alg_final()
  
-    if ( helmholtz_solve .or. use_operators ) call final_si_operators()
+    call final_si_operators()
 
     if (allocated(state))           deallocate(state)
     if (allocated(state_n))         deallocate(state_n)

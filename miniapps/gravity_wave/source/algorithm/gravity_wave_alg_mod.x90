@@ -39,14 +39,17 @@ module gravity_wave_alg_mod
                                       only: gw_mixed_diag_preconditioner_type
   use gw_pressure_operator_alg_mod,   only: gw_pressure_operator_type
   use gw_pressure_precon_alg_mod,     only: gw_pressure_preconditioner_type
-  use gw_null_preconditioner_alg_mod, only: gw_null_preconditioner_type
+  use null_preconditioner_alg_mod,    only: null_preconditioner_type
 
   ! preconditioner and solver
   use preconditioner_mod,             only: abstract_preconditioner_type
   use iterative_solver_mod,           only: abstract_iterative_solver_type, &
-                                            bicgstab_type, &
-                                            gmres_type, &
-                                            conjugate_gradient_type
+                                            bicgstab_type,                  &
+                                            gmres_type,                     &
+                                            fgmres_type,                    &
+                                            gcr_type,                       &
+                                            conjugate_gradient_type,        &
+                                            precondition_only_type
 
   use field_indices_mod,              only: igw_u, igw_p, igw_b
 
@@ -106,6 +109,9 @@ contains
                                              mixed_solver_si_method_cg,                  &
                                              mixed_solver_si_method_bicgstab,            &
                                              mixed_solver_si_method_gmres,               &
+                                             mixed_solver_si_method_fgmres,              &
+                                             mixed_solver_si_method_gcr,                 &
+                                             mixed_solver_si_method_prec_only,           &
                                              si_preconditioner,                          &
                                              mixed_solver_si_preconditioner_pressure,    &
                                              mixed_solver_si_preconditioner_diagonal,    &
@@ -118,6 +124,9 @@ contains
                                              helmholtz_solver_method_cg,                 &
                                              helmholtz_solver_method_bicgstab,           &
                                              helmholtz_solver_method_gmres,              &
+                                             helmholtz_solver_method_fgmres,             &
+                                             helmholtz_solver_method_gcr,                &
+                                             helmholtz_solver_method_prec_only,          &
                                              helmholtz_preconditioner => preconditioner, &
                                              helmholtz_solver_preconditioner_none,       &
                                              helmholtz_solver_preconditioner_tridiagonal
@@ -179,13 +188,19 @@ contains
        allocate ( conjugate_gradient_type :: gw_pressure_solver )
     else if (helmholtz_method == HELMHOLTZ_SOLVER_METHOD_GMRES) then
        allocate ( gmres_type :: gw_pressure_solver )
+    else if (helmholtz_method == HELMHOLTZ_SOLVER_METHOD_FGMRES) then
+       allocate ( fgmres_type :: gw_pressure_solver )
+    else if (helmholtz_method == HELMHOLTZ_SOLVER_METHOD_GCR) then
+       allocate ( gcr_type :: gw_pressure_solver )
+    else if (helmholtz_method == HELMHOLTZ_SOLVER_METHOD_PREC_ONLY) then
+       allocate ( precondition_only_type :: gw_pressure_solver )
     else
        call log_event("Unknown pressure solver specified",LOG_LEVEL_ERROR)
     end if
 
     ! Allocate pressure preconditioner preconditioner of correct type
     if (helmholtz_preconditioner == HELMHOLTZ_SOLVER_PRECONDITIONER_NONE) then
-       allocate ( gw_null_preconditioner_type :: gw_pressure_preconditioner)
+       allocate ( null_preconditioner_type :: gw_pressure_preconditioner)
     else if (helmholtz_preconditioner == HELMHOLTZ_SOLVER_PRECONDITIONER_TRIDIAGONAL) then
        allocate ( gw_pressure_preconditioner_type :: gw_pressure_preconditioner)
     else
@@ -199,7 +214,7 @@ contains
     else if (si_preconditioner == MIXED_SOLVER_SI_PRECONDITIONER_DIAGONAL) then
        allocate ( gw_mixed_diag_preconditioner_type :: gw_mixed_preconditioner)
     else if (si_preconditioner == MIXED_SOLVER_SI_PRECONDITIONER_NONE) then
-       allocate ( gw_null_preconditioner_type :: gw_mixed_preconditioner)
+       allocate ( null_preconditioner_type :: gw_mixed_preconditioner)
     else
        call log_event("Unknown mixed preconditioner specified",LOG_LEVEL_ERROR)
     end if
@@ -211,6 +226,12 @@ contains
       allocate ( conjugate_gradient_type :: gw_mixed_solver )
     else if (si_method == MIXED_SOLVER_SI_METHOD_GMRES) then
       allocate ( gmres_type :: gw_mixed_solver )
+    else if (si_method == MIXED_SOLVER_SI_METHOD_FGMRES) then
+      allocate ( fgmres_type :: gw_mixed_solver )
+    else if (si_method == MIXED_SOLVER_SI_METHOD_GCR) then
+      allocate ( gcr_type :: gw_mixed_solver )
+    else if (si_method == MIXED_SOLVER_SI_METHOD_PREC_ONLY) then
+      allocate ( precondition_only_type :: gw_mixed_solver )
     else
        call log_event("Unknown mixed solver specified",LOG_LEVEL_ERROR)
     end if
@@ -222,9 +243,9 @@ contains
 
     ! Construct pressure preconditioner
     select type(gw_pressure_preconditioner)
-    type is ( gw_null_preconditioner_type )        
+    type is ( null_preconditioner_type )        
        ! Null preconditioner
-       gw_pressure_preconditioner = gw_null_preconditioner_type()
+       gw_pressure_preconditioner = null_preconditioner_type()
     type is ( gw_pressure_preconditioner_type )        
        ! Vertical preconditioner
        gw_pressure_preconditioner = gw_pressure_preconditioner_type()
@@ -258,6 +279,31 @@ contains
                                         gw_pressure_solver_a_tol,       &
                                         si_pressure_maximum_iterations)
 
+    type is ( fgmres_type )        
+       ! FGMRES solver
+       gw_pressure_solver = fgmres_type( gw_pressure_operator,           &
+                                         gw_pressure_preconditioner,     &
+                                         helmholtz_gcrk,                 &
+                                         si_pressure_tolerance,          &
+                                         gw_pressure_solver_a_tol,       &
+                                         si_pressure_maximum_iterations)
+
+    type is ( gcr_type )        
+       ! GCR solver
+       gw_pressure_solver = gcr_type( gw_pressure_operator,           &
+                                      gw_pressure_preconditioner,     &
+                                      helmholtz_gcrk,                 &
+                                      si_pressure_tolerance,          &
+                                      gw_pressure_solver_a_tol,       &
+                                      si_pressure_maximum_iterations)
+
+    type is ( precondition_only_type )        
+       ! Precondition only solver
+       gw_pressure_solver = precondition_only_type( gw_pressure_operator,       &
+                                                    gw_pressure_preconditioner, &
+                                                    si_pressure_tolerance,      &
+                                                    gw_pressure_solver_a_tol)
+
     class default
        call log_event("Can not initialise pressure solver",LOG_LEVEL_ERROR)
     end select
@@ -276,9 +322,9 @@ contains
     type is ( gw_mixed_diag_preconditioner_type )
        ! Diagonal preconditioner
        gw_mixed_preconditioner = gw_mixed_diag_preconditioner_type(state)
-    type is ( gw_null_preconditioner_type )
+    type is ( null_preconditioner_type )
        ! Null preconditioner
-       gw_mixed_preconditioner = gw_null_preconditioner_type()
+       gw_mixed_preconditioner = null_preconditioner_type()
     class default
        call log_event("Can not initialise mixed preconditioner", &
                       LOG_LEVEL_ERROR)
@@ -303,6 +349,25 @@ contains
                                      si_tolerance,            &
                                      gw_mixed_solver_a_tol,   &
                                      si_maximum_iterations)
+    type is ( fgmres_type )        
+       gw_mixed_solver = fgmres_type( gw_mixed_operator,       &
+                                      gw_mixed_preconditioner, &
+                                      mixed_gcrk,              &
+                                      si_tolerance,            &
+                                      gw_mixed_solver_a_tol,   &
+                                      si_maximum_iterations)
+    type is ( gcr_type )        
+       gw_mixed_solver = gcr_type( gw_mixed_operator,       &
+                                   gw_mixed_preconditioner, &
+                                   mixed_gcrk,              &
+                                   si_tolerance,            &
+                                   gw_mixed_solver_a_tol,   &
+                                   si_maximum_iterations)
+    type is ( precondition_only_type )        
+       gw_mixed_solver = precondition_only_type( gw_mixed_operator,       &
+                                                 gw_mixed_preconditioner, &
+                                                 si_tolerance,            &
+                                                 gw_mixed_solver_a_tol)
     class default
        call log_event("Can not initialise mixed solver",LOG_LEVEL_ERROR)
     end select

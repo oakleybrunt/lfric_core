@@ -15,7 +15,7 @@ module gw_init_fields_alg_mod
                                                LOG_LEVEL_ERROR
   use constants_mod,                     only: r_def, i_def
 
-  use solver_alg_mod,                    only: solver_algorithm
+  use mass_matrix_solver_alg_mod,        only: mass_matrix_solver_alg
   use runtime_constants_mod,             only: get_coordinates
 
   ! Configuration and restart/checkpoint options
@@ -87,7 +87,7 @@ contains
                    setval_c( r_u,      0.0_r_def ), &
                    setval_c( pressure, 0.0_r_def ), &
                    initial_u_kernel_type( r_u, chi, initial_time, qr ) )
-      call solver_algorithm(wind, r_u)
+      call mass_matrix_solver_alg(wind, r_u)
 
       call log_event( 'gravity_wave: Initialised prognostic fields', LOG_LEVEL_INFO )
 

@@ -40,7 +40,7 @@
                      env={"crun":1, "nrun":300,
                           "directives":{"default":{"mpi_parts":3,
                                                    "threads":2,
-                                                   "wallclock":"00:20:00"} } },
+                                                   "wallclock":"00:59:00"} } },
                      plotstr="gw_high_order_cart_plot.py $NODAL_DATA_DIR 150 8 theta T000000:T000100:T000200:T000300 $PLOT_DIR" )',
     'run_application("gungho", "dcmip200",
                      resolutions=[("C12",600.0)],

@@ -23,7 +23,7 @@ module solver_miniapp_alg_mod
   use linear_operator_mod,            only : abstract_linear_operator_type
   use dense_operator_alg_mod,         only : dense_operator_type
   use preconditioner_mod,             only : abstract_preconditioner_type
-  use diagonal_preconditioner_mod,    only : diagonal_preconditioner_type
+  use diagonal_preconditioner_alg_mod,only : diagonal_preconditioner_type
   use iterative_solver_mod,           only : abstract_iterative_solver_type, &
                                              conjugate_gradient_type,        &
                                              bicgstab_type,                  &

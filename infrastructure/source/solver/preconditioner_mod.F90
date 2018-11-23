@@ -7,8 +7,8 @@
 
 !> @brief Abstract base type for preconditioner
 !>
-!> @detail Implements an abstract class for a preconditioner which
-!>         defines an interface for the preconditioner application y = P^{-1}.x
+!> @details Implements an abstract class for a preconditioner which
+!>          defines an interface for the preconditioner application y = P^{-1}.x
 
 module preconditioner_mod
   use vector_mod,    only : abstract_vector_type

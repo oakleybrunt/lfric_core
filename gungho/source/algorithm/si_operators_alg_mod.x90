@@ -13,11 +13,13 @@ module si_operators_alg_mod
   use log_mod,                   only: log_event,      &
                                        LOG_LEVEL_INFO, &
                                        LOG_LEVEL_ERROR
-  use helmholtz_solver_config_mod, only: preconditioner,                              &
-                                         helmholtz_solver_preconditioner_tridiagonal, &
-                                         normalise
+  use helmholtz_solver_config_mod, &
+                                 only: preconditioner,                              &
+                                       helmholtz_solver_preconditioner_tridiagonal, &
+                                       normalise
   use output_config_mod,         only: subroutine_timers 
   use timer_mod,                 only: timer
+
   implicit none
   private
 
@@ -34,6 +36,7 @@ module si_operators_alg_mod
   type(field_type),    target :: rho_at_u
   type(field_type),    target :: tri_precon(3)
   type(field_type),    target :: Helm_diag
+  type(field_type),    target :: Hb_lumped_inv
 
  ! Public functions to create and access the module contents
   public :: create_si_operators
@@ -50,6 +53,7 @@ module si_operators_alg_mod
   public :: get_rho_at_u 
   public :: get_tri_precon
   public :: get_helm_diag
+  public :: get_Hb_lumped_inv
 
 contains
 
@@ -98,7 +102,8 @@ contains
       tri_precon(2) = field_type(vector_space = w3_fs)
       tri_precon(3) = field_type(vector_space = w3_fs)
     end if
-    helm_diag = field_type(vector_space = w3_fs)
+    helm_diag     = field_type(vector_space = w3_fs)
+    Hb_lumped_inv = field_type(vector_space = w2_fs)
 
     nullify( w2_fs, w3_fs, wt_fs )
 
@@ -127,7 +132,7 @@ contains
     do i=1, size(tri_precon)
       call tri_precon(i)%field_final()
     end do
-
+    call hb_lumped_inv%field_final()
   end subroutine final_si_operators
 
   !>@brief Subroutine to compute the si operators
@@ -154,8 +159,9 @@ contains
     use runtime_constants_mod,           only: get_coordinates, &
                                                get_div, &
                                                get_mass_matrix, &
-                                               w3inv_id, theta_space_id, &
-                                               get_rmultiplicity
+                                               w2_id, w3inv_id, wt_id, dl_id, &
+                                               get_rmultiplicity, &
+                                               get_normalisation
     use derived_config_mod,              only: bundle_size
     use invert_local_operator_kernel_mod,only: invert_local_operator_kernel_type
     use field_indices_mod,               only: igh_u, igh_t, igh_d, igh_p
@@ -163,6 +169,8 @@ contains
     use timestepping_config_mod,         only: tau_r, tau_t, tau_u, dt
     use reference_element_mod,           only: reference_element_type
     use mesh_mod,                        only: mesh_type
+    use matrix_vector_kernel_mod,        only: matrix_vector_kernel_type
+    use formulation_config_mod,          only: dlayer_on
 
     implicit none
 
@@ -173,15 +181,20 @@ contains
     type(quadrature_xyoz_type)             :: qr
     type(quadrature_face_type)             :: qrf
     type(quadrature_rule_gaussian_type)    :: quadrature_rule
-    type(field_type),            pointer   :: chi(:) => null()
-    type(operator_type),         pointer   :: m3_inv => null(), div => null()
+    type(field_type),              pointer :: chi(:) => null()
+    type(operator_type),           pointer :: m3_inv => null(), div => null()
     type(field_type)                       :: ones
-    type(field_type), pointer              :: w2_rmultiplicity => null()
-    type(function_space_type),   pointer   :: u_fs => null()
+    type(field_type),              pointer :: w2_rmultiplicity => null()
+    type(function_space_type),     pointer :: u_fs => null()
     real(r_def)                            :: const1, const2
     integer(i_def), parameter              :: imone = -1_i_def
+    real(r_def), parameter                 :: one   = 1_i_def
     class(reference_element_type), pointer :: reference_element =>null()
     type(mesh_type),               pointer :: mesh => null()
+    type(operator_type),           pointer :: m2 => null()
+    type(field_type),              pointer :: u_normalisation => null(), &
+                                              t_normalisation => null() 
+    type(field_type)                       :: m2_u, theta_adv_term
 
     if ( subroutine_timers ) call timer('si_operators_alg:compute')
     call log_event( "Gungho: computing si_operators", LOG_LEVEL_INFO )
@@ -221,7 +234,6 @@ contains
     ! Compute rho^ref at u nodal points
     u_fs => ref_state(igh_u)%get_function_space()
     ones = field_type( vector_space = u_fs )
-    nullify( u_fs )
 
     w2_rmultiplicity => get_rmultiplicity( W2 )
     ! Initialise fields
@@ -235,6 +247,31 @@ contains
     div    => get_div()
     call invoke( compound_operator_kernel_type(compound_div, m3_rho_star, m3_inv, div, &
                                                rho_at_u, const1) )
+    ! Compute Hb_lumped_inv field
+    if (dlayer_on) then
+      m2 => get_mass_matrix(dl_id)
+    else
+      m2 => get_mass_matrix(w2_id)
+    end if
+    u_normalisation => get_normalisation(w2_id)
+    t_normalisation => get_normalisation(wt_id)
+    
+    m2_u           = field_type( vector_space = u_fs )
+    ones           = field_type( vector_space = u_fs )
+    theta_adv_term = field_type( vector_space = theta%get_function_space() )
+    call invoke( name = "Compute lumped inverse H_B operator",               &
+                 setval_c(ones, 1.0_r_def),                                  &
+                 setval_c(Hb_lumped_inv, 0.0_r_def),                         &
+                 setval_c(m2_u, 0.0_r_def),                                  &
+                 setval_c(theta_adv_term, 0.0_r_def),                        &
+                 matrix_vector_kernel_type(m2_u, ones, m2),                  &
+                 matrix_vector_kernel_type(theta_adv_term, ones, ptheta2v),  &
+                 inc_X_times_Y(theta_adv_term, t_normalisation),             &
+                 matrix_vector_kernel_type(Hb_lumped_inv, theta_adv_term,    &
+                                           p2theta),                         & 
+                 inc_aX_plus_Y(one, Hb_lumped_inv, m2_u),                    &
+                 inc_X_times_Y(Hb_lumped_inv, u_normalisation),              &
+                 inc_X_powint_n(Hb_lumped_inv, imone) )
 
     ! Compute terms for tridiagonal preconditioner
     if ( preconditioner == helmholtz_solver_preconditioner_tridiagonal ) then
@@ -257,7 +294,8 @@ contains
     end if
 
     nullify( theta, rho, exner, chi, m3_inv, div, w2_rmultiplicity, &
-             mesh, reference_element )
+             mesh, reference_element, m2, u_normalisation, t_normalisation, &
+             u_fs )
 
     if ( subroutine_timers ) call timer('si_operators_alg:compute')
 
@@ -350,5 +388,13 @@ contains
     type(field_type), pointer :: field
     field => helm_diag
   end function get_helm_diag
+
+ !> @brief Function to return a pointer to the lumped inverse Hb operator
+ !> @return The field
+  function get_hb_lumped_inv() result(field)
+    implicit none
+    type(field_type), pointer :: field
+    field => hb_lumped_inv
+  end function get_hb_lumped_inv
 
 end module si_operators_alg_mod

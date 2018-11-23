@@ -30,7 +30,7 @@ contains
 
     character(*), intent(in) :: filename
     character(*), parameter  :: &
-                      required_configuration(13) = ['base_mesh             ', &
+                      required_configuration(12) = ['base_mesh             ', &
                                                     'planet                ', &
                                                     'restart               ', &
                                                     'extrusion             ', &
@@ -41,7 +41,6 @@ contains
                                                     'transport             ', &
                                                     'output                ', &
                                                     'timestepping          ', &
-                                                    'multigrid             ', &
                                                     'domain_size           ']
     logical                  :: okay
     logical, allocatable     :: success_map(:)

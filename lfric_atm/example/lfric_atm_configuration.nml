@@ -110,10 +110,8 @@
     reference_reset_freq=1,
     si_maximum_iterations=10,
     si_method='gcr',
-    si_postconditioner='pressure',
-    si_preconditioner='none',
+    si_preconditioner='pressure',
     si_tolerance=1.0e-6,
-    use_operators=.T,
 /
 
 &helmholtz_solver

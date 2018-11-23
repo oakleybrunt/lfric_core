@@ -13,7 +13,7 @@ module init_prognostic_fields_alg_mod
                                              LOG_LEVEL_TRACE
   use constants_mod,                   only: r_def, i_def, str_short
 
-  use solver_alg_mod,                  only: solver_algorithm
+  use mass_matrix_solver_alg_mod,      only: mass_matrix_solver_alg
   use runtime_constants_mod,           only: get_coordinates, &
                                              get_mass_matrix, &
                                              w3inv_id,        &
@@ -119,7 +119,7 @@ contains
                      setval_c( r_u, 0.0_r_def ),      &
                      initial_u_kernel_type( r_u, chi, initial_time, qr ), &
                      enforce_bc_kernel_type( r_u ) )
-        call solver_algorithm(u, r_u)
+        call mass_matrix_solver_alg(u, r_u)
       end if
 
       if (set_hydrostatic_init) then

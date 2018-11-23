@@ -1,0 +1,243 @@
+!-------------------------------------------------------------------------------
+! (C) Crown copyright 2018 Met Office. All rights reserved.
+! For further details please refer to the file COPYRIGHT.txt
+! which you should have received as part of this distribution.
+!-------------------------------------------------------------------------------
+
+!>@brief Linear operator type which applies the mixed (outer) operator
+!>
+!> @details Calculates the left hand side of the implicit euler equations.
+!>  Given the field-vector \f$ x = (\mathbf{u'},\theta',\rho',\Pi') \f$ this calculate the
+!>  field-vector \f$ y = \delta(\mathbf{u},\delta\theta,\delta\rho,\delta\Pi) \f$ 
+!>  where the components are
+!>  calculated via the discretised version of the following set of equations:
+!>
+!>  \f[ \delta\mathbf{u} = \left(1+\mu\Delta t\mathbf{k}\cdot + 2\Delta t\Omega\times\right)\mathbf{u}' \f]
+!>  \f[                  - \tau_u\Delta t c_p\left(\theta^*\nabla\Pi' + \theta'\nabla\Pi^*\right)  \f]
+!>  \f[ \delta      \rho =       \rho' + \tau_\rho\Delta t \nabla.\left(\rho^*\mathbf{u}'\right)     \f]
+!>  \f[ \delta    \theta =     \theta' + \tau_\theta\Delta t \mathbf{u}'.\nabla'theta^* \f]
+!>  \f[ \delta       \Pi =     \frac{1-\kappa}{\kappa}\frac{\Pi'}{\Pi^*} - \frac{\rho'}{\rho^*} - \frac{\theta'}{\theta^*} \f]
+!>  where \f$ \left(\Pi^*, \rho^*, \theta^*\right) \f$ are a reference profile
+
+!>          
+!>  The primed terms are increments to the n+1 timelevel field. Upon
+!>  discretisation, this leads to :
+!>          
+!>  \f[ \delta\mathbf{u} = \left(M_2 + M_\mu + \tau_u C\right)\mathbf{u}' - \tau_u\Delta t (D^* \Pi' + P_{2\theta} \theta') \f]
+!>  \f[ \delta\rho       = \rho'  + \tau_\rho\Delta t M_3^{-1} D \left(\rho^*\mathbf{u}'\right)  \f]
+!>  \f[ \delta\theta     = M_theta \theta' + \tau_\theta\Delta t P_{\theta2} \mathbf{u}'  \f]
+!>  \f[ \delta\Pi        = M_3^{\Pi}\Pi' - M_3^{\rho}\rho' - P_{3\theta}\theta' \f]
+
+module mixed_operator_alg_mod
+  use constants_mod,                     only: r_def, i_def
+  use linear_operator_mod,               only: abstract_linear_operator_type
+  use vector_mod,                        only: abstract_vector_type
+  use field_vector_mod,                  only: field_vector_type
+  use log_mod,                           only: log_event, LOG_LEVEL_ERROR, &
+                                               log_scratch_space
+
+  implicit none
+
+  private
+
+  type, public, extends(abstract_linear_operator_type) :: &
+                        mixed_operator_type
+
+     private
+
+   contains
+     !> over-ride the abstract interface
+     !> param[in] self a linear operator
+     !> param[in] x a fieldvector the linear operator is applied to
+     !> param[inout] y a fieldvector, the result.
+     procedure, public  :: apply => apply_mixed_operator
+     !> Applies the operator as LMA matrix matrix-vector kernels in all blocks
+     procedure, private :: apply_mixed_operator
+     !> Destroys the object
+     final              :: destroy_mixed_operator
+  end type mixed_operator_type
+
+  interface mixed_operator_type
+     module procedure mixed_operator_constructor
+  end interface
+
+contains
+  !> @brief Construct a <code>mixed_operator_type</code> object.
+  !>
+  !> @details Initialise the object by building the relevant operators
+  !>
+  function mixed_operator_constructor() result(self)
+    implicit none
+    type(mixed_operator_type) :: self
+    
+  end function mixed_operator_constructor
+
+  !> @brief Applies the mixed operator to the vector, \f$ y = M x \f$
+  !> 
+  !> @param [in] self instance of the mixed operator
+  !> @param [in] x field vector to be read
+  !> @param [inout] y field vector to be written
+  subroutine apply_mixed_operator(self, x, y)
+
+    use formulation_config_mod,      only: dlayer_on, rotating
+    use output_config_mod,           only: subroutine_timers 
+    use timestepping_config_mod,     only: dt, tau_u, tau_r
+    use timer_mod,                   only: timer
+    use field_indices_mod,           only: igh_u, igh_t, igh_d, igh_p
+    use operator_mod,                only: operator_type
+    use field_mod,                   only: field_type
+    use si_operators_alg_mod,        only: get_p2theta,       &
+                                           get_div_star,      &
+                                           get_ptheta2,       &
+                                           get_m3_rho_star,   &
+                                           get_m3_exner_star, &
+                                           get_p3theta,       &
+                                           get_rho_at_u
+    use runtime_constants_mod,       only: get_div,           &
+                                           get_mass_matrix,   &
+                                           w2_id, w3inv_id,   &
+                                           wt_id,             &
+                                           dl_id,             &
+                                           get_normalisation, &
+                                           get_coriolis
+    use matrix_vector_kernel_mod,    only: matrix_vector_kernel_type
+    use enforce_bc_kernel_mod,       only: enforce_bc_kernel_type
+    use dg_matrix_vector_kernel_mod, only: dg_matrix_vector_kernel_type
+    use function_space_mod,          only: function_space_type
+    implicit none
+
+    class(mixed_operator_type),  intent(inout) :: self
+    class(abstract_vector_type), intent(in)    :: x
+    class(abstract_vector_type), intent(inout) :: y
+
+    type(operator_type), pointer             :: mm_vel => null(), &
+                                                mm_w3_inv => null(), &
+                                                mm_wtheta => null(), &
+                                                div   => null(), &
+                                                p2theta => null(), &
+                                                div_star => null(), &
+                                                ptheta2 => null(), &
+                                                m3_rho_star => null(), &
+                                                m3_exner_star => null(), &
+                                                p3theta => null(), &
+                                                coriolis => null()
+    type(field_type), pointer               :: rho_at_u => null(), &
+                                                mt_lumped_inv => null(), &
+                                                m2_diag => null()
+    type(field_type)                         :: f_star, &
+                                                u_tmp, t_tmp, r_tmp, p_tmp
+    real(r_def), parameter                   :: minus_one = -1.0_r_def
+    real(kind=r_def)                         :: tau_r_dt, tau_u_dt, &
+                                                minus_tau_u_dt
+    type(function_space_type), pointer       :: u_fs => null()
+    if ( subroutine_timers ) call timer('mixed_operator')
+
+    tau_r_dt = tau_r*dt
+    tau_u_dt = tau_u*dt
+    
+    ! Obtain operators from runtime constants
+    mm_w3_inv     => get_mass_matrix(w3inv_id)
+    mm_wtheta     => get_mass_matrix(wt_id)
+    div           => get_div()
+    mt_lumped_inv => get_normalisation(wt_id)
+    m2_diag       => get_normalisation(w2_id)
+
+    ! Using modified velocity mass matrix if using damping layer
+    if (dlayer_on) then
+      mm_vel => get_mass_matrix(dl_id)
+    else
+      mm_vel => get_mass_matrix(w2_id)
+    end if
+
+    ! Obtain operators from si operators
+    p2theta           => get_p2theta()
+    div_star          => get_div_star()
+    ptheta2           => get_ptheta2()
+    m3_rho_star       => get_m3_rho_star()
+    m3_exner_star     => get_m3_exner_star()
+    p3theta           => get_p3theta()
+    rho_at_u          => get_rho_at_u()
+
+
+    select type (x)
+    type is (field_vector_type)
+       select type (y)
+       type is (field_vector_type)
+         u_fs => y%vector(igh_u)%get_function_space()
+         f_star = field_type( vector_space = u_fs )
+         ! Create temporary fields
+         u_tmp = field_type( vector_space = y%vector(igh_u)%get_function_space() )
+         t_tmp = field_type( vector_space = y%vector(igh_t)%get_function_space() )
+         r_tmp = field_type( vector_space = y%vector(igh_d)%get_function_space() )
+         p_tmp = field_type( vector_space = y%vector(igh_p)%get_function_space() )
+
+         ! Compute lhs
+         if ( rotating ) then 
+           minus_tau_u_dt = -tau_u_dt
+           coriolis => get_coriolis()
+           call invoke( setval_c( y%vector(igh_u), 0.0_r_def ),                                  &
+                        matrix_vector_kernel_type( y%vector(igh_u), x%vector(igh_u), coriolis ), &
+                        inc_a_times_X(minus_tau_u_dt, y%vector(igh_u) ) )
+         else
+           call invoke( setval_c( y%vector(igh_u), 0.0_r_def ) )
+         end if
+         ! Initialise lhs_u and lhs_theta to 0
+         call invoke( name = "Compute mixed lhs",                                                &
+         ! Initialise field that are incremented 
+                      setval_c( u_tmp, 0.0_r_def ),                                              &
+                      setval_c( t_tmp, 0.0_r_def ),                                              &
+                      setval_c( y%vector(igh_t),     0.0_r_def ),                                &
+         ! L_u
+                      matrix_vector_kernel_type( y%vector(igh_u), x%vector(igh_t), p2theta ),    &
+                      matrix_vector_kernel_type( y%vector(igh_u), x%vector(igh_p), div_star ),   &
+                      matrix_vector_kernel_type( u_tmp, x%vector(igh_u), mm_vel ),               &
+                      inc_aX_plus_Y(minus_one, y%vector(igh_u), u_tmp),                          &
+                      enforce_bc_kernel_type( y%vector(igh_u) ),                                 &
+         ! L_theta
+                      matrix_vector_kernel_type( y%vector(igh_t), x%vector(igh_u), ptheta2 ),    &
+                      matrix_vector_kernel_type( t_tmp, x%vector(igh_t), mm_wtheta ),            &
+                      inc_X_plus_Y( y%vector(igh_t), t_tmp ),                                    &
+         ! L_rho
+                      X_times_Y( f_star, rho_at_u, x%vector(igh_u) ),                            &
+                      dg_matrix_vector_kernel_type( r_tmp, f_star, div ),                        &
+                      dg_matrix_vector_kernel_type( y%vector(igh_d), r_tmp, mm_w3_inv ),         &
+                      inc_aX_plus_Y( tau_r_dt, y%vector(igh_d), x%vector(igh_d) ),               &
+         ! L_pi 
+                      dg_matrix_vector_kernel_type( y%vector(igh_p), x%vector(igh_d),            &
+                                                    m3_rho_star ),                               &
+                      matrix_vector_kernel_type( y%vector(igh_p), x%vector(igh_t), p3theta ),    &
+                      dg_matrix_vector_kernel_type( p_tmp, x%vector(igh_p), m3_exner_star ),     &
+                      inc_X_minus_Y( p_tmp, y%vector(igh_p) ),                                   &
+                      dg_matrix_vector_kernel_type( y%vector(igh_p), p_tmp, mm_w3_inv ),         &
+         ! Normalise lu and lt
+                      inc_X_times_Y(y%vector(igh_u), m2_diag),                                   &
+                      inc_X_times_Y(y%vector(igh_t), mt_lumped_inv)                              &
+                      )
+
+         nullify( mm_vel, mm_w3_inv, mm_wtheta, div, p2theta, &
+                  div_star, ptheta2, m3_rho_star, m3_exner_star, p3theta, rho_at_u, &
+                  mt_lumped_inv, m2_diag, u_fs )
+
+       class default
+          write(log_scratch_space, '(A)') &
+                "mixed_operator_alg_mod: incorrect vector_type argument y"
+          call log_event(log_scratch_space, LOG_LEVEL_ERROR)
+       end select
+    class default
+       write(log_scratch_space, '(A)') &
+             "mixed_operator_alg_mod: incorrect vector_type argument x"
+       call log_event(log_scratch_space, LOG_LEVEL_ERROR)
+    end select
+
+    if ( subroutine_timers ) call timer('mixed_operator')
+
+  end subroutine apply_mixed_operator
+
+  !> @brief Finalizer for the mixed operator
+  !> @param [inout] self the mixed operator
+  subroutine destroy_mixed_operator(self)
+    type(mixed_operator_type), intent(inout) :: self
+
+  end subroutine destroy_mixed_operator
+
+end module mixed_operator_alg_mod

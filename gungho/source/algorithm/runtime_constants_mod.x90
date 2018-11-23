@@ -421,7 +421,7 @@ contains
   end function get_coordinates
 
   !> @brief Function to return a pointer to a height field
-  !> @param[in] i the space of the desired height field
+  !> @param[in] space the space of the desired height field
   !> @return A height field
   function get_height(space) result(height)
     implicit none

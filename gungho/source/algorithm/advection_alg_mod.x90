@@ -34,7 +34,7 @@ module advection_alg_mod
   use rtheta_kernel_mod,              only: rtheta_kernel_type
   use rtheta_supg_kernel_mod,         only: rtheta_supg_kernel_type
   use flux_rhs_kernel_mod,            only: flux_rhs_kernel_type
-  use solver_alg_mod,                 only: solver_algorithm
+  use mass_matrix_solver_alg_mod,     only: mass_matrix_solver_alg
   use transpose_matrix_vector_kernel_mod, &
                                       only: transpose_matrix_vector_kernel_type
   use vorticity_advection_kernel_mod, only: vorticity_advection_kernel_type
@@ -336,7 +336,7 @@ contains
                  setval_c(r_xi, 0.0_r_def),                                       &
                  transpose_matrix_vector_kernel_type(r_xi, advecting_wind, curl), &
                  enforce_bc_kernel_type(r_xi) )
-    call solver_algorithm( xi, r_xi)
+    call mass_matrix_solver_alg(xi, r_xi)
     call log_event( "Computing advective wind increment...", LOG_LEVEL_INFO)
     call invoke( name = "Compute advective wind increment",    &
                  setval_c(advection(igh_u), 0.0_r_def),        &
@@ -352,7 +352,7 @@ contains
     call invoke( name = "Compute advective wind in W1",                        &
                  setval_c(r_u, 0.0_r_def),                                     &
                  w2_to_w1_projection_kernel_type(r_u, advecting_wind, qr) )
-    call solver_algorithm( u_in_w1, r_u, .false.)  
+    call mass_matrix_solver_alg( u_in_w1, r_u, .false.)  
     call log_event( "Computing advective wind increment...", LOG_LEVEL_INFO)
     call invoke( name = "Compute advective wind increment using u in W1",      &
                  strong_curl_kernel_type(xi, u_in_w1),                         &
@@ -491,7 +491,7 @@ contains
                    flux_rhs_kernel_type(rhs_f, wind, density, chi, qr), &
                    enforce_bc_kernel_type(rhs_f),                       &
                    setval_c(mass_flux, 0.0_r_def) )
-      call solver_algorithm( mass_flux, rhs_f)
+      call mass_matrix_solver_alg( mass_flux, rhs_f)
   end select
 
   nullify( mm_w2, chi, mmd_w2, u_fs )

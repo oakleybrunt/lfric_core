@@ -5,7 +5,7 @@
 !-------------------------------------------------------------------------------
 
 !> @brief Abstract base type for linear operator
-!> @detail Implements an abstract class for a linear operator which
+!> @details Implements an abstract class for a linear operator which
 !! defines an interface for the linear operator application y = A.x
 
 module linear_operator_mod
@@ -22,7 +22,7 @@ module linear_operator_mod
   end type abstract_linear_operator_type
 
   abstract interface
-     !> Asbtract interface defined for the apply method.
+     !> Abstract interface defined for the apply method.
      !> param[in] self a linear operator
      !> param[in] x a vector the linear operator is applied to
      !> param[inout] y a vector, the result.
