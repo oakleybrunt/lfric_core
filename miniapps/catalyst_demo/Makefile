@@ -79,7 +79,7 @@ document-uml: uml-documentation
 	$(Q)echo > /dev/null
 
 .PHONY: document-latex
-document-latex: DOCUMENT_DIR   = $(PROJECT_DIR)/documents
+document-latex: DOCUMENT_DIR  ?= $(PROJECT_DIR)/documents
 document-latex: SOURCE_DIR     = documentation
 document-latex: DOCUMENTS      = $(shell find $(SOURCE_DIR) -name '*.latex' -print)
 document-latex: WORKING_DIR   := $(WORKING_DIR)/latex
@@ -190,7 +190,7 @@ build: ALWAYS
 .PHONY: unit-tests
 unit-tests: export PROJECT      = $(PROJECT_NAME)
 unit-tests: export WORKING_DIR := $(WORKING_DIR)/unit-test
-unit-tests: export BIN_DIR      = $(PROJECT_DIR)/test
+unit-tests: export BIN_DIR     ?= $(PROJECT_DIR)/test
 unit-tests: export PROGRAMS     = $(PROJECT_NAME)_unit_tests
 unit-tests: export IGNORE_DEPENDENCIES       += pfunit_mod
 unit-tests: export EXTERNAL_STATIC_LIBRARIES += pfunit

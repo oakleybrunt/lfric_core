@@ -222,7 +222,7 @@
         script = rose task-run --app-key=publish_mirror
         [[[environment]]]
             SOURCE  = {{publish_destination}}
-            TARGET  = file:///$HOME/public_html/lfric-gungho-{{TARGET_OPT}}-{{publishGroup}}
+            TARGET  = file://$HOME/public_html/lfric-gungho-{{TARGET_OPT}}-{{publishGroup}}
 {%- endif %}
 
 {%- if 'mirror_results_remote' in scheduledTasks %}
@@ -362,6 +362,9 @@
                                      'sleep 30' )}}
                      """
         script = make -C $SOURCE_DIRECTORY document-latex {{verboseMake()}}
+
+        [[[environment]]]
+            DOCUMENT_DIR = $DESTINATION_DIRECTORY/documents
 
         [[[job]]]
             execution retry delays = 2*PT5S, 5*PT10S, 9*PT1M, 5*PT10M, 3*PT1H
@@ -524,6 +527,7 @@
                       """
         [[[environment]]]
             SOURCE_DIRECTORY      = $SOURCE_ROOT/{{appPathFragment}}{{projectName}}
+            BIN_DIR               = $DESTINATION_DIRECTORY/bin
             WORKING_DIR           = {{TARGET_BUILD_ROOT}}/{{label}}
             TARGET                = unit-tests
             PROFILE               = {{build}}

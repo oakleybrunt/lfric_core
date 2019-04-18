@@ -76,7 +76,7 @@ document-uml: uml-documentation
 	$(Q)echo > /dev/null
 
 .PHONY: document-latex
-document-latex: DOCUMENT_DIR   = $(PROJECT_DIR)/documents
+document-latex: DOCUMENT_DIR  ?= $(PROJECT_DIR)/documents
 document-latex: SOURCE_DIR     = documentation
 document-latex: DOCUMENTS      = $(shell find $(SOURCE_DIR) -name '*.latex' -print)
 document-latex: WORKING_DIR   := $(WORKING_DIR)/latex

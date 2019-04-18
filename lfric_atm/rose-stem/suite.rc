@@ -218,7 +218,7 @@
         script = rose task-run --app-key=publish_mirror
         [[[environment]]]
             SOURCE  = $CYLC_SUITE_SHARE_DIR/publish-{{TARGET_OPT}}
-            TARGET  = file:///$HOME/public_html/lfric-gungho-{{TARGET_OPT}}
+            TARGET  = file://$HOME/public_html/lfric-gungho-{{TARGET_OPT}}
 {%- endif %}
 
 {%- if 'mirror_results_remote' in scheduledTasks %}
@@ -356,6 +356,9 @@
 
         script = make -C $SOURCE_DIRECTORY document-latex {{verboseMake()}}
 
+        [[[environment]]]
+            DOCUMENT_DIR = $DESTINATION_DIRECTORY/documents
+
         [[[job]]]
             execution retry delays = 2*PT5S, 5*PT10S, 9*PT1M, 5*PT10M, 3*PT1H
 {%- endif %}
@@ -369,7 +372,7 @@
                      """
         script = rose task-run --app-key=publish --command-key=directory
         [[[environment]]]
-            DIRECTORY = $SOURCE_DIRECTORY/documents/*.pdf
+            DIRECTORY = $DESTINATION_DIRECTORY/documents
             DESTINATION = {{publish_destination}}/documentation/design
             FILTERS = --exclude='*' --include='*.pdf'
 
@@ -513,6 +516,7 @@
                       """
         [[[environment]]]
             WORKING_DIR           = {{TARGET_BUILD_ROOT}}/{{label}}
+            BIN_DIR               = $DESTINATION_DIRECTORY/bin
             TARGET                = unit-tests
             PROFILE               = {{build}}
             LFRIC_TARGET_PLATFORM = {{TARGET_OPT}}

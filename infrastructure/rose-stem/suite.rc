@@ -157,7 +157,7 @@
     [[[environment]]]
       REWRITE = ''
       SOURCE  = {{publish_destination}}
-      TARGET  = file:///$HOME/public_html/lfric-infrastructure-{{TARGET_OPT}}
+      TARGET  = file://$HOME/public_html/lfric-infrastructure-{{TARGET_OPT}}
 {%- endif %}
 
 {%- if 'mirror_results_remote' in scheduledTasks %}

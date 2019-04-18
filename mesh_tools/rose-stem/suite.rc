@@ -153,7 +153,7 @@
     [[[environment]]]
       REWRITE = ''
       SOURCE  = {{publish_destination}}
-      TARGET  = file:///$HOME/public_html/lfric-mesh_tools-{{PLATFORM_OPT}}
+      TARGET  = file://$HOME/public_html/lfric-mesh_tools-{{PLATFORM_OPT}}
 {%- endif %}
 
 {%- if 'mirror_results_remote' in scheduledTasks %}
