@@ -16,6 +16,7 @@ use initial_wind_config_mod, only : &
                                profile_solid_body_rotation_alt,   &
                                profile_constant_uv,               &
                                profile_constant_shear_uv,         &
+                               profile_sin_uv,                    &
                                profile_dcmip301,                  &
                                profile_deep_baroclinic_steady,    &
                                profile_deep_baroclinic_perturbed, &
@@ -251,7 +252,7 @@ function xy2longlat(x,y)
 
 end function xy2longlat
 
-!> @brief Case 1 of Nair and Lauritzen test cases but on a x-y slice of the 
+!> @brief Case 1 of Nair and Lauritzen test cases but on a x-y slice of the
 !>        biperiodic domain
 !> @param[in] x x position in biperiodic mesh
 !> @param[in] y y position in biperiodic mesh
@@ -259,7 +260,7 @@ end function xy2longlat
 !> @result u Wind field vector (u,v,w)
 function xy_NL_wind_case_1(x,y,time) result(u)
   ! This function is designed to be used on the biperiodic mesh and defines a
-  ! wind in the x-y plane. Inputs are (x,y) which are the coordinates on the 
+  ! wind in the x-y plane. Inputs are (x,y) which are the coordinates on the
   ! biperiodic mesh.
   use initial_wind_config_mod, only : wind_time_period, nl_constant
 
@@ -299,7 +300,7 @@ function yz2longlat(y,z)
 
 end function yz2longlat
 
-!> @brief Case 1 of Nair and Lauritzen test cases but on a y-z slice of the 
+!> @brief Case 1 of Nair and Lauritzen test cases but on a y-z slice of the
 !>        biperiodic domain
 !> @param[in] x x position in biperiodic mesh
 !> @param[in] y y position in biperiodic mesh
@@ -307,7 +308,7 @@ end function yz2longlat
 !> @result u Wind field vector (u,v,w)
 function yz_NL_wind_case_1(y,z,time) result(u)
   ! This function is designed to be used on the biperiodic mesh and defines a
-  ! wind in the y-z plane. Inputs are (y,z) which are the coordinates on the 
+  ! wind in the y-z plane. Inputs are (y,z) which are the coordinates on the
   ! biperiodic mesh.
   use initial_wind_config_mod, only : wind_time_period, nl_constant
 
@@ -353,6 +354,7 @@ function analytic_wind(chi, time, choice, num_options, option_arg) result(u)
   real(kind=r_def)             :: s, r_on_a
   real(kind=r_def)             :: pressure, temperature, density
   real(kind=r_def)             :: lat_pole, lon_pole
+  real(kind=r_def)             :: k_z ! vertical wavenumber
 
   if ( .not. present(option_arg) ) then
     option(:) = 0.0_r_def
@@ -364,12 +366,12 @@ function analytic_wind(chi, time, choice, num_options, option_arg) result(u)
 
     case ( profile_none )
       u(:) = 0.0_r_def
-    case ( profile_solid_body_rotation,                           & 
-           profile_dcmip301)      
+    case ( profile_solid_body_rotation,                           &
+           profile_dcmip301)
       s = 0.5_r_def*(chi(3)/scaled_radius + 1.0_r_def)
       ! No height variation for the dcmip test
       if ( choice == profile_dcmip301) then
-        s = 1.0_r_def 
+        s = 1.0_r_def
       else
         s = 0.5_r_def * (chi(3) / scaled_radius + 1.0_r_def)
       endif
@@ -381,7 +383,7 @@ function analytic_wind(chi, time, choice, num_options, option_arg) result(u)
               - cos(lat_pole) * cos(chi(1)-lon_pole) * sin(chi(2)) )
       u(2) = s * option(1) * cos(lat_pole) * sin(chi(1)-lon_pole)
       u(3) = 0.0_r_def
-    case ( profile_solid_body_rotation_alt)      
+    case ( profile_solid_body_rotation_alt)
       ! Rotated pole version of equation (74) of Staniforth & White (2007)
       ! with m=1, A=0, n therefore arbitrary.
       ! In shallow geometry the r/a factor is replaced by 1 (see section 6
@@ -405,12 +407,17 @@ function analytic_wind(chi, time, choice, num_options, option_arg) result(u)
     case ( profile_constant_shear_uv )
       u(1) = option(1)*chi(3)/option(3)
       u(2) = option(2)*chi(3)/option(3)
-      u(3) = 0.0_r_def 
+      u(3) = 0.0_r_def
+    case ( profile_sin_uv )
+      k_z = 2.0_r_def*pi/option(3)
+      u(1) = option(1)*sin(chi(3)*k_z)
+      u(2) = option(2)*sin(chi(3)*k_z)
+      u(3) = 0.0_r_def
     case ( profile_deep_baroclinic_steady, &
            profile_deep_baroclinic_perturbed)
       call deep_baroclinic_wave(chi(1), chi(2), chi(3)-scaled_radius, &
                                 pressure, temperature, density, &
-                                u(1), u(2), u(3)) 
+                                u(1), u(2), u(3))
     case ( profile_vortex )
       u = vortex_wind(chi(2),chi(1),chi(3))
     case ( profile_NL_case_1 )

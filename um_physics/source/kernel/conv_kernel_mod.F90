@@ -9,7 +9,7 @@ module conv_kernel_mod
 
   use argument_mod,           only : arg_type,                       &
                                      GH_FIELD, GH_READ, GH_WRITE,    &
-                                     CELLS
+                                     CELLS, ANY_SPACE_1
   use constants_mod,          only : i_def, i_um, r_def, r_um
   use fs_continuity_mod,      only : W3, Wtheta
   use kernel_mod,             only : kernel_type
@@ -25,13 +25,14 @@ module conv_kernel_mod
   !>
   type, public, extends(kernel_type) :: conv_kernel_type
     private
-    type(arg_type) :: meta_args(6) = (/                &
+    type(arg_type) :: meta_args(7) = (/                &
          arg_type(GH_FIELD, GH_WRITE, WTHETA),         &
          arg_type(GH_FIELD, GH_WRITE, WTHETA),         &
          arg_type(GH_FIELD, GH_READ,  WTHETA),         &
          arg_type(GH_FIELD, GH_READ,  WTHETA),         &
          arg_type(GH_FIELD, GH_READ,  WTHETA),         &
-         arg_type(GH_FIELD, GH_READ,  W3)              &
+         arg_type(GH_FIELD, GH_READ,  W3),             &
+         arg_type(GH_FIELD, GH_WRITE, ANY_SPACE_1)     &
         /)
     integer :: iterates_over = CELLS
   contains
@@ -67,25 +68,33 @@ contains
   !! @param[in]  m_v          Vapour mixing ration after advection
   !! @param[in]  exner_in_wth Exner pressure field in wth space
   !! @param[in]  exner_in_w3  Exner pressure field in density space
+  !! @param[out] conv_rain_2d Convective rain from twod fields
   !! @param[in]  ndf_wth      Number of degrees of freedom per cell for potential temperature space
   !! @param[in]  undf_wth     Number unique of degrees of freedom  for potential temperature space
   !! @param[in]  map_wth      Dofmap for the cell at the base of the column for potential temperature space
   !! @param[in]  ndf_w3       Number of degrees of freedom per cell for density space
   !! @param[in]  undf_w3      Number unique of degrees of freedom  for density space
   !! @param[in]  map_w3       Dofmap for the cell at the base of the column for density space
-  subroutine conv_code(nlayers,      &
+  !! @param[in]  ndf_2d       Number of degrees of freedom per cell for 2D fields
+  !! @param[in]  undf_2d      Number of unique of degrees of freedom for 2D fields
+  !! @param[in]  map_2d       Dofmap for the cell at the base of the column for 2D fields
+subroutine conv_code(nlayers,      &
                        dt_conv,      &
                        dmv_conv,     &
                        theta_star,   &
                        m_v,          &
                        exner_in_wth, &
                        exner_in_w3,  &
+                       conv_rain_2d, &
                        ndf_wth,      &
                        undf_wth,     &
                        map_wth,      &
                        ndf_w3,       &
                        undf_w3,      &
-                       map_w3)
+                       map_w3,       &
+                       ndf_2d,       &
+                       undf_2d,      &
+                       map_2d)
 
     !---------------------------------------
     ! UM modules
@@ -97,11 +106,12 @@ contains
     implicit none
     ! Arguments
     integer(kind=i_def), intent(in) :: nlayers
-    integer(kind=i_def), intent(in) :: ndf_wth, ndf_w3
-    integer(kind=i_def), intent(in) :: undf_wth, undf_w3
+    integer(kind=i_def), intent(in) :: ndf_wth, ndf_w3, ndf_2d
+    integer(kind=i_def), intent(in) :: undf_wth, undf_w3, undf_2d
 
     integer(kind=i_def), dimension(ndf_wth), intent(in) :: map_wth
     integer(kind=i_def), dimension(ndf_w3),  intent(in) :: map_w3
+    integer(kind=i_def), dimension(ndf_w3),  intent(in) :: map_2d
 
     real(kind=r_def), dimension(undf_wth), intent(out)  :: dt_conv, dmv_conv
 
@@ -110,6 +120,8 @@ contains
                                                            exner_in_wth
 
     real(kind=r_def), dimension(undf_w3),  intent(in)   :: exner_in_w3
+
+    real(kind=r_def), dimension(undf_2d),  intent(out)  :: conv_rain_2d
 
     ! Local variables for the kernel
     integer(kind=i_def) :: k
@@ -161,6 +173,9 @@ contains
     ! Set lowest level value
     dt_conv(map_wth(1)) = dt_conv(map_wth(1) + 1)
     dmv_conv(map_wth(1)) = dmv_conv(map_wth(1) + 1)
+
+    ! Copy conv_rain
+    conv_rain_2d(map_2d(1))  = conv_rain(1,1)
 
   end subroutine conv_code
 

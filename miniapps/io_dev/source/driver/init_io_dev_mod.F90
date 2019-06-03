@@ -27,11 +27,12 @@ module init_io_dev_mod
 
   contains
 
-  subroutine init_io_dev(mesh_id, chi, density, theta, wind)
-
+  subroutine init_io_dev(mesh_id, twod_mesh_id, chi, density, theta, wind)
+    
     implicit none
 
     integer(i_def), intent(in)               :: mesh_id
+    integer(i_def), intent(in)               :: twod_mesh_id
     type( field_type ), intent(inout)        :: chi(:)
     type( field_type ), intent(inout)        :: density
     type( field_type ), intent(inout)        :: theta
@@ -62,7 +63,7 @@ module init_io_dev_mod
     ! Create runtime_constants object. This in turn creates various things
     ! needed by the timestepping algorithms such as mass matrix operators, mass
     ! matrix diagonal fields and the geopotential field
-    call create_runtime_constants(mesh_id, chi)
+    call create_runtime_constants(mesh_id, twod_mesh_id, chi)
 
     ! Initialise the test field to a fixed value
     call io_dev_init_fields_alg(density, theta, wind)

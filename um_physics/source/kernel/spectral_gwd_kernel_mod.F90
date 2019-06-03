@@ -1,0 +1,253 @@
+!-----------------------------------------------------------------------------
+! (c) Crown copyright 2019 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-----------------------------------------------------------------------------
+!> @brief Interface to the UM spectral gravity wave drag scheme
+!>
+!>
+module spectral_gwd_kernel_mod
+
+  use argument_mod,             only: arg_type,                        &
+                                      GH_FIELD, GH_READ, GH_READWRITE, &
+                                      CELLS, ANY_SPACE_1
+  use constants_mod,            only: r_def, i_def, r_um
+  use fs_continuity_mod,        only: W3, Wtheta
+  use kernel_mod,               only: kernel_type
+  use spectral_gwd_config_mod,  only: ussp_heating
+
+  implicit none
+
+  !---------------------------------------------------------------------------
+  ! Public types
+  !---------------------------------------------------------------------------
+  !> Metadata describing the kernel to PSyclone
+  !>
+  type, public, extends(kernel_type) :: spectral_gwd_kernel_type
+    private
+    type(arg_type) :: meta_args(12) = (/                  &
+        arg_type(GH_FIELD,   GH_READWRITE, W3),           & ! du_spectral_gwd, u wind increment
+        arg_type(GH_FIELD,   GH_READWRITE, W3),           & ! dv_spectral_gwd, v wind increment
+        arg_type(GH_FIELD,   GH_READWRITE, Wtheta),       & ! dtemp_spectral_gwd, temperature increment
+        arg_type(GH_FIELD,   GH_READ,      W3),           & ! u1_in_w3
+        arg_type(GH_FIELD,   GH_READ,      W3),           & ! u2_in_w3
+        arg_type(GH_FIELD,   GH_READ,      W3),           & ! wetrho_in_w3, wet density in w3
+        arg_type(GH_FIELD,   GH_READ,      Wtheta),       & ! exner_in_wth
+        arg_type(GH_FIELD,   GH_READ,      Wtheta),       & ! theta, theta in wtheta
+        arg_type(GH_FIELD,   GH_READ,      W3),           & ! height_w3
+        arg_type(GH_FIELD,   GH_READ,      Wtheta),       & ! height_wtheta
+        arg_type(GH_FIELD,   GH_READ,      ANY_SPACE_1),  & ! totalppn
+        arg_type(GH_FIELD,   GH_READ,      ANY_SPACE_1)   & ! latitude
+        /)
+    integer :: iterates_over = CELLS
+  contains
+    procedure, nopass :: spectral_gwd_code
+  end type
+
+  !---------------------------------------------------------------------------
+  ! Constructors
+  !---------------------------------------------------------------------------
+  ! Default Constructor
+
+  interface spectral_gwd_kernel_type
+    module procedure spectral_gwd_kernel_constructor
+  end interface
+
+  !---------------------------------------------------------------------------
+  ! Contained functions/subroutines
+  !---------------------------------------------------------------------------
+  public spectral_gwd_code
+
+contains
+
+type(spectral_gwd_kernel_type) &
+function spectral_gwd_kernel_constructor() result(self)
+  implicit none
+  return
+end function spectral_gwd_kernel_constructor
+!> @brief Call the UM spectral gravity wave drag scheme
+!> @details This code calls the UM USSP spectral gravity wave drag scheme, which
+!>          calculates the zonal and meridional winds and temperature increments
+!>          from parametrized non-orographic gravity wave drag.
+!! @param[in]     nlayers             Integer the number of layers
+!! @param[in,out] du_spectral_gwd     'Zonal' wind increment from spectral gravity wave drag
+!! @param[in,out] dv_spectral_gwd     'Meridional' wind increment from spectral gravity wave drag
+!! @param[in,out] dtemp_spectral_gwd  Theta increment from spectral gravity wave drag
+!! @param[in]     u1_in_w3            'Zonal' wind in density space
+!! @param[in]     u2_in_w3            'Meridional' wind in density space
+!! @param[in]     wetrho_in_w3        Wet density in density space
+!! @param[in]     exner               Exner pressure in density space
+!! @param[in]     theta_in_wth        Theta in density space
+!! @param[in]     height_w3           Height of theta space levels above surface
+!! @param[in]     height_wtheta       Height of density space levels above surface
+!! @param[in]     totalppn_2d         Total precipitation from twod fields
+!! @param[in]     latitude            Latitude field
+!! @param[in]     ndf_w3              Number of degrees of freedom per cell for density space
+!! @param[in]     undf_w3             Number unique of degrees of freedom  for density space
+!! @param[in]     map_w3              Dofmap for the cell at the base of the column for density space
+!! @param[in]     ndf_wth             Number of degrees of freedom per cell for potential temperature space
+!! @param[in]     undf_wth            Number unique of degrees of freedom  for potential temperature space
+!! @param[in]     map_wth             Dofmap for the cell at the base of the column for potential temperature space
+!! @param[in]     ndf_2d              Number of degrees of freedom per cell for 2D fields
+!! @param[in]     undf_2d             Number unique of degrees of freedom  for 2D fields
+!! @param[in]     map_2d              Dofmap for the cell at the base of the column for 2D fields
+!>
+  subroutine spectral_gwd_code(nlayers, du_spectral_gwd, dv_spectral_gwd,       &
+                           dtemp_spectral_gwd, u1_in_w3, u2_in_w3,              &
+                           wetrho_in_w3, exner_in_wth, theta_in_wth,            &
+                           height_w3, height_wth, totalppn_2d, latitude,        &
+                           ndf_w3, undf_w3, map_w3, ndf_wth, undf_wth, map_wth, &
+                           ndf_2d, undf_2d, map_2d)
+
+    use constants_mod, ONLY: r_def, i_def, r_um, i_um
+
+    use log_mod,       only: log_event, LOG_LEVEL_ERROR, LOG_LEVEL_INFO
+
+    !---------------------------------------
+    ! UM modules
+    !---------------------------------------
+
+    use nlsizes_namelist_mod,       only: row_length, rows, model_levels,      &
+                                          global_row_length
+
+    use level_heights_mod,          only: r_rho_levels, r_theta_levels,        &
+                                          eta_theta_levels
+
+    use planet_constants_mod,       only: p_zero, kappa, planet_radius
+    use timestep_mod,               only: timestep
+    use gw_ussp_mod,                only: gw_ussp
+
+    implicit none
+
+    ! Arguments
+
+    integer, intent(in) :: nlayers
+    integer, intent(in) :: ndf_w3, ndf_wth, ndf_2d
+    integer, intent(in) :: undf_w3, undf_wth, undf_2d
+    integer, intent(in), dimension(ndf_w3)  :: map_w3
+    integer, intent(in), dimension(ndf_wth) :: map_wth
+    integer, intent(in), dimension(ndf_2d)  :: map_2d
+
+    real(kind=r_def), intent(inout), dimension(undf_w3)  :: du_spectral_gwd
+    real(kind=r_def), intent(inout), dimension(undf_w3)  :: dv_spectral_gwd
+    real(kind=r_def), intent(inout), dimension(undf_wth) :: dtemp_spectral_gwd
+    real(kind=r_def), intent(in), dimension(undf_w3)     :: u1_in_w3
+    real(kind=r_def), intent(in), dimension(undf_w3)     :: u2_in_w3
+    real(kind=r_def), intent(in), dimension(undf_w3)     :: wetrho_in_w3
+    real(kind=r_def), intent(in), dimension(undf_wth)    :: exner_in_wth
+    real(kind=r_def), intent(in), dimension(undf_wth)    :: theta_in_wth
+    real(kind=r_def), intent(in), dimension(undf_w3)     :: height_w3
+    real(kind=r_def), intent(in), dimension(undf_wth)    :: height_wth
+    real(kind=r_def), intent(in), dimension(undf_2d)     :: totalppn_2d
+    real(kind=r_def), intent(in), dimension(undf_2d)     :: latitude
+
+    ! Local variables for the kernel
+    real(r_um), dimension(row_length,rows,0:nlayers) :: p_theta_levels ! Pressure at theta levels (but 0 at top)
+
+
+    real(r_um), dimension(row_length,rows) :: totalppn, & ! total percipitation
+                                              sin_theta_latitude
+
+    ! Local variables for the kernel
+    real(r_um), dimension(row_length,rows,nlayers) ::   u_on_p, v_on_p,      & ! u and v at p points
+                                                        theta,               &
+                                                        dtemp_on_t,          & ! temperature increment
+                                                        wetrho_rsq,          & ! wetrho*r*r
+                                                        du_on_p, dv_on_p       ! wind increments
+    ! Local variables that are diagnostics
+    real(r_um), dimension(row_length,rows,nlayers) :: gwspec_eflux, &
+                                                      gwspec_sflux, &
+                                                      gwspec_wflux, &
+                                                      gwspec_nflux, &
+                                                      gwspec_ewacc, &
+                                                      gwspec_nsacc
+
+    integer(i_um) :: k
+
+    integer(i_um), parameter :: n_proc = 1, n_procy = 1, proc_row_group = 1
+
+    logical :: at_extremity(4) = .false., gwspec_eflux_on = .false.,   &
+               gwspec_eflux_p_on = .false., gwspec_sflux_on = .false., &
+               gwspec_wflux_on = .false., gwspec_wflux_p_on = .false., &
+               gwspec_nflux_on = .false., gwspec_ewacc_on = .false.,   &
+               gwspec_ewacc_p_on = .false., gwspec_nsacc_on = .false.
+
+    !-----------------------------------------------------------------------
+    ! Initialisation of prognostic variables and arrays
+    !-----------------------------------------------------------------------
+    ! initialise some variables (and diagnostics) to zero
+
+    dtemp_on_t(:,:,:) = 0.0_r_um
+    du_on_p(:,:,:) = 0.0_r_um
+    dv_on_p(:,:,:) = 0.0_r_um
+
+    gwspec_eflux(:,:,:) = 0.0_r_um
+    gwspec_sflux(:,:,:) = 0.0_r_um
+    gwspec_wflux(:,:,:) = 0.0_r_um
+    gwspec_nflux(:,:,:) = 0.0_r_um
+    gwspec_ewacc(:,:,:) = 0.0_r_um
+    gwspec_nsacc(:,:,:) = 0.0_r_um
+
+    ! This assumes that map_wth(1) points to level 0
+    ! and map_w3(1) points to level 1
+
+     do k = 0, nlayers-1
+
+      ! Pressure on layer boundaries (note, top layer is set to zero below)
+      p_theta_levels(1,1,k) = real(p_zero*(exner_in_wth(map_wth(1) + k))       &
+                                      **(1.0_r_um/kappa), r_um)
+    end do   ! k
+
+    do k = 1, nlayers
+
+      u_on_p(1,1,k) = real(u1_in_w3(map_w3(1) + k-1), r_um)
+      v_on_p(1,1,k) = real(u2_in_w3(map_w3(1) + k-1), r_um)
+
+      theta(1,1,k) = real(theta_in_wth(map_wth(1) + k), r_um)
+
+      r_rho_levels(1,1,k)   = real(height_w3(map_w3(1) + k-1) + planet_radius, r_um)
+      r_theta_levels(1,1,k) = real(height_wth(map_wth(1) + k) + planet_radius, r_um)
+
+      wetrho_rsq(1,1,k) = real(wetrho_in_w3(map_w3(1) + k-1)*(r_rho_levels(1,1,k)**2), r_um)
+
+    end do   ! k
+
+    p_theta_levels(1,1,nlayers) = 0.0_r_um
+
+    r_theta_levels(1,1,0) = real(height_wth(map_wth(1) + 0) + planet_radius, r_um)
+
+    totalppn(1,1) = real(totalppn_2d(map_2d(1)), r_um)
+    sin_theta_latitude(1,1) = real(sin( latitude(map_2d(1)) ) ,r_um)
+    ! As per atmos_physics 1 code
+
+    eta_theta_levels(:) = (r_theta_levels(1,1,:)-r_theta_levels(1,1,0))               &
+                          /(r_theta_levels(1,1,nlayers)-planet_radius)
+
+    ! call USSP code from UM
+    call gw_ussp(nlayers, rows,row_length,                                            &
+                global_row_length,n_proc, n_procy, proc_row_group, at_extremity,      &
+                r_rho_levels, r_theta_levels, p_theta_levels,                         &
+                sin_theta_latitude,                                                   &
+                theta, wetrho_rsq, u_on_p, v_on_p, totalppn, timestep,                &
+                du_on_p, dv_on_p, dtemp_on_t,                                         &
+                ussp_heating,                                                         &
+                gwspec_eflux,gwspec_sflux,gwspec_wflux,gwspec_nflux,                  &
+                gwspec_ewacc,gwspec_nsacc,                                            &
+                gwspec_eflux_on, gwspec_eflux_p_on, gwspec_sflux_on,                  &
+                gwspec_wflux_on, gwspec_wflux_p_on, gwspec_nflux_on,                  &
+                gwspec_ewacc_on, gwspec_ewacc_p_on, gwspec_nsacc_on)
+
+    do k = 1, nlayers
+
+      du_spectral_gwd(map_w3(1) + k-1) = real(du_on_p(1,1,k), r_def)
+      dv_spectral_gwd(map_w3(1) + k-1) = real(dv_on_p(1,1,k), r_def)
+      dtemp_spectral_gwd(map_wth(1) + k) = real(dtemp_on_t(1,1,k), r_def)
+
+    end do   ! k
+
+    dtemp_spectral_gwd(map_wth(1) + 0) = real(dtemp_on_t(1,1,1), r_def)
+
+  end subroutine spectral_gwd_code
+
+
+end module spectral_gwd_kernel_mod

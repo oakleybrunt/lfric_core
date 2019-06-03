@@ -50,7 +50,8 @@ contains
                                          dynamics_none,       &
                                          land_surface_none,   &
                                          microphysics_none,   &
-                                         radiation_none
+                                         radiation_none,      &
+                                         spectral_gwd_none
 
     implicit none
 
@@ -75,6 +76,7 @@ contains
              convection = convection_none,         &
              dynamics = dynamics_none,             &
              microphysics = microphysics_none,     &
+             spectral_gwd = spectral_gwd_none,     &
              land_surface = land_surface_none,     &
              radiation = radiation_none )
 
@@ -156,7 +158,7 @@ contains
     this%answer_cfbulk(:) = 0.0_r_def
     this%answer_rh_crit_wth(:) = (/ 0.96_r_def, 0.96_r_def, 0.9_r_def, 0.8_r_def /)
 
-    ! Make up initial wrong fields    
+    ! Make up initial wrong fields
     this%cfarea(:) = -9.0_r_def
     this%cfliq(:)  = -9.0_r_def
     this%cfice(:)  = -9.0_r_def
@@ -169,7 +171,7 @@ contains
                              this%cfliq(:),       &
                              this%cfbulk(:),      &
                              this%rh_crit_wth(:), &
-                             ndf_wth,             & 
+                             ndf_wth,             &
                              undf_wth,            &
                              map_wth)
 

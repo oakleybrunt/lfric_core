@@ -29,9 +29,10 @@ contains
   !>           as documented in UMDP41
   !> @param[in,out] physics_incs   Group of physics increments
   !> @param[in,out] derived_fields Group of derived fields
+  !> @param[in,out] twod_fields    Group of twod fields
   !> @param[in]     exner          Exner pressure field in density (w3) space
   !> @param[in]     mr             Mixing ratios
-  subroutine conv_alg_step(physics_incs, derived_fields, exner, mr)
+  subroutine conv_alg_step(physics_incs, derived_fields, twod_fields, exner, mr)
 
     use conv_kernel_mod, only: conv_kernel_type
 
@@ -39,6 +40,7 @@ contains
 
     type( field_collection_type ), intent(inout) :: physics_incs
     type( field_collection_type ), intent(inout) :: derived_fields
+    type( field_collection_type ), intent(inout) :: twod_fields
     type( field_type ), intent( in )             :: exner, mr(nummr)
 
     ! Temporary fields unpacked from collections
@@ -46,6 +48,7 @@ contains
     type( field_type ), pointer :: theta_star => null()
     type( field_type ), pointer :: dt_conv => null()
     type( field_type ), pointer :: dmv_conv => null()
+    type( field_type ), pointer :: conv_rain => null()
 
     ! Unpack fields
     exner_in_wth => derived_fields%get_field('exner_in_wth')
@@ -54,8 +57,10 @@ contains
     dt_conv => physics_incs%get_field('dt_conv')
     dmv_conv => physics_incs%get_field('dmv_conv')
 
+    conv_rain => twod_fields%get_field('conv_rain')
+
     call invoke(conv_kernel_type(dt_conv, dmv_conv, theta_star, mr(imr_v), &
-                                 exner_in_wth, exner) )
+                                 exner_in_wth, exner, conv_rain) )
 
     if (write_diag .and. use_xios_io) then
       call dt_conv%write_field('dt_conv')

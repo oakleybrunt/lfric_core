@@ -9,7 +9,7 @@ module mphys_kernel_mod
 
 use argument_mod, only: arg_type,                     &
                         GH_FIELD, GH_READ, GH_WRITE,  &
-                        CELLS
+                        CELLS, ANY_SPACE_1
 use fs_continuity_mod, only: WTHETA, W3
 
 use kernel_mod,   only: kernel_type
@@ -23,7 +23,7 @@ implicit none
 
 type, public, extends(kernel_type) :: mphys_kernel_type
   private
-  type(arg_type) :: meta_args(23) = (/                                 &
+  type(arg_type) :: meta_args(25) = (/                                 &
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       &
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       &
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       &
@@ -46,6 +46,8 @@ type, public, extends(kernel_type) :: mphys_kernel_type
        arg_type(GH_FIELD,   GH_WRITE,   WTHETA),                       &
        arg_type(GH_FIELD,   GH_WRITE,   WTHETA),                       &
        arg_type(GH_FIELD,   GH_WRITE,   WTHETA),                       &
+       arg_type(GH_FIELD,   GH_WRITE,   ANY_SPACE_1),                  & ! ls_rain
+       arg_type(GH_FIELD,   GH_WRITE,   ANY_SPACE_1),                  & ! ls_snow
        arg_type(GH_FIELD,   GH_WRITE,   WTHETA)                        &
        /)
    integer :: iterates_over = CELLS
@@ -93,13 +95,18 @@ end function mphys_kernel_constructor
 !! @param[out] dmi_wth increment to ice cloud mass mixing ratio
 !! @param[out] dmr_wth increment to rain mass mixing ratio
 !! @param[out] dmg_wth increment to graupel mass mixing ratio
-!! @param[out] theta_inc increment to theta 
+!! @param[out] ls_rain_2d large scale rain from twod_fields
+!! @param[out] ls_snow_2d large scale snow from twod_fields
+!! @param[out] theta_inc increment to theta
 !! @param[in] ndf_wth Number of degrees of freedom per cell for potential temperature space
 !! @param[in] undf_wth Number unique of degrees of freedom  for potential temperature space
 !! @param[in] map_wth Dofmap for the cell at the base of the column for potential temperature space
 !! @param[in] ndf_w3 Number of degrees of freedom per cell for density space
 !! @param[in] undf_w3 Number unique of degrees of freedom  for density space
 !! @param[in] map_w3 Dofmap for the cell at the base of the column for density space
+!! @param[in] ndf_2d Number of degrees of freedom per cell for 2D fields
+!! @param[in] undf_2d Number unique of degrees of freedom  for 2D fields
+!! @param[in] map_2d  Dofmap for the cell at the base of the column for 2D fields
 subroutine mphys_code( nlayers,                     &
                        mv_wth,   ml_wth,   mi_wth,  &
                        mr_wth,   mg_wth,            &
@@ -110,9 +117,11 @@ subroutine mphys_code( nlayers,                     &
                        height_w3, height_wth,       &
                        dmv_wth,  dml_wth,  dmi_wth, &
                        dmr_wth,  dmg_wth,           &
+                       ls_rain_2d, ls_snow_2d,      &
                        theta_inc,                   &
                        ndf_wth, undf_wth, map_wth,  &
-                       ndf_w3,  undf_w3,  map_w3 )
+                       ndf_w3,  undf_w3,  map_w3,   &
+                       ndf_2d, undf_2d, map_2d)
 
     use constants_mod, only: r_def, i_def, r_um, i_um
 
@@ -142,7 +151,7 @@ subroutine mphys_code( nlayers,                     &
     use planet_constants_mod,       only: p_zero, kappa, planet_radius
     use arcl_mod,                   only: npd_arcl_compnts
     use def_easyaerosol,            only: t_easyaerosol_cdnc
-    
+
     use mphys_turb_gen_mixed_phase_mod, only: mphys_turb_gen_mixed_phase
 
     implicit none
@@ -150,8 +159,8 @@ subroutine mphys_code( nlayers,                     &
     ! Arguments
 
     integer(kind=i_def), intent(in) :: nlayers
-    integer(kind=i_def), intent(in) :: ndf_wth, ndf_w3
-    integer(kind=i_def), intent(in) :: undf_wth, undf_w3
+    integer(kind=i_def), intent(in) :: ndf_wth, ndf_w3, ndf_2d
+    integer(kind=i_def), intent(in) :: undf_wth, undf_w3, undf_2d
 
     real(kind=r_def), intent(in),  dimension(undf_wth) :: mv_wth
     real(kind=r_def), intent(in),  dimension(undf_wth) :: ml_wth
@@ -164,7 +173,7 @@ subroutine mphys_code( nlayers,                     &
     real(kind=r_def), intent(in),  dimension(undf_w3)  :: u1_in_w3
     real(kind=r_def), intent(in),  dimension(undf_w3)  :: u2_in_w3
     real(kind=r_def), intent(in),  dimension(undf_wth) :: w_phys
-    real(kind=r_def), intent(in),  dimension(undf_wth) :: theta_in_wth 
+    real(kind=r_def), intent(in),  dimension(undf_wth) :: theta_in_wth
     real(kind=r_def), intent(in),  dimension(undf_w3)  :: exner_in_w3
     real(kind=r_def), intent(in),  dimension(undf_wth) :: exner_in_wth
     real(kind=r_def), intent(in),  dimension(undf_w3)  :: wetrho_in_w3
@@ -175,10 +184,13 @@ subroutine mphys_code( nlayers,                     &
     real(kind=r_def), intent(out), dimension(undf_wth) :: dmi_wth
     real(kind=r_def), intent(out), dimension(undf_wth) :: dmr_wth
     real(kind=r_def), intent(out), dimension(undf_wth) :: dmg_wth
+    real(kind=r_def), intent(out), dimension(undf_2d)  :: ls_rain_2d
+    real(kind=r_def), intent(out), dimension(undf_2d)  :: ls_snow_2d
     real(kind=r_def), intent(out), dimension(undf_wth) :: theta_inc
 
     integer(kind=i_def), intent(in), dimension(ndf_wth) :: map_wth
     integer(kind=i_def), intent(in), dimension(ndf_w3)  :: map_w3
+    integer(kind=i_def), intent(in), dimension(ndf_2d)  :: map_2d
 
     ! Local variables for the kernel
 
@@ -218,7 +230,7 @@ subroutine mphys_code( nlayers,                     &
     integer(i_um) :: i,j,k
 
     integer(i_um), dimension(npd_arcl_compnts) :: i_arcl_compnts
-  
+
     integer(i_um), dimension(land_field) :: land_index
 
     real(r_um), dimension(land_field) :: ls_rainfrac
@@ -286,7 +298,7 @@ subroutine mphys_code( nlayers,                     &
     land_sea_mask(1,1) = .false.
 
     l_cosp_lsp = .false.
- 
+
     sea_salt_film(1,1,1) = 0.0_r_um
     sea_salt_jet(1,1,1)  = 0.0_r_um
     ukca_cdnc(1,1,1)     = 0.0_r_um
@@ -304,7 +316,7 @@ subroutine mphys_code( nlayers,                     &
     !-----------------------------------------------------------------------
     ! Initialisation of prognostic variables and arrays
     !-----------------------------------------------------------------------
-    
+
     ! This assumes that map_wth(1) points to level 0
     ! and map_w3(1) points to level 1
 
@@ -350,7 +362,7 @@ subroutine mphys_code( nlayers,                     &
           p_rho_minus_one(i,j,k) = p_zero*(exner_in_w3(map_w3(1) + k))       &
                                           **(1.0_r_um/kappa)
         end do
-        p_rho_minus_one(i,j,model_levels) = 0.0_r_um 
+        p_rho_minus_one(i,j,model_levels) = 0.0_r_um
         ! As per atmos_physics 1 code
       end do ! i
     end do   ! j
@@ -507,7 +519,7 @@ end if
 
   end do ! k (model_levels)
 
-  ! Copy compulsory prognostic variables from level 1 to level 0 
+  ! Copy compulsory prognostic variables from level 1 to level 0
   !  (as done in the UM)
   theta_inc(map_wth(1) + 0) = theta_inc(map_wth(1) + 1)
   dmv_wth(map_wth(1) + 0)   = dmv_wth(map_wth(1) + 1)
@@ -554,6 +566,10 @@ end if
     dcff_wth(map_wth(1) + 0) = dcff_wth(map_wth(1) + 1)
 
   end if ! i_cld_vn
+
+  ! Copy ls_rain and ls_snow
+  ls_rain_2d(map_2d(1))  = ls_rain(1,1)
+  ls_snow_2d(map_2d(1))  = ls_snow(1,1)
 
   deallocate( qgraup_work )
   deallocate( qrain_work  )

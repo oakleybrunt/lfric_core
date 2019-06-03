@@ -23,16 +23,16 @@ module init_cloud_twod_fields_alg_mod
 
 contains
 
-  !> @brief Prepares the cloud and twod fields and critical relative humidity and initialises 
+  !> @brief Prepares the cloud and twod fields and critical relative humidity and initialises
   !>        to starting values or from a restart file
-  !> @details An algorithm for initialising cloud fields (liquid, ice and bulk cloud 
+  !> @details An algorithm for initialising cloud fields (liquid, ice and bulk cloud
   !>          fraction), critical relative humidity and twod fields for all solvers.
   !>          The cloud and twod fields need to be initialised so that they have a value
-  !>          when passed on to the physics at the first time step, in case no 
+  !>          when passed on to the physics at the first time step, in case no
   !>          restart file is used. Also, rh_crit is set to the namelist value here.
-  !>          In case a restart/checkpoint file is used, clouds, twod fields 
+  !>          In case a restart/checkpoint file is used, clouds, twod fields
   !>          and rh_crit will be initialised to the values in this restart/checkpoint file
-  !> @param[in,out] cloud_fields Cloud related fields 
+  !> @param[in,out] cloud_fields Cloud related fields
   !> @param[in,out] twod_fields  Two dimensional fields
   subroutine init_cloud_twod_fields_alg(cloud_fields, twod_fields)
 
@@ -47,12 +47,18 @@ contains
     type( field_type ), pointer :: tstar_twod  => null()
     type( field_type ), pointer :: zh_twod  => null()
     type( field_type ), pointer :: z0msea_twod  => null()
+    type( field_type ), pointer :: conv_rain_twod  => null()
+    type( field_type ), pointer :: ls_rain_twod  => null()
+    type( field_type ), pointer :: ls_snow_twod  => null()
 
     !=== Initialise twod fields ==================================!
 
     tstar_twod => twod_fields%get_field('tstar')
     zh_twod => twod_fields%get_field('zh')
     z0msea_twod => twod_fields%get_field('z0msea')
+    conv_rain_twod => twod_fields%get_field('conv_rain')
+    ls_rain_twod => twod_fields%get_field('ls_rain')
+    ls_snow_twod => twod_fields%get_field('ls_snow')
 
     call log_event( "Gungho: Initialising cloud fields", LOG_LEVEL_INFO )
 
@@ -65,6 +71,9 @@ contains
     call invoke( setval_c(tstar_twod, 300.0_r_def))
     call invoke( setval_c(zh_twod, 1000.0_r_def))
     call invoke( setval_c(z0msea_twod, 1.5e-4_r_def))
+    call invoke( setval_c(conv_rain_twod, 0.0_r_def))
+    call invoke( setval_c(ls_rain_twod, 0.0_r_def))
+    call invoke( setval_c(ls_snow_twod, 0.0_r_def))
 
     call log_event( "Gungho: Initialised twod fields", LOG_LEVEL_INFO )
 

@@ -52,6 +52,8 @@ module initial_u_kernel_mod_test
   real(r_def), parameter :: sbr_angle_lon  = 0.0_r_def
   real(r_def), parameter :: wind_time_period = 10.0_r_def
   real(r_def), parameter :: nl_constant = 1.0_r_def
+  real(r_def), parameter :: shear = 1.0_r_def
+  real(r_def), parameter :: wavelength = 1.0_r_def
 
 contains
 
@@ -100,6 +102,8 @@ contains
              sbr_angle_lon=sbr_angle_lon, &
              smp_init_wind=.false.,       &
              u0=u0, v0=v0,                &
+             shear=shear,                 &
+             wavelength=wavelength,       &
              wind_time_period=wind_time_period )
 
     ! Create top level mesh collection

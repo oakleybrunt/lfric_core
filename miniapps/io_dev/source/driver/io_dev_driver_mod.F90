@@ -141,7 +141,7 @@ contains
   !-----------------------------------------------------------------------------
 
   ! Create and initialise fields
-  call init_io_dev(mesh_id, chi, density, theta, wind)
+  call init_io_dev(mesh_id, twod_mesh_id, chi, density, theta, wind)
 
 
   ! Full global meshes no longer required, so reclaim

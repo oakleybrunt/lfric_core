@@ -148,7 +148,7 @@ module gungho_driver_mod
   type( field_type ) :: mr(nummr)
 
   ! Diagnostic fields
-  type( field_type ) :: xi  
+  type( field_type ) :: xi
   ! Moist dynamics
   type( field_type ) :: moist_dyn(num_moist_factors)
 
@@ -268,7 +268,7 @@ contains
     ! Create runtime_constants object. This in turn creates various things
     ! needed by the timestepping algorithms such as mass matrix operators, mass
     ! matrix diagonal fields and the geopotential field
-    call create_runtime_constants(mesh_id, chi)
+    call create_runtime_constants(mesh_id, twod_mesh_id, chi)
 
     ! Create gungho prognostics and auxilliary (diagnostic) fields
     call create_gungho_prognostics( mesh_id, prognostic_fields, &
@@ -612,7 +612,7 @@ contains
     end if
 
     ! Write checkpoint files if required
-    if( checkpoint_write ) then 
+    if( checkpoint_write ) then
 
        call write_checkpoint(prognostic_fields, timestep_end)
 
@@ -669,7 +669,7 @@ contains
         if ( .not.iterator%has_next() ) exit
         field_ptr => iterator%next()
         call field_ptr%field_final()
-      end do 
+      end do
       field_ptr => null()
 
     endif
@@ -681,7 +681,7 @@ contains
         if ( .not.iterator%has_next() ) exit
         field_ptr => iterator%next()
         call field_ptr%field_final()
-      end do 
+      end do
       field_ptr => null()
 
     endif

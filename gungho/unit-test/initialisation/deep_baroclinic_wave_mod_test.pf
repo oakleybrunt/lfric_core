@@ -75,6 +75,8 @@ contains
                sbr_angle_lat = 0.0_r_def,                             &
                sbr_angle_lon = 0.0_r_def,                             &
                nl_constant   = 0.0_r_def,                             &
+               shear=1.0_r_def,                                       &
+               wavelength=1.0_r_def,                                  &
                wind_time_period = 0.0_r_def,                          &
                smp_init_wind = .false. )
 
@@ -134,7 +136,7 @@ contains
     llr = (/ pi/9.0_r_def, 2.0*pi/9.0_r_def, scaled_radius/)
     call deep_baroclinic_wave(llr(1), llr(2), 0.0_r_def, &
                               exner, theta, rho, &
-                              wind(1), wind(2), wind(3))    
+                              wind(1), wind(2), wind(3))
 
     analytic_wind(:) = 0.0_r_def
     @assertEqual(analytic_wind, wind, tol)
@@ -143,7 +145,7 @@ contains
     B = 35.0_r_def/66000.0_r_def
     C = 5.0_r_def/2.0_r_def * (70.0_r_def/74400.0_r_def)
     tau1 = 1.0_r_def/275.0_r_def + B
-    intt = cos(llr(2))**3 - 3.0_r_def/5.0_r_def*cos(llr(2))**5   
+    intt = cos(llr(2))**3 - 3.0_r_def/5.0_r_def*cos(llr(2))**5
 
     analytic_exner = 1.0_r_def
     analytic_theta = 1.0_r_def/(tau1 - C*intt)
@@ -154,7 +156,7 @@ contains
 
     psi = evaluate_streamfunction(llr(1), llr(2), 0.0_r_def)
     analytic_psi = -1.0_r_def/12.0_r_def
-    @assertEqual(analytic_psi,   psi,   tol) 
+    @assertEqual(analytic_psi,   psi,   tol)
 
   end subroutine test_all
 

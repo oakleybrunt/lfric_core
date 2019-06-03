@@ -6,7 +6,7 @@
 
 !> @brief Initialisation functionality for the skeleton miniapp
 
-!> @details Handles init of prognostic fields and through the call to 
+!> @details Handles init of prognostic fields and through the call to
 !>          runtime_contants the coordinate fields and fem operators
 
 module init_skeleton_mod
@@ -28,11 +28,12 @@ module init_skeleton_mod
 
   contains
 
-  subroutine init_skeleton(mesh_id, chi, field_1)
+  subroutine init_skeleton(mesh_id, twod_mesh_id, chi, field_1)
 
     implicit none
 
     integer(i_def), intent(in)               :: mesh_id
+    integer(i_def), intent(in)               :: twod_mesh_id
     ! Prognostic fields
     type( field_type ), intent(inout)        :: field_1
     ! Coordinate field
@@ -55,13 +56,13 @@ module init_skeleton_mod
        tmp_ptr => xios_write_field_face
 
        call field_1%set_write_behaviour(tmp_ptr)
-       
+
     end if
 
     ! Create runtime_constants object. This in turn creates various things
     ! needed by the fem algorithms such as mass matrix operators, mass
     ! matrix diagonal fields and the geopotential field
-    call create_runtime_constants(mesh_id, chi)
+    call create_runtime_constants(mesh_id, twod_mesh_id, chi)
 
     call log_event( 'skeleton: Miniapp initialised', LOG_LEVEL_INFO )
 

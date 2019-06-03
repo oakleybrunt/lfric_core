@@ -82,6 +82,8 @@ contains
                                     sbr_angle_lat=0.0_r_def,    &
                                     sbr_angle_lon=0.0_r_def,    &
                                     nl_constant=0.0_r_def,      &
+                                    shear=1.0_r_def,            &
+                                    wavelength=1.0_r_def,       &
                                     wind_time_period=0.0_r_def, &
                                     smp_init_wind=.false. )
     call feign_initial_density_config( sample_init_rho = .false.,                      &
@@ -133,7 +135,7 @@ contains
 
     xyz = (/ 0.0_r_def, 0.0_r_def, 3000.0_r_def /)
     call reference_profile(pressure, density, temperature, xyz, test_cold_bubble_x)
-    temperature = analytic_temperature(xyz, test_cold_bubble_x) 
+    temperature = analytic_temperature(xyz, test_cold_bubble_x)
     answer = 300.0_r_def - 15.0_r_def/pressure
     @assertEqual(answer, temperature, tol)
     temperature = analytic_temperature(xyz, test_cold_bubble_y)
@@ -142,13 +144,13 @@ contains
     xyz = (/ 0.0_r_def, 1000.0_r_def, 260.0_r_def /)
     call reference_profile(pressure, density, temperature, xyz, test_warm_bubble)
     answer = temperature + 0.5_r_def
-    temperature = analytic_temperature(xyz, test_warm_bubble) 
+    temperature = analytic_temperature(xyz, test_warm_bubble)
     @assertEqual(answer, temperature, tol)
 
     xyz = (/ 0.0_r_def, 0.0_r_def, 260.0_r_def /)
     call reference_profile(pressure, density, temperature, xyz, test_warm_bubble_3d)
     answer = temperature + 1.0_r_def
-    temperature = analytic_temperature(xyz, test_warm_bubble_3d) 
+    temperature = analytic_temperature(xyz, test_warm_bubble_3d)
     @assertEqual(answer, temperature, tol)
 
   end subroutine test_all

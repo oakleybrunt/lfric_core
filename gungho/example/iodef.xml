@@ -2,17 +2,17 @@
 <simulation>
 
   <!-- In this version we have ONE context  -->
-  
-  
+
+
   <context id = "gungho_atm">
-  
+
    <calendar type = "Gregorian" start_date = "2016-01-01 15:00:00" time_origin = "2016-01-01 15:00:00" />
 
    <axis_definition>
     <axis id="vert_axis_half_levels" name="half_levels"/>
     <axis id="vert_axis_full_levels" name="full_levels"/>
    </axis_definition>
-   
+
    <domain_definition>
       <domain id="node" name="Mesh2d_node" nvertex="1"/>
       <domain id="face_half_levels" name="Mesh2d_half_levels" nvertex="4"/>
@@ -27,7 +27,7 @@
       <domain id="fd_checkpoint_Wtheta" name="fd_checkpoint_Wtheta" nvertex="1"/>
       <domain id="checkpoint_W3_2D" name="checkpoint_W3_2D" nvertex="1"/>
    </domain_definition>
-   
+
    <grid_definition>
     <grid id="node_grid">
       <domain domain_ref="node"/>
@@ -48,7 +48,7 @@
    </grid_definition>
 
    <field_definition prec="8" >
-   
+
      <!-- Checkpoint group -->
      <field_group id="checkpoint_fields" freq_op="1ts" operation="once"  enabled=".FALSE." >
        <field id="checkpoint_theta" name="theta" long_name="air_potential_temperature" standard_name="air_potential_temperature" unit="K" domain_ref="checkpoint_Wtheta" />
@@ -69,9 +69,10 @@
        <field id="checkpoint_tstar" name="tstar" long_name="tstar"  unit="K" domain_ref="checkpoint_W3_2D" />
        <field id="checkpoint_zh" name="zh" long_name="zh"  unit="m" domain_ref="checkpoint_W3_2D" />
        <field id="checkpoint_z0msea" name="z0msea" long_name="z0msea"  unit="m" domain_ref="checkpoint_W3_2D" />
+       <field id="checkpoint_conv_rain" name="conv_rain" long_name="convective_rain"  unit="kg m-2 s-1" domain_ref="checkpoint_W3_2D" />
      </field_group>
-     
-     
+
+
      <!-- Main diagnostic group -->
      <field_group id="diagnostic_fields" freq_op="1ts" operation="instant" enabled=".TRUE." >
        <field id="theta" name="theta" long_name="air_potential_temperature" standard_name="air_potential_temperature" unit="K" grid_ref="full_level_face_grid" />
@@ -143,9 +144,9 @@
       type="one_file"
       par_access="collective"
       time_counter="none">
-      
+
       <!-- Checkpoint groups -->
-      
+
       <!-- File definition for checkpoint write -->
       <file id="lfric_checkpoint_write" name="lfric_checkpoint_write" output_freq="1ts" convention="CF" enabled=".FALSE.">
         <field field_ref="checkpoint_theta"/>
@@ -166,8 +167,9 @@
         <field field_ref="checkpoint_tstar"/>
         <field field_ref="checkpoint_zh"/>
         <field field_ref="checkpoint_z0msea"/>
-      </file> 
-      
+        <field field_ref="checkpoint_conv_rain"/>
+      </file>
+
        <!-- file definition for checkpoint read -->
       <file id="lfric_checkpoint_read" name="lfric_checkpoint_read" mode="read" output_freq="1ts" cyclic="true" enabled=".FALSE.">
        <field id="restart_theta" name="theta" long_name="air_potential_temperature" standard_name="air_potential_temperature" unit="K" operation="instant" domain_ref="checkpoint_Wtheta" />
@@ -188,9 +190,10 @@
        <field id="restart_tstar" name="tstar" long_name="tstar" unit="K" operation="instant" domain_ref="checkpoint_W3_2D" />
        <field id="restart_zh" name="zh" long_name="zh" unit="m" operation="instant" domain_ref="checkpoint_W3_2D" />
        <field id="restart_z0msea" name="z0msea" long_name="z0msea" unit="m" operation="instant" domain_ref="checkpoint_W3_2D" />
+       <field id="restart_conv_rain" name="conv_rain" long_name="convective_rain" unit="kg m-2 s-1" operation="instant" domain_ref="checkpoint_W3_2D" />
       </file>
-      
-      
+
+
       <file id="lfric_diag" name="lfric_diag" output_freq="10ts" convention="UGRID" enabled=".TRUE.">
         <field field_ref="theta"/>
         <field field_ref="w_physics"/>
@@ -216,7 +219,7 @@
         <field field_ref="exner"/>
       </file>
 
-      
+
       <file id="lfric_initial" name="lfric_initial" output_freq="1ts" convention="UGRID" enabled=".TRUE.">
         <field field_ref="init_theta"/>
         <field field_ref="init_m_v"/>

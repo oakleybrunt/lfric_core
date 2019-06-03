@@ -29,16 +29,17 @@ contains
   !>@param[in]     mr_n           Start of timestep mixing ratios
   !>@param[in]     theta          Potential temperature (theta) in wth space
   !>@param[in]     exner_in_w3    Exner Pressure in the w3 space
-  !>@param[in]     height_w3      Dry density in its native space
-  !>@param[in]     height_wth     Dry density in its native space
+  !>@param[in]     height_w3      Height from surface on density levels
+  !>@param[in]     height_wth     Height from surface on theta levels
   !>@param[in,out] derived_fields Group of derived fields
   !>@param[in,out] cloud_fields   Group of cloud fields
+  !>@param[in,out] twod_fields    Group of twod fields
   !>@param[in,out] dmr_mphys      Mixing ratio increment due to microphysics
   !>@param[in,out] theta_inc      Potential temperature increment in wth space
   !>@param[in,out] physics_incs   Group of physics increments
   subroutine mphys_alg_step( mr_n, theta, exner_in_w3, height_w3, height_wth, &
-                             derived_fields, cloud_fields, dmr_mphys,         &
-                             theta_inc, physics_incs )
+                             derived_fields, cloud_fields, twod_fields,       &
+                             dmr_mphys, theta_inc, physics_incs )
 
     use mphys_kernel_mod, only: mphys_kernel_type
     use mr_indices_mod,   only: imr_v, imr_cl, imr_r, imr_ci, imr_g, nummr
@@ -51,12 +52,12 @@ contains
     type( field_type ), intent( in )    :: mr_n ( nummr ), theta, exner_in_w3
     type( field_type ), intent( in )    :: height_w3, height_wth
 
-    type( field_collection_type ), intent(inout) :: derived_fields, cloud_fields
+    type( field_collection_type ), intent(inout) :: derived_fields, cloud_fields, twod_fields
     type( field_collection_type ), intent(inout) :: physics_incs
 
     type( field_type ), intent( inout ) :: dmr_mphys ( nummr )
     type( field_type ), intent( inout ) :: theta_inc
-    
+
     ! Temporary unpacked fields from collections
     type( field_type ), pointer :: exner_in_wth  => null()
     type( field_type ), pointer :: u1_in_w3      => null()
@@ -68,6 +69,8 @@ contains
     type( field_type ), pointer :: cff_in        => null()
     type( field_type ), pointer :: dtl_mphys     => null()
     type( field_type ), pointer :: dmt_mphys     => null()
+    type( field_type ), pointer :: ls_rain       => null()
+    type( field_type ), pointer :: ls_snow       => null()
 
     ! Unpack fields
     exner_in_wth  => derived_fields%get_field('exner_in_wth')
@@ -80,6 +83,9 @@ contains
     cfl_in        => cloud_fields%get_field('liquid_fraction')
     cff_in        => cloud_fields%get_field('ice_fraction')
 
+    ls_rain       => twod_fields%get_field('ls_rain')
+    ls_snow       => twod_fields%get_field('ls_snow')
+
     call invoke ( mphys_kernel_type (mr_n(imr_v), mr_n(imr_cl), mr_n(imr_ci),  &
                                      mr_n(imr_r), mr_n(imr_g),                 &
                                      cf_in, cfl_in, cff_in,                    &
@@ -88,7 +94,8 @@ contains
                                      wetrho_in_w3, height_w3, height_wth,      &
                                      dmr_mphys(imr_v),  dmr_mphys(imr_cl),     &
                                      dmr_mphys(imr_ci), dmr_mphys(imr_r),      &
-                                     dmr_mphys(imr_g),  theta_inc ) )
+                                     dmr_mphys(imr_g), ls_rain, ls_snow,       &
+                                     theta_inc ) )
 
     ! Calculate increments required by the BL scheme
     if ( boundary_layer == boundary_layer_um ) then

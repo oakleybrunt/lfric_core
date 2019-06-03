@@ -31,6 +31,7 @@ module init_transport_mod
   contains
 
   !> @param[in] mesh_id                Mesh-id
+  !> @param[in] twod_mesh_id           2D Mesh-id
   !> @param[in,out] chi                Coordinate field
   !> @param[in] shifted_mesh_id        Mesh-id for vertically shifted coordinates
   !> @param[in,out] shifted_chi        Coordinate field for vertically shifted coordinates
@@ -43,13 +44,14 @@ module init_transport_mod
   !> @param[in,out] divergence         Divergence field
   !> @param[in,out] wind_shifted       Wind field on vertically shifted W2 field
   !> @param[in,out] density_shifted    Density field on vertically shifted W3 field
-  subroutine init_transport( mesh_id, chi, shifted_mesh_id, shifted_chi,      &
-                             wind, density, dep_pts_x, dep_pts_y, dep_pts_z,  &
+  subroutine init_transport( mesh_id, twod_mesh_id, chi, shifted_mesh_id, shifted_chi, &
+                             wind, density, dep_pts_x, dep_pts_y, dep_pts_z,           &
                              increment, divergence, wind_shifted, density_shifted )
 
     implicit none
 
     integer(i_def),   intent(in)      :: mesh_id
+    integer(i_def),   intent(in)      :: twod_mesh_id
     type(field_type), intent(inout)   :: chi(:)
     integer(i_def),   intent(in)      :: shifted_mesh_id
     type(field_type), intent(inout)   :: shifted_chi(:)
@@ -93,7 +95,7 @@ module init_transport_mod
                           function_space_collection%get_fs( shifted_mesh_id, element_order, W3 ) )
 
     ! Create runtime_constants object.
-    call create_runtime_constants( mesh_id, chi, shifted_mesh_id, shifted_chi )
+    call create_runtime_constants( mesh_id, twod_mesh_id, chi, shifted_mesh_id, shifted_chi )
 
     ! Initialise density field
     call transport_init_fields_alg( density )

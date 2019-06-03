@@ -68,6 +68,8 @@ contains
                                     sbr_angle_lat=0.0_r_def,    &
                                     sbr_angle_lon=0.0_r_def,    &
                                     nl_constant=0.0_r_def,      &
+                                    shear=1.0_r_def,            &
+                                    wavelength=1.0_r_def,       &
                                     wind_time_period=0.0_r_def, &
                                     smp_init_wind = .false.  )
 
@@ -121,7 +123,7 @@ contains
     lat = 0.0_r_def
     z   = 0.0_r_def
 
-    ! Test the generation of prognostic fields for the 
+    ! Test the generation of prognostic fields for the
     ! spherical gravity wave case
     call generate_global_gw_fields(lat, z, exner, u, theta, rho)
 
@@ -131,8 +133,8 @@ contains
     u_ans(:)  = 0.0_r_def
 
     @assertEqual( theta_ans, theta, tol )
-    @assertEqual( exner_ans, exner, tol )  
-    @assertEqual( rho_ans,   rho,   tol ) 
+    @assertEqual( exner_ans, exner, tol )
+    @assertEqual( rho_ans,   rho,   tol )
     @assertEqual( u_ans(1),  u(1),  tol )
     @assertEqual( u_ans(2),  u(2),  tol )
     @assertEqual( u_ans(3),  u(3),  tol )
@@ -140,4 +142,3 @@ contains
   end subroutine test_all
 
 end module generate_global_gw_fields_mod_test
-

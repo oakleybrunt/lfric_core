@@ -31,8 +31,8 @@ contains
   !> @param[in]    mesh_id The identifier given to the current 3d mesh
   !> @param[in]    twod_mesh_id The identifier given to the current 2d mesh
   !> @param[inout] prognostic_fields A collection of the fields that make up the
-  !>                                 prognostic variables in the model 
-  !> @param[out]   derived_fields Collection of FD fields derived from FE fields 
+  !>                                 prognostic variables in the model
+  !> @param[out]   derived_fields Collection of FD fields derived from FE fields
   !> @param[out]   cloud_fields Collection of FD cloud fields
   !> @param[out]   twod_fields Collection of two fields
   !> @param[out]   physics_incs Collection of physics increments
@@ -57,16 +57,16 @@ contains
     type(function_space_type), pointer  :: vector_space => null()
 
     type( field_type ), pointer   :: theta => null()
- 
+
     integer(i_def) :: theta_space
     logical(l_def) :: checkpoint_restart_flag
 
     call log_event( 'Create physics prognostics', LOG_LEVEL_INFO )
-    
+
 
     theta => prognostic_fields%get_field('theta')
     theta_space=theta%which_function_space()
-    
+
     if (theta_space /= Wtheta)then
       call log_event( 'Physics: requires theta variable to be in Wtheta', LOG_LEVEL_ERROR )
     end if
@@ -79,8 +79,8 @@ contains
     ! Here we create some field collections
     !========================================================================
     derived_fields  =  field_collection_type(name='derived_fields')
-    checkpoint_restart_flag = .false. 
-   
+    checkpoint_restart_flag = .false.
+
     ! Wtheta fields
     vector_space=>function_space_collection%get_fs(mesh_id, 0, Wtheta)
 
@@ -92,7 +92,7 @@ contains
     call add_physics_field(derived_fields, 'theta_star',     vector_space, checkpoint_restart_flag)
 
     ! W3 fields
-    vector_space=> function_space_collection%get_fs(mesh_id, 0, W3) 
+    vector_space=> function_space_collection%get_fs(mesh_id, 0, W3)
 
     call add_physics_field(derived_fields, 'u1_in_w3',      vector_space, checkpoint_restart_flag)
     call add_physics_field(derived_fields, 'u2_in_w3',      vector_space, checkpoint_restart_flag)
@@ -115,12 +115,13 @@ contains
     ! Here we create some 2d fields for the UM physics
     !========================================================================
     twod_fields = field_collection_type(name='twod_fields')
-    vector_space=> function_space_collection%get_fs(twod_mesh_id, 0, W3) 
+    vector_space=> function_space_collection%get_fs(twod_mesh_id, 0, W3)
     checkpoint_restart_flag = .true.
 
     call add_physics_field(twod_fields, 'tstar',   vector_space, checkpoint_restart_flag)
     call add_physics_field(twod_fields, 'zh',      vector_space, checkpoint_restart_flag)
     call add_physics_field(twod_fields, 'z0msea',  vector_space, checkpoint_restart_flag)
+    call add_physics_field(twod_fields, 'conv_rain',  vector_space, checkpoint_restart_flag)
 
     checkpoint_restart_flag = .false.
     call add_physics_field(twod_fields, 'ntml',    vector_space, checkpoint_restart_flag)
@@ -128,6 +129,8 @@ contains
     call add_physics_field(twod_fields, 'cos_zenith_angle',   vector_space, checkpoint_restart_flag)
     call add_physics_field(twod_fields, 'lit_fraction',       vector_space, checkpoint_restart_flag)
     call add_physics_field(twod_fields, 'stellar_irradiance', vector_space, checkpoint_restart_flag)
+    call add_physics_field(twod_fields, 'ls_rain',  vector_space, checkpoint_restart_flag)
+    call add_physics_field(twod_fields, 'ls_snow',  vector_space, checkpoint_restart_flag)
 
     !========================================================================
     ! Here we create some cloud fields
@@ -175,10 +178,10 @@ contains
 
   end subroutine create_physics_prognostics
 
-  !>@brief Add field to field collection and set its write, 
-  !>       checkpoint and restart behaviour 
+  !>@brief Add field to field collection and set its write,
+  !>       checkpoint and restart behaviour
   !> @param[in,out] field_collection Field collection that 'name' will be added to
-  !> @param[in]     name             Name of field to be added to collection 
+  !> @param[in]     name             Name of field to be added to collection
   !> @param[in]     vector_space     Function space of field to set behaviour for
   !> @param[in]     checkpoint_restart_flag  Flag to allow checkpoint and
   !>                                        restart behaviour of field to be set
@@ -194,7 +197,7 @@ contains
                                    checkpoint_read_xios
 
     implicit none
-    
+
     character(*), intent(in)                   :: name
     type(field_collection_type), intent(inout) :: field_collection
     type(function_space_type), intent(in)      :: vector_space
@@ -205,7 +208,7 @@ contains
 
     ! pointers for xios write interface
     procedure(write_interface), pointer   :: write_diag_behaviour => null()
-    procedure(checkpoint_write_interface), pointer  :: checkpoint_write_behaviour => null() 
+    procedure(checkpoint_write_interface), pointer  :: checkpoint_write_behaviour => null()
     procedure(checkpoint_read_interface), pointer   :: checkpoint_read_behaviour => null()
 
     if ( use_xios_io) then

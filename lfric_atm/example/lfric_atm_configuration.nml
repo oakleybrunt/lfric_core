@@ -8,7 +8,7 @@
 /
 
 &extrusion
-    domain_top=6000.0,
+    domain_top=30000.0,
     method='uniform',
     number_of_layers=98,
 /
@@ -144,6 +144,14 @@
     i_cloud_ice_type_lw=11,
 /
 
+&spectral_gwd
+  cgw_scale_factor = 1.00
+  add_cgw = .false.
+  ussp_heating = .true.
+  ussp_launch_factor = 1.2000
+  wavelstar = 4300.00
+/
+
 &well_mixed_gases
     co2_mix_ratio = 6.002e-04,
     n2o_mix_ratio = 4.945e-07,
@@ -245,6 +253,7 @@
     convection_placement='fast',
     radiation_placement='slow',
     microphysics_placement='slow',
+    spectral_gwd_placement='slow',
     heldsuarez_thermo_placement=0,
     heldsuarez_wind_placement=0,
     hs_random=.false.,
@@ -316,4 +325,5 @@
     convection='none',
     microphysics='um',
     cloud='um'
+    spectral_gwd='um'
 /

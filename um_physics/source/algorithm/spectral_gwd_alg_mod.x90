@@ -1,0 +1,122 @@
+!-------------------------------------------------------------------------------
+! (c) Crown copyright 2019 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-------------------------------------------------------------------------------
+
+!> @brief Interface to the UM Spectral gravity wave drag scheme
+
+module spectral_gwd_alg_mod
+   use constants_mod,        only: i_def
+   use field_mod,            only: field_type
+   use field_collection_mod, only: field_collection_type
+
+   use log_mod,              only: log_event,         &
+                                   LOG_LEVEL_ERROR,   &
+                                   LOG_LEVEL_INFO
+  ! ios output
+  use io_config_mod,      only: write_diag, &
+                                use_xios_io
+  implicit none
+
+  private
+
+  public spectral_gwd_alg_step
+
+contains
+
+  !> @brief Run the UM Spectral gravity wave drag scheme
+  !> @param[in,out] du_tot_spectral_gwd  Increment to total (3D) wind field
+  !> @param[in,out] dtheta_spectral_gwd  Increment to theta field
+  !> @param[in,out] derived fields       Group of derived fields
+  !> @param[in,out] twod fields          Group of twod fields
+  !> @param[in]     theta                Potential temperature in wtheta
+  !> @param[in]     height_w3            Height on w3
+  !> @param[in]     height_wth           Height on wtheta
+   subroutine spectral_gwd_alg_step(du_tot_spectral_gwd, dtheta_spectral_gwd, derived_fields,  &
+                                    twod_fields, theta, height_w3, height_wth)
+
+    ! spectral_gwd kernels
+    use spectral_gwd_kernel_mod,      only: spectral_gwd_kernel_type
+
+    use runtime_constants_mod,    only: get_latitude
+
+   implicit none
+
+    type( field_type ), intent( inout )    :: du_tot_spectral_gwd
+    type( field_type ), intent( inout )    :: dtheta_spectral_gwd
+    type( field_collection_type ), intent(inout) :: derived_fields, twod_fields
+    type( field_type ), intent(in) :: theta
+    type( field_type ), intent(in) :: height_w3
+    type( field_type ), intent(in) :: height_wth
+
+    ! Local fields
+    type( field_type ) :: du_spectral_gwd ! increment to 'zonal' wind from spectral gwd
+    type( field_type ) :: dv_spectral_gwd ! increment to 'meridional' wind from spectral gwd
+    type( field_type ) :: dtemp_spectral_gwd ! increment to temperature from spectral gwd
+    type( field_type ) :: totalppn
+
+    ! Temporary unpacked fields from collections
+    type( field_type ), pointer :: u1_in_w3      => null()
+    type( field_type ), pointer :: u2_in_w3      => null()
+    type( field_type ), pointer :: u3_in_w3      => null()
+    type( field_type ), pointer :: exner_in_wth  => null()
+    type( field_type ), pointer :: wetrho_in_w3  => null()
+    type( field_type ), pointer :: ls_rain       => null()
+    type( field_type ), pointer :: ls_snow       => null()
+    type( field_type ), pointer :: conv_rain     => null()
+    type( field_type ), pointer :: latitude_w3   => null()
+
+    ! Unpack fields
+    u1_in_w3      => derived_fields%get_field('u1_in_w3')
+    u2_in_w3      => derived_fields%get_field('u2_in_w3')
+    u3_in_w3      => derived_fields%get_field('u3_in_w3')
+    exner_in_wth  => derived_fields%get_field('exner_in_wth')
+    wetrho_in_w3  => derived_fields%get_field('wetrho_in_w3')
+
+    ls_rain       => twod_fields%get_field('ls_rain')
+    ls_snow       => twod_fields%get_field('ls_snow')
+    conv_rain     => twod_fields%get_field('conv_rain')
+
+    latitude_w3 => get_latitude()
+
+    call u1_in_w3%copy_field_properties(du_spectral_gwd)
+    call u2_in_w3%copy_field_properties(dv_spectral_gwd)
+    call dtheta_spectral_gwd%copy_field_properties(dtemp_spectral_gwd)
+    call ls_rain%copy_field_properties(totalppn)
+
+    call invoke(                                                             &
+                ! Set total wind inc to zero as they are not mapped back yet
+                setval_c(du_tot_spectral_gwd, 0.0_r_def),                    &
+
+                ! Add precipitation
+                X_plus_Y(totalppn, ls_rain, ls_snow),                        &
+                inc_X_plus_Y(totalppn, conv_rain),                           &
+
+                ! Call spectral gravity wave drag kernel
+                spectral_gwd_kernel_type (du_spectral_gwd, dv_spectral_gwd,  &
+                            dtemp_spectral_gwd, u1_in_w3, u2_in_w3,          &
+                            wetrho_in_w3, exner_in_wth, theta,               &
+                            height_w3, height_wth, totalppn, latitude_w3),   &
+
+                ! Convert temperature to potential temperature
+                X_divideby_Y ( dtheta_spectral_gwd, dtemp_spectral_gwd,      &
+                               exner_in_wth)                                 &
+               )
+
+    call du_spectral_gwd%log_minmax(LOG_LEVEL_INFO, 'GWD USSP: du' )
+    call dv_spectral_gwd%log_minmax(LOG_LEVEL_INFO, 'GWD USSP: dv' )
+    call dtheta_spectral_gwd%log_minmax(LOG_LEVEL_INFO, 'GWD USSP: dtheta' )
+
+    ! mapping back of wind increments should happen here ticket #1445
+
+    if (write_diag .and. use_xios_io) then
+      call du_spectral_gwd%write_field('du_spectral_gwd')
+      call dv_spectral_gwd%write_field('dv_spectral_gwd')
+      call dtheta_spectral_gwd%write_field('dtheta_spectral_gwd')
+      call dtemp_spectral_gwd%write_field('dtemp_spectral_gwd')
+   end if
+
+  end subroutine spectral_gwd_alg_step
+
+end module spectral_gwd_alg_mod

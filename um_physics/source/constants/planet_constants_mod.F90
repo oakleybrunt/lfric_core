@@ -20,7 +20,7 @@ module planet_constants_mod
   public :: c_virtual, cp, cv, etar, g, grcp, kappa, lcrcp, lfrcp, ls, lsrcp, &
             one_minus_epsilon, one_minus_epsilon_32b, p_zero, planet_radius,  &
             pref, r, recip_a2, recip_kappa, repsilon, repsilon_32b, rv, vkman,&
-            recip_epsilon
+            recip_epsilon, omega, two_omega
 
   ! The following variables have been hidden as they are not currently
   ! required to build the extracted UM code. They have been left in

@@ -69,6 +69,7 @@
        <field id="checkpoint_tstar" name="tstar" long_name="tstar"  unit="K" domain_ref="checkpoint_W3_2D" />
        <field id="checkpoint_zh" name="zh" long_name="zh"  unit="m" domain_ref="checkpoint_W3_2D" />
        <field id="checkpoint_z0msea" name="z0msea" long_name="z0msea"  unit="m" domain_ref="checkpoint_W3_2D" />
+       <field id="checkpoint_conv_rain" name="conv_rain" long_name="convective_rain"  unit="kg m-2 s-1" domain_ref="checkpoint_W3_2D" />
      </field_group>
 
      <!-- Main diagnostic group -->
@@ -99,6 +100,10 @@
        <field id="u3" name="u3" long_name="upward_air_velocity" standard_name="upward_air_velocity" unit="m s-1" grid_ref="full_level_face_grid" />
        <field id="divergence" name="divergence" long_name="divergence_of_wind" standard_name="divergence_of_wind" unit="s-1" grid_ref="half_level_face_grid" />
        <field id="exner" name="exner" long_name="exner_pressure" unit="1" grid_ref="half_level_face_grid" />
+       <field id="dtheta_spectral_gwd" name="dtheta_spectral_gwd" long_name="Spectral gravity wave drag theta increment" unit="K" grid_ref="full_level_face_grid" />
+       <field id="du_spectral_gwd" name="du_spectral_gwd" long_name="Spectral gravity wave drag U wind increment" unit="m s-1" grid_ref="half_level_face_grid" />
+       <field id="dv_spectral_gwd" name="dv_spectral_gwd" long_name="Spectral gravity wave drag V wind increment" unit="m s-1" grid_ref="half_level_face_grid" />
+       <field id="dtemp_spectral_gwd" name="dtemp_spectral_gwd" long_name="Spectral gravity wave drag T increment" unit="K" grid_ref="full_level_face_grid" />
      </field_group>
 
       <!-- Initial conditions group -->
@@ -169,8 +174,9 @@
         <field field_ref="checkpoint_tstar"/>
         <field field_ref="checkpoint_zh"/>
         <field field_ref="checkpoint_z0msea"/>
-      </file> 
-      
+        <field field_ref="checkpoint_conv_rain"/>
+      </file>
+
        <!-- file definition for checkpoint read -->
       <file id="lfric_checkpoint_read" name="lfric_checkpoint_read" mode="read" output_freq="1ts" cyclic="true" enabled=".FALSE.">
        <field id="restart_theta" name="theta" long_name="air_potential_temperature" standard_name="air_potential_temperature" unit="K" operation="instant" domain_ref="checkpoint_Wtheta" />
@@ -191,6 +197,7 @@
        <field id="restart_tstar" name="tstar" long_name="tstar" unit="K" operation="instant" domain_ref="checkpoint_W3_2D" />
        <field id="restart_zh" name="zh" long_name="zh" unit="m" operation="instant" domain_ref="checkpoint_W3_2D" />
        <field id="restart_z0msea" name="z0msea" long_name="z0msea" unit="m" operation="instant" domain_ref="checkpoint_W3_2D" />
+       <field id="restart_conv_rain" name="conv_rain" long_name="convective_rain" unit="kg m-2 s-1" operation="instant" domain_ref="checkpoint_W3_2D" />
       </file>
 
       <file id="lfric_diag" name="lfric_diag" output_freq="10ts" convention="UGRID" enabled=".TRUE.">
@@ -220,6 +227,10 @@
         <field field_ref="u3"/>
         <field field_ref="divergence"/>
         <field field_ref="exner"/>
+        <field field_ref="dtheta_spectral_gwd"/>
+        <field field_ref="du_spectral_gwd"/>
+        <field field_ref="dv_spectral_gwd"/>
+        <field field_ref="dtemp_spectral_gwd"/>
       </file>
 
       <file id="lfric_averages" name="lfric_averages" output_freq="10ts" convention="UGRID" enabled=".TRUE.">

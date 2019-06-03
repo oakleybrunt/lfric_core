@@ -6,7 +6,7 @@
 
 !> @brief init functionality for the miniapp skeleton
 
-!> @details Handles init of prognostic fields and through the call to 
+!> @details Handles init of prognostic fields and through the call to
 !>          runtime_csontants the coordinate fields and fem operators
 
 module init_solver_miniapp_mod
@@ -29,29 +29,31 @@ module init_solver_miniapp_mod
 
 contains
   !> initialise the fields and field vector for the miniapp.
-  !> @param[in] mesh_id Integer, the id of the mesh
+  !> @param[in] mesh_id The id of the mesh
+  !> @param[in] twod_mesh_id The id of the twod mesh
   !> @param[inout] chi An size 3 array of fields holding the coordinates of the mesh
   !> @param[inout] The field vector which is to be initialised.
-  subroutine init_solver_miniapp(mesh_id, chi, fv )
+  subroutine init_solver_miniapp(mesh_id, twod_mesh_id, chi, fv )
     implicit none
     integer(i_def), intent(in)             :: mesh_id
+    integer(i_def), intent(in)             :: twod_mesh_id
     type( field_type ), intent(inout)      :: chi(:)
     ! prognostic fields
     type( field_vector_type ), intent(inout) :: fv
     type( field_type )                       :: f1, f2
 
-    
+
     call log_event( 'solver miniapp: initialisation...', LOG_LEVEL_INFO )
-    
-    
-    ! Create prognostic fields 
+
+
+    ! Create prognostic fields
     ! Create a field in the W0 function space (fully continuous field)
     f1 = field_type( vector_space = &
          function_space_collection%get_fs(mesh_id, element_order, W0) )
     ! Create a field in the W3 function space (fully discontinuous field)
     f2 = field_type( vector_space = &
          function_space_collection%get_fs(mesh_id, element_order, W3) )
-    
+
     ! set the fields to scalars
     call invoke_set_field_scalar(0.5_r_def,f1)
     call invoke_set_field_scalar(1.0_r_def,f2)
@@ -59,15 +61,15 @@ contains
     fv = field_vector_type(2_i_def)
     call fv%import_field(f1,1)
     call fv%import_field(f2,2)
-    
+
     write(log_scratch_space,'(A,E16.8)') "W0, W3 Fvector initiialised to 0.5/1.0 norm=",fv%norm()
     call log_event( log_scratch_space, LOG_LEVEL_INFO )
-    
-    
-    call create_runtime_constants(mesh_id, chi)
-    
+
+
+    call create_runtime_constants(mesh_id, twod_mesh_id, chi)
+
     call log_event( 'solver miniapp initialised', LOG_LEVEL_INFO )
-    
+
   end subroutine init_solver_miniapp
-  
+
 end module init_solver_miniapp_mod

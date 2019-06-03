@@ -27,6 +27,12 @@ module um_init_mod
                                     method_2d_smag,         &
                                     method_blending,        &
                                     mix_factor_in => mix_factor
+  use spectral_gwd_config_mod, only:                    &
+          	ussp_launch_factor_in => ussp_launch_factor,&
+           	wavelstar_in => wavelstar,                  &
+           	add_cgw_in => add_cgw,                      &
+           	cgw_scale_factor_in => cgw_scale_factor
+
   implicit none
 
 contains
@@ -54,12 +60,12 @@ contains
          l_subgrid_qv, ice_width
     use cv_run_mod, only: icvdiag, cvdiag_inv, cvdiag_sh_wtest,            &
          limit_pert_opt, tv1_sd_opt, iconv_congestus, iconv_deep,          &
-         ent_fac_dp, cldbase_opt_dp, cldbase_opt_sh, w_cape_limit,         & 
+         ent_fac_dp, cldbase_opt_dp, cldbase_opt_sh, w_cape_limit,         &
          l_param_conv
     use cderived_mod, only: delta_lambda, delta_phi
     use dyn_coriolis_mod, only: f3_at_u
     use dynamics_input_mod, only: numcycles
-    use fsd_parameters_mod, only: fsd_eff_lam, fsd_eff_phi 
+    use fsd_parameters_mod, only: fsd_eff_lam, fsd_eff_phi
     use gen_phys_inputs_mod, only: l_mr_physics
     use jules_sea_seaice_mod, only: nice_use, iseasurfalg, emis_sea,       &
          seasalinityfactor, charnock, nice
@@ -68,6 +74,9 @@ contains
          isrfexcnvgust
     use jules_surface_types_mod, only: nnpft, npft, nnvg, ntype, urban,    &
          lake, soil, ice
+    use g_wave_input_mod, only: ussp_launch_factor,                        &
+    	                          wavelstar, l_add_cgw, cgw_scale_factor
+
     use level_heights_mod, only: r_theta_levels, r_rho_levels, eta_theta_levels
     use lsm_switch_mod, only: init_lsm_um
     use model_domain_mod, only: model_type
@@ -81,7 +90,8 @@ contains
     use rad_input_mod, only: two_d_fsd_factor
     use timestep_mod, only: timestep
     use trignometric_mod, only: cos_theta_latitude
-    use tuning_segments_mod, only: bl_segment_size, precip_segment_size
+    use tuning_segments_mod, only: bl_segment_size, precip_segment_size, &
+                                   ussp_seg_size
     use turb_diff_ctl_mod, only: visc_m, visc_h, max_diff, delta_smag, rneutml_sq
     use turb_diff_mod, only: l_subfilter_horiz, l_subfilter_vert,        &
          mix_factor, turb_startlev_vert, turb_endlev_vert
@@ -196,11 +206,11 @@ contains
     ! Cloud namelist options - should be moved to namelist in future
     if ( cloud == cloud_um ) then
       select case (scheme)
-        case(scheme_smith) 
+        case(scheme_smith)
           i_cld_vn = 1
         case default
           write( log_scratch_space, '(A,I3)' )  &
-            'Invalid cloud scheme option, stopping', scheme 
+            'Invalid cloud scheme option, stopping', scheme
           call log_event( log_scratch_space, LOG_LEVEL_ERROR )
       end select
     else
@@ -219,7 +229,7 @@ contains
     ice_width             = 0.02_r_um
 
     ! Set rhcrit to the profile provided in the physics namelist.
-    ! rhcrit is used throughout the UM and its value needs setting 
+    ! rhcrit is used throughout the UM and its value needs setting
     ! here.
     if ( cloud == cloud_um .and. &
          scheme == scheme_smith ) then
@@ -275,6 +285,14 @@ contains
     ! Tuning segment sizes used in the physics code
     bl_segment_size     = 1
     precip_segment_size = 1
+    ussp_seg_size = 1
+
+    ! Spectral gravity wave drag namelist options
+
+    ussp_launch_factor = real(ussp_launch_factor_in, r_um)
+    wavelstar = real(wavelstar_in, r_um)
+    l_add_cgw = add_cgw_in
+    cgw_scale_factor = real(cgw_scale_factor_in, r_um)
 
     !-----------------------------------------------------------------------
     ! Set up index for sea and sea-ice
@@ -364,7 +382,7 @@ contains
       l_subfilter_horiz = .false. 
       l_subfilter_vert  = .false. 
 
-    end if 
+    end if
 
     !-----------------------------------------------------------------------
     ! Final error checking

@@ -36,6 +36,8 @@ module sample_initial_u_kernel_mod_test
   real(r_def), parameter :: sbr_angle_lon  = 0.0_r_def
   real(r_def), parameter :: wind_time_period = 10.0_r_def
   real(r_def), parameter :: nl_constant = 1.0_r_def
+  real(r_def), parameter :: shear = 1.0_r_def
+  real(r_def), parameter :: wavelength = 1.0_r_def
 
 contains
 
@@ -62,6 +64,8 @@ contains
              sbr_angle_lon=sbr_angle_lon, &
              smp_init_wind=.false.,       &
              u0=u0, v0=v0,                &
+             shear=shear,                 &
+             wavelength=wavelength,       &
              wind_time_period=wind_time_period )
 
   end subroutine setUp
@@ -152,12 +156,12 @@ contains
         do k = 0,2
           chi_data(map_wchi(1:7:2, cell) + k, 1) = real(i-1, r_def)*dx
           chi_data(map_wchi(2:8:2, cell) + k, 1) = real(i, r_def)*dx
-      
+
           chi_data(map_wchi(1:2, cell) + k, 2) = real(j-1, r_def)*dy
           chi_data(map_wchi(5:6, cell) + k, 2) = real(j-1, r_def)*dy
           chi_data(map_wchi(3:4, cell) + k, 2) = real(j, r_def)*dy
           chi_data(map_wchi(7:8, cell) + k, 2) = real(j, r_def)*dy
-      
+
           chi_data(map_wchi(1, cell) + k, 3) = real(k, r_def)*dz + real(i-1,r_def)*dzdx
           chi_data(map_wchi(2, cell) + k, 3) = real(k, r_def)*dz + real(i  ,r_def)*dzdx
           chi_data(map_wchi(3, cell) + k, 3) = real(k, r_def)*dz + real(i-1,r_def)*dzdx

@@ -52,12 +52,14 @@ module init_gravity_wave_mod
 
   contains
 
-  subroutine init_gravity_wave( mesh_id, chi, multigrid_function_space_chain, &
+  subroutine init_gravity_wave( mesh_id, twod_mesh_id, chi,     &
+                                multigrid_function_space_chain, &
                                 wind, pressure, buoyancy )
 
     implicit none
 
     integer(i_def),                  intent(in)  :: mesh_id
+    integer(i_def),                  intent(in)  :: twod_mesh_id
     type(function_space_chain_type), intent(out) :: multigrid_function_space_chain
 
     ! Prognostic fields
@@ -94,7 +96,7 @@ module init_gravity_wave_mod
         call log_event( log_scratch_space, LOG_LEVEL_INFO )
 
         call multigrid_function_space_chain%add( function_space )
- 
+
       end do
     end if
 
@@ -139,7 +141,7 @@ module init_gravity_wave_mod
          tmp_write_ptr => xios_write_field_face
          call buoyancy%set_write_behaviour(tmp_write_ptr)
        end if
-       
+
     end if
 
     ! Set I/O behaviours for checkpoint / restart
@@ -180,7 +182,7 @@ module init_gravity_wave_mod
     ! Create runtime_constants object. This in turn creates various things
     ! needed by the timestepping algorithms such as mass matrix operators, mass
     ! matrix diagonal fields and the geopotential field
-    call create_runtime_constants(mesh_id, chi)
+    call create_runtime_constants(mesh_id, twod_mesh_id, chi)
 
     ! Initialise prognostic fields
     call gw_init_fields_alg(wind, pressure, buoyancy)

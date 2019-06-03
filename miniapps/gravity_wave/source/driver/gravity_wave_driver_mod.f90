@@ -170,7 +170,8 @@ contains
   multigrid_function_space_chain = function_space_chain_type()
 
   ! Create function space collection and initialise prognostic fields
-  call init_gravity_wave( mesh_id, chi, multigrid_function_space_chain, &
+  call init_gravity_wave( mesh_id, twod_mesh_id, chi,     &
+                          multigrid_function_space_chain, &
                           wind, pressure, buoyancy )
 
   ! Full global meshes no longer required, so reclaim

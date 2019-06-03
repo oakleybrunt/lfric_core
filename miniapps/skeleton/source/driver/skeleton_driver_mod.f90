@@ -145,7 +145,7 @@ contains
 
 
     ! Create and initialise prognostic fields
-    call init_skeleton(mesh_id, chi, field_1)
+    call init_skeleton(mesh_id, twod_mesh_id, chi, field_1)
 
   end subroutine initialise
 
@@ -158,7 +158,7 @@ contains
 
     ! Call an algorithm
     call skeleton_alg(field_1)
-  
+
 
     ! Write out output file
     call log_event("skeleton: Writing diagnostic output", LOG_LEVEL_INFO)

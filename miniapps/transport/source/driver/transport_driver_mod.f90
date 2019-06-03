@@ -22,7 +22,7 @@ module transport_driver_mod
   use init_mesh_mod,                  only: init_mesh
   use io_mod,                         only: xios_domain_init
   use diagnostics_io_mod,             only: write_scalar_diagnostic,          &
-                                            write_vector_diagnostic      
+                                            write_vector_diagnostic
   use diagnostics_mod,                only: write_density_diagnostic
   use log_mod,                        only: log_event,                        &
                                             log_scratch_space,                &
@@ -153,9 +153,9 @@ contains
     call init_fem( mesh_id, chi, shifted_mesh_id, shifted_chi )
 
     ! Transport initialisation
-    call init_transport( mesh_id, chi, shifted_mesh_id, shifted_chi,      &
-                         wind, density, dep_pts_x, dep_pts_y,             &
-                         dep_pts_z, increment, wind_divergence,           &
+    call init_transport( mesh_id, twod_mesh_id, chi, shifted_mesh_id,        &
+                         shifted_chi, wind, density, dep_pts_x, dep_pts_y,   &
+                         dep_pts_z, increment, wind_divergence,              &
                          wind_shifted, density_shifted )
 
     ! Calculate det(J) at W2 dofs for chi and shifted_chi fields.

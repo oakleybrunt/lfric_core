@@ -8,7 +8,7 @@
 module fast_physics_alg_mod
 
   use section_choice_config_mod, only: boundary_layer,    &
-                                       boundary_layer_um, & 
+                                       boundary_layer_um, &
                                        convection,        &
                                        convection_um
 
@@ -43,11 +43,11 @@ contains
 
   !> @details Collection of procedures for subgrid physics that act
   !>          within the outer loop of the solver
-  !> @param[in,out] du             Increment to wind field 
-  !> @param[in,out] dtheta         Increment to theta field 
+  !> @param[in,out] du             Increment to wind field
+  !> @param[in,out] dtheta         Increment to theta field
   !> @param[in,out] mr             Mixing ratios
   !> @param[in]     outer          Outer loop counter
-  !> @param[in]     theta          Theta field 
+  !> @param[in]     theta          Theta field
   !> @param[in]     rho            Rho on w3 space
   !> @param[in]     exner          Exner pressure on w3 space
   !> @param[in]     mr_n           Mixing ratios at time level n
@@ -70,7 +70,7 @@ contains
 
     implicit none
 
-    ! Fields    
+    ! Fields
     type( field_type ), intent( inout ) :: du, dtheta
     type( field_type ), intent( inout ) :: visc_m_blend, visc_h_blend
     type( field_type ), intent( in )    :: theta, rho, exner
@@ -98,16 +98,16 @@ contains
     logical :: boundary_layer_done ! Flag to indicate that boundary_layer has been calculated
     logical :: convection_done ! Flag to indicate that convection has been calculated
 
-    boundary_layer_done=.false. 
+    boundary_layer_done=.false.
     convection_done=.false.
 
-    if (heldsuarez_wind_placement > 0)then      
+    if (heldsuarez_wind_placement > 0)then
       call log_event( &
          'fast_physics: Held-Suarez wind forcing is not currently available in fast physics.', &
          LOG_LEVEL_ERROR )
     end if
 
-    if (heldsuarez_thermo_placement > 0)then      
+    if (heldsuarez_thermo_placement > 0)then
       call log_event( &
          'fast_physics: Held-Suarez thermal forcing is not currently available in fast physics.', &
          LOG_LEVEL_ERROR )
@@ -118,14 +118,14 @@ contains
         convection_placement == convection_placement_fast) then
       ! Algorithm that calls the UM convection scheme
       call log_event( 'fast_physics: Running the convection scheme', LOG_LEVEL_INFO )
-      call conv_alg_step(physics_incs, derived_fields, exner, mr)
+      call conv_alg_step(physics_incs, derived_fields, twod_fields, exner, mr)
       ! Flag that convection has been done in this timestep and increments
       ! need adding later in BL scheme
       convection_done=.true.
     end if
 
     if (boundary_layer == boundary_layer_um .and. &
-        blayer_placement == blayer_placement_fast) then  
+        blayer_placement == blayer_placement_fast) then
       ! Algorithm that calls the UM Boundary Layer scheme
       call log_event( 'fast_physics: Running Boundary layer', LOG_LEVEL_INFO )
       call dtheta%copy_field_properties(dtheta_bl)
@@ -140,7 +140,7 @@ contains
 
     !=====================================
     ! collect individual terms in parallel
-    ! N.B. as currently coded, the convection increments are added in the 
+    ! N.B. as currently coded, the convection increments are added in the
     ! boundary layer as part of the implicit solution
     !=====================================
     if (boundary_layer_done) then

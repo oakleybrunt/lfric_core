@@ -19,8 +19,10 @@ module initial_u_kernel_mod
                                       GH_REAL
   use constants_mod,           only : r_def, PI
   use fs_continuity_mod,       only : W2
-  use initial_wind_config_mod, only : profile, sbr_angle_lat, sbr_angle_lon, &
-                                      u0, v0
+  use initial_wind_config_mod, only : profile_sin_uv,                        &
+                                      profile, sbr_angle_lat, sbr_angle_lon, &
+                                      u0, v0, shear, wavelength
+
   use kernel_mod,              only : kernel_type
 
   implicit none
@@ -88,7 +90,7 @@ end function initial_u_kernel_constructor
 !! @param[in] wqp_h Horizontal quadrature weights
 !! @param[in] wqp_v Vertical quadrature weights
 subroutine initial_u_code(nlayers, &
-                          rhs, & 
+                          rhs, &
                           chi_1, chi_2, chi_3, time, &
                           ndf, undf, &
                           map, basis, &
@@ -113,7 +115,7 @@ subroutine initial_u_code(nlayers, &
   integer, dimension(ndf),     intent(in) :: map
   integer, dimension(ndf_chi), intent(in) :: map_chi
 
-  real(kind=r_def), intent(in), dimension(3,ndf,    nqp_h,nqp_v) :: basis 
+  real(kind=r_def), intent(in), dimension(3,ndf,    nqp_h,nqp_v) :: basis
   real(kind=r_def), intent(in), dimension(3,ndf_chi,nqp_h,nqp_v) :: chi_diff_basis
   real(kind=r_def), intent(in), dimension(1,ndf_chi,nqp_h,nqp_v) :: chi_basis
 
@@ -131,13 +133,10 @@ subroutine initial_u_code(nlayers, &
   real(kind=r_def), dimension(ndf_chi)         :: chi_1_cell, chi_2_cell, chi_3_cell
   real(kind=r_def), dimension(3)               :: u_physical, u_spherical, xyz, llr
   real(kind=r_def)                             :: integrand
-  real(kind=r_def), dimension(2)               :: optionset2
   real(kind=r_def), dimension(3)               :: optionset3
 
   ! Options for Spherical domains
-  optionset3 = (/ U0, sbr_angle_lat, sbr_angle_lon /)
-  ! Options for cartesian domains
-  optionset2 = (/ U0, V0 /)
+  optionset3 = (/ u0, sbr_angle_lat, sbr_angle_lon /)
 
   do k = 0, nlayers-1
     do df = 1, ndf_chi
@@ -166,11 +165,15 @@ subroutine initial_u_code(nlayers, &
         if ( geometry == geometry_spherical ) then
           call xyz2llr(xyz(1), xyz(2), xyz(3), llr(1), llr(2), llr(3))
           u_spherical = analytic_wind(llr, time, profile, 3, optionset3)
-          u_physical = sphere2cart_vector(u_spherical,llr) 
+          u_physical = sphere2cart_vector(u_spherical,llr)
         else
-          u_physical = analytic_wind(xyz, time, profile, 2, optionset2)
+          if ( profile == profile_sin_uv ) then
+            u_physical = analytic_wind(xyz, time, profile, 3, (/ u0, v0, wavelength /))
+          else
+            u_physical = analytic_wind(xyz, time, profile, 3, (/ u0, v0, shear /))
+          end if
         end if
-        do df = 1, ndf 
+        do df = 1, ndf
           integrand = dot_product(matmul(jacobian(:,:,qp1,qp2),&
                                          basis(:,df,qp1,qp2)),u_physical)
           rhs(map(df) + k) = rhs(map(df) + k) &

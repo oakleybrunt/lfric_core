@@ -14,7 +14,7 @@ program solver_miniapp
   use constants_mod,                    only : i_def
   use cli_mod,                          only : get_initial_filename
   use init_mesh_mod,                    only : init_mesh
-  use init_fem_mod,                     only : init_fem  
+  use init_fem_mod,                     only : init_fem
   use init_solver_miniapp_mod,          only : init_solver_miniapp
   use yaxt,                             only : xt_initialize, xt_finalize
   use mpi_mod,                          only : initialise_comm, store_comm, &
@@ -94,7 +94,7 @@ program solver_miniapp
   call init_fem(mesh_id,chi)
 
   ! Create and initialise prognostic fields
-  call init_solver_miniapp(mesh_id, chi, fv_1)
+  call init_solver_miniapp(mesh_id, twod_mesh_id, chi, fv_1)
 
   ! Call an algorithm
   call solver_miniapp_alg(fv_1)
@@ -136,7 +136,3 @@ program solver_miniapp
   call finalise_logging()
 
 end program solver_miniapp
-
-
-
-
