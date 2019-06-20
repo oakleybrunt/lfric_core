@@ -61,7 +61,7 @@ $(WORKING_DIR)/common/figures: $(patsubst $(COMMON_FIGURES)/%,$(WORKING_DIR)/fig
 $(WORKING_DIR)/figures/%.pdf: $(COMMON_FIGURES)/%.svg
 	$(call MESSAGE,Transcoding,$<)
 	$(Q)mkdir -p $(dir $@)
-	$(Q)inkscape -z -f $< -A $@
+	$Qconvert $< $@
 
 $(WORKING_DIR)/figures/%.pdf: $(COMMON_FIGURES)/%.eps | $(WORKING_DIR)/figures
 	$(call MESSAGE,Transcoding,$<)
@@ -76,7 +76,7 @@ $(WORKING_DIR)/%/figures: $$(patsubst $$(SOURCE_DIR)/$$*/figures/$$(PERCENT),$(W
 $(WORKING_DIR)/figures/%.pdf: $(SOURCE_DIR)/$$(dir $$*)/figures/$$(notdir $$*).svg | $(WORKING_DIR)/figures/$$(dir $$*)
 	$(call MESSAGE,Transcoding,$<)
 	$(Q)mkdir -p $(dir $@)
-	$(Q)inkscape -z -f $< -A $@
+	$Qconvert $< $@
 
 $(WORKING_DIR)/figures/%.pdf: $(SOURCE_DIR)/$$(dir $$*)/figures/$$(notdir $$*).eps | $(WORKING_DIR)/figures/$$(dir $$*)
 	$(call MESSAGE,Transcoding,$<)

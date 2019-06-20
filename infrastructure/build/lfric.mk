@@ -203,7 +203,7 @@ uml-pdfs: $$(patsubst $$(SOURCE_DIR)/$$(PERCENT).puml, \
 .PRECIOUS: $(DOCUMENT_DIR)/%.pdf
 $(DOCUMENT_DIR)/%.pdf: $(DOCUMENT_DIR)/%.svg
 	$(call MESSAGE,Translating,$(notdir $<))
-	$(Q)inkscape $< --export-pdf=$@
+	$Qconvert $< $@
 
 .PRECIOUS: $(DOCUMENT_DIR)/%.svg
 $(DOCUMENT_DIR)/%.svg: $(SOURCE_DIR)/%.puml \
