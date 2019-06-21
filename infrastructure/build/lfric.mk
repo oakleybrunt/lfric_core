@@ -160,10 +160,11 @@ endif
 # We only want to send terminal control characters if there is a terminal to
 # interpret them...
 #
+_NOW = `date +%H:%M:%S`
 ifneq 'x$(TERM)' 'x'
-  MESSAGE = $(Q)printf "\\033[1m$(1)\\033[0m %s\n" $(2)
+  MESSAGE = $(Q)printf "%s \\033[1m$(1)\\033[0m %s\n" $(_NOW) $(2)
 else
-  MESSAGE = $(Q)echo *$(1)* $(2)
+  MESSAGE = $(Q)echo $(_NOW) *$(1)* $(2)
 endif
 
 # Set up some special macros for hard to escape characters
