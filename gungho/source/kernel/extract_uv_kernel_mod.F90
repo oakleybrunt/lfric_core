@@ -10,7 +10,7 @@
 !>         on W2 and places them in a W2H field
 
 module extract_uv_kernel_mod
-  
+
 use kernel_mod,               only: kernel_type
 use argument_mod,             only: arg_type, func_type,                 &
                                     GH_FIELD, GH_WRITE, GH_READ, GH_INC, &
@@ -37,24 +37,10 @@ contains
 end type
 
 !-------------------------------------------------------------------------------
-! Constructors
-!-------------------------------------------------------------------------------
-
-! overload the default structure constructor
-interface extract_uv_kernel_type
-   module procedure extract_uv_kernel_constructor
-end interface
-
-!-------------------------------------------------------------------------------
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
 public extract_uv_code
 contains
-
-type(extract_uv_kernel_type) function extract_uv_kernel_constructor() result(self)
-  implicit none
-  return
-end function extract_uv_kernel_constructor
 
 !> @brief The subroutine which is called directly by the psy layer
 !! @param[in] nlayers Integer the number of layers
@@ -62,11 +48,11 @@ end function extract_uv_kernel_constructor
 !! @param[in] u_wind Real array, 3d wind field
 !! @param[in] ndf_w2h The number of degrees of freedom per cell for w2h
 !! @param[in] undf_w2h The number of unique degrees of freedom for w2h
-!! @param[in] map_w2h Integer array holding the dofmap for the cell at the 
+!! @param[in] map_w2h Integer array holding the dofmap for the cell at the
 !>            base of the column for w2h
 !! @param[in] ndf_w2 The number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 The number of unique degrees of freedom for w2
-!! @param[in] map_w2 Integer array holding the dofmap for the cell at the 
+!! @param[in] map_w2 Integer array holding the dofmap for the cell at the
 !>            base of the column for w2
 subroutine extract_uv_code(nlayers,      &
                          h_wind,                     &
@@ -74,13 +60,13 @@ subroutine extract_uv_code(nlayers,      &
                          ndf_w2h, undf_w2h, map_w2h, &
                          ndf_w2, undf_w2, map_w2     &
                          )
-  
+
   implicit none
 
   !Arguments
   integer, intent(in) :: nlayers
 
-  integer, intent(in) :: ndf_w2h, undf_w2h  
+  integer, intent(in) :: ndf_w2h, undf_w2h
   integer, intent(in) :: ndf_w2, undf_w2
 
   real(kind=r_def), dimension(undf_w2h), intent(inout) :: h_wind
@@ -95,7 +81,7 @@ subroutine extract_uv_code(nlayers,      &
 
     do df=1,4
       h_wind(map_w2h(df) + k) = u_wind(map_w2(df) + k )
-    end do 
+    end do
 
   end do
 

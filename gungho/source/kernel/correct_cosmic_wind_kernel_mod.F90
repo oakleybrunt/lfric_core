@@ -38,29 +38,15 @@ module correct_cosmic_wind_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface correct_cosmic_wind_kernel_type
-    module procedure correct_cosmic_wind_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public correct_cosmic_wind_code
 
 contains
 
-type(correct_cosmic_wind_kernel_type) function correct_cosmic_wind_kernel_constructor() result(self)
-  implicit none
-  return
-end function correct_cosmic_wind_kernel_constructor
-
   !> @brief Corrects the sign of the winds used to calculate departure points in
   !>        Cosmic.
-  !> @details The sign of the winds need correcting for use in Cosmic since the 
+  !> @details The sign of the winds need correcting for use in Cosmic since the
   !>          Cosmic scheme is a finite-volume scheme and we require the physical
   !>          values of the wind, rather than the Piola wind values.
   !> @param[in] nlayers Integer the number of layers

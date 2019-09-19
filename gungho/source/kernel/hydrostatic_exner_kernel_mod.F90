@@ -49,25 +49,10 @@ contains
 end type
 
 !-------------------------------------------------------------------------------
-! Constructors
-!-------------------------------------------------------------------------------
-
-! Overload the default structure constructor for function space
-interface hydrostatic_exner_kernel_type
-   module procedure hydrostatic_exner_kernel_constructor
-end interface
-
-!-------------------------------------------------------------------------------
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
 public hydrostatic_exner_code
 contains
-
-type(hydrostatic_exner_kernel_type) &
-   function hydrostatic_exner_kernel_constructor() result(self)
-  implicit none
-  return
-end function hydrostatic_exner_kernel_constructor
 
 !> @brief Computes hydrostatic Exner function
 !! @param[in] nlayers Number of layers
@@ -96,9 +81,9 @@ subroutine hydrostatic_exner_code(nlayers, exner, theta, moist_dyn_gas, moist_dy
                                   chi_1, chi_2, chi_3, ndf_w3, undf_w3, map_w3,        &
                                   ndf_wt, undf_wt, map_wt, ndf_chi, undf_chi, map_chi, basis_chi)
 
-  use analytic_pressure_profiles_mod, only : analytic_pressure  
+  use analytic_pressure_profiles_mod, only : analytic_pressure
 
-  implicit none   
+  implicit none
 
   !Arguments
   integer(kind=i_def), intent(in) :: nlayers, ndf_w3, ndf_wt, ndf_chi, undf_w3, undf_wt, undf_chi
@@ -118,13 +103,13 @@ subroutine hydrostatic_exner_code(nlayers, exner, theta, moist_dyn_gas, moist_dy
 
   !Internal variables
   integer(kind=i_def)                    :: k, dfc, layers_offset, wt_dof
-  real(kind=r_def)                       :: dz  
+  real(kind=r_def)                       :: dz
   real(kind=r_def)                       :: theta_moist
   real(kind=r_def),   dimension(ndf_chi) :: chi_1_e, chi_2_e, chi_3_e
   real(kind=r_def)                       :: x(3)
 
   real(kind=r_def)            :: exner_start
-   
+
   if(init_exner_bt) then
     layers_offset = 0
     wt_dof = 1
@@ -146,7 +131,7 @@ subroutine hydrostatic_exner_code(nlayers, exner, theta, moist_dyn_gas, moist_dy
     x(2) = x(2) + chi_2_e(dfc)*basis_chi(1,dfc,wt_dof)
     x(3) = x(3) + chi_3_e(dfc)*basis_chi(1,dfc,wt_dof)
   end do
-  
+
   ! Exner at the model surface or top
   exner_start = analytic_pressure( (/x(1), x(2), x(3)/), test, 0.0_r_def)
 
@@ -174,7 +159,7 @@ subroutine hydrostatic_exner_code(nlayers, exner, theta, moist_dyn_gas, moist_dy
     dz = height_wt(map_wt(1)+nlayers) - height_w3(map_w3(1)+nlayers-1)
     theta_moist = moist_dyn_gas(map_wt(1)+nlayers) * theta(map_wt(1)+nlayers) / &
                   moist_dyn_tot(map_wt(1)+nlayers)
-   
+
     exner(map_w3(1)+nlayers-1) = exner_start + gravity * dz / (cp * theta_moist)
 
     ! Exner on other levels

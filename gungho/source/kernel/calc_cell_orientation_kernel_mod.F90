@@ -43,24 +43,9 @@ module calc_cell_orientation_kernel_mod
     procedure, nopass ::calc_cell_orientation_code
   end type
 
-  !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! overload the default structure constructor for function space
-  interface calc_cell_orientation_kernel_type
-    module procedure calc_cell_orientation_kernel_constructor
-  end interface
-
   public calc_cell_orientation_code
 
 contains
-
-type(calc_cell_orientation_kernel_type) &
-function calc_cell_orientation_kernel_constructor() result(self)
-  implicit none
-  return
-end function calc_cell_orientation_kernel_constructor
 
 !-------------------------------------------------------------------------------
 ! Contained functions/subroutines

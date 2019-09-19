@@ -60,26 +60,11 @@ module weighted_proj_theta2_bd_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface weighted_proj_theta2_bd_kernel_type
-    module procedure weighted_proj_theta2_bd_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public weighted_proj_theta2_bd_code
 
 contains
-
-  type(weighted_proj_theta2_bd_kernel_type) &
-  function weighted_proj_theta2_bd_kernel_constructor() result(self)
-    implicit none
-    return
-  end function weighted_proj_theta2_bd_kernel_constructor
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> @brief The subroutine which is called directly by the Psy layer
@@ -97,7 +82,7 @@ contains
   !! @param[in] stencil_wtheta_size Number of cells in the Wtheta stencil map
   !! @param[in] nqp Integer, number of quadrature points
   !! @param[in] wqp Real array. Quadrature weights
-  !! @param[in] w2_basis_face Real 4-dim array holding w2 basis functions 
+  !! @param[in] w2_basis_face Real 4-dim array holding w2 basis functions
   !!            evaluated at Gaussian quadrature points on horizontal faces
   !! @param[in] wtheta_basis_face Real 4-dim array holding wtheta basis functions
   !!            evaluated at Gaussian quadrature points on horizontal faces
@@ -177,9 +162,9 @@ contains
           do df2 = 1,ndf_w2
             v_dot_n = dot_product(w2_basis_face(:,df2,qp,face),out_face_normal(:, face))
             flux_term = wqp(qp,face) * theta_av * v_dot_n
-            if (upwind) then                      
+            if (upwind) then
               flux_term = flux_term + 0.5_r_def * abs(v_dot_n) * &
-                          (theta_at_fquad - theta_next_at_fquad)       
+                          (theta_at_fquad - theta_next_at_fquad)
             end if
             do dft = 1,ndf_wtheta
               projection(dft,df2,ik) = projection(dft,df2,ik) &

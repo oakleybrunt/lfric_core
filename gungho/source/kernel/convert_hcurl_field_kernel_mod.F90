@@ -43,24 +43,10 @@ contains
 end type
 
 !-------------------------------------------------------------------------------
-! Constructors
-!-------------------------------------------------------------------------------
-
-! Overload the default structure constructor for function space
-interface convert_hcurl_field_kernel_type
-   module procedure convert_hcurl_field_kernel_constructor
-end interface
-
-!-------------------------------------------------------------------------------
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
 public convert_hcurl_field_code
 contains
-
-type(convert_hcurl_field_kernel_type) function convert_hcurl_field_kernel_constructor() result(self)
-  implicit none
-  return
-end function convert_hcurl_field_kernel_constructor
 
 !> @param[in] nlayers Number of layers
 !> @param[in] ndf Number of degrees of freedom per cell for the output field
@@ -91,7 +77,7 @@ subroutine convert_hcurl_field_code(nlayers,                                  &
                                   )
 
   use coordinate_jacobian_mod, only: coordinate_jacobian, coordinate_jacobian_inverse
-  implicit none                              
+  implicit none
   !Arguments
   integer,                                    intent(in)    :: nlayers
   integer,                                    intent(in)    :: ndf, undf, &
@@ -110,7 +96,7 @@ subroutine convert_hcurl_field_code(nlayers,                                  &
   integer          :: df, df2, k
   real(kind=r_def) :: jacobian(3,3,ndf,1), jacobian_inv(3,3,ndf,1), dj(ndf,1)
   real(kind=r_def) :: vector_in(3), vector_out(3)
-  real(kind=r_def), dimension(ndf_chi) :: chi1_e, chi2_e, chi3_e 
+  real(kind=r_def), dimension(ndf_chi) :: chi1_e, chi2_e, chi3_e
 
   do k = 0, nlayers-1
     do df = 1,ndf_chi
@@ -120,7 +106,7 @@ subroutine convert_hcurl_field_code(nlayers,                                  &
     end do
     call coordinate_jacobian(ndf_chi, ndf, 1, chi1_e, chi2_e, chi3_e,  &
                              diff_basis_chi, jacobian, dj)
-    call coordinate_jacobian_inverse(ndf, 1, jacobian, dj, jacobian_inv)  
+    call coordinate_jacobian_inverse(ndf, 1, jacobian, dj, jacobian_inv)
     do df = 1,ndf
       vector_in(:) = 0.0_r_def
       do df2 = 1,ndf

@@ -53,27 +53,12 @@ module compute_dl_matrix_kernel_mod
   end type
 
   !-------------------------------------------------------------------------------
-  ! Constructors
-  !-------------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface compute_dl_matrix_kernel_type
-    module procedure compute_dl_matrix_constructor
-  end interface
-
-  !-------------------------------------------------------------------------------
   ! Contained functions/subroutines
   !-------------------------------------------------------------------------------
   public compute_dl_matrix_code
   public damping_layer_func
 
 contains
-
-  type(compute_dl_matrix_kernel_type) &
-       function compute_dl_matrix_constructor() result(self)
-       implicit none
-       return
-  end function compute_dl_matrix_constructor
 
   !> @brief Computes the reduced mass matrix for the damping layer term in the momentum equation.
   !!

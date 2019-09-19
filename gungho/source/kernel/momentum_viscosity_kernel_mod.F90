@@ -38,25 +38,11 @@ module momentum_viscosity_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface momentum_viscosity_kernel_type
-    module procedure momentum_viscosity_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public momentum_viscosity_code
 
 contains
-
-type(momentum_viscosity_kernel_type) function momentum_viscosity_kernel_constructor() result(self)
-  implicit none
-  return
-end function momentum_viscosity_kernel_constructor
 
 !> @brief The subroutine which is called directly by the Psy layer
 !! @param[in] nlayers Number of layers in the mesh
@@ -100,7 +86,7 @@ subroutine momentum_viscosity_code(nlayers,                               &
   real(kind=r_def), dimension(0:nlayers-1) :: idx2, idy2, idz2
   real(kind=r_def), dimension(ndf_chi)     :: chi1_e, chi2_e, chi3_e
 
-  !  ---------- 
+  !  ----------
   !  |    |   |
   !  |  w | i |
   !  -----x----
@@ -146,7 +132,7 @@ subroutine momentum_viscosity_code(nlayers,                               &
   d2dz = (u_n(map_w2(6,1) + k)  - 2.0_r_def*u_n(map_w2(5,1) + k) + u_n(map_w2(5,1) + km))*idz2(k)
   u_inc(cell_map_w2(5)+k) = viscosity_mu*(d2dx + d2dy + d2dz)
 
-  do k = 1, nlayers-2  
+  do k = 1, nlayers-2
     km = k - 1
     kp = k + 1
     ! u
@@ -168,7 +154,7 @@ subroutine momentum_viscosity_code(nlayers,                               &
     u_inc(cell_map_w2(5)+k) = viscosity_mu*(d2dx + d2dy + d2dz)
   end do
 
-  k = nlayers-1  
+  k = nlayers-1
   km = k - 1
   kp = k
   ! u
@@ -200,7 +186,7 @@ subroutine momentum_viscosity_code(nlayers,                               &
   ! Enforce zero flux boundary conditions
   u_inc(cell_map_w2(5) )             = 0.0_r_def
   u_inc(cell_map_w2(6) + nlayers-1 ) = 0.0_r_def
-   
+
 end subroutine momentum_viscosity_code
 
 end module momentum_viscosity_kernel_mod

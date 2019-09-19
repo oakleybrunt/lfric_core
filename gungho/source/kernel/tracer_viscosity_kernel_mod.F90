@@ -38,25 +38,11 @@ module tracer_viscosity_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface tracer_viscosity_kernel_type
-    module procedure tracer_viscosity_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public tracer_viscosity_code
 
 contains
-
-type(tracer_viscosity_kernel_type) function tracer_viscosity_kernel_constructor() result(self)
-  implicit none
-  return
-end function tracer_viscosity_kernel_constructor
 
 !> @brief The subroutine which is called directly by the Psy layer
 !! @param[in] nlayers Number of layers in the mesh

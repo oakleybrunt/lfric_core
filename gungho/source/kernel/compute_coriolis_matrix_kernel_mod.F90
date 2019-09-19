@@ -58,25 +58,10 @@ contains
 end type
 
 !-------------------------------------------------------------------------------
-! Constructors
-!-------------------------------------------------------------------------------
-
-! Overload the default structure constructor for function space
-interface compute_coriolis_matrix_kernel_type
-   module procedure compute_coriolis_matrix_constructor
-end interface
-
-!-------------------------------------------------------------------------------
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
 public compute_coriolis_matrix_code
 contains
-
-type(compute_coriolis_matrix_kernel_type) &
-                        function compute_coriolis_matrix_constructor() result(self)
-  implicit none
-  return
-end function compute_coriolis_matrix_constructor
 
 !> @brief Compute the Coriolis operator to apply the rotation vector Omega to
 !>        the wind fields.

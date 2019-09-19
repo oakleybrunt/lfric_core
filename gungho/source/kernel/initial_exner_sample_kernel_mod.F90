@@ -37,25 +37,11 @@ module initial_exner_sample_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface initial_exner_sample_kernel_type
-      module procedure initial_exner_sample_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public initial_exner_sample_code
 
 contains
-
-  type(initial_exner_sample_kernel_type) function initial_exner_sample_kernel_constructor() result(self)
-      implicit none
-      return
-  end function initial_exner_sample_kernel_constructor
 
   !> @brief Computes the initial exner field
   !! @param[in] nlayers Number of layers
@@ -84,7 +70,7 @@ contains
     implicit none
 
     ! Arguments
-    integer(kind=i_def),                               intent(in)  :: nlayers 
+    integer(kind=i_def),                               intent(in)  :: nlayers
     integer(kind=i_def),                               intent(in)  :: ndf_w3, ndf_chi, &
                                                                       undf_w3, undf_chi
     integer(kind=i_def), dimension(ndf_w3),            intent(in)  :: map_w3

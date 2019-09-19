@@ -43,25 +43,11 @@ module cosmic_departure_wind_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface cosmic_departure_wind_kernel_type
-    module procedure cosmic_departure_wind_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public cosmic_departure_wind_code
 
 contains
-
-  type(cosmic_departure_wind_kernel_type) function cosmic_departure_wind_kernel_constructor() result(self)
-    implicit none
-    return
-  end function cosmic_departure_wind_kernel_constructor
 
   !> @brief Divides the Piola wind values by detJ at W2 dofs.
   !> @details The Piola wind values are divided by detJ at the W2 dofs which rescales

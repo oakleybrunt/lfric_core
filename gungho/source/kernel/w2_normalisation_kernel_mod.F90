@@ -47,26 +47,11 @@ module w2_normalisation_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface w2_normalisation_kernel_type
-    module procedure w2_normalisation_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public :: w2_normalisation_code
 
 contains
-
-type(w2_normalisation_kernel_type) &
-function w2_normalisation_kernel_constructor() result(self)
-  implicit none
-  return
-end function w2_normalisation_kernel_constructor
 
 !> @brief Compute the normalisation factor for W2 fields as vJv
 !! @param[in] nlayers Number of layers
@@ -83,7 +68,7 @@ end function w2_normalisation_kernel_constructor
 !! @param[in] map_chi Dofmap for the coordinate field
 !! @param[in] chi_diff_basis Wchi basis functions evaluated at W2 nodal points
 subroutine w2_normalisation_code(nlayers,                &
-                                 normalisation,          & 
+                                 normalisation,          &
                                  chi_1, chi_2, chi_3,    &
                                  ndf, undf,              &
                                  map, basis,             &

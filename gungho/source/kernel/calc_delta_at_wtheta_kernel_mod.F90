@@ -7,8 +7,8 @@
 !-------------------------------------------------------------------------------
 
 !> @brief The kernel computes edge lengths at theta points.
-!> @details Kernel to compute the edge lengths at theta points by finding the 
-!> minimum edge length of the four w2 edges surrounding each theta point 
+!> @details Kernel to compute the edge lengths at theta points by finding the
+!> minimum edge length of the four w2 edges surrounding each theta point
 module calc_delta_at_wtheta_kernel_mod
 
 use argument_mod,            only : arg_type,              &
@@ -36,24 +36,10 @@ contains
 end type
 
 !-------------------------------------------------------------------------------
-! Constructors
-!-------------------------------------------------------------------------------
-
-! overload the default structure constructor for function space
-interface calc_delta_at_wtheta_kernel_type
-   module procedure calc_delta_at_wtheta_kernel_constructor
-end interface
-
-!-------------------------------------------------------------------------------
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
 public calc_delta_at_wtheta_code
 contains
-
-type(calc_delta_at_wtheta_kernel_type) function calc_delta_at_wtheta_kernel_constructor() result(self)
-  implicit none
-  return
-end function calc_delta_at_wtheta_kernel_constructor
 
 !> @brief compute edge lengths based on cell volume and face area.
 !! @param[in] nlayers Number of layers

@@ -4,7 +4,7 @@
 ! should have received as part of this distribution.
 !-----------------------------------------------------------------------------
 
-!> @brief Kernel which projects a field into into a given space 
+!> @brief Kernel which projects a field into into a given space
 
 module gp_rhs_kernel_mod
 use kernel_mod,              only : kernel_type
@@ -41,28 +41,14 @@ contains
 end type
 
 !-------------------------------------------------------------------------------
-! Constructors
-!-------------------------------------------------------------------------------
-
-! overload the default structure constructor for function space
-interface gp_rhs_kernel_type
-   module procedure gp_rhs_kernel_constructor
-end interface
-
-!-------------------------------------------------------------------------------
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
 contains
 
-type(gp_rhs_kernel_type) function gp_rhs_kernel_constructor() result(self)
-  implicit none
-  return
-end function gp_rhs_kernel_constructor
-
 !> @brief     Subroutine to compute right hand side of a galerkin projection of
 !>            a field from one space to  a different space
 !> @details   Computes int( gamma * f  dx) to compute the right hand side of the
-!>            galerkin projection of scalar field f into another space of which gamma 
+!>            galerkin projection of scalar field f into another space of which gamma
 !>            is the test function
 !! @param[in] nlayers Number of layers
 !! @param[in] ndf Number of degrees of freedom per cell
@@ -71,12 +57,12 @@ end function gp_rhs_kernel_constructor
 !! @param[in] basis Basis functions evaluated at quadrature points
 !! @param[inout] rhs Field containing the intergral of test_function * field
 !! @param[in] ndf_f Number of degrees of freedom per cell for the field to be projected
-!! @param[in] undf_f Number of (local) unique degrees of freedom of the proj. field 
+!! @param[in] undf_f Number of (local) unique degrees of freedom of the proj. field
 !! @param[in] map_f Dofmap for the cell at the base of the column
 !! @param[in] f_basis Basis functions evaluated at quadrature points
 !! @param[in] field Field to be projected
 !! @param[in] ndf_chi Number of dofs per cell for the coordinate field
-!! @param[in] undf_chi Number of (local) unique degrees of freedom of the chi field 
+!! @param[in] undf_chi Number of (local) unique degrees of freedom of the chi field
 !! @param[in] map_chi Dofmap for the coordinate field
 !! @param[in] chi_diff_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] chi_1 X component of the coordinate field
@@ -91,33 +77,33 @@ subroutine gp_rhs_code(nlayers, &
                        chi_1, chi_2, chi_3, &
                        ndf, undf, map, basis, &
                        ndf_f, undf_f, map_f, f_basis, &
-                       ndf_chi, undf_chi, map_chi, chi_diff_basis, & 
+                       ndf_chi, undf_chi, map_chi, chi_diff_basis, &
                        nqp_h, nqp_v, wqp_h, wqp_v                    )
-                       
-  use coordinate_jacobian_mod, only: coordinate_jacobian                       
+
+  use coordinate_jacobian_mod, only: coordinate_jacobian
 
   implicit none
 
   !Arguments
-  integer,          intent(in) :: nlayers, ndf, undf 
+  integer,          intent(in) :: nlayers, ndf, undf
   integer,          intent(in) :: ndf_f, undf_f, ndf_chi, undf_chi
   integer,          intent(in) :: nqp_h, nqp_v
 
-  integer, dimension(ndf),     intent(in) :: map 
+  integer, dimension(ndf),     intent(in) :: map
   integer, dimension(ndf_f),   intent(in) :: map_f
   integer, dimension(ndf_chi), intent(in) :: map_chi
 
-  real(kind=r_def), intent(in), dimension(1,ndf,    nqp_h,nqp_v) :: basis 
-  real(kind=r_def), intent(in), dimension(1,ndf_f,  nqp_h,nqp_v) :: f_basis 
-  real(kind=r_def), intent(in), dimension(3,ndf_chi,nqp_h,nqp_v) :: chi_diff_basis 
+  real(kind=r_def), intent(in), dimension(1,ndf,    nqp_h,nqp_v) :: basis
+  real(kind=r_def), intent(in), dimension(1,ndf_f,  nqp_h,nqp_v) :: f_basis
+  real(kind=r_def), intent(in), dimension(3,ndf_chi,nqp_h,nqp_v) :: chi_diff_basis
 
   real(kind=r_def), dimension(undf),     intent(inout) :: rhs
   real(kind=r_def), dimension(undf_chi), intent(in)    :: chi_1, chi_2, chi_3
-  real(kind=r_def), dimension(undf_f),   intent(in)    :: field  
+  real(kind=r_def), dimension(undf_f),   intent(in)    :: field
 
   real(kind=r_def), dimension(nqp_h), intent(in)      ::  wqp_h
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
-  
+
   !Internal variables
   integer                                      :: df, df2, k, qp1, qp2
   real(kind=r_def), dimension(nqp_h,nqp_v)     :: dj
@@ -151,10 +137,10 @@ subroutine gp_rhs_code(nlayers, &
                              + wqp_h(qp1)*wqp_v(qp2)*basis(1,df,qp1,qp2) &
                              * rhs_cell * dj(qp1,qp2)
           end do
-       end do      
+       end do
     end do
   end do
-  
+
 end subroutine gp_rhs_code
 
 end module gp_rhs_kernel_mod

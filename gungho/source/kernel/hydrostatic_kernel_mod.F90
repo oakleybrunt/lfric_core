@@ -66,26 +66,11 @@ module hydrostatic_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface hydrostatic_kernel_type
-    module procedure hydrostatic_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public hydrostatic_code
 
 contains
-
-type(hydrostatic_kernel_type) &
-function hydrostatic_kernel_constructor() result(self)
-  implicit none
-  return
-end function hydrostatic_kernel_constructor
 
 !> @brief Compute the pressure and geopotential gradient components of the momentum equation
 !! @param[in] nlayers Number of layers
@@ -99,16 +84,16 @@ end function hydrostatic_kernel_constructor
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 Number unique of degrees of freedom  for w2
 !! @param[in] map_w2 Dofmap for the cell at the base of the column for w2
-!! @param[in] w2_basis Basis functions evaluated at quadrature points 
+!! @param[in] w2_basis Basis functions evaluated at quadrature points
 !! @param[in] w2_diff_basis Differential of the basis functions evaluated at quadrature points
 !! @param[in] ndf_w3 Number of degrees of freedom per cell for w3
 !! @param[in] undf_w3 Number unique of degrees of freedom  for w3
 !! @param[in] map_w3 Dofmap for the cell at the base of the column for w3
-!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] ndf_wt Number of degrees of freedom per cell for wt
 !! @param[in] undf_wt Number unique of degrees of freedom  for wt
 !! @param[in] map_wt Dofmap for the cell at the base of the column for wt
-!! @param[in] wt_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] wt_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] wt_diff_basis Differential of the basis functions evaluated at quadrature points
 !! @param[in] nqp_h Number of quadrature points in the horizontal
 !! @param[in] nqp_v Number of quadrature points in the vertical
@@ -123,7 +108,7 @@ subroutine hydrostatic_code(nlayers,                                          &
                             nqp_h, nqp_v, wqp_h, wqp_v                        &
                             )
   implicit none
-                         
+
   ! Arguments
   integer, intent(in) :: nlayers,nqp_h, nqp_v
   integer, intent(in) :: ndf_wt, ndf_w2, ndf_w3
@@ -132,9 +117,9 @@ subroutine hydrostatic_code(nlayers,                                          &
   integer, dimension(ndf_w2), intent(in) :: map_w2
   integer, dimension(ndf_w3), intent(in) :: map_w3
 
-  real(kind=r_def), dimension(1,ndf_w3,nqp_h,nqp_v), intent(in) :: w3_basis  
-  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis 
-  real(kind=r_def), dimension(1,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_basis 
+  real(kind=r_def), dimension(1,ndf_w3,nqp_h,nqp_v), intent(in) :: w3_basis
+  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis
+  real(kind=r_def), dimension(1,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_basis
   real(kind=r_def), dimension(1,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_diff_basis
   real(kind=r_def), dimension(3,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_diff_basis   
 
@@ -150,9 +135,9 @@ subroutine hydrostatic_code(nlayers,                                          &
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
 
   ! Internal variables
-  integer               :: df, k 
+  integer               :: df, k
   integer               :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_w3)          :: exner_e
   real(kind=r_def), dimension(ndf_wt)          :: theta_v_e
   real(kind=r_def), dimension(ndf_w3)          :: phi_e
@@ -162,7 +147,7 @@ subroutine hydrostatic_code(nlayers,                                          &
                       grad_term, dv
   real(kind=r_def) :: phi_at_quad
   real(kind=r_def) :: geo_term
-  
+
   do k = 0, nlayers-1
     do df = 1, ndf_w3
       exner_e(df) = exner( map_w3(df) + k )
@@ -212,7 +197,7 @@ subroutine hydrostatic_code(nlayers,                                          &
       end do
     end do
   end do
-  
+
 end subroutine hydrostatic_code
 
 end module hydrostatic_kernel_mod

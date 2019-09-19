@@ -54,25 +54,10 @@ module subgrid_coeffs_kernel_mod
   end type
 
   !-------------------------------------------------------------------------------
-  ! Constructors
-  !-------------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface subgrid_coeffs_kernel_type
-    module procedure subgrid_coeffs_kernel_constructor
-  end interface
-
-  !-------------------------------------------------------------------------------
   ! Contained functions/subroutines
   !-------------------------------------------------------------------------------
   public :: subgrid_coeffs_code
 contains
-
-type(subgrid_coeffs_kernel_type) &
-function subgrid_coeffs_kernel_constructor() result(self)
-  implicit none
-  return
-end function subgrid_coeffs_kernel_constructor
 
 !> @brief Compute the subgrid reconstruction coeffiecients for a density field
 !! @param[in] nlayers Number of layers

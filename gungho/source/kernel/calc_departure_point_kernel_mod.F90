@@ -39,23 +39,9 @@ module calc_departure_point_kernel_mod
     procedure, nopass ::calc_departure_point_code
   end type
 
-  !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface calc_departure_point_kernel_type
-    module procedure calc_departure_point_kernel_constructor
-  end interface
-
   public calc_departure_point_code
 
 contains
-
-type(calc_departure_point_kernel_type) function calc_departure_point_kernel_constructor() result(self)
-  implicit none
-  return
-end function calc_departure_point_kernel_constructor
 
 !-------------------------------------------------------------------------------
 ! Contained functions/subroutines

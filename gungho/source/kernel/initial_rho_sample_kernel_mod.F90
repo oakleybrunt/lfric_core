@@ -40,25 +40,11 @@ module initial_rho_sample_kernel_mod
     end type
 
     !-------------------------------------------------------------------------
-    ! Constructors
-    !-------------------------------------------------------------------------
-
-    ! overload the default structure constructor for function space
-    interface initial_rho_sample_kernel_type
-        module procedure initial_rho_sample_kernel_constructor
-    end interface
-
-    !-------------------------------------------------------------------------
     ! Contained functions/subroutines
     !-------------------------------------------------------------------------
     public initial_rho_sample_code
 
 contains
-
-    type(initial_rho_sample_kernel_type) function initial_rho_sample_kernel_constructor() result(self)
-        implicit none
-        return
-    end function initial_rho_sample_kernel_constructor
 
     !> @brief Computes the initial rho field
     !! @param[in] nlayers Number of layers

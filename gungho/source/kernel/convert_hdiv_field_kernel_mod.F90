@@ -43,24 +43,10 @@ contains
 end type
 
 !-------------------------------------------------------------------------------
-! Constructors
-!-------------------------------------------------------------------------------
-
-! Overload the default structure constructor for function space
-interface convert_hdiv_field_kernel_type
-   module procedure convert_hdiv_field_kernel_constructor
-end interface
-
-!-------------------------------------------------------------------------------
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
 public convert_hdiv_field_code
 contains
-
-type(convert_hdiv_field_kernel_type) function convert_hdiv_field_kernel_constructor() result(self)
-  implicit none
-  return
-end function convert_hdiv_field_kernel_constructor
 
 !> @param[in] nlayers Number of layers
 !> @param[in] ndf Number of degrees of freedom per cell for the output field
@@ -77,7 +63,7 @@ end function convert_hdiv_field_kernel_constructor
 !> @param[in] undf_chi Number of unique degrees of freedom for the coordinate field
 !> @param[in] map_chi Dofmap for the cell at the base of the column for the coordinate field
 !> @param[in] basis Basis functions of the output field evaluated at its nodal points
-!> @param[in] diff_basis_chi Differential basis functions of the coordinate space evaluated at the nodal points  
+!> @param[in] diff_basis_chi Differential basis functions of the coordinate space evaluated at the nodal points
 subroutine convert_hdiv_field_code(nlayers,                                  &
                                    physical_field1,                          &
                                    physical_field2,                          &
@@ -91,7 +77,7 @@ subroutine convert_hdiv_field_code(nlayers,                                  &
                                    diff_basis_chi                            &
                                  )
   use coordinate_jacobian_mod, only: coordinate_jacobian
-  implicit none                     
+  implicit none
   !Arguments
   integer,                                    intent(in)    :: nlayers
   integer,                                    intent(in)    :: ndf1, undf1, &
@@ -113,7 +99,7 @@ subroutine convert_hdiv_field_code(nlayers,                                  &
   integer          :: df, df2, k
   real(kind=r_def) :: jacobian(3,3,ndf1,1), dj(ndf1,1)
   real(kind=r_def) :: vector_in(3), vector_out(3)
-  real(kind=r_def), dimension(ndf_chi) :: chi1_e, chi2_e, chi3_e 
+  real(kind=r_def), dimension(ndf_chi) :: chi1_e, chi2_e, chi3_e
 
   do k = 0, nlayers-1
     do df = 1,ndf_chi

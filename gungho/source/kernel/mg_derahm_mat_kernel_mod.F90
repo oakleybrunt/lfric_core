@@ -7,7 +7,7 @@
 !>
 !> @details Compute the mass matrices of the DeRahm cochain,
 !> these are the mass matrices for the W2, W3 and Wtheta function spaces
-!> along with the divergence operator 
+!> along with the divergence operator
 !> Since they all depend upon the mesh Jacobian they are computed as one
 !> to reduce the cost
 !>
@@ -39,14 +39,14 @@ module mg_derahm_mat_kernel_mod
     type(arg_type) :: meta_args(5) = (/                            &
         arg_type(GH_OPERATOR, GH_WRITE, W2, W2),                   &
         arg_type(GH_OPERATOR, GH_WRITE, W3, W3),                   &
-        arg_type(GH_OPERATOR, GH_WRITE, Wtheta, Wtheta),           &        
+        arg_type(GH_OPERATOR, GH_WRITE, Wtheta, Wtheta),           &
         arg_type(GH_OPERATOR, GH_WRITE, W3, W2),                   &
         arg_type(GH_FIELD*3,  GH_READ,  ANY_SPACE_9)               &
         /)
     type(func_type) :: meta_funcs(4) = (/                &
         func_type(W2,          GH_BASIS, GH_DIFF_BASIS), &
         func_type(W3,          GH_BASIS),                &
-        func_type(Wtheta,      GH_BASIS),                &        
+        func_type(Wtheta,      GH_BASIS),                &
         func_type(ANY_SPACE_9,           GH_DIFF_BASIS)            &
         /)
     integer :: iterates_over = CELLS
@@ -54,14 +54,6 @@ module mg_derahm_mat_kernel_mod
   contains
     procedure, nopass :: mg_derahm_mat_code
   end type
-  !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface mg_derahm_mat_kernel_type
-    module procedure mg_derahm_mat_cons
-  end interface
 
   public mg_derahm_mat_code
 
@@ -69,12 +61,6 @@ module mg_derahm_mat_kernel_mod
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
 contains
-
-  type(mg_derahm_mat_kernel_type) &
-       function mg_derahm_mat_cons() result(self)
-  implicit none
-  return
-end function mg_derahm_mat_cons
 
 !> @brief This subroutine computes the operator matrices for the modified DeRahm complex
 !! @param[in] cell Cell number
@@ -107,7 +93,7 @@ end function mg_derahm_mat_cons
 !! @param[in] nqp_v Number of vertical quadrature points
 !! @param[in] wqp_h Horizontal quadrature weights
 !! @param[in] wqp_v Vertical quadrature weights
-subroutine mg_derahm_mat_code(cell, nlayers,                      & 
+subroutine mg_derahm_mat_code(cell, nlayers,                      &
                                         ncell_3d2, mm2,                     &
                                         ncell_3d3, mm3,                     &
                                         ncell_3dt, mmt,                     &
@@ -123,7 +109,7 @@ subroutine mg_derahm_mat_code(cell, nlayers,                      &
   implicit none
   ! Arguments
   integer(kind=i_def),   intent(in)     :: cell, nqp_h, nqp_v
-  integer(kind=i_def),   intent(in)     :: nlayers 
+  integer(kind=i_def),   intent(in)     :: nlayers
   integer(kind=i_def),   intent(in)     :: ndf_w2, ndf_w3, ndf_wt
   integer(kind=i_def),   intent(in)     :: ncell_3d2, ncell_3d3, ncell_3dt, ncell_3d6
   integer(kind=i_def),   intent(in)     :: ndf_chi
@@ -131,7 +117,7 @@ subroutine mg_derahm_mat_code(cell, nlayers,                      &
   integer(kind=i_def), dimension(ndf_chi), intent(in) :: map_chi
   real(kind=r_def), intent(out) :: mm2(ndf_w2,ndf_w2,ncell_3d2)
   real(kind=r_def), intent(out) :: mm3(ndf_w3,ndf_w3,ncell_3d3)
-  real(kind=r_def), intent(out) :: mmt(ndf_wt,ndf_wt,ncell_3dt)  
+  real(kind=r_def), intent(out) :: mmt(ndf_wt,ndf_wt,ncell_3dt)
   real(kind=r_def), intent(out) :: div(ndf_w3,ndf_w2,ncell_3d6)
   real(kind=r_def), intent(in)  :: diff_basis_chi(3,ndf_chi,nqp_h,nqp_v)
   real(kind=r_def), intent(in)  :: basis_w2(3,ndf_w2,nqp_h,nqp_v)
@@ -143,11 +129,11 @@ subroutine mg_derahm_mat_code(cell, nlayers,                      &
   real(kind=r_def), intent(in)  :: chi3(undf_chi)
   real(kind=r_def), intent(in)  :: wqp_h(nqp_h)
   real(kind=r_def), intent(in)  :: wqp_v(nqp_v)
-  
+
   ! Internal variables
   integer(kind=i_def)                          :: df, df2, k, ik
   integer(kind=i_def)                          :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_chi)         :: chi1_e, chi2_e, chi3_e
   real(kind=r_def)                             :: integrand
   real(kind=r_def)                             :: dj
@@ -155,22 +141,22 @@ subroutine mg_derahm_mat_code(cell, nlayers,                      &
   real(kind=r_def), dimension(3,3)             :: jac_t
   real(kind=r_def), dimension(3)               :: jac_v
   real(kind=r_def)                             :: wt
-  
+
   do k = 0, nlayers-1
-     
+
      ! Indirect the chi coord field here
      do df = 1, ndf_chi
         chi1_e(df) = chi1(map_chi(df) + k)
         chi2_e(df) = chi2(map_chi(df) + k)
         chi3_e(df) = chi3(map_chi(df) + k)
      end do
-     
+
      ik = 1 + k + (cell-1)*nlayers
      mm2(:,:,ik) = 0.0_r_def
      mm3(:,:,ik) = 0.0_r_def
      div(:,:,ik) = 0.0_r_def
-     mmt(:,:,ik) = 0.0_r_def     
-     
+     mmt(:,:,ik) = 0.0_r_def
+
      do qp2 = 1, nqp_v
         do qp1 = 1, nqp_h
            ! Precompute some frequently used terms
@@ -180,7 +166,7 @@ subroutine mg_derahm_mat_code(cell, nlayers,                      &
            jac_inv = pointwise_coordinate_jacobian_inverse(jac,dj)
            jac_t = transpose(jac_inv)
            wt = wqp_h(qp1)*wqp_v(qp2)
-           
+
            ! W2 mass matrix
            do df2 = 1, ndf_w2
               jac_v = matmul(jac,basis_w2(:,df2,qp1,qp2))
@@ -221,7 +207,7 @@ subroutine mg_derahm_mat_code(cell, nlayers,                      &
            end do
         end do
      end do
-           
+
      do df2 = 1,ndf_w2
         do df = df2, 1, -1
            mm2(df,df2,ik) = mm2(df2,df,ik)
@@ -238,7 +224,7 @@ subroutine mg_derahm_mat_code(cell, nlayers,                      &
         end do
      end do
   end do ! end of k loop
-  
+
 end subroutine mg_derahm_mat_code
-      
+
 end module mg_derahm_mat_kernel_mod

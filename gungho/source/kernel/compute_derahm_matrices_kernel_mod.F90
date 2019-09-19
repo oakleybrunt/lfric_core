@@ -7,7 +7,7 @@
 !>
 !> @details Compute the mass matrices of the DeRahm cochain,
 !> these are the mass matrices for the W0, W1, W2 & W3 function spaces
-!> along with the gradient, curl and divergence operators and the 
+!> along with the gradient, curl and divergence operators and the
 !> W2broken/Wtheta mass matrices.
 !> Since they all depend upon the mesh Jacobian they are computed as one
 !> to reduce the cost
@@ -67,14 +67,6 @@ module compute_derahm_matrices_kernel_mod
   contains
     procedure, nopass :: compute_derahm_matrices_code
   end type
-  !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface compute_derahm_matrices_kernel_type
-    module procedure compute_derahm_matrices_constructor
-  end interface
 
   !---------------------------------------------------------------------------
   ! Contained functions/subroutines
@@ -82,12 +74,6 @@ module compute_derahm_matrices_kernel_mod
   public compute_derahm_matrices_code
 
 contains
-
-type(compute_derahm_matrices_kernel_type) &
-                        function compute_derahm_matrices_constructor() result(self)
-  implicit none
-  return
-end function compute_derahm_matrices_constructor
 
 !> @brief This subroutine computes the operator matrices for the modified DeRahm complex
 !! @param[in] cell Cell number

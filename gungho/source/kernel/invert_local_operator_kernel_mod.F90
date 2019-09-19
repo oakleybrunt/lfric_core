@@ -34,27 +34,12 @@ module invert_local_operator_kernel_mod
   end type invert_local_operator_kernel_type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! overload the default structure constructor for function space
-  interface invert_local_operator
-    module procedure invert_local_operator_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public invert_local_operator_code
 
 contains
 
-type(invert_local_operator_kernel_type) &
-function invert_local_operator_constructor() result(self)
-  implicit none
-  return
-end function invert_local_operator_constructor
-  
 !> @brief This subroutine computes the mass matrix for the w0 space
 !! @param[in] cell cell Number
 !! @param[in] nlayers Number of layers.

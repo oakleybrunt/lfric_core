@@ -8,7 +8,7 @@
 
 !> @brief Kernel which computes the multiplicity of the dofs for a field
 !> @details Computes how many times each dof in a field is visited when looping
-!>          over cells and all dof's asscociated with that cell 
+!>          over cells and all dof's asscociated with that cell
 module multiplicity_kernel_mod
 use kernel_mod,              only : kernel_type
 use argument_mod,            only : arg_type, func_type,                     &
@@ -34,24 +34,10 @@ contains
 end type
 
 !-------------------------------------------------------------------------------
-! Constructors
-!-------------------------------------------------------------------------------
-
-! overload the default structure constructor for function space
-interface multiplicity_kernel_type
-  module procedure multiplicity_kernel_constructor
-end interface
-
-!-------------------------------------------------------------------------------
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
 public multiplicity_code
 contains
-
-type(multiplicity_kernel_type) function multiplicity_kernel_constructor() result(self)
-  implicit none
-  return
-end function multiplicity_kernel_constructor
 
 !> @brief Compute the multiplicity of a field (number of cells each dof is shared by)
 !! @param[in] nlayers Number of layers
@@ -74,9 +60,9 @@ subroutine multiplicity_code(nlayers,                        &
   integer, dimension(ndf),   intent(in) :: map
 
   real(kind=r_def), dimension(undf), intent(inout) :: field
- 
+
   integer :: k, df
-  
+
   do k = 0, nlayers - 1
     do df = 1,ndf
       field(map(df) + k) = field(map(df) + k) + 1.0_r_def

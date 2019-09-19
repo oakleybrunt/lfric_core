@@ -39,25 +39,11 @@ module calc_detj_at_w2_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface calc_detj_at_w2_kernel_type
-    module procedure calc_detj_at_w2_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public calc_detj_at_w2_code
 
 contains
-
-type(calc_detj_at_w2_kernel_type) function calc_detj_at_w2_kernel_constructor() result(self)
-  implicit none
-  return
-end function calc_detj_at_w2_kernel_constructor
 
 !> @param[in]  nlayers        Integer the number of layers
 !> @param[out] detj_w2        The output field containing the detj values at W2 locations

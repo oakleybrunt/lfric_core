@@ -44,25 +44,11 @@ module compute_geopotential_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface compute_geopotential_kernel_type
-    module procedure compute_geopotential_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public compute_geopotential_code
 
 contains
-
-type(compute_geopotential_kernel_type) function compute_geopotential_kernel_constructor() result(self)
-  implicit none
-  return
-end function compute_geopotential_kernel_constructor
 
 !! @param[in] nlayers Number of layers
 !! @param[inout] phi Geopotential array

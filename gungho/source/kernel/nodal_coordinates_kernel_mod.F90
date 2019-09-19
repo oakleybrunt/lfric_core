@@ -44,24 +44,11 @@ contains
 end type
 
 !-------------------------------------------------------------------------------
-! Constructors
-!-------------------------------------------------------------------------------
-
-! Overload the default structure constructor for function space
-interface nodal_coordinates_kernel_type
-   module procedure nodal_coordinates_kernel_constructor
-end interface
-
-!-------------------------------------------------------------------------------
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
 public nodal_coordinates_code
 contains
 
-type(nodal_coordinates_kernel_type) function nodal_coordinates_kernel_constructor() result(self)
-  implicit none
-  return
-end function nodal_coordinates_kernel_constructor
 !> @brief   Compute the coordinates fields at nodal points of another
 !>          function space
 !>@param[in] nlayers Number of layers
@@ -100,7 +87,7 @@ subroutine nodal_coordinates_code(nlayers,                                    &
   ! Internal variables
   integer          :: df_x, df_chi, k
   real(kind=r_def) :: xyz(3)
-  
+
   do k = 0, nlayers-1
     do df_x = 1,ndf_x
       xyz(:) = 0.0_r_def

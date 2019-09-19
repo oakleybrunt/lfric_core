@@ -40,25 +40,11 @@ module calc_dA_at_w2_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! Overload the default structure constructor for function space
-  interface calc_dA_at_w2_kernel_type
-    module procedure calc_dA_at_w2_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public calc_dA_at_w2_code
 
 contains
-
-type(calc_dA_at_w2_kernel_type) function calc_dA_at_w2_kernel_constructor() result(self)
-  implicit none
-  return
-end function calc_dA_at_w2_kernel_constructor
 
 !> @param[in]  nlayers        Integer the number of layers
 !> @param[out] dA             The output field containing the dA values at W2 locations

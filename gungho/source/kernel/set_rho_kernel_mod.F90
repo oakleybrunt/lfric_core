@@ -44,32 +44,18 @@ module set_rho_kernel_mod
   end type
 
   !---------------------------------------------------------------------------
-  ! Constructors
-  !---------------------------------------------------------------------------
-
-  ! overload the default structure constructor for function space
-  interface set_rho_kernel_type
-    module procedure set_rho_kernel_constructor
-  end interface
-
-  !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public set_rho_code
 
 contains
 
-type(set_rho_kernel_type) function set_rho_kernel_constructor() result(self)
-  implicit none
-  return
-end function set_rho_kernel_constructor
-
 !> @brief Computes LHS of Galerkin projection and solves equation in W3 space
 !! @param[in] nlayers Number of layers
 !! @param[in] ndf_w3 Number of degrees of freedom per cell
 !! @param[in] undf_w3 Total number of degrees of freedom
 !! @param[in] map_w3 Dofmap for the cell at the base of the column
-!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points
 !! @param[inout] rho Density
 !! @param[inout] time Time evaluated as a real value
 !! @param[in] ndf_chi Number of degrees of freedom per cell for chi
