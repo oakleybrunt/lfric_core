@@ -14,7 +14,7 @@ module checksum_alg_mod
 
 contains
   !> @brief Computes the checksum of a field X as the inner product:
-  !>        checksum = sum(X.X) 
+  !>        checksum = sum(X.X)
   !>        Writes each checksum to file geenrate from the model and field name
   !> @param[in] model_name Name of the model to checksum
   !> @param[in] field1 First field to checksum

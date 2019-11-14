@@ -484,7 +484,7 @@ end subroutine write_to_file
 !-------------------------------------------------------------------------------
 !> @brief   Appends stored ugrid information to existing ugrid data file.
 !> @details Calls back to the file handler strategy (component) in order to
-!>          read the ugrid_2d_type mesh data and populate the file_handlers 
+!>          read the ugrid_2d_type mesh data and populate the file_handlers
 !>          internal arrays which the file handler will append to the ugrid file.
 !>
 !> @param[in,out] self  The calling ugrid object.

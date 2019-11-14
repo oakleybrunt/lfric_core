@@ -11,9 +11,9 @@ module umprintmgr
 
   implicit none
 
-  public 
+  public
 
-! The following public variables/parameters are all used by 
+! The following public variables/parameters are all used by
 ! the UM physics code, so there names/values should not change
 
 ! ========================

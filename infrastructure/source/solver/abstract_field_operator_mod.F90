@@ -15,9 +15,9 @@ module abstract_field_operator_mod
   !>
   !>@details Abstract type which allows the application of an operator
   !> \f$ A \f$ to a field and division by the diagonal of this operator, i.e
-  !> it implements the operations \f$ y = Ax\f$ and 
+  !> it implements the operations \f$ y = Ax\f$ and
   !> \f$ y = D^{-1}x\f$ (given \f$x\f$) where \f$D\f$ is the diagonal of
-  !> \f$A\f$. 
+  !> \f$A\f$.
   type, public, abstract :: abstract_field_operator_type
      private
    contains

@@ -65,11 +65,11 @@ subroutine hydrostatic_eos_exner_code(nlayers, exner, rho, theta, &
                                  height_w3,    &
                                  ndf_w3, undf_w3, map_w3, basis_w3, ndf_wt, &
                                  undf_wt, map_wt, basis_wt)
-  
+
   use analytic_temperature_profiles_mod, only : analytic_temperature
 
   implicit none
-  
+
   !Arguments
   integer, intent(in) :: nlayers, ndf_w3, undf_w3,  ndf_wt, undf_wt
   integer, dimension(ndf_w3), intent(in)  :: map_w3
@@ -98,14 +98,14 @@ subroutine hydrostatic_eos_exner_code(nlayers, exner, rho, theta, &
   do dft = 1, ndf_wt
     theta_moist_e(dft) = theta( map_wt(dft) + k) * moist_dyn_gas(map_wt(dft)+k)
   end do
-    
+
   do df = 1, ndf_w3
-    
-    rho_cell = 0.0_r_def 
+
+    rho_cell = 0.0_r_def
     do df3 = 1, ndf_w3
       rho_cell = rho_cell + rho_e(df3)*basis_w3(1,df3,df)
     end do
-    
+
     theta_moist = 0.0_r_def
     do dft = 1, ndf_wt
       theta_moist = theta_moist + theta_moist_e(dft)*basis_wt(1,dft,df)
@@ -113,7 +113,7 @@ subroutine hydrostatic_eos_exner_code(nlayers, exner, rho, theta, &
 
     exner(map_w3(df)+k) = (rd*rho_cell*theta_moist/p_zero)**(kappa/(1.0_r_def-kappa))
   end do
-  
+
   ! Exner on other levels from hydrostatic balance
   do k = 1, nlayers-1
     dz = height_w3(map_w3(1)+k)-height_w3(map_w3(1)+k-1)

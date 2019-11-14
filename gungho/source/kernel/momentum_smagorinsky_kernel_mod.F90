@@ -128,7 +128,7 @@ subroutine momentum_smagorinsky_code( nlayers,                                 &
   real(kind=r_def)                         :: weight_pl, weight_min
   real(kind=r_def)                         :: visc_m_u_w3, visc_m_v_w3
 
-  !  ---------- 
+  !  ----------
   !  |    |   |
   !  |  w | i |
   !  -----x----
@@ -152,7 +152,7 @@ subroutine momentum_smagorinsky_code( nlayers,                                 &
   !
   ! df = 5 is in the centre on the bottom face
   ! df = 6 is in the centre on the top face
- 
+
   ! If the centre of the cell is (i-1/2, j-1/2, k-1/2):
   ! df = 1 is  u(i-1,   j-1/2, k-1/2)
   ! df = 2 is  v(i-1/2, j-1,   k-1/2)
@@ -172,8 +172,8 @@ subroutine momentum_smagorinsky_code( nlayers,                                 &
   !     ---------------
   !          |   |
   !          | 3 |
-  !          ----- 
- 
+  !          -----
+
   ! Compute horizontal grid spacing
   do k = 0, nlayers - 1
     do df = 1,ndf_chi
@@ -193,7 +193,7 @@ subroutine momentum_smagorinsky_code( nlayers,                                 &
   end do
 
   ! Horizontal velocity diffusion
-  ! Set increment to zero at k=0 as visc_m(k=0) isn't defined 
+  ! Set increment to zero at k=0 as visc_m(k=0) isn't defined
   k = 0
   ! u:
   u_inc(map_w2(1) + k) = 0.0_r_def
@@ -237,7 +237,7 @@ subroutine momentum_smagorinsky_code( nlayers,                                 &
     u_inc(map_w2(5) + k) = visc_m(map_wt(1) + k) * (d2dx + d2dy)
   end do
 
-  ! Set increment to zero at k=nlayers as visc_m(k=nlayers) isn't defined 
+  ! Set increment to zero at k=nlayers as visc_m(k=nlayers) isn't defined
   k = nlayers - 1
   ! u:
   u_inc(map_w2(1) + k) = 0.0_r_def

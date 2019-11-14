@@ -85,17 +85,17 @@ end module test_mod
 '''
         expected = '''! Some things happen, others don't
 module test_mod
-
+! #ifdef EXTRA
   use extra_mod, only: special
-
+! #endif
   implicit none
 contains
   function normal()
   end function normal
-
+  ! #ifdef EXTRA
   function more()
   end function more
-
+  ! #endif EXTRA
 end module test_mod
 '''
         reader = SourceStringReader(source)
@@ -121,7 +121,7 @@ module test_mod
   use pFUnit
   implicit none
 contains
-
+  ! @test
   subroutine test_normal()
   end subroutine test_normal
 end module test_mod
@@ -138,7 +138,7 @@ class TestPPCSource(object):
 #ifndef TEST_HEADER
 #define TEST_HEADER
 
-#include <stdbool.h>
+  #include <stdbool.h>
 
 int normal(void);
 #ifdef EXTRA
@@ -147,15 +147,16 @@ char *more(void);
 #endif
 '''
         expected = '''/* Some things happen, others don't */
+// #ifndef TEST_HEADER
+// #define TEST_HEADER
 
-
-
+  // #include <stdbool.h>
 
 int normal(void);
-
+// #ifdef EXTRA
 char *more(void);
-
-
+// #endif
+// #endif
 '''
         reader = SourceStringReader(source)
         unit_under_test = CPreProcessor(reader)
@@ -236,7 +237,6 @@ END PROGRAM test'''
         # pylint: disable=no-self-use
         reader = SourceStringReader(path_case[0])
         unit_under_test = FortranSource(reader)
-        print(unit_under_test.get_tree())
         result = unit_under_test.path(path_case[1])
         assert [obj.__class__.__name__ for obj in result] == path_case[2]
 
@@ -247,17 +247,15 @@ END PROGRAM test'''
         # pylint: disable=no-self-use
         reader = SourceStringReader(path_case[0])
         unit_under_test = FortranSource(reader)
-        print(unit_under_test.get_tree())
         result = unit_under_test.path('/'.join(path_case[1]))
         assert [obj.__class__.__name__ for obj in result] == path_case[2]
 
     def test_find_all(self):
         '''
-        Checks that finding all occurances of a source part works.
+        Checks that finding all occurrences of a source part works.
         '''
         reader = SourceStringReader(self._MULTI_PROC_MODULE)
         unit_under_test = FortranSource(reader)
-        print(repr(unit_under_test.get_tree()))
         wanted = fparser.two.Fortran2003.Module_Subprogram
         result = unit_under_test.find_all(wanted)
         assert str(result.next().content[0].items[1]) == 'one'

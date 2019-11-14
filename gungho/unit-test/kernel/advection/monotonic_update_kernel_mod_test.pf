@@ -4,7 +4,7 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> Test the monotonic update computation 
+!> Test the monotonic update computation
 module monotonic_update_kernel_mod_test
 
   use constants_mod, only : i_def, r_def
@@ -29,7 +29,7 @@ contains
 
     use monotonic_update_kernel_mod, only: monotonic_update_code
 
-    implicit none 
+    implicit none
 
     class(monotonic_update_test_type), intent(inout) :: this
 
@@ -46,7 +46,7 @@ contains
     real(r_def), parameter          :: dv = 8.0_r_def
     integer(i_def), parameter       :: order = 1
     real(r_def)                     :: answer
- 
+
     integer(i_def) :: i
 
     do i = 1, stencil_size
@@ -55,7 +55,7 @@ contains
     end do
 
     inv_mt(:) = 1.0/dv
-    ! Create a random theta_field    
+    ! Create a random theta_field
     call random_number(theta)
 
     adv(:) = -1.0_r_def

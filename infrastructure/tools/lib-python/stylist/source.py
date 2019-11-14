@@ -93,17 +93,17 @@ class CPreProcessor(TextProcessor):
     TODO: Currently all other directives are stripped out as well. This means
           that macros used to inject source are not likely to parse.
     '''
-    _CONDITIONAL_DIRECTIVE_PATTERN = re.compile(r'^\s*#if(def|\s+)*$',
+    _CONDITIONAL_DIRECTIVE_PATTERN = re.compile(r'^(\s*)(#if(def|\s+)*)$',
                                                 re.MULTILINE)
-    _OTHER_DIRECTIVE_PATTERN = re.compile(r'^\s*#.*$', re.MULTILINE)
+    _OTHER_DIRECTIVE_PATTERN = re.compile(r'^(\s*)(#.*)$', re.MULTILINE)
 
     def get_text(self):
         '''
         Strips preprocessor directives from the text.
         '''
         text = self._source.get_text()
-        text = self._CONDITIONAL_DIRECTIVE_PATTERN.sub(lambda match: '', text)
-        text = self._OTHER_DIRECTIVE_PATTERN.sub(lambda match: '', text)
+        text = self._CONDITIONAL_DIRECTIVE_PATTERN.sub(r'\1// \2', text)
+        text = self._OTHER_DIRECTIVE_PATTERN.sub(r'\1// \2', text)
         return text
 
 
@@ -118,17 +118,17 @@ class FortranPreProcessor(TextProcessor):
     TODO: Currently all other directives are stripped out as well. This means
           that macros used to inject source are not likely to parse.
     '''
-    _CONDITIONAL_DIRECTIVE_PATTERN = re.compile(r'^\s*#if(def|\s+)*$',
+    _CONDITIONAL_DIRECTIVE_PATTERN = re.compile(r'^(\s*)(#if(def|\s+)*)$',
                                                 re.MULTILINE)
-    _OTHER_DIRECTIVE_PATTERN = re.compile(r'^\s*#.*$', re.MULTILINE)
+    _OTHER_DIRECTIVE_PATTERN = re.compile(r'^(\s*)(#.*)$', re.MULTILINE)
 
     def get_text(self):
         '''
         Strips preprocessor directives from the text.
         '''
         text = self._source.get_text()
-        text = self._CONDITIONAL_DIRECTIVE_PATTERN.sub(lambda match: '', text)
-        text = self._OTHER_DIRECTIVE_PATTERN.sub(lambda match: '', text)
+        text = self._CONDITIONAL_DIRECTIVE_PATTERN.sub(r'\1! \2', text)
+        text = self._OTHER_DIRECTIVE_PATTERN.sub(r'\1! \2', text)
         return text
 
 
@@ -137,14 +137,14 @@ class PFUnitProcessor(TextProcessor):
     '''
     Strips out pFUnit directives.
     '''
-    _DIRECTIVE_PATTERN = re.compile(r'^\s*@\w+.*$', re.MULTILINE)
+    _DIRECTIVE_PATTERN = re.compile(r'^(\s*)(@\w+.*)$', re.MULTILINE)
 
     def get_text(self):
         '''
         Strips processor directives from the text.
         '''
         text = self._source.get_text()
-        text = self._DIRECTIVE_PATTERN.sub('', text)
+        text = self._DIRECTIVE_PATTERN.sub(r'\1! \2', text)
         return text
 
 
@@ -247,7 +247,7 @@ class FortranSource(SourceTree):
         if root:
             next_candidates = root
         else:
-            next_candidates = list(self._tree.content)
+            next_candidates = list(self.get_tree().content)
 
         while path:
             node_name = path.pop(0)
@@ -297,7 +297,7 @@ class FortranSource(SourceTree):
         if root:
             candidates = [root]
         else:
-            candidates = list(self._tree.content)
+            candidates = list(self.get_tree().content)
 
         while candidates:
             candidate = candidates.pop(0)

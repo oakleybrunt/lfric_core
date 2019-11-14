@@ -23,18 +23,18 @@ module create_fd_prognostics_mod
                                              LOG_LEVEL_INFO, &
                                              LOG_LEVEL_ERROR
 
-  
+
   implicit none
   private
   public :: create_fd_prognostics
 
 contains
   !>@brief Routine to create a field collection for finite difference
-  !>       prognostic fields 
+  !>       prognostic fields
   !> @param[in] mesh_id Identifier of the mesh
   !> @param[in,out] fd_field_collection The collection object to store fields in
   subroutine create_fd_prognostics(mesh_id, fd_field_collection)
-                          
+
     implicit none
 
     integer(i_def), intent(in)                 :: mesh_id
@@ -56,7 +56,7 @@ contains
     type( field_type ) :: mcf_in_wtheta   ! Clould ice mix ratio
 
     call log_event( 'Physics: Creating Finite Difference prognostics...', LOG_LEVEL_INFO )
-    
+
     if (element_order > 0) then
       call log_event( 'Finite diff prognostics: requires lowest order elements'&
            , LOG_LEVEL_ERROR )
@@ -74,7 +74,7 @@ contains
     tmp_write_ptr => dump_write_xios
 
 
-    ! Create the fields, set the I/O behaviour and add to 
+    ! Create the fields, set the I/O behaviour and add to
     ! the field collection
 
     !========================================================================

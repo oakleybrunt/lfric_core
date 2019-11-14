@@ -77,8 +77,8 @@ function analytic_temperature(chi, choice) result(temperature)
   real(kind=r_def)             :: pressure, density
   real(kind=r_def)             :: s, u00, f_sb, t0
   real(kind=r_def)             :: r_on_a
-  real(kind=r_def)             :: u, v, w 
- 
+  real(kind=r_def)             :: u, v, w
+
   if ( geometry == geometry_spherical ) then
     call xyz2llr(chi(1),chi(2),chi(3),long,lat,radius)
     call central_angle(long,lat,x1,y1,l1)
@@ -94,25 +94,25 @@ function analytic_temperature(chi, choice) result(temperature)
   temperature = 0.0_r_def
   call reference_profile(pressure, density, temperature, chi, choice)
 
-  select case( choice ) 
-  
+  select case( choice )
+
   case ( test_gravity_wave )
-    if ( geometry == geometry_spherical ) then      
+    if ( geometry == geometry_spherical ) then
       temperature = temperature &
                   +  generate_global_gw_pert(long,lat,radius-scaled_radius)
     else
       temperature = temperature + THETA0 * sin ( PI * chi(3) / H ) &
                             / ( 1.0_r_def + ( chi(1) - XC )**2/A**2 )
-    end if  
-  
-  case ( test_cold_bubble_x ) 
+    end if
+
+  case ( test_cold_bubble_x )
     l = sqrt( ((chi(1)-XC)/XR)**2 + ((chi(3)-ZC_cold)/ZR)**2 )
     if ( l <= 1.0_r_def ) then
       dt =  15.0_r_def/2.0_r_def*(cos(PI*l)+1.0_r_def)
       temperature = temperature - dt/pressure
     end if
 
-  case ( test_cold_bubble_y ) 
+  case ( test_cold_bubble_y )
     l = sqrt( ((chi(2)-XC)/XR)**2 + ((chi(3)-ZC_cold)/ZR)**2 )
     if ( l <= 1.0_r_def ) then
       dt =  15.0_r_def/2.0_r_def*(cos(PI*l)+1.0_r_def)
@@ -129,7 +129,7 @@ function analytic_temperature(chi, choice) result(temperature)
     temperature = temperature + dt
 
   !> Test from Kelly & Giraldo
-  case( test_warm_bubble_3d )  
+  case( test_warm_bubble_3d )
     l = sqrt( (chi(1)-XC)**2 + (chi(2)-YC)**2 + (chi(3)-ZC_3d)**2 )
 
     if ( abs(l) <= 250.0_r_def ) then
@@ -188,7 +188,7 @@ function analytic_temperature(chi, choice) result(temperature)
     end if
     temperature = h1 + h2
 
-  case ( test_solid_body_rotation ) 
+  case ( test_solid_body_rotation )
     t0   = 280.0_r_def
     s    = (radius / scaled_radius) *                                          &
            ( cos(lat) * cos(sbr_angle_lat * pi) +                              &
@@ -196,12 +196,12 @@ function analytic_temperature(chi, choice) result(temperature)
     u00  = u0 * (u0 + 2.0_r_def * scaled_omega * scaled_radius) / (t0 * Rd)
     f_sb = 0.5_r_def * u00*s**2
     temperature = t0 * exp(gravity * (radius - scaled_radius) / ( cp * t0 ) )  &
-                     * exp(-kappa * f_sb)  
+                     * exp(-kappa * f_sb)
 
-  case ( test_solid_body_rotation_alt ) 
+  case ( test_solid_body_rotation_alt )
     ! See Staniforth & White (2007) (rotated pole version of example of
-    ! Section 5.3 with m = 1, A = 0, n therefore arbitrary, Phi0 = 0).    
-    ! In shallow geometry the r/a factor is replaced by 1, see Section 6 of 
+    ! Section 5.3 with m = 1, A = 0, n therefore arbitrary, Phi0 = 0).
+    ! In shallow geometry the r/a factor is replaced by 1, see Section 6 of
     ! Staniforth & White (2007).
     t0 = 280_r_def
     if (shallow) then
@@ -214,14 +214,14 @@ function analytic_temperature(chi, choice) result(temperature)
     u00  = u0 * (u0 + 2.0_r_def * scaled_omega * scaled_radius) / (t0 * Rd)
     ! f_sb is the Q of (69) of Staniforth & White (2007)
     f_sb = 0.5_r_def * u00*s**2
-    ! The first exponential factor is the integral on the RHS of the first 
+    ! The first exponential factor is the integral on the RHS of the first
     ! equation of (69), the factor r_on_a in the denominator makes the same
     ! form work for both deep and shallow atmospheres.
     ! kappa = R / cp has been used
     ! Note: temperature is potential temperature
     temperature = t0 * exp(  gravity * (radius - scaled_radius)                &
                            / (cp * t0 * r_on_a) )                              &
-                     * exp(-kappa * f_sb) 
+                     * exp(-kappa * f_sb)
   case( test_deep_baroclinic_wave )
     call deep_baroclinic_wave(long, lat, radius-scaled_radius, &
                               pressure, temperature, density, &
@@ -254,7 +254,7 @@ function analytic_temperature(chi, choice) result(temperature)
   case( test_cos_phi )
     temperature = tracer_max*cos(lat)**4
 
-  case( test_cosine_bubble ) 
+  case( test_cosine_bubble )
     l1 = sqrt( ((chi(1) - x1)/r1)**2 + ((chi(3) - y1)/r2)**2 )
     if ( l1 < 1.0_r_def ) then
       temperature = tracer_background + tracer_max*cos(0.5_r_def*l1*PI)**2

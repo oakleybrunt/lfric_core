@@ -5,7 +5,7 @@
 !-----------------------------------------------------------------------------
 
 module get_unit_test_w3nodal_basis_mod
-! A module containing a collection of helper routines that provide canned 
+! A module containing a collection of helper routines that provide canned
 ! basis functions (and differential basis functions) evaluated on w3 nodal
 ! points for use when writing unit tests of kernels.
 !
@@ -24,14 +24,14 @@ module get_unit_test_w3nodal_basis_mod
 
   public :: get_w0_w3nodal_diff_basis,     &
             get_wtheta_w3nodal_basis
-            
+
   contains
 
 !---------------------------------------------------------------------
 
   subroutine get_w0_w3nodal_diff_basis(diff_basis_w0)
-    ! Return the diff basis function for a field on a w0 function space 
-    ! evaluated on w3 nodal points 
+    ! Return the diff basis function for a field on a w0 function space
+    ! evaluated on w3 nodal points
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_w0(:,:,:)
 
@@ -49,8 +49,8 @@ module get_unit_test_w3nodal_basis_mod
 !---------------------------------------------------------------------
 
   subroutine get_wtheta_w3nodal_basis(basis_wtheta)
-    ! Return the basis function for a field on a wtheta function space 
-    ! evaluated on w3 nodal points 
+    ! Return the basis function for a field on a wtheta function space
+    ! evaluated on w3 nodal points
 
     implicit none
 
@@ -58,8 +58,8 @@ module get_unit_test_w3nodal_basis_mod
 
     ! Lowest order scalar. 2 Wtheta basis functions. 1 W3 nodal points.
     allocate(basis_wtheta(1,2,1))
-    basis_wtheta(:, 1, 1) =  0.50_r_def 
-    basis_wtheta(:, 2, 1) =  0.50_r_def 
+    basis_wtheta(:, 1, 1) =  0.50_r_def
+    basis_wtheta(:, 2, 1) =  0.50_r_def
 
   end subroutine get_wtheta_w3nodal_basis
 

@@ -10,7 +10,7 @@ implicit none
 
 contains
 
-  !>@brief Check the namelist configuration for unsupported combinations 
+  !>@brief Check the namelist configuration for unsupported combinations
   !>       of options and flag up errors and warnings
   subroutine check_configuration()
     use log_mod,                     only: log_event,                          &
@@ -154,7 +154,7 @@ contains
       ! Check the timestepping namelist
       if ( dt < EPS ) then
         write( log_scratch_space, '(A,E16.8)' ) 'Zero or negative dt: ', &
-          dt 
+          dt
         call log_event( log_scratch_space, LOG_LEVEL_WARNING )
       end if
       if ( method == method_semi_implicit ) then
@@ -164,12 +164,12 @@ contains
           call log_event( log_scratch_space, LOG_LEVEL_WARNING )
         end if
         if ( outer_iterations < 1 ) then
-          write( log_scratch_space, '(A,I4)' ) 'Invalid Choice: outer_iterations must be at least 1:', & 
+          write( log_scratch_space, '(A,I4)' ) 'Invalid Choice: outer_iterations must be at least 1:', &
           outer_iterations
           call log_event( log_scratch_space, LOG_LEVEL_ERROR )
         end if
         if ( inner_iterations < 1 ) then
-          write( log_scratch_space, '(A,I4)' ) 'Invalid Choice: inner_iterations must be at least 1:', & 
+          write( log_scratch_space, '(A,I4)' ) 'Invalid Choice: inner_iterations must be at least 1:', &
           inner_iterations
           call log_event( log_scratch_space, LOG_LEVEL_ERROR )
         else if ( inner_iterations > 1 ) then
@@ -188,7 +188,7 @@ contains
             .not. transport_only ) then
         write( log_scratch_space, '(A)' ) 'COSMIC scheme only implemented for transport only algorithms'
         call log_event( log_scratch_space, LOG_LEVEL_ERROR )
-      end if 
+      end if
       if ( scheme == scheme_method_of_lines .and. &
            operators == operators_fv ) then
         if ( mod(fv_flux_order,2_i_def) /= 0_i_def ) then
@@ -214,20 +214,20 @@ contains
 
       ! Check the damping layer namelist
       if ( dlayer_on .and. (dl_base < 0.0 .or. dl_base > domain_top) ) then
-        write( log_scratch_space, '(A,E16.8)' ) 'Damping layer base lies outside fo domain: ',& 
+        write( log_scratch_space, '(A,E16.8)' ) 'Damping layer base lies outside fo domain: ',&
           dl_base
         call log_event( log_scratch_space, LOG_LEVEL_WARNING )
       end if
       if ( dlayer_on .and. dl_str < 0.0 ) then
-        write( log_scratch_space, '(A,E16.8)' ) 'Damping layer strength is negative: ',& 
+        write( log_scratch_space, '(A,E16.8)' ) 'Damping layer strength is negative: ',&
           dl_str
         call log_event( log_scratch_space, LOG_LEVEL_WARNING )
       end if
-       
+
       ! Check for options that are invalid with higher order elements
       if ( element_order > 0 ) then
         if ( operators == operators_fv ) then
-          write( log_scratch_space, '(A)' ) 'FV transport operators only valid for element_order = 0' 
+          write( log_scratch_space, '(A)' ) 'FV transport operators only valid for element_order = 0'
           call log_event( log_scratch_space, LOG_LEVEL_ERROR )
         end if
         if ( viscosity ) then
@@ -247,16 +247,16 @@ contains
       if ( profile /= profile_none .and. abs(alpha - 0.5_r_def) < EPS ) then
         write( log_scratch_space, '(A)' ) 'Orography with alpha = 1/2 produces noisy results'
         call log_event( log_scratch_space, LOG_LEVEL_WARNING )
-      end if 
+      end if
 
       if ( method == method_semi_implicit ) then
         ! Check the mixed solver namelist
         if ( reference_reset_freq > outer_iterations*inner_iterations ) then
-          write( log_scratch_space, '(A)' ) 'reference_reset_freq greater than total number of si iterations' 
+          write( log_scratch_space, '(A)' ) 'reference_reset_freq greater than total number of si iterations'
           call log_event( log_scratch_space, LOG_LEVEL_ERROR )
         end if
         if ( mod(outer_iterations*inner_iterations,reference_reset_freq) /= 0_i_def ) then
-          write( log_scratch_space, '(A)' ) 'reference_reset_freq not a divsor of total number of si iterations' 
+          write( log_scratch_space, '(A)' ) 'reference_reset_freq not a divsor of total number of si iterations'
           call log_event( log_scratch_space, LOG_LEVEL_WARNING )
         end if
       end if

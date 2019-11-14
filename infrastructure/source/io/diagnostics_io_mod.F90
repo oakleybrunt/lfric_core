@@ -22,7 +22,7 @@ module diagnostics_io_mod
                                            xios_write_field_face, &
                                            xios_write_field_edge
   use mesh_mod,                      only: mesh_type
-  use mesh_collection_mod,           only: mesh_collection 
+  use mesh_collection_mod,           only: mesh_collection
   use field_mod,                     only: field_type, write_interface
   use fs_continuity_mod,             only: W3
   use log_mod,                       only: log_event,         &
@@ -61,7 +61,7 @@ subroutine write_scalar_diagnostic(field_name, field, ts, mesh_id, W3_project)
   integer(i_def),   intent(in)    :: mesh_id
   logical,          intent(in)    :: W3_project
 
-  ! Local Variables 
+  ! Local Variables
   type(field_type)                :: nodal_coordinates(3)
   type(field_type)                :: output_field(3)
   type(field_type)                :: level
@@ -105,7 +105,7 @@ subroutine write_scalar_diagnostic(field_name, field, ts, mesh_id, W3_project)
       call nodal_write_field(nodal_coordinates, level, output_field,    &
                                    1, nodal_output_unit, fname)
 
-    end if 
+    end if
 
   else
 
@@ -126,7 +126,7 @@ subroutine write_scalar_diagnostic(field_name, field, ts, mesh_id, W3_project)
        call output_field(1)%write_field(trim('init_'//field_name))
     else
        call output_field(1)%write_field(trim(field_name))
-    end if 
+    end if
 
     nullify(tmp_write_ptr)
 
@@ -156,7 +156,7 @@ subroutine write_vector_diagnostic(field_name, field, ts, mesh_id, W3_project)
   integer(i_def),   intent(in)    :: mesh_id
   logical,          intent(in)    :: W3_project
 
-  ! Local Variables 
+  ! Local Variables
   type(mesh_type), pointer        :: mesh => null()
   type(field_type)                :: nodal_coordinates(3)
   type(field_type)                :: output_field(3)
@@ -217,16 +217,16 @@ subroutine write_vector_diagnostic(field_name, field, ts, mesh_id, W3_project)
         call nodal_write_field(nodal_coordinates, level, output_field(i), &
                                1, nodal_output_unit, fname)
 
-           
+
       end do
 
-    end if 
+    end if
 
   else
 
   ! XIOS UGRID output
 
-    ! Check for specific vector fields and applying appropriate processing 
+    ! Check for specific vector fields and applying appropriate processing
 
     ! Currently we need to force projection of vorticity (Xi) to W3 until
     ! we decide how it should be handled in UGRID
@@ -253,8 +253,8 @@ subroutine write_vector_diagnostic(field_name, field, ts, mesh_id, W3_project)
           call projected_field(i)%write_field(trim('init_'//field_name_new))
         else
           call projected_field(i)%write_field(trim(field_name_new))
-        end if 
-           
+        end if
+
      end do
 
     end if ! Check if vector field is Xi

@@ -61,12 +61,12 @@ module kinetic_energy_gradient_kernel_mod
 
 contains
 
-!> @brief Computes the kinetic gradient component of the rhs of the momentum equation 
+!> @brief Computes the kinetic gradient component of the rhs of the momentum equation
 !! @param[in] nlayers Number of layers
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 Number unique of degrees of freedom  for w2
 !! @param[in] map_w2 Dofmap for the cell at the base of the column for w2
-!! @param[in] w2_basis Basis functions evaluated at quadrature points 
+!! @param[in] w2_basis Basis functions evaluated at quadrature points
 !! @param[in] w2_diff_basis Differntial of the basis functions evaluated at  quadrature points
 !! @param[inout] r_u Right hand side of momentum equation
 !! @param[in] u Velocity
@@ -87,7 +87,7 @@ subroutine kinetic_energy_gradient_code(nlayers,                                
                                         ndf_chi, undf_chi, map_chi, chi_diff_basis,       &
                                         nqp_h, nqp_v, wqp_h, wqp_v                        &
                                         )
-                           
+
   use coordinate_jacobian_mod,  only: coordinate_jacobian
 
   implicit none
@@ -99,7 +99,7 @@ subroutine kinetic_energy_gradient_code(nlayers,                                
   integer, dimension(ndf_chi), intent(in) :: map_chi
   integer, dimension(ndf_w2), intent(in) :: map_w2
 
-  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis 
+  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis
   real(kind=r_def), dimension(1,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_diff_basis
   real(kind=r_def), dimension(3,ndf_chi,nqp_h,nqp_v), intent(in) :: chi_diff_basis
 
@@ -111,9 +111,9 @@ subroutine kinetic_energy_gradient_code(nlayers,                                
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
 
   !Internal variables
-  integer               :: df, k, loc 
+  integer               :: df, k, loc
   integer               :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_chi)         :: chi_1_e, chi_2_e, chi_3_e
   real(kind=r_def), dimension(nqp_h,nqp_v)     :: dj
   real(kind=r_def), dimension(3,3,nqp_h,nqp_v) :: jac
@@ -121,7 +121,7 @@ subroutine kinetic_energy_gradient_code(nlayers,                                
 
   real(kind=r_def) :: u_at_quad(3)
   real(kind=r_def) :: ke_at_quad, dv
-  
+
   do k = 0, nlayers-1
   ! Extract element arrays of chi
     do df = 1, ndf_chi
@@ -136,8 +136,8 @@ subroutine kinetic_energy_gradient_code(nlayers,                                
     do df = 1, ndf_w2
       u_e(df) = u( map_w2(df) + k )
       ru_e(df) = 0.0_r_def
-    end do    
-  ! compute the RHS integrated over one cell    
+    end do
+  ! compute the RHS integrated over one cell
     do qp2 = 1, nqp_v
       do qp1 = 1, nqp_h
 ! k.e term
@@ -151,16 +151,16 @@ subroutine kinetic_energy_gradient_code(nlayers,                                
 
         do df = 1, ndf_w2
           dv = w2_diff_basis(1,df,qp1,qp2)
-          ru_e(df) = ru_e(df) +  wqp_h(qp1)*wqp_v(qp2)*dv*ke_at_quad                                                       
+          ru_e(df) = ru_e(df) +  wqp_h(qp1)*wqp_v(qp2)*dv*ke_at_quad
 
         end do
       end do
     end do
     do df = 1, ndf_w2
       r_u( map_w2(df) + k ) =  r_u( map_w2(df) + k ) + ru_e(df)
-    end do 
+    end do
   end do
-  
+
 end subroutine kinetic_energy_gradient_code
 
 end module kinetic_energy_gradient_kernel_mod

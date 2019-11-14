@@ -34,13 +34,13 @@ module runtime_constants_mod
   use timestepping_config_mod,           only: dt
 
   use multigrid_config_mod,              only: multigrid_chain_nitems, l_multigrid
-  
+
   use function_space_chain_mod,          only: multigrid_function_space_chain, &
                                                w2_multigrid_function_space_chain, &
                                                wtheta_multigrid_function_space_chain
   use assign_coordinate_field_mod,       only: assign_coordinate_field
   use assign_orography_field_mod,        only: assign_orography_field
-  
+
   ! Derived Types
   use field_mod,                         only: field_type
   use function_space_mod,                only: function_space_type
@@ -117,7 +117,7 @@ module runtime_constants_mod
   type( quadrature_xyoz_type ),target                    :: qr
   type( quadrature_rule_gaussian_type )                  :: quadrature_rule
   type(field_type), target                               :: m0_lumped_inv
-  type(field_type), target                               :: m1_lumped_inv 
+  type(field_type), target                               :: m1_lumped_inv
   type(field_type), allocatable, dimension(:), target    :: mt_lumped_inv
   type(field_type), target                               :: height_wth, height_w3
   type(field_type), target                               :: nodal_rmultiplicity_w1
@@ -176,7 +176,7 @@ module runtime_constants_mod
   public :: get_longitude
 
 
-  
+
   ! overload the interfaces for MG versions
   interface get_coordinates
      module procedure get_coordinates_fine, get_coordinates_mg
@@ -197,7 +197,7 @@ module runtime_constants_mod
   interface get_inverse_lumped_mass_matrix
      module procedure get_inverse_lumped_mass_matrix_fine, get_inverse_lumped_mass_matrix_mg
   end interface get_inverse_lumped_mass_matrix
-  
+
 contains
   !>@brief Subroutine to create the runtime constants
   !> @param[in] mesh_id         Mesh_id
@@ -242,7 +242,7 @@ contains
     ! temporaries needed for Multigrid
     integer(kind=i_def)       :: i, level, chi_space, multigrid_levels
     integer(kind=i_def)       :: mg_mesh_id
-    
+
     if ( subroutine_timers ) call timer('runtime_constants_alg')
     call log_event( "Gungho: creating runtime_constants", LOG_LEVEL_INFO )
 
@@ -251,7 +251,7 @@ contains
     else
        multigrid_levels=1
     end if
-    
+
     ! make the multigrid chi field.
     allocate(chi_mg(3,multigrid_levels))
     do i = 1, 3
@@ -271,7 +271,7 @@ contains
        ! need to get the mesh_id to create the chi fs, so get it from the W3 chain
        w3_fs     => function_space_collection%get_fs( mesh_id, element_order, W3 )
        call multigrid_function_space_chain%set_current(w3_fs%get_id())
-       
+
        ! finest level is already done, so loop through levels 2, multigrid_levels
        do level = 2, multigrid_levels
           w3_fs=>multigrid_function_space_chain%get_next()
@@ -286,8 +286,8 @@ contains
        end do
     end if
     ! set level = 1 for the finest level MG/ or single level only
-    level = 1   
-    
+    level = 1
+
     !=========== Create function spaces required for setup ===================!
 
     w0_fs     => function_space_collection%get_fs( mesh_id, element_order, W0 )
@@ -353,12 +353,12 @@ contains
              mm_wtheta(multigrid_levels) )
     allocate(w2_normalisation(multigrid_levels))
     ! These operators are MG valued (which could be 1 if then single level)
-    mm_w2(level)     = operator_type( w2_fs, w2_fs )  
+    mm_w2(level)     = operator_type( w2_fs, w2_fs )
     mm_dl(level)     = operator_type( w2_fs, w2_fs )
     mm_wtheta(level) = operator_type( wtheta_fs, wtheta_fs )
     mm_w3(level)     = operator_type( w3_fs, w3_fs )
-    mm_w3_inv(level) = operator_type( w3_fs, w3_fs ) 
-    div(level)       = operator_type( w3_fs, w2_fs )   
+    mm_w3_inv(level) = operator_type( w3_fs, w3_fs )
+    div(level)       = operator_type( w3_fs, w2_fs )
     mm_w0 = operator_type( w0_fs, w0_fs )
     mm_w1 = operator_type( w1_fs, w1_fs )
     mm_w2b = operator_type( w2b_fs, w2b_fs )
@@ -380,7 +380,7 @@ contains
     ! Construct vertical- and horizontal-only velocity mass matrices
     call invoke( compute_mass_matrix_kernel_w2_type( mm_w2v, chi_mg(:,level), qr ) )
     call invoke( compute_mass_matrix_kernel_w2_type( mm_w2h, chi_mg(:,level), qr ) )
-    ! Construct vertical- and horizontal-only weak divergence operator    
+    ! Construct vertical- and horizontal-only weak divergence operator
     call invoke( compute_div_operator_kernel_type( div_v, chi_mg(:,level), qr ) )
     call invoke( compute_div_operator_kernel_type( div_h, chi_mg(:,level), qr ) )
     ! Compute W2 mass matrix with damping layer
@@ -563,68 +563,68 @@ contains
       const = 0.125_r_def/dt
       iconst = 2_i_def
       call delta_at_wtheta%copy_field(max_diff_wtheta)
-      call invoke( inc_X_powint_n( max_diff_wtheta, iconst ),  & 
+      call invoke( inc_X_powint_n( max_diff_wtheta, iconst ),  &
                    inc_a_times_X( const, max_diff_wtheta )     &
                  )
 
    end if
 
-   
+
    if(l_multigrid) then
       ! compute on the courser multigrid levels
       call multigrid_function_space_chain%set_current(w3_fs%get_id())
       call w2_multigrid_function_space_chain%set_current(w2_fs%get_id())
-      call wtheta_multigrid_function_space_chain%set_current(wtheta_fs%get_id())    
-      
+      call wtheta_multigrid_function_space_chain%set_current(wtheta_fs%get_id())
+
       do level = 2, multigrid_levels
-         
+
          write(log_scratch_space,'(A,I0,A)') "runtime_constants[",level,"]:creating ops"
          call log_event(log_scratch_space,LOG_LEVEL_INFO)
-         
+
          w3_fs=>multigrid_function_space_chain%get_next()
          w2_fs=>w2_multigrid_function_space_chain%get_next()
          wtheta_fs=>wtheta_multigrid_function_space_chain%get_next()
-         
-         mm_w2(level)     = operator_type( w2_fs, w2_fs )  
+
+         mm_w2(level)     = operator_type( w2_fs, w2_fs )
          mm_dl(level)     = operator_type( w2_fs, w2_fs )
          mm_wtheta(level) = operator_type( wtheta_fs, wtheta_fs )
          mm_w3(level)     = operator_type( w3_fs, w3_fs )
-         mm_w3_inv(level) = operator_type( w3_fs, w3_fs ) 
+         mm_w3_inv(level) = operator_type( w3_fs, w3_fs )
          div(level)       = operator_type( w3_fs, w2_fs )
-         
+
          call invoke(mg_derahm_mat_kernel_type( mm_w2(level), &
               mm_w3(level), mm_wtheta(level), div(level), chi_mg(:,level), qr),&
-              invert_local_operator_kernel_type(mm_w3_inv(level), mm_w3(level)) )        
-         
+              invert_local_operator_kernel_type(mm_w3_inv(level), mm_w3(level)) )
+
          ! Compute W2 mass matrix with damping layer
          ! Eventually this may be absorbed into the DeRham complex computations
          ! but until the final form is settled upon it is left separate
          if (dlayer_on) call invoke( compute_dl_matrix_kernel_type( &
               mm_dl(level), chi_mg(:,level), qr) )
-         
+
          call ones%initialise( vector_space = wtheta_fs )
-         
+
          call mt_lumped_inv(level)%initialise( vector_space = wtheta_fs )
-         ! Create mt_lumped_inv    
+         ! Create mt_lumped_inv
          call invoke(  &
               setval_c(ones,          1.0_r_def),                        &
               setval_c(mt_lumped_inv(level), 0.0_r_def),                        &
               matrix_vector_kernel_type(mt_lumped_inv(level), ones, mm_wtheta(level)), &
               inc_X_powint_n(mt_lumped_inv(level), i_minus_one) )
-         
+
          call w2_normalisation(level)%initialise( vector_space = w2_fs )
          call nodal_multiplicity_w2%initialise( vector_space = w2_fs )
          call invoke( setval_c(w2_normalisation(level), 0.0_r_def),                 &
               setval_c(nodal_multiplicity_w2, 2.0_r_def),                   &
               w2_normalisation_kernel_type(w2_normalisation(level), chi_mg(:,level) ),       &
               inc_X_divideby_Y(w2_normalisation(level), nodal_multiplicity_w2), &
-              inc_X_powint_n(w2_normalisation(level), i_minus_one) )       
+              inc_X_powint_n(w2_normalisation(level), i_minus_one) )
 
-         
-         
+
+
       end do
    end if
-   
+
     nullify( w0_fs  )
     nullify( w1_fs  )
     nullify( w2_fs  )
@@ -658,7 +658,7 @@ contains
     implicit none
     integer, intent(in) :: level
     type(field_type), pointer :: coords_ptr(:)
-    
+
     coords_ptr => chi_mg(:,level)
   end function get_coordinates_mg
   !> @brief Function to return a pointer to the latitude map
@@ -830,13 +830,13 @@ contains
   !> @brief Function to return a pointer to a mass matrix
   !! Only for operator evaluated on several multigrid layers
   !> @param[in] i the index of the desired mass matrix field
-  !> @param[in] level integer multigrid level  
-  !> @return The mass matrix operator  
+  !> @param[in] level integer multigrid level
+  !> @return The mass matrix operator
   function get_mass_matrix_mg(i, level) result(mm)
     implicit none
     integer(i_def), intent(in) :: i
     integer(kind=i_def), intent(in) :: level
-    type(operator_type), pointer :: mm 
+    type(operator_type), pointer :: mm
 
     select case (i)
       case (w2_id)
@@ -915,8 +915,8 @@ contains
 
   !> @brief Function to return a pointer to the div operator
   !! on the specified multigrid_level
-  !> @param[in] level integer multigrid level    
-  !> @return The grad operator  
+  !> @param[in] level integer multigrid level
+  !> @return The grad operator
   function get_div_mg(level) result(div_op)
     implicit none
     integer, intent(in) :: level
@@ -963,7 +963,7 @@ contains
   !> @brief Function to return a pointer to a inverse lumped mass matrix
   !! on the finest multigrid level
   !> @param[in] i Index of the desired lumped mass matrix inverse field
-  !> @return The lumped inverse mass matrix 
+  !> @return The lumped inverse mass matrix
   function get_inverse_lumped_mass_matrix_fine(i) result(mm)
     implicit none
     integer(i_def), intent(in) :: i
@@ -990,7 +990,7 @@ contains
   !! on the specified multigrid level
   !> @param[in] i Index of the desired lumped mass matrix inverse field
   !> @param[in] level Integer the multigrid level
-  !> @return The lumped inverse mass matrix   
+  !> @return The lumped inverse mass matrix
     function get_inverse_lumped_mass_matrix_mg(i,level) result(mm)
     implicit none
     integer(kind=i_def), intent(in) :: i
@@ -1072,7 +1072,7 @@ contains
 
     select case (space)
       case (w2_id)
-        normalisation => w2_normalisation(level)       
+        normalisation => w2_normalisation(level)
       case (wt_id)
         normalisation => mt_lumped_inv(level)
       case (theta_space_id)
@@ -1083,8 +1083,8 @@ contains
            LOG_LEVEL_ERROR)
     end select
 
-  end function get_normalisation_mg  
-  
+  end function get_normalisation_mg
+
 
   !> @brief Function to return the Coriolis operator
   !> @return The Coriolis operator
@@ -1133,7 +1133,7 @@ contains
     call temp_w2_field%field_final()
     call temp_w2_field_shifted%field_final()
     call cell_orientation%field_final()
-    call cell_orientation_shifted%field_final() 
+    call cell_orientation_shifted%field_final()
     call detj_at_w2%field_final()
     call detj_at_w2_shifted%field_final()
     call dA_at_w2%field_final()
@@ -1159,7 +1159,7 @@ contains
     call nodal_rmultiplicity_w0%field_final()
     if(allocated(w2_normalisation)) then
        deallocate(w2_normalisation)
-    end if    
+    end if
 
   end subroutine final_runtime_constants
 

@@ -24,7 +24,7 @@ module map_physics_fields_alg_mod
 
 contains
 
-  !> @details An algorithm for mapping native FE fields to the lowest order 
+  !> @details An algorithm for mapping native FE fields to the lowest order
   !>          equivalents for use in the FD physics codes.
   !> @param[in]    u 3D wind field
   !> @param[in]    exner Pressure
@@ -41,11 +41,11 @@ contains
     type( field_collection_type ), intent(inout) :: derived_fields
 
     type( field_type ), pointer :: theta_in_w3 => null()
-    type( field_type ), pointer :: rho_in_wth => null() 
+    type( field_type ), pointer :: rho_in_wth => null()
     type( field_type ), pointer :: exner_in_wth => null()
     type( field_type ), pointer :: wetrho_in_wth => null()
     type( field_type ), pointer :: wetrho_in_w3 => null()
-    type( field_type ), pointer :: u1_in_w3 => null() 
+    type( field_type ), pointer :: u1_in_w3 => null()
     type( field_type ), pointer :: u2_in_w3 => null()
     type( field_type ), pointer :: u3_in_w3 => null()
 
@@ -65,7 +65,7 @@ contains
     call map_physics_scalars(wetrho_in_w3, wetrho_in_wth)
 
     ! Now the winds (NB if sample_physics_winds=.false. then the winds are
-    ! not re-oriented and so they are not necessarily perpendicular or 
+    ! not re-oriented and so they are not necessarily perpendicular or
     ! aligned lat-lon)
     u1_in_w3 => derived_fields%get_field('u1_in_w3')
     u2_in_w3 => derived_fields%get_field('u2_in_w3')
@@ -73,5 +73,5 @@ contains
     call map_physics_winds(u1_in_w3, u2_in_w3, u3_in_w3, u)
 
   end subroutine map_physics_fields_alg
-  
+
 end module map_physics_fields_alg_mod

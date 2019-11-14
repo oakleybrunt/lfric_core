@@ -104,7 +104,7 @@ subroutine calc_dA_at_w2_code( nlayers,                                  &
     do df = 1,ndf_w2
       JTJinvT(:,:,df) = matmul(jac_inv(:,:,df),transpose(jac_inv(:,:,df)))
     end do
-      
+
     ! Lowest order only below, i.e. we only calculate on the face dofs
     dA(map_w2(N)+k) = dj(N)*sqrt(JTJinvT(1,1,N))
     dA(map_w2(S)+k) = dj(S)*sqrt(JTJinvT(1,1,S))

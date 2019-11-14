@@ -11,7 +11,7 @@ module field_io_ncdf_mod
 
 use constants_mod, only: r_def, str_max_filename, str_long
 use netcdf, only: nf90_max_name, nf90_open, nf90_write, nf90_noerr,        &
-                  nf90_strerror, nf90_put_var, nf90_get_var, nf90_put_att, &      
+                  nf90_strerror, nf90_put_var, nf90_get_var, nf90_put_att, &
                   nf90_def_var, nf90_inq_varid, nf90_int, nf90_double,     &
                   nf90_clobber, nf90_enddef, nf90_inquire_dimension,       &
                   nf90_inq_dimid, nf90_def_dim, nf90_create, nf90_close,   &
@@ -26,7 +26,7 @@ private
 !-------------------------------------------------------------------------------
 !> @brief    NetCDF quad file type
 !!
-!! @details  Implements the ugrid file type for NetCDF files storing 2D quads.  
+!! @details  Implements the ugrid file type for NetCDF files storing 2D quads.
 !-------------------------------------------------------------------------------
 
 type, public :: field_io_ncdf_type
@@ -57,7 +57,7 @@ end type
 contains
 
 !-------------------------------------------------------------------------------
-!>  @brief   Open an existing NetCDF file.  
+!>  @brief   Open an existing NetCDF file.
 !!
 !!  @param[in,out]  self         The NetCDF file object.
 !!  @param[in]      file_name    Name of the file to open.
@@ -291,8 +291,8 @@ subroutine check_err(ierr, routine, cmess)
   if (ierr /= NF90_NOERR) then
     write(log_scratch_space,*) 'Error in field_io_ncdf ['//routine//']: '//&
       trim(cmess) // ' ' // trim(nf90_strerror(ierr))
-    call log_event( trim(log_scratch_space), LOG_LEVEL_ERROR ) 
-  end if 
+    call log_event( trim(log_scratch_space), LOG_LEVEL_ERROR )
+  end if
 
   return
 end subroutine check_err
@@ -343,8 +343,8 @@ subroutine read_field_data(self, field_data)
   implicit none
 
   !Arguments
-  class(field_io_ncdf_type), intent(in)     :: self                        
-  real(kind=r_def),          intent(out)    :: field_data(:)       
+  class(field_io_ncdf_type), intent(in)     :: self
+  real(kind=r_def),          intent(out)    :: field_data(:)
 
   !Internal variables
   integer :: ierr
@@ -373,8 +373,8 @@ subroutine write_field_data(self, field_data)
   implicit none
 
   !Arguments
-  class(field_io_ncdf_type), intent(inout)  :: self                        
-  real(kind=r_def),          intent(in)     :: field_data(:)                   
+  class(field_io_ncdf_type), intent(inout)  :: self
+  real(kind=r_def),          intent(in)     :: field_data(:)
 
   !Internal variables
   integer :: ierr

@@ -72,7 +72,7 @@ allocate( extrusion, source=create_extrusion() )
 !===================================================================
 do i=2, multigrid_chain_nitems
   global_mesh_ids(i) = global_mesh_collection %                    &
-                                   add_new_global_mesh( ugrid(i),  & 
+                                   add_new_global_mesh( ugrid(i),  &
                                                         mesh_name, &
                                                         npanels )
 

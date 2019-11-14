@@ -517,7 +517,7 @@ contains
   end subroutine set_domain_size
 
   !============================================================================
-  !> @brief Helper function that calculates and stores depth of layers in 
+  !> @brief Helper function that calculates and stores depth of layers in
   !> 3d_cell column given the suface height and the domain top (called from
   !> the mesh constructor).
   !> @param[in,out] dz                Depth of 3d-cell layer

@@ -40,11 +40,11 @@ contains
     integer(i_def), parameter :: ncell = 1
     integer(i_def), parameter :: nlayers = 3
     integer(i_def), parameter :: ncell3d = ncell*nlayers
-    real(r_def),    parameter :: dv = 8.0_r_def 
-    real(r_def),    parameter :: dL = 2.0_r_def 
+    real(r_def),    parameter :: dv = 8.0_r_def
+    real(r_def),    parameter :: dL = 2.0_r_def
 
     real(r_def),    parameter :: Nsq = 0.001_r_def
-    real(r_def),    parameter :: p_ref = 1.1_r_def 
+    real(r_def),    parameter :: p_ref = 1.1_r_def
     ! Function space information
     integer(i_def), parameter :: ndf_w3 = 1
     integer(i_def), parameter :: ndf_w2h = 4
@@ -98,7 +98,7 @@ contains
       m3_exner_star(1,1,cell) = dV/p_ref
       div_star(:,1,cell) = (/ -1.0_r_def, 1.0_r_def, 1.0_r_def, -1.0_r_def, -1.0_r_def, 1.0_r_def /)
       compound_div(1,:,cell) = -(/ -1.0_r_def, 1.0_r_def, 1.0_r_def, -1.0_r_def, -1.0_r_def, 1.0_r_def /)
-      p3theta(1,:,cell) = dV*(/ 0.5_r_def, 0.5_r_def /)   
+      p3theta(1,:,cell) = dV*(/ 0.5_r_def, 0.5_r_def /)
       ptheta2v(1,5,cell) = 0.5_r_def
       ptheta2v(2,6,cell) = 0.5_r_def
     end do
@@ -107,7 +107,7 @@ contains
     t_normalisation(:) = 1.0_r_def/dV
     u_normalisation(:) = dL
     hb_lumped_inv(:)   = (1.0_r_def + Nsq)/dL
- 
+
     call compute_p0_vert_precon_code(1_i_def,                 &
                                      nlayers,                 &
                                      tri_0, tri_p, tri_m,     &

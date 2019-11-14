@@ -68,7 +68,7 @@ subroutine limit_wind_code(nlayers, wind, dJ_on_w2, &
   do k = 0, nlayers-1
     do df = 1, ndf_w2
 
-      ! Set maximum wind flux (i.e. wind speed * face area) to 
+      ! Set maximum wind flux (i.e. wind speed * face area) to
       ! dJ*maxcfl*dt, i.e. wind speed < dJ/dA *maxcfl/dt ~ dx * maxcfl/dt
       ! dJ~cell volume
       wind_max = dJ_on_w2(map_w2(df)+k)*max_cfl/dt
@@ -76,7 +76,7 @@ subroutine limit_wind_code(nlayers, wind, dJ_on_w2, &
       ! Limit both positive and negative directions
       wind(map_w2(df)+k) = max(min(wind(map_w2(df)+k), wind_max), -wind_max)
 
-    end do 
+    end do
   end do
 
 end subroutine limit_wind_code

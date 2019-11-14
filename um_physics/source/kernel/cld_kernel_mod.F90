@@ -60,7 +60,7 @@ contains
 !! @param[in,out] cf_ice        Ice cloud fraction
 !! @param[in,out] cf_liq        Liquid cloud fraction
 !! @param[in,out] cf_bulk       Bulk cloud fraction
-!! @param[out]   theta_inc     increment to theta 
+!! @param[out]   theta_inc     increment to theta
 !! @param[in]    ndf_wth       Number of degrees of freedom per cell for potential temperature space
 !! @param[in]    undf_wth      Number unique of degrees of freedom  for potential temperature space
 !! @param[in]    map_wth       Dofmap for the cell at the base of the column for potential temperature space
@@ -74,7 +74,7 @@ contains
 subroutine cld_code(nlayers,      &
                     theta_in_wth, &
                     exner_in_w3,  &
-                    exner_in_wth, & 
+                    exner_in_wth, &
                     rh_crit_wth,  &
                     ntml_2d,      &
                     cumulus_2d,   &
@@ -101,7 +101,7 @@ subroutine cld_code(nlayers,      &
     !---------------------------------------
     ! structures holding diagnostic arrays - not used
 
-    ! other modules containing stuff passed to CLD 
+    ! other modules containing stuff passed to CLD
     use nlsizes_namelist_mod, only: row_length, rows, bl_levels, model_levels
     use planet_constants_mod, only: p_zero, kappa, cp
     use water_constants_mod, ONLY: lc
@@ -155,7 +155,7 @@ subroutine cld_code(nlayers,      &
     integer (i_um), dimension(row_length,rows) :: ntml
     integer (i_um):: errorstatus, large_levels, levels_per_level
 
-    logical :: l_mcr_qcf2,l_mixing_ratio 
+    logical :: l_mcr_qcf2,l_mixing_ratio
 
     rhc_row_length=1
     rhc_rows=1
@@ -205,8 +205,8 @@ subroutine cld_code(nlayers,      &
     p_theta_levels(1,1,nlayers) = p_zero*(exner_in_wth(map_wth(1) + nlayers))** &
                     (1.0_r_def/kappa)
     ! pressure on rho levels
-    p_rho_minus_one(1,1,nlayers) = 0.0_r_def 
- 
+    p_rho_minus_one(1,1,nlayers) = 0.0_r_def
+
 
     CALL ls_arcld( p_theta_levels, rhcpt, p_rho_minus_one,            &
                  rhc_row_length, rhc_rows, bl_levels,                 &
@@ -227,7 +227,7 @@ subroutine cld_code(nlayers,      &
       ! potential temperature increment on theta levels
       theta_inc(map_wth(1) + k) = tl(1,1,k)/exner_in_wth(map_wth(1) + k) -  &
                                   theta_in_wth(map_wth(1) + k)
-      ! water vapour on theta levels 
+      ! water vapour on theta levels
       m_v(map_wth(1) + k)  = qt(1,1,k)
       ! cloud liquid water on theta levels
       m_cl(map_wth(1) + k) = qcl_out(1,1,k)

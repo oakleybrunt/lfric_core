@@ -98,7 +98,7 @@ contains
       call log_event('Reading checkpoint file to restart wind',LOG_LEVEL_INFO)
       call wind%read_checkpoint("restart_wind", trim(ts_fname(checkpoint_stem_name,"", &
                                              "wind", (timestep_start - 1),"")))
-      call log_event('Reading checkpoint file to restart buoyancy',LOG_LEVEL_INFO) 
+      call log_event('Reading checkpoint file to restart buoyancy',LOG_LEVEL_INFO)
       call buoyancy%read_checkpoint("restart_buoyancy", trim(ts_fname(checkpoint_stem_name,"", &
                                                      "buoyancy", (timestep_start - 1),"")))
 

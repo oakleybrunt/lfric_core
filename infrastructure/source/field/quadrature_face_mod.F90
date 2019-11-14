@@ -5,11 +5,11 @@
 !-----------------------------------------------------------------------------
 !> @brief Quadrature object for computing quadrature on faces of a
 !>        cell.
-!> @details Face quadrature object that contains quadrature points and weights 
-!> stored in 3D (x-y-z), 
-!> on one of a number of faces of a cell. A proxy  
-!> is used to access the data. A type bound procedure 'compute_function' 
-!> is also available. This method uses the call_function defined in 
+!> @details Face quadrature object that contains quadrature points and weights
+!> stored in 3D (x-y-z),
+!> on one of a number of faces of a cell. A proxy
+!> is used to access the data. A type bound procedure 'compute_function'
+!> is also available. This method uses the call_function defined in
 !> function_space_type. The function is evaluated for the xyz arrangement
 
 
@@ -69,7 +69,7 @@ end type quadrature_face_type
 
 !> Psy layer representation of a quadrature_face type
 !>
-!> This is an accessor class that allows access to quadrature_face_type 
+!> This is an accessor class that allows access to quadrature_face_type
 !> data and information with each element accessed via a public pointer.
 !>
 type, public :: quadrature_face_proxy_type
@@ -266,7 +266,7 @@ subroutine create_quadrature(self, points_weights_1, points_weights_2, &
   ! Arrays for assigning coordinates to each face, assumed quad cell with face
   ! layout:
   ! y
-  ! |  |--4--|  
+  ! |  |--4--|
   ! |  1     3
   ! |  |--2--|
   ! |
@@ -302,7 +302,7 @@ subroutine create_quadrature(self, points_weights_1, points_weights_2, &
   ! Distribute the 1D points and weights:
   ! Collect horizontal face information (if any)
   if ( horizontal_faces ) then
-    do face = 1, self%nfaces_horizontal 
+    do face = 1, self%nfaces_horizontal
       ij = 1
       ! Horizontal faces (X-Z or Y-Z quadrature + fixed Y or X)
       do i = 1, size(points_weights_1, 1)
@@ -368,8 +368,8 @@ end function get_quadrature_proxy
 !> @brief Evaluates the a given function for on a set of 3d points.
 !> @param[in] self, The calling quadrature_type
 !> @param[in] function_to_call integer, Enumerator defining the function to call
-!> @param[in] function_space function_space_type, Function space containing the 
-!> function to evaluate 
+!> @param[in] function_space function_space_type, Function space containing the
+!> function to evaluate
 !> @param[in] fspace_dim integer, Size of the function to be evaluated
 !> @param[in] ndf integer, Number of dofs
 !> @param[out] basis real, 3 dimensional array holding the evaluated function
@@ -411,7 +411,7 @@ subroutine quadrature_final(self)
 
   if (allocated(self%points_xyz))  deallocate(self%points_xyz)
   if (allocated(self%weights_xyz)) deallocate(self%weights_xyz)
-  
+
 end subroutine quadrature_final
 
 !-------------------------------------------------------------------------------
@@ -426,7 +426,7 @@ subroutine quadrature_destructor(self)
   type(quadrature_face_type) :: self
 
   call self%quadrature_final()
-  
+
 end subroutine quadrature_destructor
 !-------------------------------------------------------------------------------
 

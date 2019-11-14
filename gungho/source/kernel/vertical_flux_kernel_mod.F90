@@ -178,7 +178,7 @@ subroutine vertical_flux_code( nlayers,             &
     mass_frac = return_part_mass(3,subgrid_coeffs,left_integration_limit,right_integration_limit)
 
     ! Calculate the total mass, which, depending on the departure distance
-    ! is the sum of mass from whole cells, i.e. the integer part of the 
+    ! is the sum of mass from whole cells, i.e. the integer part of the
     ! departure distance, and the fractional part of the departure distance.
     mass_total = mass_from_whole_cells + mass_frac
 

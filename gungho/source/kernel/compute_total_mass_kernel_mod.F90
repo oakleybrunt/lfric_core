@@ -54,7 +54,7 @@ contains
 !! @param[in] ndf_w3 Number of degrees of freedom per cell
 !! @param[in] undf_w3 Total number of degrees of freedom for w3
 !! @param[in] map_w3 Dofmap for the cell at the base of the column
-!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points
 !! @param[out] mass Cell integrated mass
 !! @param[in] rho Density
 !! @param[in] ndf_chi Number of degrees of freedom per cell for chi
@@ -76,7 +76,7 @@ subroutine compute_total_mass_code(                                            &
                                    nqp_h, nqp_v, wqp_h, wqp_v                  &
                                  )
 
-  use coordinate_jacobian_mod, only : coordinate_jacobian 
+  use coordinate_jacobian_mod, only : coordinate_jacobian
 
   implicit none
 
@@ -92,7 +92,7 @@ subroutine compute_total_mass_code(                                            &
   real(kind=r_def), dimension(undf_chi), intent(in)    :: chi_1, chi_2, chi_3
 
   real(kind=r_def), dimension(nqp_h), intent(in)      ::  wqp_h
-  real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v  
+  real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
 
   !Internal variables
   integer               :: df1, df2, k

@@ -35,8 +35,8 @@ contains
 
   !> @brief   The algorithm returns mass flux in the x and y directions separately
   !>          with input the density field and winds at timestep n and n+1.
-  !> @details The algorithm is composed of four main stages. The first stage is to 
-  !>          derive the winds used to calculate the departure points for the 
+  !> @details The algorithm is composed of four main stages. The first stage is to
+  !>          derive the winds used to calculate the departure points for the
   !>          Cosmic scheme. The second stage is to then calculate the departure
   !>          points.
   !>          The third and fourth stages are to perform the advective and conservative

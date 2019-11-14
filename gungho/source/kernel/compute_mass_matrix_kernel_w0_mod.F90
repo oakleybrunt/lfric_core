@@ -107,7 +107,7 @@ subroutine compute_mass_matrix_w0_code(cell, nlayers, ncell_3d,            &
   !loop over layers: Start from 1 as in this loop k is not an offset
   do k = 1, nlayers
      ik = k + (cell-1)*nlayers
-     
+
      ! indirect the chi coord field here
      do df = 1, ndf_chi
         chi1_e(df) = chi1(map_chi(df) + k - 1)
@@ -123,19 +123,19 @@ subroutine compute_mass_matrix_w0_code(cell, nlayers, ncell_3d,            &
           mm(df,df2,ik) = 0.0_r_def
           do qp2 = 1, nqp_v
              do qp1 = 1, nqp_h
-                integrand = wqp_h(qp1) * wqp_v(qp2) * & 
+                integrand = wqp_h(qp1) * wqp_v(qp2) * &
                      basis_w0(1,df,qp1,qp2)*basis_w0(1,df2,qp1,qp2)     * &
-                     dj(qp1,qp2) 
+                     dj(qp1,qp2)
                 mm(df,df2,ik) = mm(df,df2,ik) + integrand
              end do
           end do
        end do
-       do df = df2, 1, -1  
+       do df = df2, 1, -1
           mm(df,df2,ik) = mm(df2,df,ik)
        end do
-       
+
     end do
-    
+
   end do ! end of k loop
 
 

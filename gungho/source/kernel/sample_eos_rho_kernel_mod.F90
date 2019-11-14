@@ -67,11 +67,11 @@ contains
 subroutine sample_eos_rho_code(nlayers, rho, exner, theta, moist_dyn_gas, &
                                ndf_w3, undf_w3, map_w3, basis_3, ndf_wt,  &
                                undf_wt, map_wt, basis_t)
-  
+
   use analytic_temperature_profiles_mod, only : analytic_temperature
 
   implicit none
-  
+
   !Arguments
   integer, intent(in) :: nlayers, ndf_w3, undf_w3,  ndf_wt, undf_wt
   integer, dimension(ndf_w3), intent(in)  :: map_w3
@@ -101,19 +101,19 @@ subroutine sample_eos_rho_code(nlayers, rho, exner, theta, moist_dyn_gas, &
     do dft = 1, ndf_wt
       theta_vd_e(dft) = theta( map_wt(dft) + k) * moist_dyn_gas( map_wt(dft) + k)
     end do
-    
+
     do df = 1, ndf_w3
-      
-      exner_cell = 0.0_r_def 
+
+      exner_cell = 0.0_r_def
       do df3 = 1, ndf_w3
         exner_cell = exner_cell + exner_e(df3)*basis_3(1,df3,df)
       end do
- 
+
       theta_vd_cell = 0.0_r_def
       do dft = 1, ndf_wt
         theta_vd_cell = theta_vd_cell + theta_vd_e(dft)*basis_t(1,dft,df)
       end do
-      
+
       rho(map_w3(df)+k) = (p_zero*exner_cell**(1.0/(rd/cp)-1.0))/(rd*theta_vd_cell)
     end do
 

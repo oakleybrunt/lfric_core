@@ -6,7 +6,7 @@
 ! @brief Control code for the radiative transfer scheme
 
 module radiation_alg_mod
-  
+
 use field_mod,               only: field_type
 use field_collection_mod,    only: field_collection_type
 use mr_indices_mod,          only: nummr, imr_v, imr_cl, imr_ci

@@ -9,7 +9,7 @@
 !>           mass flux and the algorithm is designed for use with finite volume
 !>           type fields.
 module cusph_fv_density_update_alg_mod
-  
+
   use constants_mod,                     only: i_def, r_def, LARGE_REAL_NEGATIVE
   use field_mod,                         only: field_type
   use timestepping_config_mod,           only: dt
@@ -50,7 +50,7 @@ contains
                                           detj_at_w2 )
 
     implicit none
- 
+
     type(field_type),    intent(inout)  :: increment
     type(field_type),    intent(in)     :: mass_flux_x
     type(field_type),    intent(in)     :: mass_flux_y

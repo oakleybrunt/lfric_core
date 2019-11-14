@@ -5,11 +5,11 @@
 !-----------------------------------------------------------------------------
 !>@brief Main program for running the CMA operator tests in cma_test_mod.x90.
 !>@details To run a particular test, provide the appropriate command line
-!>         argument of the form --test_XXX where a list of possible values 
+!>         argument of the form --test_XXX where a list of possible values
 !>         for XXX is given below. Running with --test_all will carry out all
 !>         tests.
 !>
-!>         Any configuration data is read from the namelist file 
+!>         Any configuration data is read from the namelist file
 !>         cma_test_configuration.nml.
 !>
 !>         Note that the test of the diag_DhMDhT term currently only works
@@ -76,7 +76,7 @@ program cma_test
   ! has a suitable size (i.e. \f$dx \approx dz\f$)
   ! Pointer to mesh
   type(mesh_type), pointer :: mesh
-  ! Number of cells of 2d mesh (local and global), 
+  ! Number of cells of 2d mesh (local and global),
   integer(kind=i_def) :: ncells_2d_local, ncells_2d
   ! Number of vertical layers
   integer(kind=i_def) :: nlayers

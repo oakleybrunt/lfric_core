@@ -32,7 +32,7 @@ contains
     d(4,:) = (/ -4.5_r_def, 7.9_r_def /)
     ! rhs vector
     x(:) = (/ 0.25_r_def, 1.5_r_def /)
-    
+
     answer = matmul(d,x)
 
     call dg_matrix_vector_code(1, &

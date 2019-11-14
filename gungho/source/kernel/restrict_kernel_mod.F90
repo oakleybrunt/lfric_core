@@ -14,7 +14,7 @@
 module restrict_kernel_mod
 use constants_mod,           only: i_def, r_def
 use kernel_mod,              only: kernel_type
-use argument_mod,            only: arg_type, &      
+use argument_mod,            only: arg_type, &
                                    GH_FIELD,                 &
                                    GH_READ, GH_WRITE, CELLS, &
                                    ANY_SPACE_1, ANY_SPACE_2, &
@@ -22,7 +22,7 @@ use argument_mod,            only: arg_type, &
 implicit none
 
 type, public, extends(kernel_type) :: restrict_kernel_type
-   private 
+   private
    type(arg_type) :: meta_args(2) = (/                                      &
        arg_type(GH_FIELD, GH_WRITE, ANY_SPACE_1, mesh_arg=GH_COARSE),       &
        arg_type(GH_FIELD, GH_READ,  ANY_SPACE_2, mesh_arg=GH_FINE  )        &
@@ -36,7 +36,7 @@ public :: restrict_kernel_code
 
 contains
 
-  !> @brief Subroutine to perform the restriction operation 
+  !> @brief Subroutine to perform the restriction operation
   !> @param[in] nlayers Number of layers in a model column
   !> @param[in] cell_map Map of which fine grid cells lie in the coarse grid
   !!                     cell
@@ -62,7 +62,7 @@ contains
                                   undf_f,        &
                                   dofmap_f)
     implicit none
-    
+
     integer(kind=i_def), intent(in) :: nlayers
     integer(kind=i_def), intent(in) :: ncell_f_per_c
     integer(kind=i_def), dimension(ncell_f_per_c), intent(in) :: cell_map
@@ -78,7 +78,7 @@ contains
     real(kind=r_def) :: denom
 
     denom = 1.0_r_def/real(ncell_f_per_c, kind=r_def)
-   
+
     do k = 0, nlayers-1
        do df = 1, ndf
           coarse(dofmap_c(df) + k ) = 0.0_r_def

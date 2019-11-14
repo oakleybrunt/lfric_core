@@ -62,7 +62,7 @@ contains
 !! @param[in] wt_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] wt_diff_basis Differential basis functions evaluated at gaussian quadrature points
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
-!! @param[in] w2_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w2_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] w2_diff_basis Differential basis functions evaluated at gaussian quadrature points
 !! @param[in] nqp_h Number of horizontal quadrature points
 !! @param[in] nqp_v Number of vertical quadrature points
@@ -87,8 +87,8 @@ subroutine weighted_proj_theta2_code(cell, nlayers, ncell_3d,         &
 
   real(kind=r_def), dimension(1,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_basis
   real(kind=r_def), dimension(3,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_diff_basis
-  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis 
-  real(kind=r_def), dimension(1,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_diff_basis 
+  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis
+  real(kind=r_def), dimension(1,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_diff_basis
 
   real(kind=r_def), dimension(ndf_wt,ndf_w2,ncell_3d), intent(inout) :: projection
   real(kind=r_def), dimension(undf_wt),                intent(in)    :: theta
@@ -100,11 +100,11 @@ subroutine weighted_proj_theta2_code(cell, nlayers, ncell_3d,         &
   ! Internal variables
   integer(kind=i_def) :: df, k, ik, dft, df2
   integer(kind=i_def) :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_wt) :: theta_e
   real(kind=r_def) :: theta_at_quad
   real(kind=r_def) :: div_gamma_v, i1
-  
+
   do k = 0, nlayers-1
     do df = 1, ndf_wt
       theta_e(df)  = theta( map_wt(df) + k )
@@ -118,7 +118,7 @@ subroutine weighted_proj_theta2_code(cell, nlayers, ncell_3d,         &
           theta_at_quad = theta_at_quad + theta_e(df)*wt_basis(1,df,qp1,qp2)
         end do
         i1 = scalar*theta_at_quad*wqp_h(qp1)*wqp_v(qp2)
-        do df2 = 1,ndf_w2          
+        do df2 = 1,ndf_w2
           do dft = 1,ndf_wt
             div_gamma_v = wt_basis(1,dft,qp1,qp2)*w2_diff_basis(1,df2,qp1,qp2) &
                         + dot_product(wt_diff_basis(:,dft,qp1,qp2),w2_basis(:,df2,qp1,qp2))
@@ -128,7 +128,7 @@ subroutine weighted_proj_theta2_code(cell, nlayers, ncell_3d,         &
       end do
     end do
   end do
-  
+
 end subroutine weighted_proj_theta2_code
 
 end module weighted_proj_theta2_kernel_mod

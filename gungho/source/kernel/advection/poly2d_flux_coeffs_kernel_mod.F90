@@ -7,17 +7,17 @@
 !-------------------------------------------------------------------------------
 
 !> @brief Compute the coefficients for reconstructing a
-!>        a  2D horizontal upwind polynomial representation of a tracer field on the 
+!>        a  2D horizontal upwind polynomial representation of a tracer field on the
 !>        faces of a cell
 !> @details Compute the coefficients of the flux of a tracer density field using a high order
 !>          2D polynomial fit to the integrated tracer values over a given stencil.
 !>          The stencil used for the polynomial is centred on the upwind cell for each edge
 !>          A symmetric polynomial is used containing all monomials up to the
 !>          desired order, i.e. order = 2: 1 + x + y + x^2 + xy + y^2
-!>          This is exactly fitted over the central cell and then in a least 
+!>          This is exactly fitted over the central cell and then in a least
 !>          squares manner over the remaining cells in the stencil
 !>          The methodology closely follows that of Thuburn et.al GMD 2014
-!>          This method is only valid for lowest order elements 
+!>          This method is only valid for lowest order elements
 module poly2d_flux_coeffs_kernel_mod
 
 use argument_mod,      only : arg_type, func_type, mesh_data_type,  &
@@ -82,13 +82,13 @@ contains
 !>@param[in] stencil_size_wx Number of cells in the coordinate space stencil
 !>@param[in] smap_wx Stencil dofmap of the coordinate space stencil
 !>@param[in] basis_wx Basis function of the coordinate space evaluated on
-!!                    quadrature points 
+!!                    quadrature points
 !>@param[in] face_basis_wx Basis function of the coordinate space evaluated on
 !!                         quadrature points on the horizontal faces
 !>@param[in] order Polynomial order for flux computations
 !>@param[in] nfaces_h Number of horizontal neighbours
 !>@param[in] cells_in_stencil Number of cells in the stencil to use for the
-!!                            reconstruction in this column (may be smaller than 
+!!                            reconstruction in this column (may be smaller than
 !!                            stencil_size_w3)
 !>@param[in] nqp_h Number of horizontal quadrature points
 !>@param[in] nqp_v Number of vertical quadrature points
@@ -125,7 +125,7 @@ subroutine poly2d_flux_coeffs_code(nlayers,                    &
   use poly_helper_functions_mod, only: buildadvcoeff, &
                                        local_distance_2d
   implicit none
-   
+
   ! Arguments
   integer(kind=i_def), intent(in) :: order, cells_in_stencil
   integer(kind=i_def), intent(in) :: nlayers
@@ -180,13 +180,13 @@ subroutine poly2d_flux_coeffs_code(nlayers,                    &
   ! (this is only true if the number of quadrature points is odd
   qv0 = (nqp_v+1)/2
   qh0 = (nqp_h+1)/2
- 
+
   ! Step 1: Build integrals of monomials over all cells in advection stencils
   ! Initialize to zero
-  allocate( int_monomial(stencil_size_w3, nmonomial) ) 
+  allocate( int_monomial(stencil_size_w3, nmonomial) )
 
   ! Loop over all layers
-  layer_loop: do k = 0, nlayers-1   
+  layer_loop: do k = 0, nlayers-1
 
     int_monomial = 0.0_r_def
 
@@ -212,7 +212,7 @@ subroutine poly2d_flux_coeffs_code(nlayers,                    &
     ! Loop over all cells in stencils
     stencil_loop: do stencil = 1, cells_in_stencil
 
-      ! Integrate monomials over this cell 
+      ! Integrate monomials over this cell
       area(stencil) = mdw3(smap_w3( 1, stencil) + k)
       quadrature_loop: do qp = 1, nqp_h
         ! First: Compute physical coordinate of each quadrature point
@@ -221,11 +221,11 @@ subroutine poly2d_flux_coeffs_code(nlayers,                    &
           ijk = smap_wx( df, stencil) + k
           xq(:) = xq(:) + (/ chi1(ijk), chi2(ijk), chi3(ijk) /)*basis_wx(1,df,qp,qv0)
         end do
- 
-        ! Second: Compute the local coordinate of each quadrature point from the 
+
+        ! Second: Compute the local coordinate of each quadrature point from the
         !         physical coordinate
-        xx = local_distance_2d(x0, xq, xn1, spherical) 
- 
+        xx = local_distance_2d(x0, xq, xn1, spherical)
+
         ! Third: Compute each needed monomial in terms of the local coordinate
         !        on each quadrature point
         ! Loop over monomials
@@ -251,7 +251,7 @@ subroutine poly2d_flux_coeffs_code(nlayers,                    &
     ! each edge when this is the upwind cell
     face_loop: do face = 1,nfaces_h
       ! Initialise polynomial coeffficients to zero
-      coeff(:,face,smap_w3(1,1)+k) = 0.0_r_def    
+      coeff(:,face,smap_w3(1,1)+k) = 0.0_r_def
       ! Loop over quadrature points on this face
       face_quadrature_loop: do qp = 1,nqp_f
 
@@ -261,8 +261,8 @@ subroutine poly2d_flux_coeffs_code(nlayers,                    &
           ijk = smap_wx( df, 1) + k
           xq(:) = xq(:) + (/ chi1(ijk), chi2(ijk), chi3(ijk) /)*face_basis_wx(1,df,qp,face)
         end do
-  
-        xx = local_distance_2d(x0, xq, xn1, spherical) 
+
+        xx = local_distance_2d(x0, xq, xn1, spherical)
 
         ! Evaluate polynomial fit
         ! Loop over monomials
@@ -279,7 +279,7 @@ subroutine poly2d_flux_coeffs_code(nlayers,                    &
               px = py
               py = 0
             end if
-          end do 
+          end do
           coeff(stencil,face,smap_w3(1,1)+k) = &
             coeff(stencil,face,smap_w3(1,1)+k) + wqp_f(qp,face)*poly*area(stencil)
         end do

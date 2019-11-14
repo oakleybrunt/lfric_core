@@ -28,7 +28,7 @@ module init_io_dev_mod
   contains
 
   subroutine init_io_dev(mesh_id, twod_mesh_id, chi, density, theta, wind)
-    
+
     implicit none
 
     integer(i_def), intent(in)               :: mesh_id

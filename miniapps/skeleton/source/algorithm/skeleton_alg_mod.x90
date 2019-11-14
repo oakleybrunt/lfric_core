@@ -32,16 +32,16 @@ contains
 
     implicit none
 
-    ! Prognostic fields    
+    ! Prognostic fields
     type( field_type ), intent( inout ) :: field_1
-     
+
     ! Diagnostic fields
     type( field_type )                  :: field_2
 
     real(r_def)                         :: s
     integer(i_def)                      :: mesh_id
     type( operator_type ), pointer      :: divergence => null()
-    
+
     call log_event( "skeleton: Running algorithm", LOG_LEVEL_INFO )
 
     ! Create a new field on the W2 function space
@@ -51,7 +51,7 @@ contains
     ! Set the new field to a constant value and compute the divergence of it
     divergence => get_div()
     s = 2.0_r_def
-    call invoke( name = "Compute divergence",  & 
+    call invoke( name = "Compute divergence",  &
                  setval_c(field_2, s        ), &
                  setval_c(field_1, 0.0_r_def), &
                  matrix_vector_kernel_type(field_1, field_2, divergence) )
@@ -59,7 +59,7 @@ contains
     ! The divergence of a constant field should be zero so lets check this by
     ! printing the min/max values in field_1
     call field_1%log_minmax(LOG_LEVEL_INFO,'field_1')
-  
+
     call log_event( "skeleton: finished algorithm", LOG_LEVEL_INFO )
 
   end subroutine skeleton_alg

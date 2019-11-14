@@ -42,7 +42,7 @@ contains
                                         direction )
 
     implicit none
- 
+
     type(field_type),    intent(in)     :: rho_n
     type(field_type),    intent(in)     :: mass_flux
     type(field_type),    intent(inout)  :: rho

@@ -136,7 +136,7 @@ contains
                                      mm_p%local_stencil,                &
                                      ndf                                &
                                      )
- 
+
     answer = 1.0_r_def/5.0_r_def
     @assertEqual(answer, mm_inv_p%local_stencil(1, 1, 1 ), tol)
 

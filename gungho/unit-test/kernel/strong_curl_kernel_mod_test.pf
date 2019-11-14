@@ -56,9 +56,9 @@ contains
     real(kind=r_def),    dimension(undf1)       :: u
 
     integer(kind=r_def) :: i
-    
 
-    d21 = real(reshape( [ & 
+
+    d21 = real(reshape( [ &
      1,  0,  0,  0, -1,  0, &
      0,  1,  0,  0,  1,  0, &
      0,  0,  1,  0,  1,  0, &
@@ -71,7 +71,7 @@ contains
      0, -1,  0,  0,  0,  1, &
      0,  0, -1,  0,  0,  1, &
      0,  0,  0, -1,  0, -1  &
-    ], shape(d21) ),r_def) 
+    ], shape(d21) ),r_def)
 
     do i = 1,ndf1
       map1(i) = i
@@ -111,7 +111,7 @@ contains
      end do
 
      xi = 0.0_r_def
-     
+
 
      call strong_curl_code(nlayers,                         &
                            xi, u,                           &

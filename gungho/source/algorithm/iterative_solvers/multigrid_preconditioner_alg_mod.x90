@@ -40,9 +40,9 @@ module multigrid_preconditioner_alg_mod
 
      !> Jacobi smoothing parameter, before
      integer(kind=i_def) :: n_presmooth
-     !> Jacobi smoothing parameter, after     
+     !> Jacobi smoothing parameter, after
      integer(kind=i_def) :: n_postsmooth
-     !> Jacobi smoothing parameter, for coarsest mesh     
+     !> Jacobi smoothing parameter, for coarsest mesh
      integer(kind=i_def) :: n_coarsesmooth
      !> Helmholtz operator on each multigrid level
      type(helmholtz_operator_type), allocatable, dimension(:) :: H_operator
@@ -59,7 +59,7 @@ module multigrid_preconditioner_alg_mod
 
   end type multigrid_preconditioner_type
 
-    ! Overload the default structure constructor                                 
+    ! Overload the default structure constructor
   interface multigrid_preconditioner_type
      module procedure multigrid_preconditioner_constructor
   end interface multigrid_preconditioner_type
@@ -90,7 +90,7 @@ contains
 
     ! Construct fields and operators on all multigrid levels
     call self%construct_multigrid_fields(p_rhs)
-    
+
   end function multigrid_preconditioner_constructor
 
   !> @brief Construct fields on all multigrid levels
@@ -111,14 +111,14 @@ contains
          "construct_multigrid_preconditioner:make fields and operator on ", &
          self%n_level," levels"
     call log_event(log_scratch_space,LOG_LEVEL_INFO)
-    
+
     ! Extract function spaces and mesh ids
     fs => p_rhs%get_function_space()
     fs_fine_id = fs%get_id()
-    
+
     if (multigrid_function_space_chain%exists(fs_fine_id)) then
        call multigrid_function_space_chain%set_current(fs_fine_id)
-    else 
+    else
        write(log_scratch_space,'(A,I7)') &
             "Function space space not present in chain:", fs_fine_id
        call log_event(log_scratch_space, LOG_LEVEL_ERROR)
@@ -140,7 +140,7 @@ contains
     call self%u_mg(1)%initialise( fs )
     call self%b_mg(1)%initialise( fs )
     call self%r_mg(1)%initialise( fs )
-    self%H_operator(1) = helmholtz_operator_type(fs, 1)    
+    self%H_operator(1) = helmholtz_operator_type(fs, 1)
     do level = 2, self%n_level
        fs => multigrid_function_space_chain%get_next()
        self%fs_id(level) = fs%get_id()
@@ -149,7 +149,7 @@ contains
        call self%b_mg(level)%initialise( fs )
        call self%r_mg(level)%initialise( fs )
 
-       self%H_operator(level) = helmholtz_operator_type(fs, level)          
+       self%H_operator(level) = helmholtz_operator_type(fs, level)
     end do
   end subroutine construct_multigrid_fields
 
@@ -187,21 +187,21 @@ contains
 
        call invoke( inc_aX_plus_y (-1.0_r_def, self%r_mg(level),   &
                                                self%b_mg(level)) )
-       
+
        ! Restrict b^{(ell+1)} = R r^{(ell)}
        call invoke( restrict_kernel_type(self%b_mg(level+1), &
                                          self%r_mg(level) ))
-       
+
        ! Recursive call to V-cycle
        call self%vcycle(level+1,.true.)
        ! Prolong and add solution from coarser level
        ! u^{(ell)} = u^{(ell)} + P u^{(ell+1)}
-      
+
        call invoke( prolong_kernel_type(self%u_mg(level), &
                                         self%u_mg(level+1) ))
        ! Postsmooth u^{(ell)}
        call self%smooth(self%n_postsmooth,level,.false.)
-       
+
     end if
 
   end subroutine vcycle
@@ -210,7 +210,7 @@ contains
   !! apply the preconditioner to x, store in y
   !> @param[inout] self
   !> @param[in]    x abstract_vector_type
-  !> @param[inout] y abstract_vector_type  
+  !> @param[inout] y abstract_vector_type
   subroutine apply_multigrid_preconditioner(self,x,y)
     implicit none
     class(multigrid_preconditioner_type), intent(inout) :: self
@@ -236,15 +236,15 @@ contains
        write(log_scratch_space, '(A)') "multigrid_preconditioner_mod: incorrect vector_type argument x"
        call log_event(log_scratch_space, LOG_LEVEL_ERROR)
     end select
-    
+
   end subroutine apply_multigrid_preconditioner
 
-  !> @brief Apply a number of Jacobi smoother iterations on a 
+  !> @brief Apply a number of Jacobi smoother iterations on a
   !>   particular level.
   !>
   !> @details Calculate \f$ u^{(\ell)} \mapsto u^{(\ell)} + \rho H_z^{-1} (b^{(\ell)}-H u^{(\ell)}) \f$
   !>   nsmooth times on a particular multigrid level. If the flag
-  !>   initial_solution_is_zero is set, set 
+  !>   initial_solution_is_zero is set, set
   !>   \f$ u^{(\ell)} \mapsto \rho H_z^{-1} b^{(\ell)}\f$ in the first
   !>   iteration to save one operator application.
   !>
@@ -260,7 +260,7 @@ contains
     integer(kind=i_def), intent(in) :: level
     logical, intent(in) :: initial_solution_is_zero
     type(function_space_type), pointer :: fs => null()
-    
+
     type(field_type) :: res
 
     real(kind=r_def) :: const
@@ -268,24 +268,24 @@ contains
 
     real(kind=r_def) :: alpha, beta, rz, rz_new, fnorm
     type(field_type) :: p
-    
+
     ! Construct temporary fields (we probably do not want to construct them
     ! in every smoother application in the future)
     fs => self%u_mg(level)%get_function_space()
     call res%initialise(vector_space = fs)
-    
+
     if (initial_solution_is_zero) then
        ! First iteration
        call self%H_operator(level)%apply_inv_diag(self%b_mg(level), &
             self%r_mg(level) )
-       
+
        const = self%rho_smooth
        call invoke(a_times_X(self%u_mg(level),const,self%r_mg(level)))
        i_first = 2
     else
        i_first = 1
     end if
-    
+
     ! Subsequent iterations
     ! Jacobi smoother
     do i = i_first, nsmooth
@@ -296,7 +296,7 @@ contains
        ! Calculate r^{(ell)} = H_z^{-1}.(H.u^{(ell)} - b^{(ell)})
        call self%H_operator(level)%apply_inv_diag(res, &
             self%r_mg(level) )
-       
+
        const = -self%rho_smooth
        ! Calculate
        ! u^{(ell)} = u^{(ell)} - rho*H_z^{-1}.(H.u^{(ell)} - b^{(ell)})
@@ -304,7 +304,7 @@ contains
     end do
 
   end subroutine smooth
-  
+
   subroutine destroy_multigrid_preconditioner(self)
     implicit none
     type(multigrid_preconditioner_type), intent(inout) :: self
@@ -315,8 +315,8 @@ contains
     if (allocated(self%r_mg))                 deallocate(self%r_mg)
     if (allocated(self%mesh_id))              deallocate(self%mesh_id)
     if (allocated(self%fs_id))                deallocate(self%fs_id)
-    
-    
+
+
   end subroutine destroy_multigrid_preconditioner
-    
+
 end module multigrid_preconditioner_alg_mod

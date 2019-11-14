@@ -57,7 +57,7 @@ contains
     real(kind=r_def),    dimension(1)           :: wt
 
     integer(kind=r_def) :: i
-    
+
 
     do i = 1,ndf1
       map1(i) = i
@@ -93,7 +93,7 @@ contains
 
      wt(1) = 1.0_r_def
 
-     
+
      call w2_to_w1_projection_code(nlayers,                    &
                                    v, u,                       &
                                    ndf1, undf1, map1, basis_1, &

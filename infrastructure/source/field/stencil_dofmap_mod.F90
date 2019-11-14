@@ -7,17 +7,17 @@
 !> @details Types for storing the general stencil dofmaps of a general size
 !> Inherits from linked_list_data_type so it can be stored in a linked_list
 !> Allowable stencil types ( the size is variable ):
-!> Currently on the point stencil is allowed 
-!> 
+!> Currently on the point stencil is allowed
+!>
 !> POINT --> [1]
-!>   
+!>
 !> 1DX --> |4|2|1|3|5|
-!>   
+!>
 !>         |5|
 !>         |3|
 !> 1DY --> |1|
 !>         |2|
-!>         |4|      
+!>         |4|
 !>
 !>           |5|
 !> CROSS-> |2|1|4|
@@ -40,11 +40,11 @@ private
 public :: generate_stencil_dofmap_id
 
 type, extends(linked_list_data_type), public :: stencil_dofmap_type
-  private 
+  private
   integer(i_def) :: dofmap_shape
   integer(i_def) :: dofmap_extent
-  integer(i_def) :: dofmap_size 
-  integer(i_def), allocatable :: local_size(:) 
+  integer(i_def) :: dofmap_size
+  integer(i_def), allocatable :: local_size(:)
   integer(i_def), allocatable :: dofmap(:,:,:)
 contains
   procedure :: get_dofmap
@@ -73,7 +73,7 @@ interface stencil_dofmap_type
   module procedure stencil_dofmap_constructor
 end interface
 
-contains 
+contains
 
 !-----------------------------------------------------------------------------
 ! Construct the stencil dofmap
@@ -133,9 +133,9 @@ function stencil_dofmap_constructor( st_shape, st_depth, ndf, mesh, master_dofma
     number_of_neighbours = reference_element%get_number_2d_edges()
     ! Since this routine is only valid for quadrilateral elements throw an error
     ! if the number of (horizontal) neighbours is not four
-    if ( number_of_neighbours /= 4_i_def ) &  
+    if ( number_of_neighbours /= 4_i_def ) &
      call log_event( 'Stencil dofmaps only valid for quad elements', LOG_LEVEL_ERROR )
- 
+
     allocate( opposite(number_of_neighbours) )
     ! Set local directions to be those of the reference element
     opposite(W) = E
@@ -148,7 +148,7 @@ function stencil_dofmap_constructor( st_shape, st_depth, ndf, mesh, master_dofma
     ! Compute the number of cells away from the central cell
     ! that the stencil will reach to, this will determine the needed
     ! halo size
-    if ( st_shape == STENCIL_REGION ) then 
+    if ( st_shape == STENCIL_REGION ) then
       ! Since region stencils pass in the order as the depth variable the extent
       ! is half of this value
       st_extent = st_depth/2
@@ -198,12 +198,12 @@ function stencil_dofmap_constructor( st_shape, st_depth, ndf, mesh, master_dofma
           cell_west  = cell
           cell_south = cell
           cell_east  = cell
-          cell_north = cell         
+          cell_north = cell
           west  = W
           east  = E
           north = N
           south = S
-          do while ( cell_in_stencil <= st_size )  
+          do while ( cell_in_stencil <= st_size )
             if ( st_shape ==  STENCIL_CROSS .or. st_shape == STENCIL_1DX ) then
               cell_in_stencil = cell_in_stencil + 1
               if (  cell_in_stencil <= st_size ) then
@@ -267,16 +267,16 @@ function stencil_dofmap_constructor( st_shape, st_depth, ndf, mesh, master_dofma
           end do
         end do
 
-      case ( STENCIL_REGION ) 
+      case ( STENCIL_REGION )
         allocate( self%local_size(ncells) )
         allocate( cell_in_region(self%dofmap_size), &
                   list(self%dofmap_size) )
-        minimum_stencil_size = (st_depth + 1_i_def)*(st_depth + 2_i_def)/2_i_def 
+        minimum_stencil_size = (st_depth + 1_i_def)*(st_depth + 2_i_def)/2_i_def
         do cell = 1, ncells
           ! Not all stencils are the same size so initialise stencil to a
           ! negative value that should give an error if it is ever used
           self%dofmap(:,:,cell) = -1_i_def
-          
+
           ! Put the cell itself in the first entry
           cell_in_region(1_i_def) = cell
           ncells_in_stencil = 1_i_def
@@ -307,7 +307,7 @@ function stencil_dofmap_constructor( st_shape, st_depth, ndf, mesh, master_dofma
                   do c2 = 1, nlist
                     if (cell2 == abs(list(c2))) then
                       ! It's already on the list; make a note, and store as
-                      ! a positive number 
+                      ! a positive number
                         alreadylist = .true.
                         list(c2) = cell2
                     end if
@@ -356,7 +356,7 @@ function stencil_dofmap_constructor( st_shape, st_depth, ndf, mesh, master_dofma
         write( log_scratch_space, '( A, I4 )' ) &
            "Invalid stencil type: ", st_shape
         call log_event( log_scratch_space, LOG_LEVEL_ERROR )
-    end select 
+    end select
 
     deallocate( opposite )
     nullify(map, reference_element)
@@ -366,7 +366,7 @@ function stencil_dofmap_constructor( st_shape, st_depth, ndf, mesh, master_dofma
 !-----------------------------------------------------------------------------
 ! Get the stencil dofmap for a single cell
 !-----------------------------------------------------------------------------
-!> Function Returns a pointer to the dofmap for the cell 
+!> Function Returns a pointer to the dofmap for the cell
 !! @param[in] self The calling function_space
 !! @param[in] cell Which cell
 !! @return The pointer which points to a slice of the dofmap
@@ -374,7 +374,7 @@ function get_dofmap(self,cell) result(map)
   implicit none
   class(stencil_dofmap_type), target, intent(in) :: self
   integer(i_def),                     intent(in) :: cell
-  integer(i_def), pointer                        :: map(:,:) 
+  integer(i_def), pointer                        :: map(:,:)
 
   map => self%dofmap(:,:,cell)
   return
@@ -382,13 +382,13 @@ end function get_dofmap
 !-----------------------------------------------------------------------------
 ! Get the stencil dofmap for the whole mesh
 !-----------------------------------------------------------------------------
-!> Function Returns a pointer to the dofmap for the mesh 
+!> Function Returns a pointer to the dofmap for the mesh
 !! @param[in] self The calling function_space
 !! @return The pointer which points to the dofmap
 function get_whole_dofmap(self) result(map)
   implicit none
   class(stencil_dofmap_type), target, intent(in) :: self
-  integer(i_def), pointer                        :: map(:,:,:) 
+  integer(i_def), pointer                        :: map(:,:,:)
 
   map => self%dofmap(:,:,:)
   return
@@ -441,7 +441,7 @@ function compute_dofmap_size(st_shape, st_extent, number_of_neighbours) result(s
   integer(i_def)                       :: stencil_size
   integer(i_def)                       :: s
 
-  select case ( st_shape ) 
+  select case ( st_shape )
   case ( STENCIL_POINT )
     stencil_size = 1
   case ( STENCIL_1DX, STENCIL_1DY )
@@ -457,7 +457,7 @@ function compute_dofmap_size(st_shape, st_extent, number_of_neighbours) result(s
     ! filling in the corners of a square stencil)
     ! or 4*s (if we are extending the stencil to all cells that have a neighbour
     ! not in the stencil)
-    stencil_size = 1    
+    stencil_size = 1
     do s = 1, st_extent
       if ( mod(s,2) == 0 ) then
         stencil_size = stencil_size + number_of_neighbours
@@ -465,7 +465,7 @@ function compute_dofmap_size(st_shape, st_extent, number_of_neighbours) result(s
         stencil_size = stencil_size + number_of_neighbours*s
       end if
     end do
- 
+
   case default
     write( log_scratch_space, '( A, I4 )' ) &
        "Invalid stencil type: ", st_shape

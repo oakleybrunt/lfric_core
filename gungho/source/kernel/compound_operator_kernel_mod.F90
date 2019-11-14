@@ -5,7 +5,7 @@
 !-----------------------------------------------------------------------------
 !
 !-------------------------------------------------------------------------------
-!> @brief Computes a compound operator A = B*C*D where A,B,C & D are all locally 
+!> @brief Computes a compound operator A = B*C*D where A,B,C & D are all locally
 !!        assembled operators and B & C are mass matrices
 module compound_operator_kernel_mod
 use constants_mod,           only: r_def, i_def
@@ -43,7 +43,7 @@ end type
 public compound_operator_kernel_code
 contains
 
-!> @brief This subroutine computes the div operator 
+!> @brief This subroutine computes the div operator
 !! @param[in] cell Cell number
 !! @param[in] nlayers Number of layers.
 !! @param[in] ncell_3d_1 Ncell*ndf
@@ -68,7 +68,7 @@ subroutine compound_operator_kernel_code(cell, nlayers, &
                                          ncell_3d_2,  &
                                          mass_matrix1,  &
                                          ncell_3d_3,  &
-                                         mass_matrix2, & 
+                                         mass_matrix2, &
                                          ncell_3d_4,  &
                                          differential_matrix, &
                                          field, &
@@ -100,7 +100,7 @@ subroutine compound_operator_kernel_code(cell, nlayers, &
     do df = 1,ndf2
       compound_operator(:,df,ik) = tau*d(:,df)*field(map2(df)+k)
     end do
-  end do 
+  end do
 end subroutine compound_operator_kernel_code
 
 end module compound_operator_kernel_mod

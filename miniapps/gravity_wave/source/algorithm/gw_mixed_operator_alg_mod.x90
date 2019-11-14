@@ -15,11 +15,11 @@
 !>  \f[ \mathbf{u} = \mathbf{u}' - \alpha\Delta t(\nabla p' + b\mathbf{z})  \f]
 !>  \f[          p =          p' + \alpha\Delta t c^2\nabla.\mathbf{u}'     \f]
 !>  \f[          b =          b' + \alpha\Delta t N^2\mathbf{u}'.\mathbf{z} \f]
-!>          
+!>
 !>  The primed terms are increments to the n timelevel field. Upon
 !>  discretisation, this leads to (note that the pressure-equation has been
 !>  divided by the mass-matrix \f$ M_3 \f$):
-!>          
+!>
 !>  \f[ \mathbf{U} = M_2 \mathbf{U}' - \alpha\Delta t (D^T P' + Q B') \f]
 !>  \f[          P = P'  + \alpha\Delta t c^2 M_3^{-1} D \mathbf{U}'  \f]
 !>  \f[          B = M_theta B' + \alpha\Delta t N^2 Q^T \mathbf{U}'  \f]
@@ -122,7 +122,7 @@ contains
     self%Q = operator_type( u_fs, b_fs)
     qr = quadrature_xyoz_type(element_order+2, quadrature_rule)
     call invoke( compute_q_operator_type(self%Q, qr) )
-    
+
   end function gw_mixed_operator_constructor
 
   !> Performs a deep copy between gw_mixed_operator_type pairs.
@@ -143,7 +143,7 @@ contains
   end subroutine gw_mixed_operator_assign
 
   !> @brief Applies the GW mixed operator to the vector, \f$ y = M x \f$
-  !> 
+  !>
   !> @param [in] self instacen of the GW mixed operator
   !> @param [in] x field vector to be read
   !> @param [inout] y field vector to be written
@@ -153,7 +153,7 @@ contains
     use operator_mod,                       only: operator_type
     use transpose_matrix_vector_kernel_mod, only: transpose_matrix_vector_kernel_type
     use dg_matrix_vector_kernel_mod,        only: dg_matrix_vector_kernel_type
-    use initial_temperature_config_mod,     only: bvf_square  
+    use initial_temperature_config_mod,     only: bvf_square
     use timestepping_config_mod,            only: dt, alpha
     use enforce_bc_kernel_mod,              only: enforce_bc_kernel_type
     use gravity_wave_constants_config_mod,  only: cs_square,  &
@@ -173,20 +173,20 @@ contains
 
     ! Auxiliary constants to group invokes
     real(kind=r_def)             :: const1, const2, const3
-    
+
     select case(b_space)
-    case(b_space_w0)  
+    case(b_space_w0)
        mm_wt => get_mass_matrix(w0_id)
-    case(b_space_w3)  
+    case(b_space_w3)
        mm_wt => get_mass_matrix(w3_id)
-    case(b_space_wtheta)  
+    case(b_space_wtheta)
        mm_wt => get_mass_matrix(wt_id)
     end select
 
     ! Extract velocity mass matrix
     mm_w2 => get_mass_matrix(w2_id)
     ! Extract divergence operator
-    div   => get_div() 
+    div   => get_div()
     ! Extract inverse pressure mass matrix
     m3_inv => get_mass_matrix(w3inv_id)
 
@@ -249,7 +249,7 @@ contains
   !> @param [inout] self the mixed operator
   subroutine destroy_gw_mixed_operator(self)
     implicit none
-    type(gw_mixed_operator_type), intent(inout) :: self    
+    type(gw_mixed_operator_type), intent(inout) :: self
   end subroutine destroy_gw_mixed_operator
 
 end module gw_mixed_operator_alg_mod

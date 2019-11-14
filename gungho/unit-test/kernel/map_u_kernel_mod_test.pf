@@ -15,7 +15,7 @@ module map_u_kernel_mod_test
                                             halo_routing_collection
   use field_mod,                     only : field_type, field_proxy_type
   use function_space_mod,            only : function_space_type
-  use fs_continuity_mod,             only : W0, W2, W3, WTHETA 
+  use fs_continuity_mod,             only : W0, W2, W3, WTHETA
 
   use pFUnit_Mod
   use quadrature_xyoz_mod,           only : quadrature_xyoz_type, &
@@ -305,7 +305,7 @@ contains
                      r_u_proxy%data,                            &
                      u_lon_proxy%data,                          &
                      u_lat_proxy%data,                          &
-                     u_up_proxy%data,                           & 
+                     u_up_proxy%data,                           &
                      chi_p(1)%data,                             &
                      chi_p(2)%data,                             &
                      chi_p(3)%data,                             &

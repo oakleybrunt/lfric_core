@@ -90,7 +90,7 @@ contains
 
     ! Set mesh configuration
     call feign_base_mesh_config(                                    &
-                         filename        = filename,                & 
+                         filename        = filename,                &
                          prime_mesh_name = mesh_name,               &
                          geometry        = geometry_spherical,      &
                          partitioner     = partitioner_cubedsphere, &
@@ -100,9 +100,9 @@ contains
     ! Set planet parameters
     call feign_planet_config( gravity        = gravity, &
                               radius         = radius,  &
-                              omega          = omega,   & 
+                              omega          = omega,   &
                               rd             = rd,      &
-                              cp             = cp,      &  
+                              cp             = cp,      &
                               p_zero         = p_zero,  &
                               scaling_factor = scaling )
 

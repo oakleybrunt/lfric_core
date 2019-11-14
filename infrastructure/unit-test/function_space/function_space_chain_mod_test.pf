@@ -329,7 +329,7 @@ type(mesh_type), pointer :: mesh1 => null()
 type(mesh_type), pointer :: mesh2 => null()
 
 integer(i_def) :: mesh1_id, mesh2_id
-integer(i_def) :: mesh_map_id    
+integer(i_def) :: mesh_map_id
 
 type(mesh_map_type), pointer :: mesh_map1to2 => null(), &
                                 mesh_map2to1 => null()

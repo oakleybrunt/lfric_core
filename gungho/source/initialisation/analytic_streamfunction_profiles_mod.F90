@@ -45,15 +45,15 @@ function analytic_streamfunction(chi, choice, num_options, option) result(psi)
 
   select case ( choice )
 
-    case ( profile_sbr_streamfunction, & 
-           profile_dcmip301_streamfunction)      
+    case ( profile_sbr_streamfunction, &
+           profile_dcmip301_streamfunction)
       s = 0.5_r_def*(chi(3)/scaled_radius + 1.0_r_def)
       ! Turn off the height variation for the dcmip test
       if ( choice == profile_dcmip301_streamfunction) s = 1.0_r_def
 
       lat_pole = pi/2.0_r_def - option(2)*pi
       lon_pole = pi/2.0_r_def + option(3)*pi
- 
+
       psi(1) = 0.0_r_def
       psi(2) = 0.0_r_def
       psi(3) = s * option(1) * scaled_radius * &

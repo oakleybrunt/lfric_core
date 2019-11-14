@@ -69,13 +69,13 @@ if ( geometry == geometry_spherical ) then  ! SPHERICAL DOMAIN
 
   select case( itest_option )
 
-    case( test_const_lapse_rate )  
+    case( test_const_lapse_rate )
       t = (theta_surf - lapse_rate * z)
       p = p_zero*(1.0_r_def - lapse_rate/theta_surf*z)**(gravity/(Rd*lapse_rate))
 
       ! Convert p (pressure) to exner_s (exner pressure)
       exner_s = (p/p_zero)**(kappa)
-   
+
       ! Convert t (temperature) to theta (potential temperature)
       theta_s = t/exner_s
 

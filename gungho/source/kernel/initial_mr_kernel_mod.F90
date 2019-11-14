@@ -135,7 +135,7 @@ contains
           mr_ci(map_wtheta(1)) = mr_ci(map_wtheta(2))
           mr_s(map_wtheta(1)) = mr_s(map_wtheta(2))
           mr_g(map_wtheta(1)) = mr_g(map_wtheta(2))
-          
+
         else
           do k = 0, nlayers-1
             kp1 = min(k+1,nlayers-1)
@@ -155,7 +155,7 @@ contains
             mr_s(map_wtheta(df) + k) = 0.0_r_def
             mr_g(map_wtheta(df) + k) = 0.0_r_def
           end do
-          
+
 ! Set bottom value
           k = 0
           df = 1

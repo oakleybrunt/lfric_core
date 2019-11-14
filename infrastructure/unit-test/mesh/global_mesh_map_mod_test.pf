@@ -12,7 +12,7 @@ module global_mesh_map_mod_test
   use constants_mod,       only: r_def, i_def, imdi, str_max_filename
   use global_mesh_map_mod, only: global_mesh_map_type
 
-  implicit none 
+  implicit none
 
   private
   public test_global_mesh_map, setUp, tearDown
@@ -78,7 +78,7 @@ contains
     implicit none
 
     class( global_mesh_map_test_type ), intent( inout ) :: this
- 
+
     type(global_mesh_map_type) :: tmp_map
     type(global_mesh_map_type) :: CoarseToFine_map
     type(global_mesh_map_type) :: FineToCoarse_map

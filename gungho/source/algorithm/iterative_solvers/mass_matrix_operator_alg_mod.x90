@@ -47,12 +47,12 @@ contains
   !>@param[in] mass_matrix Operator to apply
   !>@param[in] apply_bc Flag to control application of boundary condition kernel
   !>@return instance of the mass matrix operator
-  function mass_matrix_operator_constructor(mass_matrix, apply_bc) result(self)    
+  function mass_matrix_operator_constructor(mass_matrix, apply_bc) result(self)
     implicit none
 
     type(mass_matrix_operator_type)         :: self
     logical,                     intent(in) :: apply_bc
-    type(operator_type), target, intent(in) :: mass_matrix 
+    type(operator_type), target, intent(in) :: mass_matrix
 
     call log_event( 'Constructing mass matrix operator...', LOG_LEVEL_INFO )
 

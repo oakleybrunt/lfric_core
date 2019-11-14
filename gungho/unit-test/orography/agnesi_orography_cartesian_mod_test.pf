@@ -3,7 +3,7 @@
 ! For further details please refer to the file COPYRIGHT.txt
 ! which you should have received as part of this distribution.
 !-----------------------------------------------------------------------
-!> @brief Test suite to verify calculation of Witch-of-Agnesi mountain orography 
+!> @brief Test suite to verify calculation of Witch-of-Agnesi mountain orography
 !>        profile in Cartesian coordinates.
 !-------------------------------------------------------------------------------
 module agnesi_orography_cartesian_mod_test
@@ -163,7 +163,7 @@ contains
     integer(i_def)                            :: mesh_id
     type(global_mesh_type),           pointer :: global_mesh => null()
     type(mesh_type),                  pointer :: mesh => null()
-    type(domain_size_type)                    :: domain_size 
+    type(domain_size_type)                    :: domain_size
     type(partition_type)                      :: partition
     procedure(partitioner_interface), pointer :: partitioner_ptr => null()
     type(uniform_extrusion_type)              :: extrusion

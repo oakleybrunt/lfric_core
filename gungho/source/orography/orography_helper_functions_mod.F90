@@ -15,7 +15,7 @@ module orography_helper_functions_mod
 
   implicit none
 
-  private 
+  private
 
   !> Domain length and domain width (horizontal).
   real(kind=r_def) :: domain_length, domain_width
@@ -28,19 +28,19 @@ module orography_helper_functions_mod
 contains
 
   !=============================================================================
-  !> @brief Transforms nondimensional coordinate to physical height.  
+  !> @brief Transforms nondimensional coordinate to physical height.
   !>
-  !> @details Helper routine which calculates physical height from eta 
-  !>          (nondimensional) coordinate using linear transformation from 
+  !> @details Helper routine which calculates physical height from eta
+  !>          (nondimensional) coordinate using linear transformation from
   !>          Wood et al. (2013), Section 7.
   !>
   !> @param[in] eta            Nondimensional (terrain following) coordinate
   !> @param[in] surface_height Surface height (m)
   !> @param[in] domain_top     Height of the domain (m)
   !> @return    z              Physical height (m)
-  !=============================================================================  
+  !=============================================================================
   real(kind=r_def) function eta2z_linear(eta,            &
-                                         surface_height, & 
+                                         surface_height, &
                                          domain_top)     &
                                          result(z)
 
@@ -54,11 +54,11 @@ contains
     ! Calculate physical height from eta
     z = eta*domain_top + (1.0_r_def - eta)*surface_height
 
-    return 
+    return
   end function eta2z_linear
 
   !=============================================================================
-  !> @brief Transforms physical height to nondimensional coordinate.  
+  !> @brief Transforms physical height to nondimensional coordinate.
   !>
   !> @details Helper routine which calculates nondimensional (terrain following)
   !>          coordinate eta from physical height using linear transformation
@@ -68,9 +68,9 @@ contains
   !> @param[in] surface_height Surface height (m)
   !> @param[in] domain_top     Height of the domain (m)
   !> @return    eta            Nondimensional (terrain following) coordinate
-  !=============================================================================  
+  !=============================================================================
   real(kind=r_def) function z2eta_linear(z,              &
-                                         surface_height, & 
+                                         surface_height, &
                                          domain_top)     &
                                          result(eta)
 
@@ -84,22 +84,22 @@ contains
     ! Calculate eta from physical height
     eta = (z - surface_height)/(domain_top - surface_height)
 
-    return 
+    return
   end function z2eta_linear
 
   !=============================================================================
-  !> @brief Calculates domain size in horizontal.  
+  !> @brief Calculates domain size in horizontal.
   !>
-  !> @details Helper routine which calculates domain_length and domain_width. 
-  !>          For now this is required only for the "biperiodic transforms" of 
-  !>          Cartesian coordinates for analytic orography profiles (Schar and  
-  !>          Witch-of-Agnesi mountains). 
+  !> @details Helper routine which calculates domain_length and domain_width.
+  !>          For now this is required only for the "biperiodic transforms" of
+  !>          Cartesian coordinates for analytic orography profiles (Schar and
+  !>          Witch-of-Agnesi mountains).
   !>
   !> @param[in] xmin Minimum in x (Cartesian) or long (spherical) direction
   !> @param[in] xmax Maximum in x (Cartesian) or long (spherical) direction
   !> @param[in] ymin Minimum in y (Cartesian) or lat (spherical) direction
   !> @param[in] ymax Maximum in y (Cartesian) or lat (spherical) direction
-  !=============================================================================  
+  !=============================================================================
   subroutine calc_domain_size_horizontal(xmin, xmax, ymin, ymax)
 
     implicit none
@@ -108,7 +108,7 @@ contains
     real(kind=r_def), intent(in) :: xmin, xmax, ymin, ymax
 
     ! Calculate domain length and width
-    domain_length = xmax - xmin 
+    domain_length = xmax - xmin
     domain_width  = ymax - ymin
 
     write(log_scratch_space,'(A,A)') &
@@ -119,30 +119,30 @@ contains
     write(log_scratch_space,'(A,ES15.3E3)') "domain_width  = ", domain_width
     call log_event(log_scratch_space, LOG_LEVEL_DEBUG)
 
-    return 
+    return
   end subroutine calc_domain_size_horizontal
 
   !=============================================================================
   !> @brief Transforms Cartesian coordinates to biperiodic domain.
   !>
-  !> @details Helper routine which calculates "biperiodic transforms" of  
+  !> @details Helper routine which calculates "biperiodic transforms" of
   !>          Cartesian coordinates for analytic orography profiles (Schar and
-  !>          Witch-of-Agnesi mountains). This enables continuation of mountains 
-  !>          around the boundary of Cartesian biperiodic domain. 
-  !>          Note: This works for analytic mountain profiles which use absolute 
-  !>          distance from the mountain centre. Minima of absolute distances 
+  !>          Witch-of-Agnesi mountains). This enables continuation of mountains
+  !>          around the boundary of Cartesian biperiodic domain.
+  !>          Note: This works for analytic mountain profiles which use absolute
+  !>          distance from the mountain centre. Minima of absolute distances
   !>          from the mountain centre are at x_centre and y_centre.
   !>          Periodicities are domain_length in x direction and domain_width in
   !>          y direction, so the maxima of absolute distances must be halfway
-  !>          apart from the respective minima.  
+  !>          apart from the respective minima.
   !>
   !> @param[in]  x_coord     x coordinate (m)
   !> @param[in]  y_coord     y coordinate (m)
   !> @param[in]  x_centre    x coordinate centre of mountain function (m)
   !> @param[in]  y_centre    y coordinate centre of mountain function (m)
-  !> @param[out] xper_coord  x coordinate biperiodic transform (m) 
-  !> @param[out] yper_coord  y coordinate biperiodic transform (m) 
-  !=============================================================================  
+  !> @param[out] xper_coord  x coordinate biperiodic transform (m)
+  !> @param[out] yper_coord  y coordinate biperiodic transform (m)
+  !=============================================================================
   subroutine coord_transform_cart_biperiodic( x_coord,    &
                                               y_coord,    &
                                               x_centre,   &
@@ -152,19 +152,19 @@ contains
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     real(kind=r_def),    intent(in)  :: x_coord, y_coord, x_centre, y_centre
-    real(kind=r_def),    intent(out) :: xper_coord, yper_coord  
+    real(kind=r_def),    intent(out) :: xper_coord, yper_coord
     ! Internal variables
     real(kind=r_def) :: xcen, ycen, lx, ly
 
     ! Note: Domain size is calculated in subroutine assign_orography_field
-    ! before calling the selected analytic orography function. 
+    ! before calling the selected analytic orography function.
 
     ! Calculate domain half-length (lx) for periodicity in x direction
     lx = domain_length/2.0_r_def
 
-    ! Calculate domain half-width (ly) for periodicity in y direction 
+    ! Calculate domain half-width (ly) for periodicity in y direction
     ly = domain_width/2.0_r_def
 
     ! Calculate distance from the mountain centre in x and y directions
@@ -175,7 +175,7 @@ contains
     xper_coord = lx-abs(lx-abs(xcen))
     yper_coord = ly-abs(ly-abs(ycen))
 
-    return 
+    return
   end subroutine coord_transform_cart_biperiodic
 
 end module orography_helper_functions_mod

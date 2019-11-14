@@ -4,7 +4,7 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> Test the helmper functions for the polynomial interpolation routines 
+!> Test the helmper functions for the polynomial interpolation routines
 module poly_helper_functions_mod_test
 
   use constants_mod, only: i_def, r_def, l_def
@@ -27,9 +27,9 @@ module poly_helper_functions_mod_test
 
 contains
 
-  subroutine setUp( this ) 
+  subroutine setUp( this )
     use feign_config_mod, only : feign_domain_size_config
-    implicit none 
+    implicit none
 
     class(poly_helper_functions_test_type), intent(inout) :: this
     ! Initialise YAXT
@@ -50,7 +50,7 @@ contains
     use poly_helper_functions_mod, only: buildadvcoeff, &
                                          local_distance_2d, &
                                          local_distance_1d
-    implicit none 
+    implicit none
 
     class(poly_helper_functions_test_type), intent(inout) :: this
 
@@ -83,8 +83,8 @@ contains
     @assertEqual(answer(1), s(1), tol)
   end subroutine test_all
 
-  subroutine tearDown( this ) 
-    implicit none 
+  subroutine tearDown( this )
+    implicit none
 
     class(poly_helper_functions_test_type), intent(inout) :: this
     ! Finalise YAXT

@@ -16,7 +16,7 @@ use argument_mod,            only : arg_type,                               &
                                     GH_COLUMNWISE_OPERATOR,                 &
                                     GH_READ, GH_WRITE, GH_READWRITE,        &
                                     ANY_SPACE_1, ANY_SPACE_2, ANY_SPACE_3,  &
-                                    CELLS 
+                                    CELLS
 
 use constants_mod,           only : r_def, i_def
 
@@ -46,7 +46,7 @@ public columnwise_op_mul_kernel_code
 contains
 
   !> @brief The subroutine which is called directly from the PSY layer and
-  !> calculates op_C = op_C + op_A * op_B 
+  !> calculates op_C = op_C + op_A * op_B
   !>
   !> @param [in] cell the horizontal cell index
   !> @param [in] ncell_2d total number of cells in 2d grid
@@ -98,7 +98,7 @@ contains
                                            gamma_m_C,                 &
                                            gamma_p_C)
     implicit none
-    
+
     ! Arguments
     integer(kind=i_def), intent(in) :: cell,  ncell_2d
     integer(kind=i_def), intent(in) :: nrow_A, ncol_A

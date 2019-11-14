@@ -16,7 +16,7 @@ use argument_mod,            only : arg_type,                               &
                                     GH_COLUMNWISE_OPERATOR,                 &
                                     GH_READ, GH_WRITE, GH_REAL,             &
                                     ANY_SPACE_1, ANY_SPACE_2,               &
-                                    CELLS 
+                                    CELLS
 
 use constants_mod,           only : r_def, i_def
 
@@ -106,7 +106,7 @@ contains
                                                  alpha,                     &
                                                  beta)
     implicit none
-    
+
     ! Arguments
     integer(kind=i_def), intent(in) :: cell,  ncell_2d
     integer(kind=i_def), intent(in) :: nrow_A, ncol_A
@@ -126,7 +126,7 @@ contains
     integer(kind=i_def) :: i,j ! Row and column index index
     ! Smallest index in a particular row
     integer(kind=i_def) :: j_minus_A, j_minus_B, j_minus_C, j_plus_A, j_plus_B
-    
+
     ! Number of rows (same for all matrices)
     integer(kind=i_def) :: nrow
 

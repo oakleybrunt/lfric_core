@@ -6,7 +6,7 @@
 !
 !-------------------------------------------------------------------------------
 module coordinate_jacobian_mod_test
-  implicit none 
+  implicit none
 
 contains
 
@@ -68,7 +68,7 @@ contains
     @assertEqual( zero, jac(2,1), tol )
     @assertEqual( zero, jac(2,3), tol )
     @assertEqual( zero, jac(3,1), tol )
-    @assertEqual( zero, jac(3,2), tol )  
+    @assertEqual( zero, jac(3,2), tol )
 
     @assertEqual( zero, err, tol)
 
@@ -86,7 +86,7 @@ contains
     @assertEqual( zero, jac(2,1), tol )
     @assertEqual( zero, jac(2,3), tol )
     @assertEqual( zero, jac(3,1), tol )
-    @assertEqual( zero, jac(3,2), tol ) 
+    @assertEqual( zero, jac(3,2), tol )
 
   end subroutine test_of_jacobian
 

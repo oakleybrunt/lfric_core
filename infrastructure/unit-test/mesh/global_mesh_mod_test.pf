@@ -15,7 +15,7 @@ module global_mesh_mod_test
   use pFUnit_Mod
 
 
-  implicit none 
+  implicit none
 
   private
   public :: test_cubedsphere_global_mesh,  &
@@ -174,7 +174,7 @@ contains
     implicit none
 
     class( global_mesh_test_type ), intent( inout ) :: this
- 
+
     type(global_mesh_type) :: global_mesh
     character(len = str_max_filename) :: filename
 
@@ -200,7 +200,7 @@ contains
     !---------------------------------------
     ! Test construction of a cubed-sphere mesh
     !---------------------------------------
-    filename = 'data/mesh_C4.nc' 
+    filename = 'data/mesh_C4.nc'
     global_mesh = global_mesh_type( filename, mesh_name )
 
     ! Check the global mesh id

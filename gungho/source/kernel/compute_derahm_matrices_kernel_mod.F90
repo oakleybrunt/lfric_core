@@ -127,7 +127,7 @@ contains
 !! @param[in] nqp_v Number of vertical quadrature points
 !! @param[in] wqp_h Horizontal quadrature weights
 !! @param[in] wqp_v Vertical quadrature weights
-subroutine compute_derahm_matrices_code(cell, nlayers,                      & 
+subroutine compute_derahm_matrices_code(cell, nlayers,                      &
                                         ncell_3d0, mm0,                     &
                                         ncell_3d1, mm1,                     &
                                         ncell_3d2, mm2,                     &
@@ -152,7 +152,7 @@ subroutine compute_derahm_matrices_code(cell, nlayers,                      &
   implicit none
   ! Arguments
   integer(kind=i_def),   intent(in)     :: cell, nqp_h, nqp_v
-  integer(kind=i_def),   intent(in)     :: nlayers 
+  integer(kind=i_def),   intent(in)     :: nlayers
   integer(kind=i_def),   intent(in)     :: ndf_w0, ndf_w1, ndf_w2, ndf_w3, ndf_wt, ndf_w2b
   integer(kind=i_def),   intent(in)     :: ncell_3d0, ncell_3d1, ncell_3d2, &
                                            ncell_3d3, ncell_3d4, ncell_3d5, &

@@ -56,7 +56,7 @@ subroutine enforce_operator_bc_code(cell, nlayers,                   &
                                     op, ncell_3d,                    &
                                     ndf1, ndf2, boundary_value       &
                                    )
-  
+
   implicit none
 
   ! Arguments
@@ -74,7 +74,7 @@ subroutine enforce_operator_bc_code(cell, nlayers,                   &
   do df = 1,ndf1
     op(df,:,ik) = op(df,:,ik)*real(boundary_value(df,1), r_def)
   end do
-  k = nlayers  
+  k = nlayers
   ik = (cell-1)*nlayers + k
   do df = 1,ndf1
     op(df,:,ik) = op(df,:,ik)*real(boundary_value(df,2), r_def)

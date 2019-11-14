@@ -3,7 +3,7 @@
 ! The file LICENCE, distributed with this code, contains details of the terms
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
-!> @brief Computes the broken (cell-local) divergence operator 
+!> @brief Computes the broken (cell-local) divergence operator
 module compute_broken_div_operator_kernel_mod
 
   use argument_mod,              only: arg_type, func_type,     &
@@ -50,7 +50,7 @@ module compute_broken_div_operator_kernel_mod
 
 contains
 
-  !> @brief Computes the broken (cell-local) divergence operator 
+  !> @brief Computes the broken (cell-local) divergence operator
   !! @param[in] cell     Cell number
   !! @param[in] nlayers  Number of layers.
   !! @param[in] ncell_3d ncell*ndf
@@ -86,7 +86,7 @@ contains
                                               map_chi, diff_basis_chi,       &
                                               nqp_h, nqp_v, wqp_h, wqp_v)
 
-    implicit none 
+    implicit none
 
     ! Argument declarations
     integer(kind=i_def),                     intent(in) :: cell, nqp_h, nqp_v
@@ -141,18 +141,18 @@ contains
             do qp1 = 1, nqp_h
               ! Weak divergence operator: div(W2_basis) * W3_basis * dx
               if ( rehabilitate ) then
-                ! With rehabilitation 
+                ! With rehabilitation
                 !   divergence mapping is div(x) -> ! \hat{div}(\hat{x})
                 integrand = wqp_h(qp1) * wqp_v(qp2)          &
                           * basis_w3(1, df3, qp1, qp2)       &
-                          * diff_basis_w2b(1, df2, qp1, qp2) 
+                          * diff_basis_w2b(1, df2, qp1, qp2)
               else
                 ! Without rehabilitation
                 !   divergence mapping is div(x) -> ! \hat{div}(\hat{x})/det(J)
                 integrand = wqp_h(qp1) * wqp_v(qp2)          &
                           * basis_w3(1, df3, qp1, qp2)       &
                           * diff_basis_w2b(1, df2, qp1, qp2) &
-                          / dj(qp1, qp2) 
+                          / dj(qp1, qp2)
               end if
               broken_div(df3, df2, ik) = broken_div(df3, df2, ik) + integrand
             end do

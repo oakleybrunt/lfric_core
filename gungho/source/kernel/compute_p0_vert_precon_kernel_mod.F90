@@ -49,13 +49,13 @@ contains
 
   !> @brief Compute the terms of the helmholz operator restricted to a single
   !!        column
-  !> @details Computes the coefficients of the tri diagonal matrix 
+  !> @details Computes the coefficients of the tri diagonal matrix
   !!          [ tri_m, tri_0, tri_p] that correspond to the helmholtz operator
   !!          for lowest order elements
   !!          restricted to a single column. This is then used as the
-  !!          preconditioner. This routine is a condensed version of the 
+  !!          preconditioner. This routine is a condensed version of the
   !!          algorithm level calls to apply the Helmholtz operator for lowest
-  !!          order elements. Since it is restricted to a single column it can be 
+  !!          order elements. Since it is restricted to a single column it can be
   !!          applied in a single kernel.
   !> @param[in]  cell Horizontal cell index
   !> @param[in]  nlayers Number of layers
@@ -110,7 +110,7 @@ contains
                                          ndf_w3, undf_w3, map_w3, &
                                          ndf_w2, undf_w2, map_w2, &
                                          ndf_wt, undf_wt, map_wt)
- 
+
   implicit none
   ! Arguments
   integer(kind=i_def),                    intent(in) :: cell, nlayers
@@ -139,7 +139,7 @@ contains
   ! Internal variables
   integer(kind=i_def) :: k, ik, df
 
-  real(kind=r_def), dimension(6,0:nlayers-1) :: grad_p  
+  real(kind=r_def), dimension(6,0:nlayers-1) :: grad_p
   real(kind=r_def), dimension(0:nlayers)     :: t_e
   real(kind=r_def)                           :: div_u, t_at_p
 

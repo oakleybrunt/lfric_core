@@ -99,7 +99,7 @@ contains
 !> @param[in] edge_cells_y    Number of cells in biperiodic mesh y axis
 !> @param[in] domain_x        Domain size in x-axis
 !> @param[in] domain_y        Domain size in y-axis
-!> @param[in, optional] target_mesh_names    
+!> @param[in, optional] target_mesh_names
 !>                            Names of mesh(es) to map to
 !> @param[in, optional] target_edge_cells_x
 !>                            Number of cells in x axis of
@@ -251,7 +251,7 @@ function genbiperiodic_constructor( mesh_name,                  &
     write(target_edge_cells_y_str,'(I0)') target_edge_cells_y(1)
     if (size(target_mesh_names) > 1) then
       do i=2, self%nmaps
-        write(target_mesh_names_str,'(A)')                  & 
+        write(target_mesh_names_str,'(A)')                  &
             trim(adjustl(target_mesh_names_str)) // ",'" // &
             trim(adjustl(target_mesh_names(i)))  // "'"
         write(target_edge_cells_x_str,'(A,I0)')             &
@@ -344,7 +344,7 @@ end subroutine calc_adjacency
 !>          the vertices which form each cell.
 !>
 !> @param[in]   self           The genbiperiodic_type instance reference.
-!> @param[out]  verts_on_cell  A rank 2 (4,ncells)-sized integer array of 
+!> @param[out]  verts_on_cell  A rank 2 (4,ncells)-sized integer array of
 !>                             vertices which constitute each cell.
 !-------------------------------------------------------------------------------
 subroutine calc_face_to_vert(self, verts_on_cell)
@@ -520,7 +520,7 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
                       LOG_LEVEL_ERROR )
 
 
-  ! The assumed working layout for the folowing code with respect to 
+  ! The assumed working layout for the folowing code with respect to
   ! cell/panel is
   !
   ! ID Origin     Top (North)
@@ -528,7 +528,7 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
   !         |                    +
   !         |   edge/vertex id   +
   !         |  + anti-clockwise  +
-  !   Left  |   \   Numbering    + Right 
+  !   Left  |   \   Numbering    + Right
   !  (West) |    \               + (East)
   !         |     +------->      +
   !         |                    +
@@ -551,7 +551,7 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
   ! When considered as a panel, the Eastern and Southern edges
   ! are taken as the `ghost` edges/vertices in the case of any
   ! periodicity.
-  !  
+  !
   ! So that vertices on edges are consistent, listed vertices
   ! connected to edges will go from N-S, or W-E.
 
@@ -606,9 +606,9 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
       ! the left-most cell on this row (because of the periodicity).
       ! At this point, left-most cell on this row has already
       ! had its edge ids assigned.
- 
+
       ! In other words, the eastern edge of this cell exists on
-      ! another cell where it has already been assigned an id. 
+      ! another cell where it has already been assigned an id.
 
       ! Cell eastern edge
       edges_on_cell(E, cell)  = edges_on_cell(W,self%cell_next(E,cell))
@@ -620,7 +620,7 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
 
       nxf = nxf+2
 
-    else 
+    else
 
       ! Cell eastern edge
       edges_on_cell(E, cell)  = nxf+1
@@ -635,7 +635,7 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
 
       nxf = nxf+3
     end if
-  
+
   end do
 
   !-----------------------------------------
@@ -732,9 +732,9 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
       ! the on the top-edge of the panel (because of the periodicity).
       ! At this point, all cells on the top-edge of the panel have
       ! had their edge ids assigned.
- 
+
       ! In other words, the southern edge of this cell exists on
-      ! another cell where it has already been assigned an id. 
+      ! another cell where it has already been assigned an id.
       edges_on_cell(S, cell) = edges_on_cell(N,self%cell_next(S,cell))
 
       ! Cell eastern edge
@@ -750,25 +750,25 @@ subroutine calc_edges(self, edges_on_cell, verts_on_edge)
 
       ! Cell western edge
       edges_on_cell(W, cell) = edges_on_cell(E,self%cell_next(W,cell))
-      
+
       ! Cell southern edge
       ! For a biperiodic panel, if the cell is on the bottom edge
       ! of the panel then the cell's southern neighbour is actually
       ! the on the top-edge of the panel (because of the periodicity).
       ! At this point, all cells on the top-edge of the panel have
       ! had their edge ids assigned.
- 
+
       ! In other words, the southern edge of this cell exists on
-      ! another cell where it has already been assigned an id. 
+      ! another cell where it has already been assigned an id.
        edges_on_cell(S, cell) = edges_on_cell(N,self%cell_next(S,cell))
-      
+
       ! Cell eastern edge
       ! For a biperiodic panel, if the cell is on the right-hand edge
       ! of the panel then the cell's eastern neighbour is actually
       ! the left-most cell on this row (because of the periodicity).
       ! At this point, left-most cell on this row has already
       ! had its edge ids assigned.
- 
+
       ! In other words, the eastern edge of this cell exists on
       ! another cell where it has already been assigned an id.
       edges_on_cell(E, cell) = edges_on_cell(W,self%cell_next(E,cell))
@@ -1062,7 +1062,7 @@ subroutine calc_global_mesh_maps(self)
     deallocate(cell_map)
 
   end do
-  
+
   return
 end subroutine calc_global_mesh_maps
 

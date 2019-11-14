@@ -193,7 +193,7 @@ contains
     answer = (2.5_r_def*2.0_r_def) * ( &
          f1_p%vspace%get_undf() +    &
          f2_p%vspace%get_undf() +    &
-         f3_p%vspace%get_undf()) 
+         f3_p%vspace%get_undf())
     @assertEqual( test, answer, 1.0e-2_r_def )
 
     ! check the norm and the sqrt of dot on itself agree
@@ -202,7 +202,7 @@ contains
     @assertEqual( test, answer, 1.0e-2_r_def )
 
     ! test for aypx
-    ! fv1 is still 2.0 and fv2 is 2.5 
+    ! fv1 is still 2.0 and fv2 is 2.5
     scalar = 2.0
     call fv1%aypx(scalar, fv2)
     ! fv1 = 2.0*2.0 + 2.5 = 6.5

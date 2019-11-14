@@ -31,7 +31,7 @@ module diagnostics_calc_mod
   use diagnostics_io_mod,            only: write_scalar_diagnostic,     &
                                            write_vector_diagnostic
   use mesh_mod,                      only: mesh_type
-  use mesh_collection_mod,           only: mesh_collection 
+  use mesh_collection_mod,           only: mesh_collection
   use field_mod,                     only: field_type, write_interface
   use fs_continuity_mod,             only: W3
   use moist_dyn_mod,                 only: num_moist_factors
@@ -49,7 +49,7 @@ module diagnostics_calc_mod
             write_density_diagnostic,    &
             write_hydbal_diagnostic,     &
             write_vorticity_diagnostic
-            
+
 
 contains
 
@@ -72,7 +72,7 @@ subroutine write_divergence_diagnostic(u_field, ts, mesh_id)
 
   type(field_type)                :: div_field
   real(r_def)                     :: l2_norm
-  
+
 
   procedure(write_interface), pointer  :: tmp_write_ptr
 
@@ -87,7 +87,7 @@ subroutine write_divergence_diagnostic(u_field, ts, mesh_id)
       !If using XIOS, we need to set a field I/O method appropriately
       tmp_write_ptr => xios_write_field_face
       call div_field%set_write_behaviour(tmp_write_ptr)
-  end if 
+  end if
 
   call write_scalar_diagnostic('divergence', div_field, ts, mesh_id, .false.)
 
@@ -113,7 +113,7 @@ subroutine write_density_diagnostic(rho_field, ts)
   real(r_def)                     :: l2_norm
 
   ! Note that timestep (ts) is required for the actual calculation
-  ! of the density diagnostic and so is passed to the algorithm call 
+  ! of the density diagnostic and so is passed to the algorithm call
   call density_diagnostic_alg(l2_norm, rho_field, ts)
 
   write( log_scratch_space, '(A,E16.8)' )  &

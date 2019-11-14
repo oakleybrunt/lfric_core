@@ -10,7 +10,7 @@ module project_output_mod
 
   implicit none
 
-  private 
+  private
   public :: project_output
 
 contains
@@ -23,14 +23,14 @@ contains
 !> @param[in] d dimension of the output field
 !> @param[in] output_fs the desired output function space
 !> @param[in] mesh_id  The id of the mesh object the model runs on
-  subroutine project_output(field, projected_field, d, output_fs, mesh_id) 
+  subroutine project_output(field, projected_field, d, output_fs, mesh_id)
 
     use log_mod,                   only: log_event, log_scratch_space, &
                                          LOG_LEVEL_INFO, LOG_LEVEL_ERROR
     use constants_mod,             only: r_def, str_max_filename, i_def
     use field_mod,                 only: field_type, write_interface
     use operator_mod,              only: operator_type
-    use finite_element_config_mod, only: element_order 
+    use finite_element_config_mod, only: element_order
     use function_space_collection_mod,  only: function_space_collection
     use fs_continuity_mod,         only: W0, W1, W2, W3
     use mesh_mod,                  only: mesh_type
@@ -61,7 +61,7 @@ contains
     qr = quadrature_xyoz_type(element_order+3, quadrature_rule)
 
     ! determine the input function space
-    fs_handle = field%which_function_space()  
+    fs_handle = field%which_function_space()
 
     write( log_scratch_space, '(A,I6,A,I6)' ) 'IO - Projecting from : ', fs_handle, ' to ', output_fs
     call log_event( log_scratch_space, LOG_LEVEL_INFO )
@@ -73,13 +73,13 @@ contains
       call field%get_write_behaviour(tmp_write_ptr)
       ! set the write field behaviour based upon what is set in the original field
       call projected_field(dir)%set_write_behaviour(tmp_write_ptr)
-    end do 
+    end do
 
 
-    ! do the projection 
+    ! do the projection
     call galerkin_projection_algorithm(projected_field, field, mesh_id, &
                                            d, qr)
 
-  end subroutine project_output 
+  end subroutine project_output
 
 end module project_output_mod

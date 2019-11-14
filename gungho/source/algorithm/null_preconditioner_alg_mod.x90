@@ -23,7 +23,7 @@ module null_preconditioner_alg_mod
   type, public, extends(abstract_preconditioner_type) :: null_preconditioner_type
 
    integer(kind=i_def) :: useless
-     
+
    contains
      ! Overide the (abstract interface) for application of a preconditioner
      ! \f$y = P.x\f$
@@ -34,7 +34,7 @@ module null_preconditioner_alg_mod
 
   end type null_preconditioner_type
 
-  ! Overload the default structure constructor                                 
+  ! Overload the default structure constructor
   interface null_preconditioner_type
      module procedure null_preconditioner_constructor
   end interface
@@ -47,7 +47,7 @@ contains
   function null_preconditioner_constructor() result(self)
 
     use log_mod,                       only: log_event, LOG_LEVEL_INFO
-    
+
     implicit none
 
     type(null_preconditioner_type)  :: self
@@ -64,10 +64,10 @@ contains
   !>@brief Apply the preconditioner to calculate \f$y = P.x = x\f$
   !>
   !>@details Apply the trivial (null) preconditioner by setting \f$y=x\f$
-  !> 
+  !>
   !>@param[inout] self instance of type null_preconditioner_type
   !>@param[inout] x field-vector containing the right hand side of the pressure
-  !>@param[inout] y field-vector containing the solution 
+  !>@param[inout] y field-vector containing the solution
   subroutine apply_null_preconditioner(self, x, y)
 
     implicit none
@@ -89,7 +89,7 @@ contains
        write(log_scratch_space, '(A)') "null_preconditioner_mod: incorrect vector_type argument x"
        call log_event(log_scratch_space, LOG_LEVEL_ERROR)
     end select
-    
+
   end subroutine apply_null_preconditioner
 
   !>@brief Destructor

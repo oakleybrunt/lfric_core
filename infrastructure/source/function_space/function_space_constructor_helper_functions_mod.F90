@@ -1410,8 +1410,8 @@ contains
   !> @param[out] dofmap               Array containing the dofmap indexed by
   !>                                  cells.
   !> @param[out] global_dof_id        Global id of dofs.
-  !> @param[out] global_dof_id_2d     Global id of dofs on the 2D 
-  !>                                  horizontal domain 
+  !> @param[out] global_dof_id_2d     Global id of dofs on the 2D
+  !>                                  horizontal domain
   !>
   subroutine dofmap_setup( mesh, gungho_fs, element_order, &
                            ncells_2d_with_ghost, &

@@ -10,10 +10,10 @@
 !>        upwind reconstruction
 !> @details Compute the flux for a tracer density field using a high order
 !>          polynomial fit to the integrated tracer values. The stencil used for the
-!>          polynomial is centred on the upwind cell. 
+!>          polynomial is centred on the upwind cell.
 !>          A 2D region stencil centred around the cell is used to build the polynomial
 !>          representation of the tracer field
-!>          This method is only valid for lowest order elements 
+!>          This method is only valid for lowest order elements
 module poly2d_flux_kernel_mod
 
 use argument_mod,      only : arg_type, func_type, mesh_data_type,  &
@@ -63,7 +63,7 @@ contains
 
 !> @brief Computes the horizontal fluxes for a tracer density
 !! @param[in]  nlayers Number of layers
-!! @param[out] flux Mass flux field to compute 
+!! @param[out] flux Mass flux field to compute
 !! @param[in]  wind Wind field
 !! @param[in]  density Tracer density
 !! @param[in]  coeff Array of polynomial coefficients for interpolation
@@ -96,7 +96,7 @@ subroutine poly2d_flux_code( nlayers,              &
                              nfaces_h,             &
                              cells_in_stencil,     &
                              out_face_normal )
-                                    
+
   implicit none
 
   ! Arguments
@@ -134,7 +134,7 @@ subroutine poly2d_flux_code( nlayers,              &
 
   ij = stencil_map(1,1)
 
-  ! Horizontal flux computation    
+  ! Horizontal flux computation
   do k = 0, nlayers - 1
     do df = 1,nfaces_h
       ! Check if this is the upwind cell
@@ -149,7 +149,7 @@ subroutine poly2d_flux_code( nlayers,              &
       end if
     end do
   end do
-  
+
 end subroutine poly2d_flux_code
 
 end module poly2d_flux_kernel_mod

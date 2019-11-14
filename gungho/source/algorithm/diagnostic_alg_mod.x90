@@ -3,15 +3,15 @@
 ! For further details please refer to the file LICENCE.original which you
 ! should have received as part of this distribution.
 !-----------------------------------------------------------------------------
-!> @brief Algorithms to do field processing to produce generic and specific 
+!> @brief Algorithms to do field processing to produce generic and specific
 !>        diagnostics for different I/O methods
 module diagnostic_alg_mod
    use constants_mod,                 only: i_def, r_def, str_max_filename
    use finite_element_config_mod,     only: element_order
    use base_mesh_config_mod,          only: geometry, &
-                                            geometry_spherical    
+                                            geometry_spherical
    use mesh_mod,                      only: mesh_type
-   use mesh_collection_mod,           only: mesh_collection 
+   use mesh_collection_mod,           only: mesh_collection
    use function_space_collection_mod, only: function_space_collection
    use fs_continuity_mod,             only: W1, W2, W3, Wtheta, W2H
    use field_mod,                     only: field_type
@@ -53,7 +53,7 @@ contains
     use planet_config_mod,           only: scaled_radius
     use constants_mod,               only: pi
 
-    implicit none 
+    implicit none
     type(field_type), intent(inout) :: divergence
     real(r_def), intent(inout)      :: l2
     type(field_type), intent(in)    :: u
@@ -148,7 +148,7 @@ contains
                  dg_matrix_vector_kernel_type( w3_rho_analytic, rho_analytic , mm_w3 ),   &
                  X_innerproduct_Y( sum_analytic, w3_rho_analytic, rho_analytic ) )
 
-    
+
     l2 = sqrt(sum_diff)/sqrt(sum_analytic)
 
     nullify( chi )
@@ -198,7 +198,7 @@ contains
 
     call invoke( setval_c(hyd_imbal, 0.0_r_def), &
                  hydrostatic_kernel_type( hyd_imbal, exner, theta, moist_dyn, &
-                                          geopotential, qr ), & 
+                                          geopotential, qr ), &
                  enforce_bc_kernel_type( hyd_imbal ), &
                  X_innerproduct_X(l2, hyd_imbal) )
 
@@ -277,7 +277,7 @@ contains
     ! Convert to standard SI units (m/s) in orthogonal directions
 
     if ( geometry == geometry_spherical ) then
-        call invoke_convert_cart2sphere_vector(physical_wind, physical_chi)       
+        call invoke_convert_cart2sphere_vector(physical_wind, physical_chi)
     end if
 
     ! Extract vertical wind into W2V and u,v winds into W2H
@@ -291,9 +291,9 @@ contains
 
   !> @details Generic diagnostic processing for a scalar field to nodal format
   !>          Allows optional projection to W3
-  !> @param[inout] output_field      The output field 
+  !> @param[inout] output_field      The output field
   !> @param[inout] nodal_coordinates Coordinates of the output field
-  !> @param[inout] level             Levels of the output field 
+  !> @param[inout] level             Levels of the output field
   !> @param[in] field_name           Name of the field to be output
   !> @param[in] field                The input field
   !> @param[in] mesh_id              Mesh_id
@@ -369,7 +369,7 @@ contains
     ! If in spherical geometry,
     ! convert the coordinate field to (longitude, latitude, radius)
     if ( geometry == geometry_spherical ) then
-      call invoke_pointwise_convert_xyz2llr(nodal_coordinates) 
+      call invoke_pointwise_convert_xyz2llr(nodal_coordinates)
     end if
 
     ! Compute fractional level of every dof
@@ -380,9 +380,9 @@ contains
 
   !> @details Generic diagnostic processing for a vector field to nodal format
   !> @param[inout] output_field      The output field
-  !> @param[inout] output_dim        Dimension of the output field 
+  !> @param[inout] output_dim        Dimension of the output field
   !> @param[inout] nodal_coordinates Coordinates of the output field
-  !> @param[inout] level             Levels of the output field 
+  !> @param[inout] level             Levels of the output field
   !> @param[in] field_name           Name of the field to be output
   !> @param[in] field                The input field
   subroutine vector_nodal_diagnostic_alg(output_field, output_dim, &
@@ -392,7 +392,7 @@ contains
     use convert_hdiv_field_kernel_mod,  only: convert_hdiv_field_kernel_type
     use convert_hcurl_field_kernel_mod, only: convert_hcurl_field_kernel_type
 
-    implicit none 
+    implicit none
 
     integer(i_def), intent(inout)   :: output_dim
     type(field_type), intent(inout) :: nodal_coordinates(3)
@@ -447,9 +447,9 @@ contains
     end if
 
     ! Scale by the reciprocal of multiplicity (number of shared dofs
-    ! in a cell 
+    ! in a cell
     if ( output_fs == W1 .or. output_fs == W2) then
-      rmultiplicity => get_rmultiplicity( output_fs ) 
+      rmultiplicity => get_rmultiplicity( output_fs )
       do i = 1,output_dim
         call invoke( inc_X_times_Y(output_field(i), rmultiplicity) )
       end do
@@ -460,15 +460,15 @@ contains
     !  convert the coordinate field to (longitude, latitude, radius)
     if ( geometry == geometry_spherical ) then
       if ( output_fs == W1 .or. output_fs == W2) then
-        call invoke_convert_cart2sphere_vector(output_field, nodal_coordinates)         
+        call invoke_convert_cart2sphere_vector(output_field, nodal_coordinates)
       end if
-      call invoke_pointwise_convert_xyz2llr(nodal_coordinates) 
+      call invoke_pointwise_convert_xyz2llr(nodal_coordinates)
     end if
 
     ! Compute fractional level of every dof
     call invoke_compute_dof_level_kernel(level)
 
-    
+
   end subroutine vector_nodal_diagnostic_alg
 
 
@@ -482,7 +482,7 @@ contains
   subroutine scalar_ugrid_diagnostic_alg(output_field, field_name, field, &
                                          mesh_id, W3_project)
 
-    implicit none 
+    implicit none
     type(field_type), intent(inout) :: output_field(1)
     character(len=*), intent(in)    :: field_name
     type(field_type), intent(in)    :: field
@@ -496,7 +496,7 @@ contains
     ! get pointer to local mesh
     mesh => mesh_collection%get_mesh( mesh_id )
 
- 
+
     ! Check if projection required, setup output field and filename
 
     if (W3_project) then
@@ -527,7 +527,7 @@ contains
       call invoke( setval_X(output_field(1), field) )
 
     end if
-    
+
   end subroutine scalar_ugrid_diagnostic_alg
 
   !> @details Calculates the diagnostic vorticity from the wind
@@ -539,11 +539,11 @@ contains
     use fs_continuity_mod,              only: W1, W2
     use compute_vorticity_alg_mod,      only: compute_vorticity_alg
     use finite_element_config_mod,      only: element_order, &
-                                              vorticity_in_w1 
+                                              vorticity_in_w1
     use function_space_collection_mod,  only: function_space_collection
     use field_mod,                      only: write_interface
     use io_mod,                         only: xios_write_field_face
-    implicit none 
+    implicit none
 
     type(field_type), intent(out) :: vorticity
     type(field_type), intent(in)  :: u

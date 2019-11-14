@@ -119,7 +119,7 @@ program biperiodic_mesh_generator
     call log_event(log_scratch_space,LOG_LEVEL_ERROR)
   end if
 
-  
+
 
   !===================================================================
   ! 5.0 Get the unique edge_cells list as meshes could appear more than
@@ -175,7 +175,7 @@ program biperiodic_mesh_generator
         edge_cells_x(i), ',', edge_cells_y(i), ')'
     if (i==1) then
       tmp_str2 = trim(adjustl(tmp_str1))
-    else 
+    else
       tmp_str2 = trim(adjustl(tmp_str2))//'-'//trim(adjustl(tmp_str1))
     end if
   end do
@@ -246,7 +246,7 @@ program biperiodic_mesh_generator
           unique_target_edge_cells_y(j), ')'
         if (j==1) then
           tmp_str2 = trim(adjustl(tmp_str1))
-        else 
+        else
           tmp_str2 = trim(adjustl(tmp_str2))//', '//trim(adjustl(tmp_str1))
         end if
       end do
@@ -257,7 +257,7 @@ program biperiodic_mesh_generator
                                 unique_edge_cells_y(i), ')'
       call log_event( trim(log_scratch_space), LOG_LEVEL_INFO)
 
-      bpgen(i) = genbiperiodic_type( mesh_name=unique_mesh_names(i),                 & 
+      bpgen(i) = genbiperiodic_type( mesh_name=unique_mesh_names(i),                 &
                                      edge_cells_x=unique_edge_cells_x(i),            &
                                      edge_cells_y=unique_edge_cells_y(i),            &
                                      target_mesh_names=unique_target_mesh_names,     &
@@ -273,7 +273,7 @@ program biperiodic_mesh_generator
 
       ! Only 1 mesh requested, so it must be the prime mesh
       ! and so no optional target_ndivs required
-      bpgen(i) = genbiperiodic_type( mesh_name=unique_mesh_names(i),      & 
+      bpgen(i) = genbiperiodic_type( mesh_name=unique_mesh_names(i),      &
                                      edge_cells_x=unique_edge_cells_x(i), &
                                      edge_cells_y=unique_edge_cells_y(i), &
                                      domain_x=domain_x,                   &

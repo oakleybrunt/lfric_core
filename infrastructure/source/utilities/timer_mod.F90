@@ -4,7 +4,7 @@
 ! received as part of this distribution.
 !-----------------------------------------------------------------------------
 !> @brief A Simple subroutine timer based upon calls to cpu time
-module timer_mod   
+module timer_mod
    use constants_mod,   only: i_def, str_def, i_long, r_double
 
    implicit none
@@ -29,7 +29,7 @@ module timer_mod
    public  :: timer, init_timer
    public  :: output_timer
    private :: convert_to_lower
-   
+
    ! These routines only need to be public for unit test
    public :: calculate_timer_stats
    public :: get_routine_name
@@ -105,7 +105,7 @@ contains
          isystem_clock_time(k) = isystem_clock_time(k) + (itime - iprev_time(k))
          start_stop(k) = .false.
        else
-         start_stop(k) = .true.               
+         start_stop(k) = .true.
          call system_clock(iprev_time(k))
          num_calls(k)  = num_calls(k) + 1_i_long
        endif
@@ -129,7 +129,7 @@ contains
      type(scalar_type) :: time_scalar
      real(r_double)    :: time_real_tmp
      integer(i_def)    :: total_ranks
-   
+
      total_ranks = get_comm_size()
 
      ! check all timers are closed

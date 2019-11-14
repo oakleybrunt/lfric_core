@@ -27,7 +27,7 @@ contains
   procedure (new_open_interface ),      deferred :: file_open
   procedure (new_open_interface ),      deferred :: file_new
   procedure (close_interface),          deferred :: file_close
-end type file_type 
+end type file_type
 
 !-------------------------------------------------------------------------------
 ! Abstract interfaces

@@ -4,7 +4,7 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> Test the polynomial reconstruction of a tracer field on horizontal !> edges 
+!> Test the polynomial reconstruction of a tracer field on horizontal !> edges
 module poly2d_adv_recon_kernel_mod_test
 
   use constants_mod,only : i_def, r_def
@@ -29,7 +29,7 @@ contains
 
     use poly2d_adv_recon_kernel_mod, only: poly2d_adv_recon_code
 
-    implicit none 
+    implicit none
 
     class(poly2d_adv_recon_test_type), intent(inout) :: this
 
@@ -55,7 +55,7 @@ contains
     real(r_def), dimension(undf_w2)           :: wind
     real(r_def), dimension(undf_wt)           :: tracer
     real(r_def), dimension(stencil_size,4,undf_wt) :: coeff
- 
+
     integer(i_def) :: i
 
     do i = 1,ndf_w2
@@ -107,7 +107,7 @@ contains
     basis_w2(2,4,7) =-0.5_r_def
 
     wind(:) = 1.0_r_def
-     
+
     ! Set up coeff field for quadratic fit in x direction
     coeff(:,:,:) = 0.0_r_def
     do i = 0,nlayers

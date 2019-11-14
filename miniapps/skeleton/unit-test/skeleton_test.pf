@@ -6,7 +6,7 @@
 
 !> An example of an LFRic unit test.
 !> LFRic unit tests use pfUnit, a Fortran unit test framework written by NASA.
-!> This particular example tests the result of a matrix vector calculation 
+!> This particular example tests the result of a matrix vector calculation
 !> using the code from the gungho matrix_vector_kernel_mod.
 !>
 !-------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ module skeleton_test
   public :: example_test
 
   ! The test case type, containing procedures to setup, run
-  ! and clean up after a test. 
+  ! and clean up after a test.
   ! It can also contain data.
 
   @TestCase
@@ -41,7 +41,7 @@ contains
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> The setUp subroutine is optional and is called prior to running the test.
-  !> It is used to create and initialise types / data that are used in 
+  !> It is used to create and initialise types / data that are used in
   !> the tests
   subroutine setUp( this )
 
@@ -49,7 +49,7 @@ contains
 
     class(skeleton_test_type), intent(inout) :: this
 
-    ! This section should create and initialise anything needed for the test 
+    ! This section should create and initialise anything needed for the test
 
   end subroutine setUp
 
@@ -63,7 +63,7 @@ contains
 
     class(skeleton_test_type), intent(inout) :: this
 
-    ! This section should destroy any previously created types / data 
+    ! This section should destroy any previously created types / data
 
   end subroutine tearDown
 
@@ -116,7 +116,7 @@ contains
       ! two arguments to be equal to within the range of the third.
       @assertEqual( y(i), answer(i), tol )
     end do
-    
+
 
   end  subroutine example_test
 

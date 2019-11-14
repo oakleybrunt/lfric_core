@@ -60,7 +60,7 @@ module lhs_exner_kernel_mod
 
 contains
 
-!> @brief Computes lhs of the equation of state for the nonlinear equations 
+!> @brief Computes lhs of the equation of state for the nonlinear equations
 !! @param[in] nlayers Number of layers
 !! @param[inout] l_exner LHS array for the equation of state
 !! @param[in] theta Potential temperature increment
@@ -75,15 +75,15 @@ contains
 !! @param[in] ndf_w3 Number of degrees of freedom per cell for w3
 !! @param[in] undf_w3 Number of (local) unique degrees of freedom
 !! @param[in] map_w3 Dofmap for the cell at the base of the column for w3
-!! @param[in] w3_basis Basis functions evaluated at quadrature points 
+!! @param[in] w3_basis Basis functions evaluated at quadrature points
 !! @param[in] ndf_wtheta Number of degrees of freedom per cell for wtheta
 !! @param[in] undf_wtheta Number of (local) unique degrees of freedom
 !! @param[in] map_wtheta Dofmap for the cell at the base of the column for wtheta
-!! @param[in] wtheta_basis Basis functions evaluated at quadrature points 
+!! @param[in] wtheta_basis Basis functions evaluated at quadrature points
 !! @param[in] ndf_chi Number of degrees of freedom per cell for chi
 !! @param[in] undf_chi Number of (local) unique degrees of freedom for chi
 !! @param[in] map_chi Dofmap for the cell at the base of the column for chi
-!! @param[in] chi_diff_basis Differential basis functions evaluated at quadrature points 
+!! @param[in] chi_diff_basis Differential basis functions evaluated at quadrature points
 !! @param[in] nqp_h Number of quadrature points in the horizontal
 !! @param[in] nqp_v Number of quadrature points in the vertical
 !! @param[in] wqp_h Horizontal quadrature weights
@@ -124,9 +124,9 @@ subroutine lhs_exner_code(nlayers,                                           &
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
 
   ! Internal variables
-  integer(kind=i_def) :: df, k 
+  integer(kind=i_def) :: df, k
   integer(kind=i_def) :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_wtheta)  :: theta_e, theta_ref_e
   real(kind=r_def), dimension(ndf_chi)     :: chi1_e, chi2_e, chi3_e
   real(kind=r_def), dimension(ndf_w3)      :: rho_e, rho_ref_e
@@ -180,7 +180,7 @@ subroutine lhs_exner_code(nlayers,                                           &
 
         eos = (1.0_r_def - kappa)/kappa * exner_quad/exner_ref_quad &
             - rho_quad/rho_ref_quad - theta_quad/theta_ref_quad
-        do df = 1, ndf_w3          
+        do df = 1, ndf_w3
           integrand = wqp_h(qp1)*wqp_v(qp2)*w3_basis(1,df,qp1,qp2)*eos*dj(qp1,qp2)
           lhs_exner_e(df) = lhs_exner_e(df) + integrand
         end do
@@ -188,9 +188,9 @@ subroutine lhs_exner_code(nlayers,                                           &
     end do
     do df = 1, ndf_w3
       l_exner( map_w3(df) + k ) =  lhs_exner_e(df)
-    end do 
+    end do
   end do
-  
+
 end subroutine lhs_exner_code
 
 end module lhs_exner_kernel_mod

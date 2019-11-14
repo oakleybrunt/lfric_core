@@ -68,7 +68,7 @@ contains
   function scalar_constructor(value) result(self)
 
     implicit none
-    
+
     real(kind=r_def), intent(in) :: value
     type(scalar_type), target :: self
 

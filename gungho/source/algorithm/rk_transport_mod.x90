@@ -73,7 +73,7 @@ module rk_transport_mod
   ! Log
   use log_mod,                           only: log_event,         &
                                                LOG_LEVEL_ERROR
-  use io_config_mod,                     only: subroutine_timers 
+  use io_config_mod,                     only: subroutine_timers
   use timer_mod,                         only: timer
   implicit none
 
@@ -190,7 +190,7 @@ contains
         ! Number of horizontal neighbours
         nfaces_h = reference_element%get_number_horizontal_faces()
         ! Number of vertical neighbours is (and always will be) 2
-        nfaces_v = reference_element%get_number_vertical_faces() 
+        nfaces_v = reference_element%get_number_vertical_faces()
 
         ! Compute stencil extents
         flux_stencil_extent      = int(real(fv_flux_order+1)/2.0,i_def)
@@ -206,7 +206,7 @@ contains
                    setval_c(mt_lumped, 0.0_r_def), &
                    matrix_vector_kernel_type(mt_lumped, ones, mm_wt) )
 
-      ! Compute stencil for nonuniform polynomial fit   
+      ! Compute stencil for nonuniform polynomial fit
       ! Initialise PSy layer arrays (this will not be needed when
       ! multi-dimensional field arrays are supported)
       if ( oned_reconstruction ) then
@@ -218,8 +218,8 @@ contains
                                       fv_advective_order,   &
                                       fv_advective_order+1, &
                                       nfaces_h, nfaces_v)
-      else 
-        flux2d_stencil_size = 1    
+      else
+        flux2d_stencil_size = 1
         do polynomial = 1, fv_flux_order
           if ( mod(polynomial,2) == 0 ) then
             flux2d_stencil_size = flux2d_stencil_size + nfaces_h
@@ -227,7 +227,7 @@ contains
             flux2d_stencil_size = flux2d_stencil_size + nfaces_h*polynomial
           end if
         end do
-        advective2d_stencil_size = 1    
+        advective2d_stencil_size = 1
         do polynomial = 1, fv_advective_order
           if ( mod(polynomial,2) == 0 ) then
             advective2d_stencil_size = advective2d_stencil_size + nfaces_h
@@ -244,7 +244,7 @@ contains
                                       advective2d_stencil_size, &
                                       nfaces_h, nfaces_v)
       end if
-   
+
       chi => get_coordinates()
       nqp_xyz = fv_flux_order+1
       qr = quadrature_xyoz_type(nqp_xyz, gaussian_quadrature)
@@ -338,7 +338,7 @@ contains
           call vert_adv_coeffs(polynomial,direction)%initialise( vector_space = theta_fs )
         end do
       end do
-      call invoke_poly1d_vert_adv_coeffs( vert_adv_coeffs, md_wt, chi, & 
+      call invoke_poly1d_vert_adv_coeffs( vert_adv_coeffs, md_wt, chi, &
                                           fv_advective_order, nfaces_v )
 
       if ( consistent_metric ) then
@@ -423,7 +423,7 @@ contains
                                           fv_advective_order, advective_stencil_extent, &
                                           nfaces_h )
             ! Horizontal advection of metric terms
-            if ( consistent_metric ) then 
+            if ( consistent_metric ) then
               call invoke( setval_c(advective_av_chi3, 0.0_r_def) )
               call invoke_poly1d_adv_recon( advective_av_chi3, u, &
                                             chi3_at_wt, adv_coeffs, &
@@ -438,7 +438,7 @@ contains
                                           fv_advective_order, advective2d_stencil_size, &
                                           nfaces_h )
             ! Horizontal advection of metric terms
-            if ( consistent_metric ) & 
+            if ( consistent_metric ) &
               call invoke_poly2d_adv_recon( advective_av_chi3, u, &
                                             chi3_at_wt, adv_coeffs, &
                                             fv_advective_order, advective2d_stencil_size, &
@@ -462,7 +462,7 @@ contains
           call invoke_poly1d_vert_adv( rt_prediction(stage), consistent_wind, theta, &
                                        vert_adv_coeffs, &
                                        fv_advective_order, nfaces_v)
-        case(operators_fem)      
+        case(operators_fem)
           ! Use FEM projection
           ! Initialise fields
           call invoke( name = "Initialise fields",                &
@@ -470,11 +470,11 @@ contains
                        setval_c(mass_flux,            0.0_r_def), &
                        setval_c(rt_prediction(stage), 0.0_r_def) )
 
-          ! Rho advection, compute mass flux 
-          call invoke( name = "Compute mass flux",                 & 
+          ! Rho advection, compute mass flux
+          call invoke( name = "Compute mass flux",                 &
                        flux_rhs_kernel_type(r_u, u, rho, chi, qr), &
                        enforce_bc_kernel_type(r_u) )
-          call mass_matrix_solver_alg( mass_flux, r_u) 
+          call mass_matrix_solver_alg( mass_flux, r_u)
 
           ! Theta advection
           call invoke( rtheta_kernel_type( rt_prediction(stage), theta, u, qr) )
@@ -525,7 +525,7 @@ contains
     implicit none
 
     type( field_type ), intent(in) :: rho, theta
- 
+
     type( field_type )                 :: drho, dtheta, l2_rho, l2_theta
     type(function_space_type), pointer :: rho_fs   => null(), &
                                           theta_fs => null()
@@ -570,7 +570,7 @@ contains
     ! Write out normalised L2 errors
     write( log_scratch_space, '(A, E15.8)' ) &
       "L2 theta = ", sqrt(l2_theta_diff)/sqrt(l2_theta_analytic)
-    call log_event( log_scratch_space, LOG_LEVEL_INFO ) 
+    call log_event( log_scratch_space, LOG_LEVEL_INFO )
     write( log_scratch_space, '(A, E15.8)' ) &
       "L2 rho   = ", sqrt(l2_rho_diff)/sqrt(l2_rho_analytic)
     call log_event( log_scratch_space, LOG_LEVEL_INFO )

@@ -32,7 +32,7 @@ contains
 
     integer(i_def) :: i
 
-    do i = 1,bundle_size   
+    do i = 1,bundle_size
       call x(i)%copy_field_properties(y(i))
     end do
   end subroutine clone_bundle
@@ -47,8 +47,8 @@ contains
     integer(i_def),   intent(in)    :: bundle_size
     type(field_type), intent(inout) :: x(bundle_size)
     real(kind=r_def), intent(in)    :: a
-    integer(i_def) :: i   
- 
+    integer(i_def) :: i
+
     do i = 1,bundle_size
        call invoke( setval_c( x(i), a ) )
     end do
@@ -68,7 +68,7 @@ contains
     type(field_type), intent(in)    :: x(bundle_size), y(bundle_size)
     type(field_type), intent(inout) :: z(bundle_size)
     integer(i_def) :: i
-    
+
     do i = 1,bundle_size
       call invoke( aX_plus_Y( z(i), a, x(i), y(i) ) )
     end do
@@ -83,9 +83,9 @@ contains
     implicit none
     integer(i_def),   intent(in)    :: bundle_size
     type(field_type), intent(in)    :: x(bundle_size)
-    type(field_type), intent(inout) :: y(bundle_size)  
+    type(field_type), intent(inout) :: y(bundle_size)
     integer(i_def) :: i
-    
+
     do i = 1,bundle_size
        call invoke( setval_X( y(i), x(i) ) )
     end do
@@ -102,7 +102,7 @@ contains
     type(field_type), intent(in)    :: x(bundle_size), y(bundle_size)
     type(field_type), intent(inout) :: z(bundle_size)
     integer(i_def) :: i
-    
+
     do i = 1,bundle_size
       call invoke( X_minus_Y( z(i), x(i), y(i) ) )
     end do
@@ -120,7 +120,7 @@ contains
     type(field_type), intent(in)    :: x(bundle_size)
     real(kind=r_def), intent(in)    :: a
     integer(i_def) :: i
-   
+
     do i = 1,bundle_size
       call invoke( a_times_X( y(i), a, x(i) ) )
     end do
@@ -134,7 +134,7 @@ contains
     implicit none
     integer(i_def),   intent(in)    :: bundle_size
     type(field_type), intent(inout) :: x(bundle_size), y(bundle_size)
-    integer(i_def) :: i    
+    integer(i_def) :: i
 
     do i = 1,bundle_size
       call invoke( inc_X_divideby_Y( x(i), y(i) ) )
@@ -146,7 +146,7 @@ contains
 !> @param[in] bundle_size Number of fields in the bundle
   subroutine bundle_minmax(x, bundle_size)
 
-    use log_mod,                   only: lOG_LEVEL_INFO   
+    use log_mod,                   only: lOG_LEVEL_INFO
     use finite_element_config_mod, only: element_order
 
     implicit none
@@ -174,7 +174,7 @@ contains
     type(field_type), intent(in)    :: x(bundle_size), y(bundle_size)
     type(field_type), intent(inout) :: z(bundle_size)
     integer(i_def) :: i
-    
+
     do i = 1,bundle_size
       call invoke( aX_plus_bY( z(i), a, x(i), b, y(i) ) )
     end do
@@ -191,12 +191,12 @@ contains
     type(field_type), intent(in)    :: x(bundle_size), y(bundle_size)
     type(field_type), intent(inout) :: z(bundle_size)
     integer(i_def) :: i
-    
+
     do i = 1,bundle_size
       call invoke( X_plus_Y( z(i), x(i), y(i) ) )
     end do
   end subroutine add_bundle
 !=============================================================================!
- 
+
 end module field_bundle_mod
 

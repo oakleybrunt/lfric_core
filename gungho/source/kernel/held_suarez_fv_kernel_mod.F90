@@ -69,11 +69,11 @@ contains
 !! @param[in] chi_3 The physical z coordinate in chi
 !! @param[in] ndf_wth The number of degrees of freedom per cell for wth
 !! @param[in] undf_wth The number of unique degrees of freedom for wth
-!! @param[in] map_wth Integer array holding the dofmap for the cell at the 
+!! @param[in] map_wth Integer array holding the dofmap for the cell at the
 !>            base of the column for wth
 !! @param[in] ndf_chi The number of degrees of freedom per cell for chi
 !! @param[in] undf_chi The number of unique degrees of freedom for chi
-!! @param[in] map_chi Integer array holding the dofmap for the cell at the 
+!! @param[in] map_chi Integer array holding the dofmap for the cell at the
 !>            base of the column for chi
 subroutine held_suarez_fv_code(nlayers,                     &
                                dtheta, theta, exner_in_wth, &
@@ -81,7 +81,7 @@ subroutine held_suarez_fv_code(nlayers,                     &
                                ndf_wth, undf_wth, map_wth,  &
                                ndf_chi, undf_chi, map_chi   &
                                )
-  
+
   use coordinate_jacobian_mod,  only: coordinate_jacobian
 
   implicit none
@@ -89,7 +89,7 @@ subroutine held_suarez_fv_code(nlayers,                     &
   ! Arguments
   integer(kind=i_def), intent(in) :: nlayers
 
-  integer(kind=i_def), intent(in) :: ndf_wth, undf_wth  
+  integer(kind=i_def), intent(in) :: ndf_wth, undf_wth
   integer(kind=i_def), intent(in) :: ndf_chi, undf_chi
 
   real(kind=r_def), dimension(undf_wth), intent(inout) :: dtheta
@@ -105,14 +105,14 @@ subroutine held_suarez_fv_code(nlayers,                     &
 
   real(kind=r_def)            :: theta_eq, exner
   real(kind=r_def)            :: lat, lon
-  
+
   real(kind=r_def) :: exner0 ! lowest level exner value
   real(kind=r_def) :: sigma  ! exner/exner0
 
   real(kind=r_def) :: x, y, z
   real(kind=r_def), dimension(ndf_chi)  :: chi_1_at_dof, chi_2_at_dof, chi_3_at_dof
   real(kind=r_def) :: pert(nlayers+1)
-  
+
   x=0.0_r_def
   y=0.0_r_def
   z=0.0_r_def
@@ -135,13 +135,13 @@ subroutine held_suarez_fv_code(nlayers,                     &
   do k = 0, nlayers-1
 
     exner = exner_in_wth(map_wth(1) + k)
-    
+
     sigma = (exner/exner0)**(1.0_r_def/kappa)
-    
-    theta_eq = held_suarez_equilibrium_theta(exner, lat) 
+
+    theta_eq = held_suarez_equilibrium_theta(exner, lat)
 
     dtheta(map_wth(1) + k) = -held_suarez_newton_frequency(sigma, lat)    &
-       * (theta(map_wth(1) + k) - theta_eq)*dt 
+       * (theta(map_wth(1) + k) - theta_eq)*dt
 
   end do
 
@@ -151,7 +151,7 @@ subroutine held_suarez_fv_code(nlayers,                     &
 
     dtheta(map_wth(1):map_wth(1)+nlayers) = dtheta(map_wth(1):map_wth(1)+nlayers) &
        *(1.0_r_def + (pert-0.5_r_def)*.0001_r_def)
-    
+
   end if
 
 end subroutine held_suarez_fv_code

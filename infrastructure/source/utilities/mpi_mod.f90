@@ -59,7 +59,7 @@ module mpi_mod
 
 contains
 
-  !> Initialises MPI and returns mpi_comm_world as the communicator 
+  !> Initialises MPI and returns mpi_comm_world as the communicator
   !>
   !> @param out_comm The MPI communicator.
   !>
@@ -89,7 +89,7 @@ contains
     comm_set = .true.
   end subroutine store_comm
 
-  !> Finalises MPI 
+  !> Finalises MPI
   !>
   subroutine finalise_comm()
     implicit none
@@ -117,7 +117,7 @@ contains
   !> Calculates the global sum of a collection of real local sums
   !>
   !> @param l_sum The sum of the reals on the local partition
-  !> @param g_sum The calculated global sum 
+  !> @param g_sum The calculated global sum
   !>
   subroutine global_sum_r_def(l_sum, g_sum)
     implicit none
@@ -144,7 +144,7 @@ contains
   !> Calculates the global sum of a collection of integer local sums
   !>
   !> @param l_sum The sum of the integers on the local partition
-  !> @param g_sum The calculated global sum 
+  !> @param g_sum The calculated global sum
   !>
   subroutine global_sum_i_def(l_sum, g_sum)
     implicit none
@@ -475,7 +475,7 @@ contains
     case (logical_type)
       mpi_datatype = MPI_LOGICAL
     end select
-    
+
   end function get_mpi_datatype
 
   !> Returns the number of MPI ranks in the communicator

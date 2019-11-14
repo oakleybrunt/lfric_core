@@ -32,23 +32,23 @@ module rk_alg_timestep_mod
                                        theta_space_id, &
                                        w3inv_id, &
                                        get_coordinates, &
-                                       get_coriolis 
+                                       get_coriolis
   use transport_config_mod,      only: operators, &
                                        operators_fv
   use mixing_config_mod,         only: viscosity
-  
+
   ! PsyKAl-lite kernels
   use psykal_lite_mod,                   only: invoke_pressure_gradient_bd_kernel,     &
                                                invoke_tracer_viscosity, &
                                                invoke_momentum_viscosity
 
   use field_bundle_mod,                  only: clone_bundle, &
-                                               bundle_axpy,  & 
+                                               bundle_axpy,  &
                                                bundle_axpby, &
                                                add_bundle,   &
                                                copy_bundle,  &
                                                set_bundle_scalar
-  
+
   ! PsyKAl PSYClone kernels
   use enforce_bc_kernel_mod,               only: enforce_bc_kernel_type
   use hydrostatic_kernel_mod,              only: hydrostatic_kernel_type
@@ -75,7 +75,7 @@ module rk_alg_timestep_mod
   use field_indices_mod,                 only: igh_u, igh_t, igh_d, igh_p
   use moist_dyn_mod,                     only: num_moist_factors, gas_law
 
-  use io_config_mod,                     only: subroutine_timers 
+  use io_config_mod,                     only: subroutine_timers
   use timer_mod,                         only: timer
 
   implicit none
@@ -106,7 +106,7 @@ contains
     implicit none
 
     ! Mesh
-    integer(i_def), intent(in)          :: mesh_id 
+    integer(i_def), intent(in)          :: mesh_id
 
     ! Prognostic fields
     type( field_type ), intent( in ) :: u, rho, theta, exner
@@ -118,7 +118,7 @@ contains
     integer(i_def) :: vorticity_fs
 
     !=== Allocate internal state field arrays ================================!
-    allocate(state(bundle_size))   
+    allocate(state(bundle_size))
     allocate(state_n(bundle_size))
     allocate(rhs(bundle_size))
     allocate(inc(bundle_size))
@@ -137,7 +137,7 @@ contains
     call clone_bundle(state, inc, bundle_size)
 
     do stage = 1,num_rk_stage
-      call clone_bundle(state, rhs_prediction(:,stage), bundle_size) 
+      call clone_bundle(state, rhs_prediction(:,stage), bundle_size)
     end do
 
     ! Create the diagnostic vorticity field
@@ -166,7 +166,7 @@ contains
   !> @brief A Runge-Kutta time-discretisation of the non-linear 3D equations,
   !>        currently using 3-stage SSP.
   !> @details An algorithm for timstepping the 3D nonlinear
-  !>          equations using a Runge-Kutta algortihm. 
+  !>          equations using a Runge-Kutta algortihm.
   !>          The type of Runge-Kutta scheme can be simply changed by
   !>          modifying the (currently hardwired) Butcher tableau (ak array)
   !>          The current set up uses the 3rd-order three stage
@@ -176,9 +176,9 @@ contains
   !> @param[inout] theta Potential temperature
   !> @param[inout] moist_dyn Moist dynamics factors
   subroutine rk_alg_step(u, rho, theta, moist_dyn, exner)
-     
+
     implicit none
-    ! Prognostic fields    
+    ! Prognostic fields
     type( field_type ), intent( inout ) :: u, rho, theta, moist_dyn(num_moist_factors), &
                                            exner
 
@@ -211,13 +211,13 @@ contains
     ! Get geopotential field from runtime_constants
     geopotential => get_geopotential()
 
-    ! Get mm operators from runtime_constants 
+    ! Get mm operators from runtime_constants
     mm_lumped_inv_wtheta => get_inverse_lumped_mass_matrix(theta_space_id)
 
     ! Get coordinates
     chi => get_coordinates()
     !=== Do a single timestep ==============================================!
-                        
+
     ! Runge-Kutta algorithm
     call copy_bundle(state, state_n, bundle_size)
     do stage = 1,num_rk_stage
@@ -244,14 +244,14 @@ contains
       end if
       call invoke_pressure_gradient_bd_kernel( rhs_prediction(igh_u, stage),   &
                                                state(igh_p), state(igh_t),     &
-                                               moist_dyn, qrf ) 
+                                               moist_dyn, qrf )
       call invoke( name = "Compute new rhs",                                   &
                    hydrostatic_kernel_type( rhs_prediction(igh_u,stage),       &
                                             state(igh_p), state(igh_t),        &
                                             moist_dyn, geopotential, qr ),     &
-                   kinetic_energy_gradient_kernel_type(                        & 
+                   kinetic_energy_gradient_kernel_type(                        &
                         rhs_prediction(igh_u,stage), state(igh_u), chi, qr ),  &
-                   enforce_bc_kernel_type( rhs_prediction(1,stage) ) ) 
+                   enforce_bc_kernel_type( rhs_prediction(1,stage) ) )
       call set_bundle_scalar(0.0_r_def, rhs, bundle_size)
 
       do st = 1, stage
@@ -292,10 +292,10 @@ contains
 
     ! Apply viscosity
     if ( viscosity ) then
-      call log_event( 'Applying Viscosity', LOG_LEVEL_INFO ) 
+      call log_event( 'Applying Viscosity', LOG_LEVEL_INFO )
       call invoke_tracer_viscosity(   inc(igh_t), state(igh_t), 1, chi)
-      call invoke_momentum_viscosity( inc(igh_u), state(igh_u), 1, chi)  
-      call invoke( setval_c(inc(igh_d), 0.0_r_def) )   
+      call invoke_momentum_viscosity( inc(igh_u), state(igh_u), 1, chi)
+      call invoke( setval_c(inc(igh_d), 0.0_r_def) )
       call bundle_axpy(dt, inc, state, state, bundle_size)
     end if
 

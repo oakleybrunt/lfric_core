@@ -135,13 +135,13 @@ subroutine weighted_proj_2theta_code(cell, nlayers, ncell_3d,             &
             div_gamma_v = diff_basis_w2(1,df2,qp1,qp2)*basis_wtheta(1,df0,qp1,qp2) &
                         + dot_product(basis_w2(:,df2,qp1,qp2), &
                                       diff_basis_wtheta(:,df0,qp1,qp2))
-            projection(df2,df0,ik) = projection(df2,df0,ik) & 
+            projection(df2,df0,ik) = projection(df2,df0,ik) &
                                    + integrand*div_gamma_v
           end do
         end do
       end do
     end do
-  end do 
+  end do
 end subroutine weighted_proj_2theta_code
 
 end module weighted_proj_2theta_kernel_mod

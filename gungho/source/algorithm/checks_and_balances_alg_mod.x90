@@ -23,7 +23,7 @@ module checks_and_balances_alg_mod
 
   ! Runtime constants
   use runtime_constants_mod,  only: get_detJ_at_w2
-  
+
   implicit none
 
 contains
@@ -34,7 +34,7 @@ contains
 
     implicit none
 
-    ! Prognostic fields    
+    ! Prognostic fields
     type(field_type), intent( inout ) :: state(bundle_size)
 
     type( field_type ), pointer  :: detJ => null() ! Areas of faces

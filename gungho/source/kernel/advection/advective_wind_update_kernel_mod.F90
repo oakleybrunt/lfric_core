@@ -10,7 +10,7 @@
 !> @details Computes u.grad(v) on scalar points for a specific wind component v.
 !>          This is done in the computational space:
 !>          u.grad_v = u_bar * (vp-vm) for each wind component (u,v,w)
-!>          where u_bar is the wind sampled at the scalar point and 
+!>          where u_bar is the wind sampled at the scalar point and
 !>          vp & vm are the reconstructed wind on the cell faces
 module advective_wind_update_kernel_mod
 
@@ -23,7 +23,7 @@ use fs_continuity_mod,       only : W2, W3
 
 implicit none
 
-private 
+private
 
 !-------------------------------------------------------------------------------
 ! Public types
@@ -73,7 +73,7 @@ subroutine advective_wind_update_code(nlayers,                 &
                                       basis_w2                 &
                                       )
 
-  implicit none                     
+  implicit none
 
   ! Arguments
   integer(kind=i_def),                     intent(in)  :: nlayers

@@ -477,7 +477,7 @@ contains
         case(cv_scheme_lambert_lewis)
           i_convection_vn   = i_cv_llcs
           non_local_bl      = off
-          llcs_cloud_precip = llcs_opt_all_rain 
+          llcs_cloud_precip = llcs_opt_all_rain
           llcs_rhcrit       = 0.8_r_um
           llcs_timescale    = 3600.0_r_um
         case default
@@ -604,9 +604,9 @@ contains
           blending_option   = off
           non_local_bl      = off
           ng_stress         = off
-        case( method_2d_smag ) 
-          l_subfilter_horiz = .true. 
-          l_subfilter_vert  = .false. 
+        case( method_2d_smag )
+          l_subfilter_horiz = .true.
+          l_subfilter_vert  = .false.
           blending_option   = off
         case( method_blending )
           l_subfilter_horiz = .true.

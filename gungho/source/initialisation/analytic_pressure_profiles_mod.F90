@@ -143,15 +143,15 @@ contains
       lat  = chi(2)
       l1 = sqrt((long-x1)**2 + (lat-y1)**2)
       l2 = sqrt((long-x2)**2 + (lat-y2)**2)
-    end if 
+    end if
 
-    select case( choice )   
+    select case( choice )
     case (test_gravity_wave, test_isentropic, &
           test_isot_atm, test_isot_cold_atm,  &
           test_const_lapse_rate)
       call reference_profile(pressure, density, temperature, chi, choice)
- 
-    case (test_cold_bubble_x, test_cold_bubble_y ) 
+
+    case (test_cold_bubble_x, test_cold_bubble_y )
       if (choice == test_cold_bubble_x ) then
         id = 1
       else
@@ -164,10 +164,10 @@ contains
         temperature = temperature - dt/pressure
         density = p_zero/(Rd*temperature) * pressure**( (1.0_r_def - kappa )/ kappa )
       end if
- 
+
     !> No perturbation needed for warm bubble tests so just use background
     !> (isentropic) value
-    case (test_warm_bubble, test_warm_bubble_3d ) 
+    case (test_warm_bubble, test_warm_bubble_3d )
       call reference_profile(pressure, density, temperature, chi, choice)
 
     case (test_gaussian_hill)
@@ -229,10 +229,10 @@ contains
       else
         pressure = tracer_background
       end if
-  
+
     case (test_vortex_field)
       pressure = vortex_field(lat,long,radius,time)
-  
+
     case( test_yz_cosine_hill, &
           test_hadley_like_dcmip )
       ! This case is for transport of tracers and density only so it is not
@@ -248,14 +248,14 @@ contains
     case (test_deep_baroclinic_wave)
       call deep_baroclinic_wave(long, lat, radius-scaled_radius, &
                                 pressure, temperature, density, &
-                                u, v, w) 
+                                u, v, w)
     case(test_dry_cbl, test_shallow_conv)
       call reference_profile(pressure, density, temperature, chi, choice)
 
     case( test_cos_phi )
       pressure = tracer_max*cos(lat)**4
 
-    case( test_cosine_bubble ) 
+    case( test_cosine_bubble )
       l1 = sqrt( ((chi(1) - x1)/r1)**2 + ((chi(3) - y1)/r2)**2 )
       if ( l1 < 1.0_r_def ) then
         pressure = tracer_background + tracer_max*cos(0.5_r_def*l1*PI)**2

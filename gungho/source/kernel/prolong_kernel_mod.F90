@@ -13,7 +13,7 @@
 module prolong_kernel_mod
 use constants_mod,           only: i_def, r_def
 use kernel_mod,              only: kernel_type
-use argument_mod,            only: arg_type,                 &             
+use argument_mod,            only: arg_type,                 &
                                    GH_FIELD,                 &
                                    GH_READ, GH_INC, CELLS,   &
                                    ANY_SPACE_1, ANY_SPACE_2, &
@@ -21,7 +21,7 @@ use argument_mod,            only: arg_type,                 &
 implicit none
 
 type, public, extends(kernel_type) :: prolong_kernel_type
-   private 
+   private
    type(arg_type) :: meta_args(2) = (/                               &
        arg_type(GH_FIELD, GH_INC,  ANY_SPACE_1, mesh_arg=GH_FINE),   &
        arg_type(GH_FIELD, GH_READ, ANY_SPACE_2, mesh_arg=GH_COARSE ) &
@@ -40,7 +40,7 @@ contains
   !> @param[in] cell_map Map of which fine grid cells lie in the coarse grid
   !!                     cell
   !> @param[in] ncell_f_per_c Number of fine cells per coarse grid cell
-  !> @param[in] ncell_f Number of cells in the fine grid 
+  !> @param[in] ncell_f Number of cells in the fine grid
   !> @param[in,out] fine Fine grid field to update
   !> @param[in] coarse Coarse grid field to prolong
   !> @param[in] ndf Number of degrees of freedom per cell on both the coarse and
@@ -73,7 +73,7 @@ contains
     real(kind=r_def), dimension(undf_f), intent(inout) :: fine
 
     integer(kind=i_def) :: df, k, lp
-   
+
     do k = 0, nlayers-1
        do df = 1, ndf
           do lp = 1, ncell_f_per_c

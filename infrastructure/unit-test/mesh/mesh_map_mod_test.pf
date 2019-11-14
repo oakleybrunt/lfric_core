@@ -31,7 +31,7 @@ module mesh_map_mod_test
   public :: mesh_map_test_type,      &
             test_coarse_to_fine_map, &
             test_fine_to_coarse_map
-  
+
   @testCase
   type, extends( MPITestCase ) :: mesh_map_test_type
     private
@@ -293,7 +293,7 @@ contains
         CoarseToFine_global_mesh_map%get_nsource_cells()
     allocate(map(ntarget_cells_per_source_cell,nsource_cells))
 
-    map(:,:) = CoarseToFineMap(:,:) 
+    map(:,:) = CoarseToFineMap(:,:)
     mesh_map = mesh_map_type( this%coarse_mesh%get_id(), &
                               this%fine_mesh%get_id(),   &
                               map )
@@ -374,7 +374,7 @@ contains
         FineToCoarse_global_mesh_map%get_nsource_cells()
     allocate(map(ntarget_cells_per_source_cell,nsource_cells))
 
-    map(:,:) = FineToCoarseMap(:,:) 
+    map(:,:) = FineToCoarseMap(:,:)
     mesh_map = mesh_map_type( this%fine_mesh%get_id(),   &
                               this%coarse_mesh%get_id(), &
                               map )

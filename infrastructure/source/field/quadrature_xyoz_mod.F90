@@ -9,13 +9,13 @@
 !> @brief Contains quadrature_xyoz_type and quadrature_xyoz_type.
 
 !> @details This module contains the quadrature_xyoz_type.
-!> 
-!> This type contains points and weights stored in 2D (x-y - horizontal) 
-!> and 1D (z - vertical). A proxy is used to access the data. A type bound 
+!>
+!> This type contains points and weights stored in 2D (x-y - horizontal)
+!> and 1D (z - vertical). A proxy is used to access the data. A type bound
 !> procedure 'compute_function' is also available. This method uses
 !> call_function defined in function_space_type. The function is evaluated for
 !> the xyoz arrangement
-!> 
+!>
 !> There are two constructors:
 !> init_quadrature_symmetrical(np, rule),
 !> init_quadrature_variable(np_x, np_y, np_z, rule)
@@ -62,7 +62,7 @@ contains
   ! Get a proxy with public pointers to the data in a quadrature_xyoz type.
   procedure, public :: get_quadrature_proxy
 
-  ! Evaluates the function for given set of 3d points 
+  ! Evaluates the function for given set of 3d points
   procedure, public :: compute_function
 
   ! Destroy the quadrature object
@@ -75,7 +75,7 @@ end type quadrature_xyoz_type
 
 !> Psy layer representation of a quadrature_xyoz type
 !>
-!> This is an accessor class that allows access to quadrature_xyoz_type 
+!> This is an accessor class that allows access to quadrature_xyoz_type
 !> data and information with each element accessed via a public pointer.
 !>
 type, public :: quadrature_xyoz_proxy_type
@@ -273,8 +273,8 @@ end function get_quadrature_proxy
 !> @brief Evaluates the a given function for on a set of 3d points.
 !> @param[in] self, The calling quadrature_type
 !> @param[in] function_to_call integer, Enumerator defining the function to call
-!> @param[in] function_space function_space_type, Function space containing the 
-!> function to evaluate 
+!> @param[in] function_space function_space_type, Function space containing the
+!> function to evaluate
 !> @param[in] fspace_dim integer, Size of the function to be evaluated
 !> @param[in] ndf integer, Number of dofs
 !> @param[out] basis real, 3 dimensional array holding the evaluated function
@@ -324,7 +324,7 @@ subroutine quadrature_final(self)
   if (allocated(self%points_xy))  deallocate(self%points_xy)
   if (allocated(self%weights_z))  deallocate(self%weights_z)
   if (allocated(self%weights_xy)) deallocate(self%weights_xy)
-  
+
 end subroutine quadrature_final
 
 !-------------------------------------------------------------------------------
@@ -338,7 +338,7 @@ subroutine quadrature_destructor(self)
   type(quadrature_xyoz_type) :: self
 
   call self%quadrature_final()
-  
+
 end subroutine quadrature_destructor
 
 !-------------------------------------------------------------------------------

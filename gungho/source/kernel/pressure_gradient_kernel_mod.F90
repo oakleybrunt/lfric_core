@@ -71,18 +71,18 @@ contains
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 Number unique of degrees of freedom  for w2
 !! @param[in] map_w2 Dofmap for the cell at the base of the column for w2
-!! @param[in] w2_basis Basis functions evaluated at quadrature points 
+!! @param[in] w2_basis Basis functions evaluated at quadrature points
 !! @param[in] w2_diff_basis Differential of the basis functions evaluated at  quadrature points
 !! @param[inout] r_u Momentum equation right hand side
 !! @param[in] ndf_w3 Number of degrees of freedom per cell for w3
 !! @param[in] undf_w3 Number unique of degrees of freedom  for w3
 !! @param[in] map_w3 Dofmap for the cell at the base of the column for w3
-!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] rho Density
 !! @param[in] ndf_wt Number of degrees of freedom per cell for wt
 !! @param[in] undf_wt Number unique of degrees of freedom  for wt
 !! @param[in] map_wt Dofmap for the cell at the base of the column for wt
-!! @param[in] wt_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] wt_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] wt_diff_basis Differential of the basis functions evaluated at gaussian quadrature point
 !! @param[in] theta Potential temperature
 !! @param[in] nqp_h Number of quadrature points in the horizontal
@@ -96,11 +96,11 @@ subroutine pressure_gradient_code(nlayers,                                      
                                   ndf_wt, undf_wt, map_wt, wt_basis, wt_diff_basis, &
                                   nqp_h, nqp_v, wqp_h, wqp_v                        &
                                   )
-                           
+
   use calc_exner_pointwise_mod, only: calc_exner_pointwise
 
   implicit none
-  
+
   ! Arguments
   integer, intent(in) :: nlayers,nqp_h, nqp_v
   integer, intent(in) :: ndf_wt, ndf_w2, ndf_w3
@@ -108,14 +108,14 @@ subroutine pressure_gradient_code(nlayers,                                      
   integer, dimension(ndf_wt), intent(in) :: map_wt
   integer, dimension(ndf_w2), intent(in) :: map_w2
   integer, dimension(ndf_w3), intent(in) :: map_w3
-  
 
 
-  real(kind=r_def), dimension(1,ndf_w3,nqp_h,nqp_v), intent(in) :: w3_basis  
-  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis 
-  real(kind=r_def), dimension(1,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_basis 
+
+  real(kind=r_def), dimension(1,ndf_w3,nqp_h,nqp_v), intent(in) :: w3_basis
+  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis
+  real(kind=r_def), dimension(1,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_basis
   real(kind=r_def), dimension(1,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_diff_basis
-  real(kind=r_def), dimension(3,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_diff_basis   
+  real(kind=r_def), dimension(3,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_diff_basis
 
   real(kind=r_def), dimension(undf_w2), intent(inout) :: r_u
   real(kind=r_def), dimension(undf_w3), intent(in)    :: rho
@@ -125,9 +125,9 @@ subroutine pressure_gradient_code(nlayers,                                      
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
 
   ! Internal variables
-  integer               :: df, k 
+  integer               :: df, k
   integer               :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_w3)          :: rho_e
   real(kind=r_def), dimension(ndf_w2)          :: ru_e
   real(kind=r_def), dimension(ndf_wt)          :: theta_e
@@ -135,23 +135,23 @@ subroutine pressure_gradient_code(nlayers,                                      
   real(kind=r_def) :: grad_theta_at_quad(3), v(3)
   real(kind=r_def) :: exner_at_quad, rho_at_quad, theta_at_quad, &
                       grad_term, dv
-  
+
   do k = 0, nlayers-1
     do df = 1, ndf_w3
       rho_e(df) = rho( map_w3(df) + k )
-    end do    
+    end do
     do df = 1, ndf_wt
       theta_e(df) = theta( map_wt(df) + k )
-    end do   
+    end do
     do df = 1, ndf_w2
       ru_e(df) = 0.0_r_def
-    end do 
-  ! compute the RHS integrated over one cell    
+    end do
+  ! compute the RHS integrated over one cell
     do qp2 = 1, nqp_v
       do qp1 = 1, nqp_h
-        rho_at_quad = 0.0_r_def 
+        rho_at_quad = 0.0_r_def
         do df = 1, ndf_w3
-          rho_at_quad  = rho_at_quad + rho_e(df)*w3_basis(1,df,qp1,qp2) 
+          rho_at_quad  = rho_at_quad + rho_e(df)*w3_basis(1,df,qp1,qp2)
         end do
         theta_at_quad = 0.0_r_def
         grad_theta_at_quad(:) = 0.0_r_def
@@ -159,7 +159,7 @@ subroutine pressure_gradient_code(nlayers,                                      
           theta_at_quad   = theta_at_quad                                      &
                           + theta_e(df)*wt_basis(1,df,qp1,qp2)
           grad_theta_at_quad(:) = grad_theta_at_quad(:) &
-                                + theta_e(df)*wt_diff_basis(:,df,qp1,qp2) 
+                                + theta_e(df)*wt_diff_basis(:,df,qp1,qp2)
 
         end do
 
@@ -170,7 +170,7 @@ subroutine pressure_gradient_code(nlayers,                                      
           dv = w2_diff_basis(1,df,qp1,qp2)
 
 !pressure gradient term
-          grad_term = cp*exner_at_quad * (                           & 
+          grad_term = cp*exner_at_quad * (                           &
                       theta_at_quad * dv                             &
                     + dot_product( grad_theta_at_quad(:),v)          &
                                          )
@@ -182,9 +182,9 @@ subroutine pressure_gradient_code(nlayers,                                      
     end do
     do df = 1, ndf_w2
       r_u( map_w2(df) + k ) =  r_u( map_w2(df) + k ) + ru_e(df)
-    end do 
+    end do
   end do
-  
+
 end subroutine pressure_gradient_code
 
 end module pressure_gradient_kernel_mod

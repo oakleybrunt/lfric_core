@@ -1,13 +1,13 @@
 !-------------------------------------------------------------------------------
-! (c) The copyright relating to this work is owned jointly by the Crown, 
-! Met Office and NERC 2014. 
-! However, it has been created with the help of the GungHo Consortium, 
+! (c) The copyright relating to this work is owned jointly by the Crown,
+! Met Office and NERC 2014.
+! However, it has been created with the help of the GungHo Consortium,
 ! whose members are identified at https://puma.nerc.ac.uk/trac/GungHo/wiki
 !-------------------------------------------------------------------------------
 !
 !-------------------------------------------------------------------------------
 
-!> @brief Copies the accumulated diagonal elements of a mass matrix, as stored in 
+!> @brief Copies the accumulated diagonal elements of a mass matrix, as stored in
 !>        a field, back to a LMA representation
 
 !> @details The kernel in mm_diagonal_mod can be used to extract the diagonal
@@ -15,7 +15,7 @@
 !>          fields, this field stores \f$D_i=\sum_e M^{(e)}_{ii}\f$ where
 !>          \f$e\f$ are all elements that share the unknown (global) i.
 !>          In other words, \f$D_i\f$ is the diagonal of the assembled mass matrix,
-!>          whereas \f$M^{(e)}_{ii}\f$ is the diagonal of the local mass matrix. Using the 
+!>          whereas \f$M^{(e)}_{ii}\f$ is the diagonal of the local mass matrix. Using the
 !>          data in the field \f$D\f$, kernel constructs an assembled diagonal mass matrix
 !>          on every element, i.e. \f$\tilde{M}^{(e)}_{ij}= D_i\delta_{ij}\f$.
 
@@ -24,7 +24,7 @@ module mm_diagonal_assembled_kernel_mod
 use argument_mod,            only : arg_type,                                 &
                                     GH_FIELD, GH_OPERATOR, GH_READ, GH_WRITE, &
                                     ANY_SPACE_1,                              &
-                                    CELLS 
+                                    CELLS
 use constants_mod,           only : r_def, i_def
 use kernel_mod,              only : kernel_type
 
@@ -59,7 +59,7 @@ contains
 !> @param[in]  ncell_3d Total number of cells
 !> @param[out] mass_matrix Array holding mass matrix values after kernel execution
 !> @param[in]  ndf Number of degrees of freedom per cell
-!> @param[in]  undf Unique number of degrees of freedom 
+!> @param[in]  undf Unique number of degrees of freedom
 !> @param[in]  map Dofmap for the cell at the base of the column
 
 subroutine mm_diagonal_assembled_kernel_code(cell,        &
@@ -68,7 +68,7 @@ subroutine mm_diagonal_assembled_kernel_code(cell,        &
                                              ncell_3d,    &
                                              mass_matrix, &
                                              ndf,undf,map)
- 
+
   implicit none
 
   !Arguments
@@ -81,7 +81,7 @@ subroutine mm_diagonal_assembled_kernel_code(cell,        &
 
   !Internal variables
   integer :: df, k, ik
- 
+
   do k = 0, nlayers-1
     ik = (cell-1)*nlayers + k + 1
     mass_matrix(:,:,ik) = 0.0_r_def
@@ -90,7 +90,7 @@ subroutine mm_diagonal_assembled_kernel_code(cell,        &
       mass_matrix(df,df,ik) = mm_diag(map(df)+k)
     end do
   end do
- 
+
 end subroutine mm_diagonal_assembled_kernel_code
 
 end module mm_diagonal_assembled_kernel_mod

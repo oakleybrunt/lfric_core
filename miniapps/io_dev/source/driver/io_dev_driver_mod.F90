@@ -14,7 +14,7 @@ use constants_mod,              only: i_def, i_native
 use convert_to_upper_mod,       only: convert_to_upper
 use create_fem_mod,             only: init_fem
 use create_mesh_mod,            only: init_mesh
-use derived_config_mod,         only: set_derived_config 
+use derived_config_mod,         only: set_derived_config
 use diagnostics_io_mod,         only: write_scalar_diagnostic, &
                                       write_vector_diagnostic
 use field_mod,                  only: field_type
@@ -59,7 +59,7 @@ character(*), public, parameter :: xios_id  = 'lfric_client'
 ! Examples of fields that are output on different I/O domains
 type( field_type ) :: density ! on W3
 type( field_type ) :: theta   ! on Wtheta
-type( field_type ) :: wind    ! on W2 and output on W2H and W2V 
+type( field_type ) :: wind    ! on W2 and output on W2H and W2V
 
 
 ! Coordinate field
@@ -72,7 +72,7 @@ contains
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Sets up required state in preparation for run.
-  !>@param[in] filename Name of the file containing the desired configuration 
+  !>@param[in] filename Name of the file containing the desired configuration
   subroutine initialise( filename )
 
   use logging_config_mod, only: run_log_level,          &
@@ -198,7 +198,7 @@ contains
   call log_event( 'Running '//program_name//' ...', LOG_LEVEL_ALWAYS )
 
   !-----------------------------------------------------------------------------
-  ! Model step 
+  ! Model step
   !-----------------------------------------------------------------------------
 
   ! Update XIOS calendar

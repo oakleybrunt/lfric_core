@@ -141,8 +141,8 @@ contains
                           map_w2(:,cell)   &
                           )
 
- 
-    ! The answer returns the max wind.  If the kernel is correct, then 
+
+    ! The answer returns the max wind.  If the kernel is correct, then
     ! this should be <= DX*DX*DX*MAX_CFL/DT
     answer = maxval(abs(wind))
 

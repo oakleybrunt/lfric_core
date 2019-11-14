@@ -7,7 +7,7 @@
 !>@brief Initialisation of prognostic fields for the gravity wave equations
 module gw_init_fields_alg_mod
 
-  !use quadrature_edge_mod,               only: 
+  !use quadrature_edge_mod,               only:
   use log_mod,                           only: log_event,         &
                                                log_scratch_space, &
                                                LOG_LEVEL_INFO,    &

@@ -8,7 +8,7 @@
 
 !> @brief Contains the routines used for (Gaussian-Lobatto) quadrature rule.
 
-!> @details This module contains the (Gaussian-Lobbato) quadrature rule accessed via 
+!> @details This module contains the (Gaussian-Lobbato) quadrature rule accessed via
 !> a functor from the quadrature_type.
 
 module quadrature_rule_gauss_lobatto_mod
@@ -36,7 +36,7 @@ function quadrature_rule(self, nqp_1d)
   class(quadrature_rule_gauss_lobatto_type) :: self
   integer(kind=i_def), intent(in)      :: nqp_1d
   real(kind=r_def)                     :: quadrature_rule(nqp_1d,2)
- 
+
   integer(kind=i_def)                        :: i, j
   real(kind=r_def), dimension(nqp_1d)        :: x, x_old
   real(kind=r_def), dimension(nqp_1d,nqp_1d) :: p
@@ -58,7 +58,7 @@ function quadrature_rule(self, nqp_1d)
 
   ! The weights are given by w = 2/(n*(n-1)*P^2)
 
-  ! First guess of the points 
+  ! First guess of the points
   do i = 1,nqp_1d
      x(i) = cos(pi*real(nqp_1d-i,r_def)/real(nqp_1d-1,r_def))
    end do
@@ -87,8 +87,8 @@ function quadrature_rule(self, nqp_1d)
    end do
    do j=1,nqp_1d
      quadrature_rule(j,1) = x(j)
-     quadrature_rule(j,2) = 2.0_r_def/(real((nqp_1d-1)*nqp_1d,r_def)*p(j,nqp_1d)**2) 
-   end do 
+     quadrature_rule(j,2) = 2.0_r_def/(real((nqp_1d-1)*nqp_1d,r_def)*p(j,nqp_1d)**2)
+   end do
 
    !Shift quad points from [-1,1] to [0,1]
    do i=1,nqp_1d

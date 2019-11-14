@@ -8,7 +8,7 @@
 
 !> @brief Contains the routines used for (Newton-Cotes) quadrature rule.
 
-!> @details This module contains the (Newton-Cote) quadrature rule accessed via 
+!> @details This module contains the (Newton-Cote) quadrature rule accessed via
 !> a functor from the quadrature_type.
 
 module quadrature_rule_newton_cotes_mod
@@ -70,7 +70,7 @@ function quadrature_rule(self, nqp_1d)
   call matrix_invert(A,Ainv,nqp_1d)
   quadrature_rule(:,2) = matmul(Ainv,b)
 
-  quadrature_rule(:,2) = DOMAIN_CHANGE_FACTOR*quadrature_rule(:,2) 
+  quadrature_rule(:,2) = DOMAIN_CHANGE_FACTOR*quadrature_rule(:,2)
 
   return
 end function quadrature_rule

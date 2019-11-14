@@ -20,7 +20,7 @@ module initial_buoyancy_kernel_mod_test
   use mpi_mod,                    only : store_comm, clear_comm
   use pFUnit_Mod
 
-  implicit none 
+  implicit none
 
   private
   public :: initial_buoyancy_kernel_test_type, test_all

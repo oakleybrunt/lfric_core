@@ -46,7 +46,7 @@ contains
 
 !> @brief Applies boundary conditions to a field
 !! @param[in] nlayers Number of layers
-!! @param[inout] field Input/Output data 
+!! @param[inout] field Input/Output data
 !! @param[in] ndf Number of degrees of freedom per cell
 !! @param[in] undf Number unique of degrees of freedom
 !! @param[in] map Dofmap for the cell at the base of the column
@@ -75,7 +75,7 @@ subroutine enforce_bc_code(nlayers,                        &
   do df = 1,ndf
     field(map(df) + k) = field(map(df) + k)*real(boundary_value(df,1),r_def)
   end do
-  k = nlayers - 1  
+  k = nlayers - 1
   do df = 1,ndf
     field(map(df) + k) = field(map(df) + k)*real(boundary_value(df,2),r_def)
   end do

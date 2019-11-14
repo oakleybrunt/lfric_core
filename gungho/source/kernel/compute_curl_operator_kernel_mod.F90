@@ -46,7 +46,7 @@ module compute_curl_operator_kernel_mod
 
 contains
 
-!> @brief Computes the curl operator 
+!> @brief Computes the curl operator
 !! @param[in] cell Cell number
 !! @param[in] nlayers Number of layers.
 !! @param[in] ncell_3d Ncell*ndf
@@ -71,7 +71,7 @@ contains
 !! @param[inout] chi3 Array for chi in the 3rd dir
 !! @param[in] nqp_h Number of horizontal quadrature points
 !! @param[in] nqp_v Number of vertical quadrature points
-!! @param[in] wqp_h Horizontal quadrature weights 
+!! @param[in] wqp_h Horizontal quadrature weights
 !! @param[in] wqp_v Vertical quadrature weights
 subroutine compute_curl_operator_code(cell, nlayers, ncell_3d,          &
                                       curl,                             &
@@ -134,7 +134,7 @@ subroutine compute_curl_operator_code(cell, nlayers, ncell_3d,          &
         end do
       end do
     end do
-  end do 
+  end do
 
 end subroutine compute_curl_operator_code
 

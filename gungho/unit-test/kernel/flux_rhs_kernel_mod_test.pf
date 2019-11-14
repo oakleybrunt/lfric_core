@@ -178,7 +178,7 @@ contains
                         nqp_h, nqp_v
 
     integer, pointer :: map_f(:) => null(), &
-                        map_u(:) => null(), & 
+                        map_u(:) => null(), &
                         map_chi(:) => null()
 
     real(kind=r_def), pointer :: xp(:,:) => null()
@@ -253,7 +253,7 @@ contains
 
 
     call flux_rhs_code( rhs_p%vspace%get_nlayers(), &
-                        rhs_p%data, &                     
+                        rhs_p%data, &
                         u_p%data, &
                         f_p%data, &
                         chi_p(1)%data, &

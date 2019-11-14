@@ -14,7 +14,7 @@ module visualisation_mod
                                            geometry_spherical
   use fs_continuity_mod,             only: W0, W3
   use mesh_mod,                      only: mesh_type
-  use mesh_collection_mod,           only: mesh_collection 
+  use mesh_collection_mod,           only: mesh_collection
   use function_space_mod,            only: function_space_type
   use function_space_collection_mod, only: function_space_collection
   use project_output_mod,            only: project_output
@@ -124,7 +124,7 @@ subroutine vis_field_list_destructor(self)
   return
 end subroutine vis_field_list_destructor
 
-!------------------------------------------------------------------------------- 
+!-------------------------------------------------------------------------------
 
 !> @brief Initialises Catalyst coprocessor
 !> @details Initialises coprocessor library and creates a visualisation pipeline

@@ -6,7 +6,7 @@
 !> @brief Defines and implements bell-shaped hill orography profile in
 !>        Cartesian coordinates.
 !>
-!> @details This module contains type definition and routines to calculate   
+!> @details This module contains type definition and routines to calculate
 !>          analytic orography profile of bell-shaped mountain function from
 !>          Cartesian coordinates: x and y.
 !>          Reference: Lock et al. (2012), Section 3b.
@@ -56,7 +56,7 @@ module bell_orography_cartesian_mod
     procedure, public, pass(self) :: analytic_orography => bell_orography_cartesian
     procedure                     :: bell_coordinate_cartesian
     procedure                     :: write_bell_cartesian_type
-    
+
   end type bell_cartesian_type
 
   ! Constructor for bell_cartesian_type
@@ -68,7 +68,7 @@ contains
 
   !=============================================================================
   !> @brief Constructor for bell-shaped hill function in Cartesian
-  !>        coordinates. 
+  !>        coordinates.
   !>
   !> @param[in] mountain_height Height of mountain function (m)
   !> @param[in] half_width_x    Half-width of mountain function in x direction (m)
@@ -77,19 +77,19 @@ contains
   !> @param[in] y_centre        y coordinate centre of mountain function (m)
   !> @param[in] direction       Direction of mountain function read (x, y or both)
   !> @return    self            An object of type bell_cartesian_type
-  !=============================================================================   
+  !=============================================================================
   type(bell_cartesian_type) function bell_cartesian_constructor(     &
                                                         mountain_height, &
                                                         half_width_x,    &
                                                         half_width_y,    &
                                                         x_centre,        &
                                                         y_centre,        &
-                                                        direction )      & 
+                                                        direction )      &
                                                         result(self)
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     real(kind=r_def),    intent(in) :: mountain_height, &
                                        half_width_x,    &
                                        half_width_y,    &
@@ -114,16 +114,16 @@ contains
   !> @param[in] self      An object of type bell_cartesian_type
   !> @param[in] chi_1     x coordinate (m)
   !> @param[in] chi_2     y coordinate (m)
-  !> @return    chi_surf  Surface height (m)  
-  !=============================================================================  
+  !> @return    chi_surf  Surface height (m)
+  !=============================================================================
   function bell_orography_cartesian(self, chi_1, chi_2) result(chi_surf)
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(bell_cartesian_type),   intent(in) :: self
-    real(kind=r_def),             intent(in) :: chi_1, chi_2  
-    real(kind=r_def)                         :: chi_surf 
+    real(kind=r_def),             intent(in) :: chi_1, chi_2
+    real(kind=r_def)                         :: chi_surf
     ! Internal variables
     real(kind=r_def) :: chisurf_arg(2)
 
@@ -140,12 +140,12 @@ contains
   !=============================================================================
   !> @brief Transforms/scales coordinate for Cartesian bell-shaped hill
   !>       function.
-  !> 
+  !>
   !> @param[in]  self         An object of type bell_cartesian_type
   !> @param[in]  chi_1        x coordinate (m)
   !> @param[in]  chi_2        y coordinate (m)
   !> @param[out] chisurf_arg  Bell-shaped hill function
-  !>                          transformed/scaled arguments  
+  !>                          transformed/scaled arguments
   !=============================================================================
   subroutine bell_coordinate_cartesian(self, chi_1, chi_2, chisurf_arg)
 
@@ -153,10 +153,10 @@ contains
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(bell_cartesian_type),   intent(in)  :: self
     real(kind=r_def),             intent(in)  :: chi_1, chi_2
-    real(kind=r_def),             intent(out) :: chisurf_arg(2)   
+    real(kind=r_def),             intent(out) :: chisurf_arg(2)
     ! Internal variables
     real(kind=r_def)               :: chi_1_per, chi_2_per
 
@@ -187,23 +187,23 @@ contains
               "No valid orography directions (x, y, or xy) selected. "
         call log_event(log_scratch_space, LOG_LEVEL_ERROR)
     end select
-       
+
     return
   end subroutine bell_coordinate_cartesian
 
   !=============================================================================
   !> @brief Writes out parameters of bell-shaped hill function in
-  !>        Cartesian coordinates. 
+  !>        Cartesian coordinates.
   !>
   !> @param[in] self An object of type bell_cartesian_type
-  !=============================================================================   
+  !=============================================================================
   subroutine write_bell_cartesian_type(self)
 
     use constants_mod, only : str_short, str_max_filename
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(bell_cartesian_type), intent(in) :: self
     ! Temporary write variables
     integer(kind=i_def),             parameter :: funit = 777
@@ -213,7 +213,7 @@ contains
 
     ! Temporary write
     open(funit, file = trim(fname), status = 'replace')
-    write(funit,'(A)') & 
+    write(funit,'(A)') &
           "Bell-shaped hill parameters in Cartesian coordinates: "
     write(funit, fmtreal) "mountain_height = ", self%mountain_height
     write(funit, fmtreal) "half_width_x    = ", self%half_width_x
@@ -225,5 +225,5 @@ contains
 
     return
   end subroutine write_bell_cartesian_type
-  
+
 end module bell_orography_cartesian_mod

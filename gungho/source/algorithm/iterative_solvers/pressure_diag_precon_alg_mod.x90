@@ -8,7 +8,7 @@
 !>
 !>@details This preconditioner calculates \f$y = Px = M^{-1}x\f$ where
 !> \f$M\f$ is the mass matrix for the pressure space.
-!> 
+!>
 
 module pressure_diag_precon_alg_mod
   use vector_mod,                      only : abstract_vector_type
@@ -19,7 +19,7 @@ module pressure_diag_precon_alg_mod
                                               LOG_LEVEL_ERROR, &
                                               log_scratch_space
   use constants_mod,                   only : i_def, r_def
-            
+
   implicit none
 
   type, public, extends(abstract_preconditioner_type) :: pressure_diag_preconditioner_type
@@ -62,10 +62,10 @@ contains
   !>@brief Apply the preconditioner to calculate \f$y = P.x = x\f$
   !>
   !>@details Apply the vertical preconditioner \f$y = H_z^{-1}x\f$
-  !> 
+  !>
   !>@param[inout] self instance of type pressure_diag_preconditioner_type
   !>@param[inout] x field-vector containing the right hand side of the pressure
-  !>@param[inout] y field-vector containing the solution 
+  !>@param[inout] y field-vector containing the solution
   subroutine apply_pressure_diag_preconditioner(self, x, y)
     use dg_matrix_vector_kernel_mod, only: dg_matrix_vector_kernel_type
     use operator_mod,                only: operator_type
@@ -95,7 +95,7 @@ contains
     end select
 
     nullify(m3_inv)
-    
+
   end subroutine apply_pressure_diag_preconditioner
 
   !>@brief Destructor

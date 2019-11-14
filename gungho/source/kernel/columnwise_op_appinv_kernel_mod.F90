@@ -10,7 +10,7 @@
 !>
 !> @detail Given a field \f$x\f$, this calculates \f$y+=A^{-1}x\f$, i.e.
 !> solves \f$A\delta y=x\f$ for \f$\delta y\f$ and adds this to \f$y\f$.
-!> Only works if the assembled matrix is square and tridiagonal, and the 
+!> Only works if the assembled matrix is square and tridiagonal, and the
 !> Thomas algorithm can be used. The PSY layer should check whether the
 !> matrix has the correct properties.
 !>
@@ -25,7 +25,7 @@ use argument_mod,            only : arg_type, func_type,                    &
                                     GH_READ, GH_INC,                        &
                                     ANY_SPACE_1,                            &
                                     GH_COLUMN_INDIRECTION_DOFMAP,           &
-                                    CELLS 
+                                    CELLS
 
 use constants_mod,           only : r_def, i_def
 
@@ -73,7 +73,7 @@ contains
   !> @param [in] indirection_dofmap_ indirection map for function space
   subroutine columnwise_op_appinv_kernel_code(cell,                    &
                                               ncell_2d,                &
-                                              lhs, x,                  & 
+                                              lhs, x,                  &
                                               columnwise_matrix,       &
                                               nrow,                    &
                                               bandwidth,               &
@@ -84,7 +84,7 @@ contains
                                               ndf, undf, map,          &
                                               indirection_dofmap)
     implicit none
-    
+
     ! Arguments
     integer(kind=i_def), intent(in) :: cell, ncell_2d
     integer(kind=i_def), intent(in) :: nrow, bandwidth
@@ -104,19 +104,19 @@ contains
     real(kind=r_def), dimension(nrow) :: c_prime, d_prime
     ! inverse denominator
     real(kind=r_def) :: inv_denom
-    
+
     ! Spurious instructions to avoid 'unused variable' warnings
     i = alpha + beta + gamma_m + gamma_p
 
     ! Step 1: Forward sweep, loop over all rows
     do i=1, nrow
        mu_i = map(1) + indirection_dofmap(i) - 1
-       if (i == 1) then 
+       if (i == 1) then
           ! First row
           inv_denom = 1.0_r_def/columnwise_matrix(2,i,cell)
           c_prime(i) = inv_denom * columnwise_matrix(3,i,cell)
           d_prime(i) = inv_denom * x(mu_i)
-       else 
+       else
           ! Subsequent rows 2,...,nrow-1
           inv_denom = 1.0_r_def / ( columnwise_matrix(2,i,cell) &
                     - columnwise_matrix(1,i,cell) * c_prime(i-1) )
@@ -132,7 +132,7 @@ contains
     do i=nrow,1,-1
        ! Overwrite d' with solution and then copy to correct position in vector
        mu_i = map(1) + indirection_dofmap(i) - 1
-       if (i<nrow) then 
+       if (i<nrow) then
           d_prime(i) = d_prime(i) - c_prime(i) * d_prime(i+1)
        end if
        lhs(mu_i) = d_prime(i)

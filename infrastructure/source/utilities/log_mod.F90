@@ -179,7 +179,7 @@ contains
   !>
   !> If the code is running on multiple MPI ranks, the event description will
   !> be sent to a log file. For serial executions, the event description is
-  !> sent to the terminal along with timestamp and level information. 
+  !> sent to the terminal along with timestamp and level information.
   !> For the most serious events (a severity level equal to
   !> or greater than LOG_LEVEL_ERROR), execution of the code will be aborted.
   !>
@@ -221,7 +221,7 @@ contains
         case ( LOG_LEVEL_ERROR : LOG_LEVEL_ALWAYS - 1)
           unit = alert_unit
           tag  = 'ERROR'
-          abort_run = .true. 
+          abort_run = .true.
         case ( LOG_LEVEL_ALWAYS : )
           unit = info_unit
           tag  = 'INFO'

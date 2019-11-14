@@ -5,8 +5,8 @@
 !-----------------------------------------------------------------------------
 !> @brief Computes the rhs for the mapping of the wind field.
 !>
-!> The kernel computes a very crude approximation to the rhs of the equation u = u0 
-!> where u0 is the physical wind field. The computational wind field is 
+!> The kernel computes a very crude approximation to the rhs of the equation u = u0
+!> where u0 is the physical wind field. The computational wind field is
 !> projected onto using Galerkin projection.
 !>
 module map_u_kernel_mod
@@ -18,7 +18,7 @@ module map_u_kernel_mod
                                       CELLS, GH_QUADRATURE_XYoZ, &
                                       GH_REAL
   use constants_mod,           only : r_def, i_def
-  use fs_continuity_mod,       only : W2, W3, WTHETA 
+  use fs_continuity_mod,       only : W2, W3, WTHETA
   use kernel_mod,              only : kernel_type
 
   implicit none
@@ -76,8 +76,8 @@ contains
 !! @param[in] wqp_h Horizontal quadrature weights
 !! @param[in] wqp_v Vertical quadrature weights
 subroutine map_u_code(nlayers, &
-                      rhs, & 
-                      u_lon, u_lat, u_up, & 
+                      rhs, &
+                      u_lon, u_lat, u_up, &
                       chi_1, chi_2, chi_3,  &
                       ndf_w2, undf_w2, &
                       map_w2, basis_w2, &
@@ -105,9 +105,9 @@ subroutine map_u_code(nlayers, &
   integer, dimension(ndf_w3),  intent(in) :: map_w3
   integer, dimension(ndf_wth), intent(in) :: map_wth
 
-  real(kind=r_def), intent(in), dimension(3,ndf_w2, nqp_h,nqp_v)  :: basis_w2 
-  real(kind=r_def), intent(in), dimension(1,ndf_w3, nqp_h,nqp_v)  :: basis_w3 
-  real(kind=r_def), intent(in), dimension(1,ndf_wth, nqp_h,nqp_v) :: basis_wt 
+  real(kind=r_def), intent(in), dimension(3,ndf_w2, nqp_h,nqp_v)  :: basis_w2
+  real(kind=r_def), intent(in), dimension(1,ndf_w3, nqp_h,nqp_v)  :: basis_w3
+  real(kind=r_def), intent(in), dimension(1,ndf_wth, nqp_h,nqp_v) :: basis_wt
   real(kind=r_def), intent(in), dimension(3,ndf_chi,nqp_h,nqp_v)  :: chi_diff_basis
   real(kind=r_def), intent(in), dimension(1,ndf_chi,nqp_h,nqp_v)  :: chi_basis
 
@@ -158,7 +158,7 @@ subroutine map_u_code(nlayers, &
           u_spherical(2) = u_lat(map_w3(1)+k)*basis_w3(1,1,qp1,qp2)
           u_spherical(3) = u_up(map_wth(1)+k)*basis_wt(1,1,qp1,qp2) &
                          + u_up(map_wth(2)+k)*basis_wt(1,2,qp1,qp2)
-          u_physical     = sphere2cart_vector(u_spherical,llr) 
+          u_physical     = sphere2cart_vector(u_spherical,llr)
         else
           u_physical(1) = u_lon(map_w3(1)+k)*basis_w3(1,1,qp1,qp2)
           u_physical(2) = u_lat(map_w3(1)+k)*basis_w3(1,1,qp1,qp2)
@@ -166,7 +166,7 @@ subroutine map_u_code(nlayers, &
                         + u_up(map_wth(2)+k)*basis_wt(1,2,qp1,qp2)
          end if
 
-        do df = 1, ndf_w2 
+        do df = 1, ndf_w2
           integrand = dot_product(matmul(jacobian(:,:,qp1,qp2),&
                                          basis_w2(:,df,qp1,qp2)),u_physical)
           rhs(map_w2(df) + k) = rhs(map_w2(df) + k) &

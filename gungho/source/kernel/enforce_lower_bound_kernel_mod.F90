@@ -6,8 +6,8 @@
 !> @brief Enforces (non-conservatively) a lower bound on a field, such that
 !>        if the value of the field is below this value, then the field is set
 !>        to zero.  The rational behind this is that if the threshold is set
-!>        to be O(SPACING(field)) then any small floating point errors will 
-!>        be removed. 
+!>        to be O(SPACING(field)) then any small floating point errors will
+!>        be removed.
 module enforce_lower_bound_kernel_mod
 
   use argument_mod,  only : arg_type, func_type,       &
@@ -66,10 +66,10 @@ subroutine enforce_lower_bound_code(nlayers, field, lower_bound, &
 
   do k = 0, nlayers-1
     do df = 1, ndf
-        
+
       ! Clip field
       if (field(map(df)+k) < lower_bound) field(map(df)+k) = 0.0_r_def
-        
+
     end do
   end do
 

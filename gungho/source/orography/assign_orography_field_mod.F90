@@ -3,7 +3,7 @@
 ! For further details please refer to the file COPYRIGHT.txt
 ! which you should have received as part of this distribution.
 !-----------------------------------------------------------------------
-!> @brief Module to assign the values of the surface height to model  
+!> @brief Module to assign the values of the surface height to model
 !> coordinates using analytic orography function.
 !-------------------------------------------------------------------------------
 module assign_orography_field_mod
@@ -46,36 +46,36 @@ module assign_orography_field_mod
 contains
 
   !=============================================================================
-  !> @brief Updates model vertical coordinate using selected analytic orography.  
+  !> @brief Updates model vertical coordinate using selected analytic orography.
   !>
-  !> @details Model coordinate array of size 3 for the type field is passed in 
-  !> to be updated. The field proxy is used to break encapsulation and access 
+  !> @details Model coordinate array of size 3 for the type field is passed in
+  !> to be updated. The field proxy is used to break encapsulation and access
   !> the function space and the data attributes of the field so that its values
   !> can be updated. Model coordinates are updated by calling single column
   !> subroutines, one for spherical and the other for Cartesian domain. These
-  !> routines calculate analytic orography from horizontal coordinates and then 
-  !> update the vertical coordinate.  
+  !> routines calculate analytic orography from horizontal coordinates and then
+  !> update the vertical coordinate.
   !>
   !> @param[in,out] chi     Model coordinate array of size 3 (x,y,z) of fields
   !> @param[in]     mesh_id Id of mesh on which this field is attached
-  !============================================================================= 
+  !=============================================================================
   subroutine assign_orography_field(chi, mesh_id)
 
     use field_mod,                      only : field_type, field_proxy_type
     use mesh_mod,                       only : mesh_type
     use mesh_constructor_helper_functions_mod, &
                                         only : domain_size_type
-    use orography_helper_functions_mod, only : calc_domain_size_horizontal                                             
-                                             
+    use orography_helper_functions_mod, only : calc_domain_size_horizontal
+
     implicit none
 
     ! Arguments
     type( field_type ), intent( inout ) :: chi(3)
-    integer(kind=i_def),     intent(in) :: mesh_id  
+    integer(kind=i_def),     intent(in) :: mesh_id
     ! Local variables
     type( field_proxy_type )     :: chi_proxy(3)
     type( mesh_type), pointer    :: mesh => null()
-    type( domain_size_type )     :: domain_size 
+    type( domain_size_type )     :: domain_size
     real(kind=r_def), pointer    :: dof_coords(:,:) => null()
     real(kind=r_def)             :: domain_top, domain_surface
     integer(kind=i_def)          :: cell
@@ -148,27 +148,27 @@ contains
   end subroutine assign_orography_field
 
   !=============================================================================
-  !> @brief Updates spherical vertical coordinate for a single column using 
-  !>        selected analytic orography.  
+  !> @brief Updates spherical vertical coordinate for a single column using
+  !>        selected analytic orography.
   !>
   !> @details Calculates analytic orography from chi_1 and chi_2 horizontal
-  !>          coordinates and then updates chi_3. As model coordinates for 
+  !>          coordinates and then updates chi_3. As model coordinates for
   !>          spherical domain are currently (x,y,z) form they first need to be
   !>          converted to (long,lat,r) to assign orography to the model surface.
-  !>          After evaluation of the new surface height chi_3 is updated using  
-  !>          its nondimensional eta coordinate and then transformed back to 
+  !>          After evaluation of the new surface height chi_3 is updated using
+  !>          its nondimensional eta coordinate and then transformed back to
   !>          (x,y,z) form.
   !>
   !> @param[in]     nlayers        Number of vertical layers
   !> @param[in]     ndf            Array size and loop bound for map
-  !> @param[in]     undf           Column coordinates' array size and loop bound 
+  !> @param[in]     undf           Column coordinates' array size and loop bound
   !> @param[in]     map            Indirection map
   !> @param[in]     domain_surface Physical height of flat domain surface (m)
   !> @param[in]     domain_top     Physical height of domain top (m)
-  !> @param[in,out] chi_1          Size undf x coord 
+  !> @param[in,out] chi_1          Size undf x coord
   !> @param[in,out] chi_2          Size undf y coord
   !> @param[in,out] chi_3          Size undf z coord
-  !=============================================================================  
+  !=============================================================================
   subroutine assign_orography_spherical(nlayers, ndf, undf, map,    &
                                         domain_surface, domain_top, &
                                         chi_1, chi_2, chi_3)
@@ -177,8 +177,8 @@ contains
 
     ! Arguments
     integer(kind=i_def), intent(in)    :: nlayers, undf
-    integer(kind=i_def), intent(in)    :: ndf 
-    integer(kind=i_def), intent(in)    :: map(ndf) 
+    integer(kind=i_def), intent(in)    :: ndf
+    integer(kind=i_def), intent(in)    :: map(ndf)
     real(kind=r_def),    intent(in)    :: domain_surface, domain_top
     real(kind=r_def),    intent(inout) :: chi_1(undf), chi_2(undf), chi_3(undf)
     ! Internal variables
@@ -191,23 +191,23 @@ contains
     ! Calculate orography and update chi_3
     do df = 1, ndf
       do k = 0, nlayers-1
-        dfk = map(df)+k 
+        dfk = map(df)+k
 
         ! Model coordinates for spherical domain are in (x,y,z) form so they need
-        ! to be converted to (long,lat,r) first   
+        ! to be converted to (long,lat,r) first
         call xyz2llr(chi_1(dfk), chi_2(dfk), chi_3(dfk), longitude, latitude, r)
 
         ! Calculate surface height for each DoF using selected analytic orography
         chi_oro = orography_profile%analytic_orography(longitude, latitude)
 
-        ! Calculate nondimensional coordinate from current height coordinate 
+        ! Calculate nondimensional coordinate from current height coordinate
         ! (chi_3) with flat domain_surface
         eta = z2eta_linear(r, domain_surface, domain_top)
 
         ! Calculate new surface_height from flat domain_surface and orography
         surface_height = domain_surface + chi_oro
 
-        ! Calculate new height spherical coordinate (chi_3_r) from its  
+        ! Calculate new height spherical coordinate (chi_3_r) from its
         ! nondimensional coordinate eta and surface_height
         chi_3_r = eta2z_linear(eta, surface_height, domain_top)
 
@@ -221,24 +221,24 @@ contains
   end subroutine assign_orography_spherical
 
   !=============================================================================
-  !> @brief Updates Cartesian vertical coordinate for a single column using 
-  !>        selected analytic orography.  
+  !> @brief Updates Cartesian vertical coordinate for a single column using
+  !>        selected analytic orography.
   !>
   !> @details Calculates analytic orography from chi_1 and chi_2 horizontal
-  !>          coordinates and then updates chi_3. After evaluation of the new 
-  !>          surface height chi_3 is updated using its nondimensional eta 
+  !>          coordinates and then updates chi_3. After evaluation of the new
+  !>          surface height chi_3 is updated using its nondimensional eta
   !>          coordinate.
   !>
   !> @param[in]     nlayers        Number of vertical layers
   !> @param[in]     ndf            Array size and loop bound for map
-  !> @param[in]     undf           Column coordinates' array size and loop bound 
+  !> @param[in]     undf           Column coordinates' array size and loop bound
   !> @param[in]     map            Indirection map
   !> @param[in]     domain_surface Physical height of flat domain surface (m)
   !> @param[in]     domain_top     Physical height of domain top (m)
-  !> @param[in,out] chi_1          Size undf x coord 
+  !> @param[in,out] chi_1          Size undf x coord
   !> @param[in,out] chi_2          Size undf y coord
   !> @param[in,out] chi_3          Size undf z coord
-  !=============================================================================  
+  !=============================================================================
   subroutine assign_orography_cartesian(nlayers, ndf, undf, map,   &
                                        domain_surface, domain_top, &
                                        chi_1, chi_2, chi_3)
@@ -247,8 +247,8 @@ contains
 
     ! Arguments
     integer(kind=i_def), intent(in)    :: nlayers, undf
-    integer(kind=i_def), intent(in)    :: ndf 
-    integer(kind=i_def), intent(in)    :: map(ndf) 
+    integer(kind=i_def), intent(in)    :: ndf
+    integer(kind=i_def), intent(in)    :: map(ndf)
     real(kind=r_def),    intent(in)    :: domain_surface, domain_top
     real(kind=r_def),    intent(inout) :: chi_1(undf), chi_2(undf), chi_3(undf)
     ! Internal variables
@@ -259,12 +259,12 @@ contains
     ! Calculate orography and update chi_3
     do df = 1, ndf
       do k = 0, nlayers-1
-        dfk = map(df)+k 
+        dfk = map(df)+k
 
         ! Calculate surface height for each DoF using selected analytic orography
         chi_oro = orography_profile%analytic_orography(chi_1(dfk), chi_2(dfk))
 
-        ! Calculate nondimensional coordinate from current height coordinate 
+        ! Calculate nondimensional coordinate from current height coordinate
         ! (chi_3) with flat domain_surface
         eta = z2eta_linear(chi_3(dfk), domain_surface, domain_top)
 
@@ -274,7 +274,7 @@ contains
         ! Calculate new height coordinate from its nondimensional coordinate
         ! eta and surface_height
         chi_3(dfk) = eta2z_linear(eta, surface_height, domain_top)
-      end do 
+      end do
     end do
 
     return

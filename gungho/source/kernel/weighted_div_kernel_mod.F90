@@ -53,7 +53,7 @@ module weighted_div_kernel_mod
 
 contains
 
-!> @brief Computes the LMA form of the divegence operator 
+!> @brief Computes the LMA form of the divegence operator
 !! @param[in] cell Cell number
 !! @param[in] nlayers Number of layers.
 !! @param[in] ncell_3d ncell*ndf
@@ -137,7 +137,7 @@ subroutine weighted_div_code(cell, nlayers, ncell_3d,             &
         end do
       end do
     end do
-  end do 
+  end do
 
 end subroutine weighted_div_code
 

@@ -63,7 +63,7 @@ subroutine wetrho_code(nlayers,                         &
   implicit none
 
   ! Arguments
-  integer(kind=i_def),                     intent(in) :: nlayers 
+  integer(kind=i_def),                     intent(in) :: nlayers
   integer(kind=i_def),                     intent(in) :: ndf_wth, undf_wth
   integer(kind=i_def), dimension(ndf_wth), intent(in) :: map_wth
 

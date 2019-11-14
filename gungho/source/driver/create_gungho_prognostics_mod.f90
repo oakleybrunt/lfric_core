@@ -5,7 +5,7 @@
 !-----------------------------------------------------------------------------
 
 !> @brief Create empty fields for use by the gungho model
-!> @details Creates the empty prognostic fields that will be later 
+!> @details Creates the empty prognostic fields that will be later
 !>          initialise and used by the gungho model. Field creation
 !>          consists of three stages: constructing the field object,
 !>          placing it in the depository (so it doesn't go out of scope) and
@@ -52,7 +52,7 @@ contains
   !> @param[inout] depository A collection of all fields that need to be
   !>                          kept in scope
   !> @param[inout] prognostic_fields A collection of the fields that make up the
-  !>                                 prognostic variables in the model 
+  !>                                 prognostic variables in the model
   !> @param[inout] mr An array of fields that hold the moisture mixing ratios
   !> @param[inout] moist_dyn An array of the moist dynamics fields
   subroutine create_gungho_prognostics(mesh_id, depository,&
@@ -121,7 +121,7 @@ contains
     if (write_diag .and. use_xios_io) then
 
        ! Set diagnostic output handlers
- 
+
        ! Face domain
 
        tmp_write_ptr => xios_write_field_face
@@ -155,7 +155,7 @@ contains
          call mr(imr)%set_write_behaviour(tmp_write_ptr)
        end do
 
-    end if 
+    end if
 
     if ( checkpoint_write .or. checkpoint_read) then
 

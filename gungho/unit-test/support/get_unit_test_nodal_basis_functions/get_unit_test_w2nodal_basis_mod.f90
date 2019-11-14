@@ -5,7 +5,7 @@
 !-----------------------------------------------------------------------------
 
 module get_unit_test_w2nodal_basis_mod
-! A module containing a collection of helper routines that provide canned 
+! A module containing a collection of helper routines that provide canned
 ! basis functions (and differential basis functions) evaluated on w2 nodal
 ! points for use when writing unit tests of kernels.
 !
@@ -28,12 +28,12 @@ module get_unit_test_w2nodal_basis_mod
             get_w3_w2nodal_basis
 
   contains
-  
+
 !---------------------------------------------------------------------
 
   subroutine get_w2_w2nodal_basis(basis_w2)
     ! Return the basis function for a field on a w2 function space
-    ! evaluated on w2 nodal points 
+    ! evaluated on w2 nodal points
     implicit none
     real(r_def), allocatable, intent(out) :: basis_w2(:,:,:)
 
@@ -66,8 +66,8 @@ module get_unit_test_w2nodal_basis_mod
 !---------------------------------------------------------------------
 
   subroutine get_w0_w2nodal_basis(basis_w0)
-    ! Return the basis function for a field on a w0 function space 
-    ! evaluated on w2 nodal points 
+    ! Return the basis function for a field on a w0 function space
+    ! evaluated on w2 nodal points
     implicit none
     real(r_def), allocatable, intent(out) :: basis_w0(:,:,:)
 
@@ -91,8 +91,8 @@ module get_unit_test_w2nodal_basis_mod
 !---------------------------------------------------------------------
 
   subroutine get_w0_w2nodal_diff_basis(diff_basis_w0)
-    ! Return the diff basis function for a field on a w0 function space 
-    ! evaluated on w2 nodal points 
+    ! Return the diff basis function for a field on a w0 function space
+    ! evaluated on w2 nodal points
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_w0(:,:,:)
 
@@ -133,7 +133,7 @@ module get_unit_test_w2nodal_basis_mod
 
   subroutine get_w3_w2nodal_basis(basis_w3)
     ! Return the basis function for a field on a w3 function space
-    ! evaluated on w2 nodal points 
+    ! evaluated on w2 nodal points
 
     implicit none
 

@@ -7,7 +7,7 @@
 !!             the split advection scheme.
 !!
 !!  @details   The routine return_mass returns the mass which passes through a
-!!             cell wall in a given timestep. 
+!!             cell wall in a given timestep.
 !!             The inputs to the routine are the departure distance and the rho
 !!             values for the neighbouring cells (in 1D), and also the subgrid
 !!             coefficients for rho.
@@ -316,13 +316,13 @@ contains
 
 
   !--------------------------------------------------------------------------------
-  !>  @brief  Returns the W2 dof to update dependent on cell orientation. If the 
+  !>  @brief  Returns the W2 dof to update dependent on cell orientation. If the
   !!          cell has orientation 1 then w2_dof = local_dof but if
   !!          cell has orientation 2 then local_dof = 1 returns w2_dof = 2
   !!          due to the orientation.
   !!
   !!  @param[in]   orientation    Orientation of the cell
-  !!  @param[in]   local_dof      W2 dof assuming the cell has orientation 
+  !!  @param[in]   local_dof      W2 dof assuming the cell has orientation
   !!  @param[out]  w2_dof         Actual W2 dof given the cell's orientation
   !--------------------------------------------------------------------------------
   function w2_dof(orientation,local_dof)
@@ -408,7 +408,7 @@ contains
   !!  @param[in]   n_cells_to_sum     Number of cells to sum
   !!  @param[in]   k                  Cell for which mass flux is calculated for
   !!  @param[in]   nlayers            Number of vertical levels
-  !!  @param[in]   edge               Each cell has two edges in the vertical, 
+  !!  @param[in]   edge               Each cell has two edges in the vertical,
   !!                                  edge=1 denotes the top edge, edge=0 denotes
   !!                                  the bottom edge
   !--------------------------------------------------------------------------------

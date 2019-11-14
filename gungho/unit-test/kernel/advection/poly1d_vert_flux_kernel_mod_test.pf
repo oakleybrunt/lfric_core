@@ -4,7 +4,7 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> Test the flux computation using 1d polynomials 
+!> Test the flux computation using 1d polynomials
 module poly1d_vert_flux_kernel_mod_test
 
   use constants_mod, only : i_def, r_def
@@ -29,7 +29,7 @@ contains
 
     use poly1d_vert_flux_kernel_mod, only: poly1d_vert_flux_code
 
-    implicit none 
+    implicit none
 
     class(poly1d_vert_flux_test_type), intent(inout) :: this
 
@@ -56,7 +56,7 @@ contains
     real(r_def), dimension(order+1,2,undf_w3) :: coeff
 
     integer(i_def) :: df, k
-    
+
     map_w3(1) = 1
     do df = 1,4
       map_w2(df) = 1 + (df-1)*nlayers
@@ -73,7 +73,7 @@ contains
     out_face_normal(3,6) =  1.0_r_def
 
     wind(:) = 1.0_r_def
-    
+
     basis_w2 = 0.0_r_def
     basis_w2(1,1,1) = 1.0_r_def
     basis_w2(2,2,2) = -1.0_r_def
@@ -81,7 +81,7 @@ contains
     basis_w2(2,4,4) = -1.0_r_def
     basis_w2(3,5,5) = 1.0_r_def
     basis_w2(3,6,6) = 1.0_r_def
-   
+
     do k = 1,nlayers
       density(k) = real(k,r_def)
     end do

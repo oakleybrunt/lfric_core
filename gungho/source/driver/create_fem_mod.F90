@@ -6,7 +6,7 @@
 
 !> @brief init and final for fem specific choices for model
 
-!> @details Create and destroy a collection of function spaces and the coordinate 
+!> @details Create and destroy a collection of function spaces and the coordinate
 !>          field (chi)
 
 module create_fem_mod
@@ -23,7 +23,7 @@ module create_fem_mod
   use function_space_chain_mod,       only : function_space_chain_type, &
                                              multigrid_function_space_chain, &
                                              W2_multigrid_function_space_chain, &
-                                             wtheta_multigrid_function_space_chain  
+                                             wtheta_multigrid_function_space_chain
   use assign_coordinate_field_mod,    only : assign_coordinate_field
   use assign_orography_field_mod,     only : assign_orography_field
   use log_mod,                        only : log_event,         &
@@ -121,7 +121,7 @@ module create_fem_mod
     if (l_multigrid) then
        multigrid_function_space_chain        = function_space_chain_type()
        w2_multigrid_function_space_chain     = function_space_chain_type()
-       wtheta_multigrid_function_space_chain = function_space_chain_type()       
+       wtheta_multigrid_function_space_chain = function_space_chain_type()
        write(log_scratch_space,'(A,I1)') &
             'init_fem: Intialising function space chains Multigrid levels = ', &
                                          multigrid_chain_nitems
@@ -150,10 +150,10 @@ module create_fem_mod
                'Adding function_space id ', fs%get_id(), &
                ' to wtheta_multigrid function_space chain'
           call log_event( log_scratch_space, LOG_LEVEL_INFO )
-          call wtheta_multigrid_function_space_chain%add( fs )          
+          call wtheta_multigrid_function_space_chain%add( fs )
        end do
     end if
-    
+
 
     nullify( fs )
     call log_event( 'FEM specifics created', LOG_LEVEL_INFO )

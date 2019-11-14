@@ -87,7 +87,7 @@ contains
     ! Dofmaps
     integer(i_def), allocatable :: map_w2(:,:)
     integer(i_def), allocatable :: map_w3(:,:)
- 
+
    ! Basis functions
     real(r_def),    allocatable :: diff_basis_w2(:,:,:,:)
     real(r_def),    allocatable :: basis_w3(:,:,:,:)
@@ -115,7 +115,7 @@ contains
     ! Get canned basis functions
     call get_w2_q3x3x3_diff_basis(diff_basis_w2)
     call get_w3_q3x3x3_basis(basis_w3)
- 
+
     ! Create the data
     allocate( u_field( undf_w2 ) )
     allocate( r_rho( undf_w3 ) )
@@ -141,9 +141,9 @@ contains
                        wh,              &
                        wv               &
                        )
-    end do 
+    end do
 
-    ! Simple test, check when u = const, div(u) = 0    
+    ! Simple test, check when u = const, div(u) = 0
     answer(:) = 0.0_r_def
     @assertEqual(answer(:), r_rho(:), tol)
 

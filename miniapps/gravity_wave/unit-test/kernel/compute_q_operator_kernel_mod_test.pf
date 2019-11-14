@@ -118,8 +118,8 @@ contains
       call this%chi(i)%initialise( vector_space = this%w0_fs )
     end do
 
-    q_p = this%q%get_proxy()   
- 
+    q_p = this%q%get_proxy()
+
     ndf_w2  = q_p%fs_to%get_ndf()
     dim_w2 = q_p%fs_to%get_dim_space( )
     allocate(this%basis_w2(dim_w2 ,ndf_w2, nqp_h, nqp_v) )
@@ -163,7 +163,7 @@ contains
     class(compute_q_operator_test_type), intent(inout) :: this
 
     type(operator_proxy_type) :: q_p
-    type(field_proxy_type )   :: chi_p(3) 
+    type(field_proxy_type )   :: chi_p(3)
 
     type(mesh_type),pointer   :: mesh => null()
 
@@ -175,7 +175,7 @@ contains
     integer(i_def) :: err
 
     real(r_def) :: dz, dz_test(3)
-     
+
     integer :: nlayers
     integer :: ndf_chi, undf_chi, ndf_w2, ndf_wt
     integer :: nqp_h, nqp_v
@@ -222,11 +222,11 @@ contains
     nlayers = q_p%fs_from%get_nlayers()
     ndf_wt  = q_p%fs_from%get_ndf()
     call q_p%fs_from%compute_basis_function(                     &
-         this%basis_wt, ndf_wt, nqp_h, nqp_v, xp, zp ) 
+         this%basis_wt, ndf_wt, nqp_h, nqp_v, xp, zp )
 
     ndf_w2 = q_p%fs_to%get_ndf()
     call q_p%fs_to%compute_basis_function(                            &
-         this%basis_w2, ndf_w2, nqp_h, nqp_v, xp, zp ) 
+         this%basis_w2, ndf_w2, nqp_h, nqp_v, xp, zp )
 
     call compute_q_operator_init(dz_test, nlayers)
     cell = 1
@@ -250,7 +250,7 @@ contains
 
   end subroutine test_all
 
-  subroutine q_operator( q ) 
+  subroutine q_operator( q )
     use constants_mod, only: r_def
     implicit none
 
@@ -259,7 +259,7 @@ contains
   q = real(reshape( [ &
    0, 0, 0, 0, 2, 1, &
    0, 0, 0, 0, 1, 2 &
- ], shape(q) ),r_def)/6.0_r_def 
+ ], shape(q) ),r_def)/6.0_r_def
 
     return
   end subroutine q_operator

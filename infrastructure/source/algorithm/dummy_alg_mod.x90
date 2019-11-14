@@ -7,7 +7,7 @@
 !> demonstrate psyclone of infrastructure.
 !>
 !> @todo Once infrastructure has gained some proper .x90 source files this
-!>       one should be removed. 
+!>       one should be removed.
 !>
 module dummy_alg_mod
 

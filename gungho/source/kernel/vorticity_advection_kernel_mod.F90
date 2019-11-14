@@ -6,16 +6,16 @@
 !
 !-------------------------------------------------------------------------------
 
-!> @brief Kernel which computes the vorticity component of the rhs of the momentum 
+!> @brief Kernel which computes the vorticity component of the rhs of the momentum
 !>        equation for the nonlinear equations, written in the vector invariant form
 
 
-!> @details The kernel computes the  vorticity component of the rhs of the momentum equation 
+!> @details The kernel computes the  vorticity component of the rhs of the momentum equation
 !>         for the nonlinear equations, written in the vector invariant form
 !>         This consists of four terms:
 !>         Pressure gradient: \f[ cp*\theta*\nabla(\Pi) \f]
 !>         geopotential gradient: \f[ \nabla(\Phi) ( \equiv g for some domains) \f]
-!>         gradient of kinetic energy: \f[ \nabla(1/2*u.u) \f] 
+!>         gradient of kinetic energy: \f[ \nabla(1/2*u.u) \f]
 !>         vorticity advection: \f[ \xi/\rho \times F (with vorticity \xi and mass flux F) \f]
 !>         This results in:
 !>         \f[ r_u = -\xi/\rho \times F - \nabla(\Phi + 1/2*u.u) - cp*\theta*\nabla(\Pi) \f]
@@ -73,11 +73,11 @@ contains
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 Number unique of degrees of freedom  for w2
 !! @param[in] map_w2 Dofmap for the cell at the base of the column for w2
-!! @param[in] w2_basis Basis functions evaluated at quadrature points 
+!! @param[in] w2_basis Basis functions evaluated at quadrature points
 !! @param[in] ndf_w1 Number of degrees of freedom per cell for w1
 !! @param[in] undf_w1 Number unique of degrees of freedom  for w1
 !! @param[in] map_w1 Dofmap for the cell at the base of the column for w1
-!! @param[in] w1_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w1_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] ndf_chi Number of degrees of freedom per cell for chi
 !! @param[in] undf_chi Number unique of degrees of freedom  for chi
 !! @param[in] map_chi Dofmap for the cell at the base of the column for chi
@@ -94,10 +94,10 @@ subroutine vorticity_advection_code(nlayers,                                   &
                                     ndf_chi, undf_chi, map_chi, chi_diff_basis,&
                                     nqp_h, nqp_v, wqp_h, wqp_v                 &
                                     )
-                           
+
   use coordinate_jacobian_mod, only: pointwise_coordinate_jacobian, &
                                      pointwise_coordinate_jacobian_inverse
-  implicit none 
+  implicit none
   ! Arguments
   integer, intent(in) :: nlayers,nqp_h, nqp_v
   integer, intent(in) :: ndf_chi, ndf_w1, ndf_w2
@@ -106,8 +106,8 @@ subroutine vorticity_advection_code(nlayers,                                   &
   integer, dimension(ndf_w1), intent(in) :: map_w1
   integer, dimension(ndf_w2), intent(in) :: map_w2
 
-  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v),  intent(in) :: w2_basis 
-  real(kind=r_def), dimension(3,ndf_w1,nqp_h,nqp_v),  intent(in) :: w1_basis 
+  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v),  intent(in) :: w2_basis
+  real(kind=r_def), dimension(3,ndf_w1,nqp_h,nqp_v),  intent(in) :: w1_basis
   real(kind=r_def), dimension(3,ndf_chi,nqp_h,nqp_v), intent(in) :: chi_diff_basis
 
   real(kind=r_def), dimension(undf_w2),  intent(inout) :: r_u
@@ -121,13 +121,13 @@ subroutine vorticity_advection_code(nlayers,                                   &
   ! Internal variables
   integer               :: df, k, loc
   integer               :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_chi)  :: chi_1_e, chi_2_e, chi_3_e
   real(kind=r_def)                      :: dj
   real(kind=r_def), dimension(3,3)      :: jac, jac_inv
   real(kind=r_def), dimension(3)        :: vorticity_at_quad, u_at_quad, &
                                            vorticity_term, j_vorticity
- 
+
   do k = 0, nlayers-1
   ! Extract element arrays of chi
     do df = 1, ndf_chi
@@ -141,7 +141,7 @@ subroutine vorticity_advection_code(nlayers,                                   &
     ! J*v . ( J^-T*vorticity cross J*u ) /det(J)
     ! This can be simplified through the vector triple product to
     ! J^-T*vorticity . ( J*u cross J*v ) /det(J)
-    ! Which can again be simplified by pulling out the J factor to 
+    ! Which can again be simplified by pulling out the J factor to
     ! J^-T*vorticity . J^-T*( u cross v )
     ! Or equivalently
     ! [(J^-1 * J^-T)*vorticity].( u cross v ) = v.([(J^-1 * J^-T)*vorticity] cross u)
@@ -156,14 +156,14 @@ subroutine vorticity_advection_code(nlayers,                                   &
         end do
         call pointwise_coordinate_jacobian(ndf_chi, chi_1_e, chi_2_e, chi_3_e,  &
                                            chi_diff_basis(:,:,qp1,qp2), jac, dj)
-        jac_inv =  pointwise_coordinate_jacobian_inverse(jac, dj) 
-        jac = matmul(jac_inv,transpose(jac_inv))  
+        jac_inv =  pointwise_coordinate_jacobian_inverse(jac, dj)
+        jac = matmul(jac_inv,transpose(jac_inv))
         j_vorticity = wqp_h(qp1)*wqp_v(qp2)*matmul(jac,vorticity_at_quad)
 
         u_at_quad(:) = 0.0_r_def
-        do df = 1, ndf_w2     
+        do df = 1, ndf_w2
           u_at_quad(:) = u_at_quad(:) + wind( map_w2(df) + k )*w2_basis(:,df,qp1,qp2)
-        end do       
+        end do
         vorticity_term = cross_product(j_vorticity,u_at_quad)
 
         do df = 1, ndf_w2
@@ -174,7 +174,7 @@ subroutine vorticity_advection_code(nlayers,                                   &
       end do
     end do
   end do
-  
+
 end subroutine vorticity_advection_code
 
 end module vorticity_advection_kernel_mod

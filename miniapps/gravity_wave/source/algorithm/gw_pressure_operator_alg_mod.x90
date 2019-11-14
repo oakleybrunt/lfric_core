@@ -126,7 +126,7 @@ contains
     wu => state%vector(igw_u)%get_function_space()
     wp => state%vector(igw_p)%get_function_space()
     wb => state%vector(igw_b)%get_function_space()
-    
+
     ! Temporaries required in operator application
     call self%grad_p%initialise( vector_space = wu )
     call self%div_grad_p%initialise( vector_space = wp )
@@ -136,19 +136,19 @@ contains
     call M_lumped%initialise( vector_space = wb )
     call Mb_lumped_inv%initialise( vector_space = wb )
     select case(b_space)
-      case(b_space_w0)  
+      case(b_space_w0)
         Mb => get_mass_matrix(w0_id)
-      case(b_space_w3)  
+      case(b_space_w3)
         Mb => get_mass_matrix(w3_id)
-      case(b_space_wtheta)  
+      case(b_space_wtheta)
         Mb => get_mass_matrix(wt_id)
     end select
     call invoke( setval_c( ones,     1.0_r_def ),               &
                  setval_c( M_lumped, 0.0_r_def ),               &
                  matrix_vector_kernel_type(M_lumped, ones, Mb), &
                  X_divideby_Y(Mb_lumped_inv, ones, M_lumped) )
-    
-    ! Compute Q (projection) operator 
+
+    ! Compute Q (projection) operator
     Q = operator_type( wu, wb )
     qr = quadrature_xyoz_type(element_order+2, quadrature_rule)
     call invoke( compute_q_operator_type(Q, qr) )
@@ -162,7 +162,7 @@ contains
 
     const1 = self%alpha**2*dt**2*bvf_square
     call invoke( setval_c(ones_u,     1.0_r_def),                        &
-                 setval_c(M_lumped_u, 0.0_r_def),                        & 
+                 setval_c(M_lumped_u, 0.0_r_def),                        &
                  setval_c(QT1,        0.0_r_def),                        &
                  transpose_matrix_vector_kernel_type(QT1, ones_u, Q),    &
                  inc_X_times_Y(QT1, Mb_lumped_inv),                      &
@@ -267,7 +267,7 @@ contains
   !> @param [inout] self the pressure operator
   subroutine destroy_gw_pressure_operator(self)
     implicit none
-    type(gw_pressure_operator_type), intent(inout) :: self    
+    type(gw_pressure_operator_type), intent(inout) :: self
   end subroutine destroy_gw_pressure_operator
 
 end module gw_pressure_operator_alg_mod

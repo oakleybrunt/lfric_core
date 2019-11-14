@@ -47,7 +47,7 @@ contains
 !> @brief     Subroutine to compute right hand side of a galerkin projection of
 !>            a field from W2 into W1
 !> @details   Computes int( gamma * f  dx) to compute the right hand side of the
-!>            galerkin projection of scalar field f into another space of which gamma 
+!>            galerkin projection of scalar field f into another space of which gamma
 !>            is the test function
 !! @param[in] nlayers Number of layers
 !! @param[in] ndf1 Number of degrees of freedom per cell
@@ -56,7 +56,7 @@ contains
 !! @param[in] basis1 Basis functions evaluated at quadrature points
 !! @param[inout] v_w1 Field containing the integral of test_function * field
 !! @param[in] ndf2 Number of degrees of freedom per cell for the field to be projected
-!! @param[in] undf2 Number of (local) unique degrees of freedom of the proj. field 
+!! @param[in] undf2 Number of (local) unique degrees of freedom of the proj. field
 !! @param[in] map2 Dofmap for the cell at the base of the column
 !! @param[in] basis2 Basis functions evaluated at quadrature points
 !! @param[in] u_w2 Field to be projected
@@ -80,15 +80,15 @@ subroutine w2_to_w1_projection_code(nlayers, &
   integer, dimension(ndf1), intent(in) :: map1
   integer, dimension(ndf2), intent(in) :: map2
 
-  real(kind=r_def), intent(in), dimension(3,ndf1,nqp_h,nqp_v) :: basis_w1 
+  real(kind=r_def), intent(in), dimension(3,ndf1,nqp_h,nqp_v) :: basis_w1
   real(kind=r_def), intent(in), dimension(3,ndf2,nqp_h,nqp_v) :: basis_w2
 
   real(kind=r_def), dimension(undf1), intent(inout) :: v_w1
-  real(kind=r_def), dimension(undf2), intent(in)    :: u_w2  
+  real(kind=r_def), dimension(undf2), intent(in)    :: u_w2
 
   real(kind=r_def), dimension(nqp_h), intent(in) ::  wqp_h
   real(kind=r_def), dimension(nqp_v), intent(in) ::  wqp_v
-  
+
   !Internal variables
   integer                        :: df1, df2, k, qp1, qp2
   real(kind=r_def), dimension(3) :: wind
@@ -105,10 +105,10 @@ subroutine w2_to_w1_projection_code(nlayers, &
           vu = wqp_h(qp1)*wqp_v(qp2)*dot_product(basis_w1(:,df1,qp1,qp2),wind)
           v_w1(map1(df1) + k) = v_w1(map1(df1) + k) + vu
         end do
-      end do      
+      end do
     end do
   end do
-  
+
 end subroutine w2_to_w1_projection_code
 
 end module w2_to_w1_projection_kernel_mod

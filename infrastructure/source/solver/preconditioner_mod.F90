@@ -38,5 +38,5 @@ module preconditioner_mod
      end subroutine apply_interface
   end interface
 
-  
+
 end module preconditioner_mod

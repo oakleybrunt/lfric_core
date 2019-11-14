@@ -10,10 +10,10 @@
 !>        upwind reconstruction
 !> @details Compute the flux for a tracer density field using a high order
 !>          polynomial fit to the integrated tracer values. The stencil used for the
-!>          polynomial is centred on the upwind cell. 
-!>          Near the boundaries the order of reconstruction may be reduced 
+!>          polynomial is centred on the upwind cell.
+!>          Near the boundaries the order of reconstruction may be reduced
 !>          if there are not enough points to compute desired order
-!>          This method is only valid for lowest order elements 
+!>          This method is only valid for lowest order elements
 module poly1d_vert_adv_kernel_mod
 
 use argument_mod,      only : arg_type, func_type, mesh_data_type,  &
@@ -58,7 +58,7 @@ contains
 
 !> @brief Computes the vertical fluxes for a tracer density
 !! @param[in]  nlayers Number of layers
-!! @param[in,out] advective Advective update to increment 
+!! @param[in,out] advective Advective update to increment
 !! @param[in]  wind Wind field
 !! @param[in]  tracer Tracer field to advect
 !! @param[in]  coeff Array of polynomial coefficients for interpolation
@@ -85,7 +85,7 @@ subroutine poly1d_vert_adv_code( nlayers,              &
                                  map_w2,               &
                                  global_order,         &
                                  nfaces_v)
-                                    
+
   implicit none
 
   ! Arguments
@@ -107,14 +107,14 @@ subroutine poly1d_vert_adv_code( nlayers,              &
   ! Internal variables
   integer(kind=i_def)            :: k, ij, p, stencil, order, &
                                     m, ijkp, direction
-  real(kind=r_def)               :: w 
+  real(kind=r_def)               :: w
   real(kind=r_def)               :: polynomial_tracer
 
   integer(kind=i_def), allocatable, dimension(:,:) :: smap
 
   ! Compute the offset map for all even orders up to order
   ! The + 3 comes from the minimum number of cells needed
-  ! (central cell and the neighbours either side) 
+  ! (central cell and the neighbours either side)
   allocate( smap(global_order+3,0:global_order/2) )
   smap(:,:) = 0
   do m = 0,global_order,2
@@ -125,7 +125,7 @@ subroutine poly1d_vert_adv_code( nlayers,              &
 
   ij = map_wt(1)
 
-  ! Vertical advective update    
+  ! Vertical advective update
   do k = 1, nlayers - 1
     order = min(global_order, min(2*(k-1), 2*(nlayers-1-k)))
     ! Check if this is the upwind cell
@@ -140,11 +140,11 @@ subroutine poly1d_vert_adv_code( nlayers,              &
     end do
     advective(map_wt(1) + k ) = advective(map_wt(1) + k ) &
                               + wind(map_w2(5) + k )*polynomial_tracer
-      
+
   end do
 
   deallocate( smap )
-  
+
 end subroutine poly1d_vert_adv_code
 
 end module poly1d_vert_adv_kernel_mod

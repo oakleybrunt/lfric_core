@@ -132,7 +132,7 @@ subroutine compute_mass_matrix_w1_code(cell, nlayers, ncell_3d,          &
                             basis_w1(:,df,qp1,qp2)),                          &
                      matmul(transpose(jac_inv(:,:,qp1,qp2)),                  &
                             basis_w1(:,df2,qp1,qp2))                          &
-                                )*dj(qp1,qp2) 
+                                )*dj(qp1,qp2)
                 mm(df,df2,ik) = mm(df,df2,ik) + integrand
              end do
           end do

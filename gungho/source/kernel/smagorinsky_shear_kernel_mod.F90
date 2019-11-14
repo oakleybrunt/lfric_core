@@ -15,7 +15,7 @@ module smagorinsky_shear_kernel_mod
   use constants_mod,     only : r_def, i_def
   use fs_continuity_mod, only : W2, W3, Wtheta
   use kernel_mod,        only : kernel_type
- 
+
   implicit none
 
   !---------------------------------------------------------------------------
@@ -110,7 +110,7 @@ subroutine smagorinsky_shear_code( nlayers,                                 &
 
   ! Internal variables
   integer                                  :: k, km, kp, df
-  real(kind=r_def)                         :: weight_pl_w3, weight_min_w3 
+  real(kind=r_def)                         :: weight_pl_w3, weight_min_w3
   real(kind=r_def)                         :: weight_pl_wth, weight_min_wth
   real(kind=r_def)                         :: sum_sij, ssq12k, ssq11, ssq22, ssq33
   real(kind=r_def)                         :: ssq12up, ssq12, ssq13, ssq23
@@ -118,7 +118,7 @@ subroutine smagorinsky_shear_code( nlayers,                                 &
   real(kind=r_def), dimension(0:nlayers-1) :: dz_w3, idz_w3, idz_w3_2
   real(kind=r_def), dimension(1:nlayers-1) :: idz_wth
   real(kind=r_def), dimension(ndf_chi)     :: chi1_e, chi2_e
-  real(kind=r_def)                         :: smallp=1.0e-14_r_def 
+  real(kind=r_def)                         :: smallp=1.0e-14_r_def
 
   !  ----------
   !  |    |   |
@@ -144,7 +144,7 @@ subroutine smagorinsky_shear_code( nlayers,                                 &
   !
   ! df = 5 is in the centre on the bottom face
   ! df = 6 is in the centre on the top face
- 
+
   ! If the centre of the cell is (i-1/2, j-1/2, k-1/2):
   ! df = 1 is  u(i-1,   j-1/2, k-1/2)
   ! df = 2 is  v(i-1/2, j-1,   k-1/2)
@@ -164,7 +164,7 @@ subroutine smagorinsky_shear_code( nlayers,                                 &
   !     ---------------
   !          |   |
   !          | 3 |
-  !          ----- 
+  !          -----
   !
   ! To get extra cells you could use the new region stencil, this is not on
   ! trunk yet but will be as part of #1449. This would give a stencil of
@@ -204,10 +204,10 @@ subroutine smagorinsky_shear_code( nlayers,                                 &
   idz_w3(k) = 1.0_r_def / dz_w3(k)
   idz_w3_2(k) = idz_w3(k)*idz_w3(k)
 
-  do k = 1, nlayers - 1 
+  do k = 1, nlayers - 1
     km = k - 1
     kp = k + 1
-   
+
     ! dz between adjacent wth/theta levels, held on w3/rho levels
     dz_w3(k) = height_wth(map_wt_stencil(1,1) + kp) - height_wth(map_wt_stencil(1,1) + k)
     idz_w3(k) = 1.0_r_def / dz_w3(k)
@@ -231,12 +231,12 @@ subroutine smagorinsky_shear_code( nlayers,                                 &
             ( idy(k) * (u_n(map_w2_stencil(1,5) + k) - u_n(map_w2_stencil(1,1) + k) ) +                 &
             idx(k) * (u_n(map_w2_stencil(4,1) + k) - u_n(map_w2_stencil(4,2) + k) ) )**2 +              &
             ( idy(k) * (u_n(map_w2_stencil(3,5) + k) - u_n(map_w2_stencil(3,1) + k) ) +                 &
-            idx(k) * (u_n(map_w2_stencil(4,4) + k) - u_n(map_w2_stencil(4,1) + k) ) )**2 ) / 4             
+            idx(k) * (u_n(map_w2_stencil(4,4) + k) - u_n(map_w2_stencil(4,1) + k) ) )**2 ) / 4
 
-  do k = 1, nlayers - 1 
+  do k = 1, nlayers - 1
     km = k - 1
     kp = k + 1
-   
+
     ! Vertical interpolation weights:
     ! Vertical interpolation of w3 to wth levels
     weight_pl_w3 = (height_wth(map_wt_stencil(1,1) + k) - height_w3(map_w3_stencil(1,1) + km)) /             &
@@ -268,14 +268,14 @@ subroutine smagorinsky_shear_code( nlayers,                                 &
     ssq13 = ( ( idz_wth(k) * (u_n(map_w2_stencil(1,1) + k) - u_n(map_w2_stencil(1,1) + km) ) +            &
             idx(k) * (u_n(map_w2_stencil(5,1) + k) - u_n(map_w2_stencil(5,2) + k) ) )**2 +                &
             ( idz_wth(k) * (u_n(map_w2_stencil(3,1) + k) - u_n(map_w2_stencil(3,1) + km) ) +              &
-            idx(k) * (u_n(map_w2_stencil(5,4) + k) - u_n(map_w2_stencil(5,1) + k) ) )**2 ) / 2                 
+            idx(k) * (u_n(map_w2_stencil(5,4) + k) - u_n(map_w2_stencil(5,1) + k) ) )**2 ) / 2
 
     ! ssq23: (dw/dy + dv/dz)^2 averaged to wth
     ! ssq32 = ssq23
     ssq23 = ( ( idy(k) * (u_n(map_w2_stencil(5,5) + k) - u_n(map_w2_stencil(5,1) + k) ) +                 &
             idz_wth(k) * (u_n(map_w2_stencil(4,1) + k) - u_n(map_w2_stencil(4,1) + km) ) )**2 +           &
             ( idy(k) * (u_n(map_w2_stencil(5,1) + k) - u_n(map_w2_stencil(5,3) + k) ) +                   &
-            idz_wth(k) * (u_n(map_w2_stencil(2,1) + k) - u_n(map_w2_stencil(2,1) + km) ) )**2 ) / 2     
+            idz_wth(k) * (u_n(map_w2_stencil(2,1) + k) - u_n(map_w2_stencil(2,1) + km) ) )**2 ) / 2
 
     ! ssq12: (du/dy + dv/dx)^2 on w3 level k
     ! ssq21 = ssq12
@@ -286,7 +286,7 @@ subroutine smagorinsky_shear_code( nlayers,                                 &
               ( idy(k) * (u_n(map_w2_stencil(1,5) + k) - u_n(map_w2_stencil(1,1) + k) ) +                 &
               idx(k) * (u_n(map_w2_stencil(4,1) + k) - u_n(map_w2_stencil(4,2) + k) ) )**2 +              &
               ( idy(k) * (u_n(map_w2_stencil(3,5) + k) - u_n(map_w2_stencil(3,1) + k) ) +                 &
-              idx(k) * (u_n(map_w2_stencil(4,4) + k) - u_n(map_w2_stencil(4,1) + k) ) )**2 ) / 4             
+              idx(k) * (u_n(map_w2_stencil(4,4) + k) - u_n(map_w2_stencil(4,1) + k) ) )**2 ) / 4
 
     ! average ssq21 to wth level k
     ssq12 = weight_pl_w3 * ssq12up + weight_min_w3 * ssq12k

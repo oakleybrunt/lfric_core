@@ -62,7 +62,7 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> @brief Initialises the system for running computing the flux
   !>
-  !> @details Initializes system required for FV flux computation. 
+  !> @details Initializes system required for FV flux computation.
   !>          FV aspects currently only support lowest order elements.
   !>
   !> @param[in] mesh_id Identity of the mesh to create all fields on
@@ -99,7 +99,7 @@ contains
         ! Compute stencil extents
         flux_stencil_extent = int(real(fv_flux_order+1)/2.0,i_def)
         !======================================================================!
-        ! Compute stencil for nonuniform polynomial fit   
+        ! Compute stencil for nonuniform polynomial fit
         ! Initialise PSy layer arrays (this will not be needed when
         ! multi-dimensional field arrays are supported)
         ! This needs some temporary fields for computing undf in the PSy layer
@@ -111,16 +111,16 @@ contains
         reference_element => mesh%get_reference_element()
         ! Number of horizontal neighbours
         nfaces_h = reference_element%get_number_horizontal_faces()
-        ! Number of vertical neighbours is (and always will be) 2 
+        ! Number of vertical neighbours is (and always will be) 2
         nfaces_v = reference_element%get_number_vertical_faces()
 
         if ( oned_reconstruction ) then
           flux_stencil_size = fv_flux_order + 1
         else
-          ! Compute the maximum number of cells in the flux stencil 
+          ! Compute the maximum number of cells in the flux stencil
           ! This occurs on a uniform mesh
           ! (this computation is only correct for quadrilateral meshes)
-          flux2d_stencil_size = 1    
+          flux2d_stencil_size = 1
           do polynomial = 1, fv_flux_order
             if ( mod(polynomial, 2) == 0 ) then
               flux2d_stencil_size = flux2d_stencil_size + nfaces_h
@@ -128,7 +128,7 @@ contains
               flux2d_stencil_size = flux2d_stencil_size + nfaces_h*polynomial
             end if
           end do
-          flux_stencil_size = flux2d_stencil_size  
+          flux_stencil_size = flux2d_stencil_size
         end if
         call psykal_lite_mol_flux_init(w3_field, &
                                        fv_flux_order, flux_stencil_size, &
@@ -193,7 +193,7 @@ contains
   end subroutine flux_alg_init
 
   !=============================================================================
-  !> @details Finalises allocatable arrays and calls finalising routines for 
+  !> @details Finalises allocatable arrays and calls finalising routines for
   !>          kernels that this algorithm initialised.
   subroutine flux_alg_final()
 
@@ -218,7 +218,7 @@ contains
   subroutine flux_alg(mass_flux, density, wind)
 
   implicit none
-  
+
   type(field_type), intent(in)    :: density, wind
   type(field_type), intent(inout) :: mass_flux
 
@@ -228,7 +228,7 @@ contains
 
   type(quadrature_xyoz_type)          :: qr
   type(quadrature_rule_gaussian_type) :: quadrature_rule
-  type(field_type)                    :: rhs_f 
+  type(field_type)                    :: rhs_f
 
   type(function_space_type), pointer  :: u_fs  => null()
 
@@ -252,8 +252,8 @@ contains
                                    vert_flux_coeffs, &
                                    fv_flux_order, nfaces_v)
 
-    case(operators_fem)  
-      ! Project density*wind into the mass flux space 
+    case(operators_fem)
+      ! Project density*wind into the mass flux space
       qr = quadrature_xyoz_type(nqp_exact, quadrature_rule)
 
       mm_w2  => get_mass_matrix(w2_id)

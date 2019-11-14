@@ -85,25 +85,25 @@ contains
     use function_space_mod,            only: function_space_type
     use function_space_collection_mod, only: function_space_collection
     use fs_continuity_mod,             only: W2
-    implicit none    
+    implicit none
     type(function_space_type), intent(in) :: fs_w3
     integer(kind=i_def),       intent(in) :: mg_level
 
-    type(helmholtz_operator_type)         :: self    
+    type(helmholtz_operator_type)         :: self
     type(function_space_type), pointer    :: fs_w2
 
 
     call log_event( 'Constructing MG Helmholtz operator...', LOG_LEVEL_INFO )
     ! get the w2 space from the collection and w3 mesh and element order
     fs_w2     => function_space_collection%get_fs( fs_w3%get_mesh_id(), fs_w3%get_element_order(), W2 )
-    
+
     ! Temporaries required in operator application
     call self%grad_p%initialise(vector_space = fs_w2)
     call self%div_grad_p%initialise(vector_space = fs_w3)
     self%mg_level   = mg_level
-    
+
     call log_event( 'done', LOG_LEVEL_INFO )
-    
+
 
   end function helmholtz_operator_constructor
 
@@ -139,7 +139,7 @@ contains
                                                opt_apply_variable_hx_kernel_type
     use dg_matrix_vector_kernel_mod,     only: dg_matrix_vector_kernel_type
     use finite_element_config_mod,       only: element_order
-    use io_config_mod,                   only: subroutine_timers 
+    use io_config_mod,                   only: subroutine_timers
     use timer_mod,                       only: timer
     use helmholtz_solver_config_mod,     only: normalise
     implicit none
@@ -161,7 +161,7 @@ contains
 
     if ( subroutine_timers ) call timer('helmholtz mg')
 
-    
+
     m3_exner_star   => get_m3_exner_star(self%mg_level)
     div_star        => get_div_star(self%mg_level)
     compound_div    => get_compound_div(self%mg_level)
@@ -193,10 +193,10 @@ contains
                                                   m3_exner_star, one) )
 
     end if
-    
+
     m3_inv => get_mass_matrix(w3inv_id,self%mg_level)
     call invoke( dg_matrix_vector_kernel_type(y, self%div_grad_p, m3_inv) )
-    
+
     if ( normalise ) then
        h_diag => get_helm_diag(self%mg_level)
        call invoke( inc_X_times_Y(y, h_diag) )
@@ -205,13 +205,13 @@ contains
     nullify( m3_exner_star, div_star, compound_div, ptheta2,  &
          p3theta, m3_inv, mt_lumped_inv, u_normalisation, &
          h_diag )
-         
+
     if ( subroutine_timers ) call timer('helmholtz mg')
-    
-    
+
+
   end subroutine apply_helmholtz_operator
 
-  !>@brief Apply the inverse of the Helmholtz operator to a pressure field 
+  !>@brief Apply the inverse of the Helmholtz operator to a pressure field
   !>@param[in] self instance of pressure_operator_type
   !>@param[in] x field \f$x\f$ to apply operator to
   !>@param[inout] y Resulting field in pressure space
@@ -221,10 +221,10 @@ contains
 
     class(helmholtz_operator_type), intent(inout) :: self
     class(field_type),              intent(in)    :: x
-    class(field_type),              intent(inout) :: y    
+    class(field_type),              intent(inout) :: y
 
     type(field_type), pointer                  :: tri(:) => null()
-    
+
     ! Multiply by inverse of vertical operator
     tri => get_tri_precon(self%mg_level)
     call invoke( tri_solve_kernel_type(y, x, tri) )
@@ -236,7 +236,7 @@ contains
   subroutine destroy_helmholtz_operator(self)
    implicit none
    type(helmholtz_operator_type), intent(inout) :: self
-    
+
   end subroutine destroy_helmholtz_operator
 
 end module helmholtz_field_operator_alg_mod

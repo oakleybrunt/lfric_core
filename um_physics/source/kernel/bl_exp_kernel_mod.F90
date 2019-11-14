@@ -969,7 +969,7 @@ contains
 
     !-----------------------------------------------------------------------
     ! For the initial implementation we pass each individual column
-    ! of data to an array sized (1,1,k) to match the UMs (i,j,k) data 
+    ! of data to an array sized (1,1,k) to match the UMs (i,j,k) data
     ! layout.
     ! assuming map_wth(1) points to level 0
     ! and map_w3(1) points to level 1
@@ -1326,7 +1326,7 @@ contains
       ! sea-ice moisture flux
       tile_moisture_flux(map_tile(i)) = real(fqw_ice(1,1,i_sice), r_def)
     end do
-    
+
     ! update blended Smagorinsky diffusion coefficients only if using Smagorinsky scheme
     if ( smagorinsky ) then
       do k = 1, nlayers

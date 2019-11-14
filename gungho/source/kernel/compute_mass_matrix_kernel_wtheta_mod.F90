@@ -125,9 +125,9 @@ subroutine compute_mass_matrix_wtheta_code(    &
         do qp2 = 1, nqp_v
           do qp1 = 1, nqp_h
             ! Wtheta mapping is x -> \hat{x}
-            integrand = wqp_h(qp1) * wqp_v(qp2) * & 
+            integrand = wqp_h(qp1) * wqp_v(qp2) * &
                      basis_wtheta(1,df,qp1,qp2)*basis_wtheta(1,df2,qp1,qp2)  &
-                     *dj(qp1,qp2) 
+                     *dj(qp1,qp2)
             mm(df,df2,ik) = mm(df,df2,ik) + integrand
           end do
         end do

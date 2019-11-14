@@ -114,9 +114,9 @@ contains
 !>                               Each panel will contain edge_cells*edge_cells faces.
 !> @param[in] nsmooth            Number of smoothing passes to be performed on mesh nodes.
 !>                               Each panel will contain edge_cells*edge_cells faces.
-!> @param[in, optional] target_mesh_names 
+!> @param[in, optional] target_mesh_names
 !>                               Names of meshes to map to.
-!> @param[in, optional] target_edge_cells 
+!> @param[in, optional] target_edge_cells
 !>                               Number of cells per panel edge of the meshes to map to.
 !>
 !> @return    self               Instance of gencube_ps_type
@@ -315,12 +315,12 @@ subroutine calc_adjacency(self, cell_next)
   do i=1, edge_cells
     ! Top edge
     cell = panel_edge_cells(i,N, panel_number)
-    cell_next(N, cell) = panel_edge_cells(i, W, panel_next(N,panel_number) ) 
+    cell_next(N, cell) = panel_edge_cells(i, W, panel_next(N,panel_number) )
 
     ! Right edge
     cell = panel_edge_cells(i,E, panel_number)
-    cell_next(E, cell) = panel_edge_cells(i, W, panel_next(E,panel_number) ) 
-      
+    cell_next(E, cell) = panel_edge_cells(i, W, panel_next(E,panel_number) )
+
     ! Bottom edge
     cell = panel_edge_cells(i,S, panel_number)
     cell_next(S, cell) = panel_edge_cells(edge_cells+1-i, W, panel_next(S,panel_number) )
@@ -336,19 +336,19 @@ subroutine calc_adjacency(self, cell_next)
   do i=1, edge_cells
     ! Top edge
     cell = panel_edge_cells(i,N, panel_number)
-    cell_next(N, cell) = panel_edge_cells(i, S, panel_next(N,panel_number) ) 
-    
+    cell_next(N, cell) = panel_edge_cells(i, S, panel_next(N,panel_number) )
+
     ! Right edge
     cell = panel_edge_cells(i,E, panel_number)
-    cell_next(E, cell) = panel_edge_cells(i, W, panel_next(E,panel_number) ) 
+    cell_next(E, cell) = panel_edge_cells(i, W, panel_next(E,panel_number) )
 
     ! Bottom edge
     cell = panel_edge_cells(i,S, panel_number)
-    cell_next(S, cell) = panel_edge_cells(i, N, panel_next(S,panel_number) ) 
-      
+    cell_next(S, cell) = panel_edge_cells(i, N, panel_next(S,panel_number) )
+
     ! Left edge
     cell = panel_edge_cells(i,W, panel_number)
-    cell_next(W, cell) = panel_edge_cells(i, E, panel_next(W,panel_number) ) 
+    cell_next(W, cell) = panel_edge_cells(i, E, panel_next(W,panel_number) )
   end do
 
   ! Panel III
@@ -358,19 +358,19 @@ subroutine calc_adjacency(self, cell_next)
 
     ! Top edge
     cell = panel_edge_cells(i,N, panel_number)
-    cell_next(N, cell) = panel_edge_cells(edge_cells+1-i, E, panel_next(N,panel_number) ) 
+    cell_next(N, cell) = panel_edge_cells(edge_cells+1-i, E, panel_next(N,panel_number) )
 
     ! Right edge
     cell = panel_edge_cells(i,E, panel_number)
-    cell_next(E, cell) = panel_edge_cells(i, W, panel_next(E,panel_number) ) 
+    cell_next(E, cell) = panel_edge_cells(i, W, panel_next(E,panel_number) )
 
     ! Bottom edge
     cell = panel_edge_cells(i,S, panel_number)
-    cell_next(S, cell) = panel_edge_cells(i, E, panel_next(S,panel_number) ) 
+    cell_next(S, cell) = panel_edge_cells(i, E, panel_next(S,panel_number) )
 
     ! Left edge
     cell = panel_edge_cells(i,W, panel_number)
-    cell_next(W, cell) = panel_edge_cells(i, E, panel_next(W,panel_number) ) 
+    cell_next(W, cell) = panel_edge_cells(i, E, panel_next(W,panel_number) )
 
   end do
 
@@ -381,19 +381,19 @@ subroutine calc_adjacency(self, cell_next)
   do i=1, edge_cells
     ! Top edge
     cell = panel_edge_cells(i,N, panel_number)
-    cell_next(N, cell) = panel_edge_cells(edge_cells+1-i, N, panel_next(N,panel_number) ) 
+    cell_next(N, cell) = panel_edge_cells(edge_cells+1-i, N, panel_next(N,panel_number) )
 
     ! Right edge
     cell = panel_edge_cells(i,E, panel_number)
-    cell_next(E, cell) = panel_edge_cells(i, W, panel_next(E,panel_number) ) 
+    cell_next(E, cell) = panel_edge_cells(i, W, panel_next(E,panel_number) )
 
     ! Bottom edge
     cell = panel_edge_cells(i,S, panel_number)
-    cell_next(S, cell) = panel_edge_cells(edge_cells+1-i, S, panel_next(S,panel_number) ) 
+    cell_next(S, cell) = panel_edge_cells(edge_cells+1-i, S, panel_next(S,panel_number) )
 
     ! Left edge
     cell = panel_edge_cells(i,W, panel_number)
-    cell_next(W, cell) = panel_edge_cells(i, E, panel_next(W,panel_number) ) 
+    cell_next(W, cell) = panel_edge_cells(i, E, panel_next(W,panel_number) )
   end do
 
   ! Panel V
@@ -402,19 +402,19 @@ subroutine calc_adjacency(self, cell_next)
   do i=1, edge_cells
     ! Top edge
     cell = panel_edge_cells(i,N, panel_number)
-    cell_next(N, cell) = panel_edge_cells(edge_cells+1-i, N, panel_next(N,panel_number) ) 
+    cell_next(N, cell) = panel_edge_cells(edge_cells+1-i, N, panel_next(N,panel_number) )
 
     ! Right edge
     cell = panel_edge_cells(i,E, panel_number)
-    cell_next(E, cell) = panel_edge_cells(edge_cells+1-i, N, panel_next(E,panel_number) ) 
+    cell_next(E, cell) = panel_edge_cells(edge_cells+1-i, N, panel_next(E,panel_number) )
 
     ! Bottom edge
     cell = panel_edge_cells(i,S, panel_number)
-    cell_next(S, cell) = panel_edge_cells(i, N, panel_next(S,panel_number) ) 
+    cell_next(S, cell) = panel_edge_cells(i, N, panel_next(S,panel_number) )
 
     ! Left edge
     cell = panel_edge_cells(i,W, panel_number)
-    cell_next(W, cell) = panel_edge_cells(i, N, panel_next(W,panel_number) ) 
+    cell_next(W, cell) = panel_edge_cells(i, N, panel_next(W,panel_number) )
   end do
 
 
@@ -425,19 +425,19 @@ subroutine calc_adjacency(self, cell_next)
   do i=1, edge_cells
     ! Top edge
     cell = panel_edge_cells(i,N, panel_number)
-    cell_next(N, cell) = panel_edge_cells(i, S, panel_next(N,panel_number) ) 
+    cell_next(N, cell) = panel_edge_cells(i, S, panel_next(N,panel_number) )
 
     ! Right edge
     cell = panel_edge_cells(i,E, panel_number)
-    cell_next(E, cell) = panel_edge_cells(i, S, panel_next(E,panel_number) ) 
+    cell_next(E, cell) = panel_edge_cells(i, S, panel_next(E,panel_number) )
 
     ! Bottom edge
     cell = panel_edge_cells(i,S, panel_number)
-    cell_next(S, cell) = panel_edge_cells(edge_cells+1-i, S, panel_next(S,panel_number) ) 
+    cell_next(S, cell) = panel_edge_cells(edge_cells+1-i, S, panel_next(S,panel_number) )
 
     ! Left edge
     cell = panel_edge_cells(i,W, panel_number)
-    cell_next(W, cell) = panel_edge_cells(edge_cells+1-i, S, panel_next(W,panel_number) ) 
+    cell_next(W, cell) = panel_edge_cells(edge_cells+1-i, S, panel_next(W,panel_number) )
   end do
 
   return
@@ -795,7 +795,7 @@ subroutine calc_coords(self, vert_coords, coord_units_x, coord_units_y)
   real(r_def)    :: x0, y0, z0
   real(r_def)    :: xs, ys, zs
 
-  real(r_def)    :: dlambda 
+  real(r_def)    :: dlambda
   real(r_def)    :: lambda1, lambda2
   real(r_def)    :: t1, t2
 
@@ -1223,7 +1223,7 @@ subroutine calc_global_mesh_maps(self)
     deallocate(cell_map)
 
   end do
-  
+
   return
 end subroutine calc_global_mesh_maps
 
@@ -1482,7 +1482,7 @@ subroutine smooth(self)
   do cell=1, ncells
     call ll2xyz( self%cell_coords(1,cell), &
                  self%cell_coords(2,cell), &
-                 cell_coords(1,cell),      & 
+                 cell_coords(1,cell),      &
                  cell_coords(2,cell),      &
                  cell_coords(3,cell) )
 
@@ -1698,7 +1698,7 @@ subroutine get_panel_edge_cell_ids( edge_cells, panel_edge_cells )
 !      o---->>>----o         Cell ids on panel edges are
 !      |           |         listed in direction shown:
 ! West Y   Panel   Y East
-!      |           |         panel_edge_cells( cell_ids, 
+!      |           |         panel_edge_cells( cell_ids,
 !      o---->>>----o                           side of the panel,
 !          South                               panel number )
 !

@@ -13,7 +13,7 @@ module get_unit_test_qfaces_mod
 ! Typically, data can be obtained for the side (horizontal) faces,
 ! the top and botton (vertical) faces, or both.
 ! The canned data was computed by the LFRic infrastructure code.
-! 
+!
   use constants_mod, only : r_def, i_def, l_def
 
   implicit none
@@ -76,9 +76,9 @@ contains
     implicit none
 
     real(r_def), allocatable, intent(out)  :: wqp(:,:)
-    
+
     integer :: nfaces = 4
-    
+
     allocate( wqp( nqp, nfaces) )
 
     call get_quadrature_faces_weights( wqp, .true., .false.)
@@ -91,9 +91,9 @@ contains
     implicit none
 
     real(r_def), allocatable, intent(out)  :: wqp(:,:)
-    
+
     integer :: nfaces = 2
-    
+
     allocate( wqp( nqp, nfaces) )
 
     call get_quadrature_faces_weights( wqp, .false., .true.)
@@ -106,9 +106,9 @@ contains
     implicit none
 
     real(r_def), allocatable, intent(out)  :: wqp(:,:)
-    
+
     integer :: nfaces = 6
-    
+
     allocate( wqp( nqp, nfaces) )
 
     call get_quadrature_faces_weights( wqp, .true., .true.)
@@ -528,7 +528,7 @@ contains
        ], [   3,   6,   9,   4] )
       face = face + 4
     end if
-    if (vertical) then 
+    if (vertical) then
       ! No data required yet
     end if
   end subroutine get_w2_qfaces_cube_basis
@@ -575,7 +575,7 @@ contains
       ], [   1,   1,   9,   4] )
       face = face + 4
     end if
-    if (vertical) then 
+    if (vertical) then
       ! No data required yet
     end if
   end subroutine get_w3_qfaces_cube_basis
@@ -635,7 +635,7 @@ contains
 
       face = face + 4
     end if
-    if (vertical) then 
+    if (vertical) then
       ! No data required yet
     end if
   end subroutine get_wtheta_qfaces_cube_basis

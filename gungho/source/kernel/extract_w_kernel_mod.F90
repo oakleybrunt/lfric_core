@@ -47,11 +47,11 @@ contains
 !! @param[in] u_physics Real array winds for physics
 !! @param[in] ndf_wth The number of degrees of freedom per cell for wth
 !! @param[in] undf_wth The number of unique degrees of freedom for wth
-!! @param[in] map_wth Integer array holding the dofmap for the cell at the 
+!! @param[in] map_wth Integer array holding the dofmap for the cell at the
 !>            base of the column for wth
 !! @param[in] ndf_w2 The number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 The number of unique degrees of freedom for w2
-!! @param[in] map_w2 Integer array holding the dofmap for the cell at the 
+!! @param[in] map_w2 Integer array holding the dofmap for the cell at the
 !>            base of the column for w2
 subroutine extract_w_code(nlayers,                   &
                          w_physics,                  &
@@ -65,7 +65,7 @@ subroutine extract_w_code(nlayers,                   &
   !Arguments
   integer, intent(in) :: nlayers
 
-  integer, intent(in) :: ndf_wth, undf_wth  
+  integer, intent(in) :: ndf_wth, undf_wth
   integer, intent(in) :: ndf_w2, undf_w2
 
   real(kind=r_def), dimension(undf_wth), intent(inout) :: w_physics

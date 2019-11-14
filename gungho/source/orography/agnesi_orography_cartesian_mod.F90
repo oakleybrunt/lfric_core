@@ -3,22 +3,22 @@
 ! For further details please refer to the file COPYRIGHT.txt
 ! which you should have received as part of this distribution.
 !-----------------------------------------------------------------------
-!> @brief Defines and implements Witch-of-Agnesi mountain orography profile in 
+!> @brief Defines and implements Witch-of-Agnesi mountain orography profile in
 !>        Cartesian coordinates.
 !>
-!> @details This module contains type definition and routines to calculate   
-!>          analytic orography profile of Witch-of-Agnesi mountain function from 
+!> @details This module contains type definition and routines to calculate
+!>          analytic orography profile of Witch-of-Agnesi mountain function from
 !>          Cartesian coordinates: x and y.
-!>          Reference: Melvin et al. (2010), Section 4.3. 
+!>          Reference: Melvin et al. (2010), Section 4.3.
 !>          Witch-of-Agnesi mountain parameters in Cartesian coordinates are:
 !>          mountain_height - Height of Witch-of-Agnesi mountain function (m),
-!>          half_width_x - Half-width of Witch-of-Agnesi mountain function in 
+!>          half_width_x - Half-width of Witch-of-Agnesi mountain function in
 !>                         x direction (m),
-!>          half_width_y - Half-width of Witch-of-Agnesi mountain function in 
+!>          half_width_y - Half-width of Witch-of-Agnesi mountain function in
 !>                         y direction (m),
-!>          x_centre -  x coordinate centre of Witch-of-Agnesi mountain 
+!>          x_centre -  x coordinate centre of Witch-of-Agnesi mountain
 !>                     function (m),
-!>          y_centre -  y coordinate centre of Witch-of-Agnesi mountain 
+!>          y_centre -  y coordinate centre of Witch-of-Agnesi mountain
 !>                    function (m),
 !>          direction - Direction of Witch-of-Agnesi mountain function
 !>                      (x or y).
@@ -37,7 +37,7 @@ module agnesi_orography_cartesian_mod
 
   private
 
-  !> @brief Holds parameters and methods used to calculate Witch-of-Agnesi 
+  !> @brief Holds parameters and methods used to calculate Witch-of-Agnesi
   !>        orography profile in Cartesian coordinates.
   type, public, extends(analytic_orography_type) :: agnesi_cartesian_type
 
@@ -55,7 +55,7 @@ module agnesi_orography_cartesian_mod
     procedure, public, pass(self) :: analytic_orography => agnesi_orography_cartesian
     procedure                     :: agnesi_coordinate_cartesian
     procedure                     :: write_agnesi_cartesian_type
-    
+
   end type agnesi_cartesian_type
 
   ! Constructor for agnesi_cartesian_type
@@ -66,8 +66,8 @@ module agnesi_orography_cartesian_mod
 contains
 
   !=============================================================================
-  !> @brief Constructor for Witch-of-Agnesi mountain function in Cartesian 
-  !>        coordinates. 
+  !> @brief Constructor for Witch-of-Agnesi mountain function in Cartesian
+  !>        coordinates.
   !>
   !> @param[in] mountain_height Height of mountain function read from
   !>                            namelist (m)
@@ -79,22 +79,22 @@ contains
   !>                            from namelist (m)
   !> @param[in] y_centre        y coordinate centre of mountain function read
   !>                            from namelist (m)
-  !> @param[in] direction       Direction of mountain function read from  
+  !> @param[in] direction       Direction of mountain function read from
   !>                            namelist (x or y)
   !> @return    self            An object of type agnesi_cartesian_type
-  !=============================================================================   
+  !=============================================================================
   type(agnesi_cartesian_type) function agnesi_cartesian_constructor(     &
                                                         mountain_height, &
                                                         half_width_x,    &
                                                         half_width_y,    &
                                                         x_centre,        &
                                                         y_centre,        &
-                                                        direction )      & 
+                                                        direction )      &
                                                         result(self)
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     real(kind=r_def),    intent(in) :: mountain_height, &
                                        half_width_x,    &
                                        half_width_y,    &
@@ -114,28 +114,28 @@ contains
   end function agnesi_cartesian_constructor
 
   !=============================================================================
-  !> @brief Calculates Witch-of-Agnesi mountain function in Cartesian coordinates. 
+  !> @brief Calculates Witch-of-Agnesi mountain function in Cartesian coordinates.
   !>
   !> @param[in] self      An object of type agnesi_cartesian_type
   !> @param[in] chi_1     x coordinate (m)
   !> @param[in] chi_2     y coordinate (m)
-  !> @return    chi_surf  Surface height (m)  
-  !=============================================================================  
+  !> @return    chi_surf  Surface height (m)
+  !=============================================================================
   function agnesi_orography_cartesian(self, chi_1, chi_2) result(chi_surf)
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(agnesi_cartesian_type), intent(in) :: self
-    real(kind=r_def),             intent(in) :: chi_1, chi_2  
-    real(kind=r_def)                         :: chi_surf 
+    real(kind=r_def),             intent(in) :: chi_1, chi_2
+    real(kind=r_def)                         :: chi_surf
     ! Internal variables
     real(kind=r_def) :: chisurf_arg(2)
 
     ! Calculate transformed/scaled function arguments
     call agnesi_coordinate_cartesian(self, chi_1, chi_2, chisurf_arg)
 
-    ! Calculate Witch-of-Agnesi mountain surface height 
+    ! Calculate Witch-of-Agnesi mountain surface height
     ! Reference: Melvin et al. (2010), Section 4.3., Eq. 69
     chi_surf = self%mountain_height/(1.0_r_def + sum(chisurf_arg**2))
 
@@ -143,14 +143,14 @@ contains
   end function agnesi_orography_cartesian
 
   !=============================================================================
-  !> @brief Transforms/scales coordinate for Cartesian Witch-of-Agnesi mountain 
+  !> @brief Transforms/scales coordinate for Cartesian Witch-of-Agnesi mountain
   !>       function.
-  !> 
+  !>
   !> @param[in]  self         An object of type agnesi_cartesian_type
   !> @param[in]  chi_1        x coordinate (m)
   !> @param[in]  chi_2        y coordinate (m)
-  !> @param[out] chisurf_arg  Witch-of-Agnesi mountain function 
-  !>                          transformed/scaled arguments  
+  !> @param[out] chisurf_arg  Witch-of-Agnesi mountain function
+  !>                          transformed/scaled arguments
   !=============================================================================
   subroutine agnesi_coordinate_cartesian(self, chi_1, chi_2, chisurf_arg)
 
@@ -158,10 +158,10 @@ contains
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(agnesi_cartesian_type), intent(in)  :: self
     real(kind=r_def),             intent(in)  :: chi_1, chi_2
-    real(kind=r_def),             intent(out) :: chisurf_arg(2)   
+    real(kind=r_def),             intent(out) :: chisurf_arg(2)
     ! Internal variables
     real(kind=r_def)               :: chi_1_per, chi_2_per
 
@@ -189,23 +189,23 @@ contains
               "No valid orography directions (x or y) selected. "
         call log_event(log_scratch_space, LOG_LEVEL_ERROR)
     end select
-       
+
     return
   end subroutine agnesi_coordinate_cartesian
 
   !=============================================================================
-  !> @brief Writes out parameters of Witch-of-Agnesi mountain function in 
-  !>        Cartesian coordinates. 
+  !> @brief Writes out parameters of Witch-of-Agnesi mountain function in
+  !>        Cartesian coordinates.
   !>
   !> @param[in] self An object of type agnesi_cartesian_type
-  !=============================================================================   
+  !=============================================================================
   subroutine write_agnesi_cartesian_type(self)
 
     use constants_mod, only : str_short, str_max_filename
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(agnesi_cartesian_type), intent(in) :: self
     ! Temporary write variables
     integer(kind=i_def),             parameter :: funit = 777
@@ -215,8 +215,8 @@ contains
 
     ! Temporary write
     open(funit, file = trim(fname), status = 'replace')
-    write(funit,'(A)') & 
-          "Witch-of-Agnesi mountain parameters in Cartesian coordinates: " 
+    write(funit,'(A)') &
+          "Witch-of-Agnesi mountain parameters in Cartesian coordinates: "
     write(funit, fmtreal) "mountain_height = ", self%mountain_height
     write(funit, fmtreal) "half_width_x    = ", self%half_width_x
     write(funit, fmtreal) "half_width_y    = ", self%half_width_y
@@ -227,5 +227,5 @@ contains
 
     return
   end subroutine write_agnesi_cartesian_type
-  
+
 end module agnesi_orography_cartesian_mod

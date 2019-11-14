@@ -6,7 +6,7 @@
 !
 !-------------------------------------------------------------------------------
 module matrix_invert_mod_test
-  implicit none 
+  implicit none
 
 contains
 

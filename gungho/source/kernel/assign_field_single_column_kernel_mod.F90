@@ -11,15 +11,15 @@
 !>          to zero almost everwhere to test the kernel in
 !>          columnwise_op_asm_diag_hmht_kernel_mod.F90
 !>          Note that in parallel this might not work, i.e. the values in
-!>          several columns will be set to one as a module variable is used to determine 
+!>          several columns will be set to one as a module variable is used to determine
 !>          whether the field has already been set.
-!> 
+!>
 
 module assign_field_single_column_kernel_mod
 use argument_mod,            only : arg_type,             &
                                     GH_FIELD, GH_INC,     &
                                     ANY_SPACE_1,          &
-                                    CELLS 
+                                    CELLS
 use constants_mod,           only : r_def, i_def
 use kernel_mod,              only : kernel_type
 
@@ -48,7 +48,7 @@ logical :: set_already = .false.
 public assign_field_single_column_code
 contains
 
-!> @brief Sets all field entries to 0, except for the values in the first encountered 
+!> @brief Sets all field entries to 0, except for the values in the first encountered
 !>        column.
 !> @param[in]  nlayers Number of vertical layers
 !> @param[out] x Output data
@@ -56,7 +56,7 @@ contains
 !> @param[in]  undf Unique number of degrees of freedom  for the output field
 !> @param[in]  map Dofmap for the cell at the base of the column for the output field
 subroutine assign_field_single_column_code(nlayers,     &
-                                           x,           & 
+                                           x,           &
                                            ndf, undf, map)
   implicit none
   !Arguments
@@ -67,8 +67,8 @@ subroutine assign_field_single_column_code(nlayers,     &
 
   !Internal variables
   integer          :: df, k
-  real(kind=r_def) :: val     
- 
+  real(kind=r_def) :: val
+
   ! Check if one column has already been set. If yet, set value to 1, otherwise
   ! set it to 0.
   if (set_already) then
@@ -84,7 +84,7 @@ subroutine assign_field_single_column_code(nlayers,     &
        x(map(df)+k) = val
     end do
   end do
- 
+
 end subroutine assign_field_single_column_code
 
 end module assign_field_single_column_kernel_mod

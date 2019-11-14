@@ -21,7 +21,7 @@ use argument_mod,            only : arg_type, func_type,       &
                                     GH_READ, GH_WRITE,         &
                                     ANY_SPACE_1, ANY_SPACE_2,  &
                                     GH_COLUMN_BANDED_DOFMAP,   &
-                                    CELLS 
+                                    CELLS
 
 use constants_mod,           only : r_def, i_def
 
@@ -91,7 +91,7 @@ subroutine columnwise_op_asm_diag_hmht_kernel_code(cell,                 &
                                                    ndf_w2h               )
 
   implicit none
-    
+
   ! Arguments
   integer(kind=i_def),                                     intent(in)  :: cell
   integer(kind=i_def),                                     intent(in)  :: nlayers

@@ -51,7 +51,7 @@ module semi_implicit_solver_alg_mod
   type(mixed_operator_type)                          :: mixed_operator
   class(abstract_preconditioner_type),   allocatable :: mixed_preconditioner
   class(abstract_iterative_solver_type), allocatable :: mixed_solver
-  
+
   !> Absolute solver tolerance (mixed solver)
   real(kind=r_def), parameter :: mixed_solver_a_tol = 1.E-6
 
@@ -60,7 +60,7 @@ module semi_implicit_solver_alg_mod
   type(pressure_operator_type)                       :: pressure_operator
   class(abstract_preconditioner_type),   allocatable :: pressure_preconditioner
   class(abstract_iterative_solver_type), allocatable :: pressure_solver
-  
+
   !> Absolute solver tolerance (pressure solver)
   real(kind=r_def), parameter :: pressure_solver_a_tol = 1.E-8
 
@@ -70,7 +70,7 @@ module semi_implicit_solver_alg_mod
 
 contains
 !=============================================================================!
-  !> @details Initialisation procedure for the semi-implicit solver 
+  !> @details Initialisation procedure for the semi-implicit solver
   !> @param[in] state Prognostic state for the solver
   subroutine semi_implicit_solver_alg_init(state)
     use mixed_solver_config_mod,       only: si_maximum_iterations,                      &
@@ -107,13 +107,13 @@ contains
                                              preconditioner_multigrid
     implicit none
 
-    ! Prognostic fields    
+    ! Prognostic fields
     type( field_vector_type ), intent( inout ) :: state
 
     ! *** Allocate polymorphic solver- and preconditioner objects ***
 
     call log_event( "semi_implicit_solver_alg_init: allocate and construct pressure/Helmholtz preconditioner", &
-                       LOG_LEVEL_INFO)        
+                       LOG_LEVEL_INFO)
     ! Allocate pressure preconditioner preconditioner of correct type
     select case(helmholtz_preconditioner)
     case(PRECONDITIONER_NONE)
@@ -124,7 +124,7 @@ contains
                  source = pressure_diag_preconditioner_type() )
     case(PRECONDITIONER_TRIDIAGONAL)
        allocate( pressure_preconditioner, &
-                 source = pressure_preconditioner_type() )       
+                 source = pressure_preconditioner_type() )
     case(PRECONDITIONER_MULTIGRID)
        allocate( pressure_preconditioner, &
                  source = multigrid_preconditioner_type(state%vector(igh_p)) )
@@ -133,10 +133,10 @@ contains
                        LOG_LEVEL_ERROR)
     end select
 
-    call log_event( "semi_implicit_solver_alg_inti:Setting up pressure solver", LOG_LEVEL_INFO )    
+    call log_event( "semi_implicit_solver_alg_inti:Setting up pressure solver", LOG_LEVEL_INFO )
       pressure_operator = pressure_operator_type(state)
 
-    
+
     ! Allocate pressure solver of correct type
     select case( helmholtz_method )
     case (METHOD_BICGSTAB)
@@ -195,10 +195,10 @@ contains
     end select
 
     call log_event( "semi_implicit_solver_alg_init: ... Helmholtz done ", &
-                       LOG_LEVEL_INFO)        
+                       LOG_LEVEL_INFO)
 
     call log_event( "semi_implicit_solver_alg_init: allocate and construct mixed preconditioner", &
-                       LOG_LEVEL_INFO)    
+                       LOG_LEVEL_INFO)
     ! Allocate mixed preconditioner of correct type and call constructor
     select case(si_preconditioner)
     case(SI_PRECONDITIONER_PRESSURE)
@@ -216,7 +216,7 @@ contains
     mixed_operator = mixed_operator_type()
 
     call log_event( "semi_implicit_solver_alg_init: allocate and construct mixed solver", &
-                       LOG_LEVEL_INFO)        
+                       LOG_LEVEL_INFO)
     ! Allocate mixed solver of correct type
     select case(si_method)
     case(SI_METHOD_BICGSTAB)
@@ -225,7 +225,7 @@ contains
                                      mixed_preconditioner, &
                                      si_tolerance,         &
                                      mixed_solver_a_tol,   &
-                                     si_maximum_iterations) ) 
+                                     si_maximum_iterations) )
     case(SI_METHOD_CG)
        allocate ( mixed_solver, &
                   source = conjugate_gradient_type( mixed_operator,       &
@@ -256,7 +256,7 @@ contains
                                 mixed_gcrk,           &
                                 si_tolerance,         &
                                 mixed_solver_a_tol,   &
-                                si_maximum_iterations) ) 
+                                si_maximum_iterations) )
     case(SI_METHOD_PREC_ONLY)
        allocate ( mixed_solver, &
                   source = precondition_only_type( mixed_operator,  &
@@ -269,7 +269,7 @@ contains
                                         mixed_preconditioner, &
                                         si_tolerance,         &
                                         mixed_solver_a_tol,   &
-                                        si_maximum_iterations) )       
+                                        si_maximum_iterations) )
     case default
        call log_event("Unknown mixed solver specified",LOG_LEVEL_ERROR)
     end select
@@ -312,7 +312,7 @@ contains
 
     implicit none
 
-    ! Prognostic fields    
+    ! Prognostic fields
     type( field_vector_type ), intent( inout ) :: state, rhs
     type( field_vector_type )                  :: inc
 

@@ -3,7 +3,7 @@
 ! For further details please refer to the file COPYRIGHT.txt
 ! which you should have received as part of this distribution.
 !-----------------------------------------------------------------------
-!> @brief Test suite to verify calculation of Witch-of-Agnesi mountain orography 
+!> @brief Test suite to verify calculation of Witch-of-Agnesi mountain orography
 !>        profile in spherical coordinates.
 !-------------------------------------------------------------------------------
 module agnesi_orography_spherical_mod_test
@@ -29,7 +29,7 @@ module agnesi_orography_spherical_mod_test
   @testCase
   type, public, extends(MPITestCase) :: agnesi_orography_spherical_test_type
     real(r_def) :: mountain_height
-    real(r_def) :: half_width 
+    real(r_def) :: half_width
     real(r_def) :: lambda_centre_dec
     real(r_def) :: phi_centre_dec
     real(r_def) :: lambda_focus_dec
@@ -91,7 +91,7 @@ contains
 
     ! Set mesh configuration
     call feign_base_mesh_config(                                    &
-                         filename        = filename,                & 
+                         filename        = filename,                &
                          prime_mesh_name = mesh_name,               &
                          geometry        = geometry_spherical,      &
                          partitioner     = partitioner_cubedsphere, &
@@ -101,9 +101,9 @@ contains
     ! Set planet parameters
     call feign_planet_config( gravity        = gravity, &
                               radius         = radius,  &
-                              omega          = omega,   & 
+                              omega          = omega,   &
                               rd             = rd,      &
-                              cp             = cp,      &  
+                              cp             = cp,      &
                               p_zero         = p_zero,  &
                               scaling_factor = scaling )
 

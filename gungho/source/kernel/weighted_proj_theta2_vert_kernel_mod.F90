@@ -66,7 +66,7 @@ contains
 !! @param[in] wtheta_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] wtheta_diff_basis Differential basis functions evaluated at gaussian quadrature points
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
-!! @param[in] w2_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w2_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] nqp_h Number of horizontal quadrature points
 !! @param[in] nqp_v Number of vertical quadrature points
 !! @param[in] wqp_h Weights of the horizontal quadrature points
@@ -81,7 +81,7 @@ subroutine weighted_proj_theta2_vert_code(cell, nlayers, ncell_3d,              
                                           nqp_h, nqp_v, wqp_h, wqp_v)
 
   implicit none
- 
+
   ! Arguments
   integer(kind=i_def), intent(in) :: cell, nlayers, ncell_3d, nqp_h, nqp_v
   integer(kind=i_def), intent(in) :: ndf_wtheta, ndf_w2, undf_wtheta
@@ -90,7 +90,7 @@ subroutine weighted_proj_theta2_vert_code(cell, nlayers, ncell_3d,              
 
   real(kind=r_def), dimension(1,ndf_wtheta,nqp_h,nqp_v), intent(in) :: wtheta_basis
   real(kind=r_def), dimension(3,ndf_wtheta,nqp_h,nqp_v), intent(in) :: wtheta_diff_basis
-  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v),     intent(in) :: w2_basis 
+  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v),     intent(in) :: w2_basis
 
   real(kind=r_def), dimension(ndf_wtheta,ndf_w2,ncell_3d), intent(inout) :: projection
   real(kind=r_def), dimension(undf_wtheta),                intent(in)    :: theta
@@ -102,14 +102,14 @@ subroutine weighted_proj_theta2_vert_code(cell, nlayers, ncell_3d,              
   ! Internal variables
   integer(kind=i_def) :: df, k, ik, dft, df2, ndf_w2h
   integer(kind=i_def) :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_wtheta) :: theta_e
   real(kind=r_def) :: grad_theta_at_quad(3)
   real(kind=r_def) :: integrand, i1(3), i2
 
   ! Last index of horizontal component of W2 space
   ! Assumes dofs in W2 are ordered (uv,w)
-  ndf_w2h = 2*ndf_w2/3 
+  ndf_w2h = 2*ndf_w2/3
 
   do k = 0, nlayers-1
     ik = k + 1 + (cell-1)*nlayers
@@ -135,7 +135,7 @@ subroutine weighted_proj_theta2_vert_code(cell, nlayers, ncell_3d,              
       end do
     end do
   end do
-  
+
 end subroutine weighted_proj_theta2_vert_code
 
 end module weighted_proj_theta2_vert_kernel_mod

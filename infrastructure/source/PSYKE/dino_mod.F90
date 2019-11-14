@@ -6,14 +6,14 @@
 !> @brief IO library for the PSKE to inject into PSy layer for kernel extraction,
 !! DO NOT use in general.
 !>
-!> @details Creates a Dynamo input-output object (dino). Can read-write scalars 
-!! and arrays. Procedures are overloaded so code generation in PSy layer is 
+!> @details Creates a Dynamo input-output object (dino). Can read-write scalars
+!! and arrays. Procedures are overloaded so code generation in PSy layer is
 !! simpler.
 !! THIS IS SERIAL ONLY - Multiple MPI ranks will write to the same file.
-!> @note dino_type uses a fixed file handle for simplicity. This could cause 
-!! problems if more than one dino_type is instanciated at once, hence the 
+!> @note dino_type uses a fixed file handle for simplicity. This could cause
+!! problems if more than one dino_type is instanciated at once, hence the
 !! close subroutine in  addition to the destructor.
-!> 
+!>
 
 module dino_mod
   use constants_mod, only : r_def, i_def, str_max_filename
@@ -65,13 +65,13 @@ contains
     character(str_max_filename) :: fname
     character(str_max_filename) :: iomsg
     self%file_handle = 789
-    
+
     write(fname,'(A)') "dinodump.dat"
     open(unit=self%file_handle,file=fname, status="unknown",iostat=ierr,iomsg=iomsg)
     if(ierr/=0) then
        write(*,'(A," ",A)') "proflib_io:dino constructor:cannot open file ",    &
             trim(fname), iomsg
-       stop 1 
+       stop 1
     end if
     self%file_is_open = .true.
     allocate(self%gnu_dummy)
@@ -131,7 +131,7 @@ contains
        stop 1
     end if
     write(self%file_handle,*) array
-    
+
   end subroutine output_1d_integer_array
 
   !> subroutine to read in a 1d integer array
@@ -147,7 +147,7 @@ contains
        stop 1
     end if
     read(self%file_handle,*) array
-    
+
   end subroutine input_1d_integer_array
 
   !> subroutine to write out a 1d real array
@@ -196,7 +196,7 @@ contains
        write(*,'(A)') "output_integer:Shriek, file not open"
        stop 1
     end if
-    
+
     write(self%file_handle,*) array
 
   end subroutine output_2d_integer_array
@@ -218,9 +218,9 @@ contains
     read(self%file_handle,*) array
 
   end subroutine input_2d_integer_array
-  
-  !> subroutine to write out an integer 
-  !> @param integer scalar 
+
+  !> subroutine to write out an integer
+  !> @param integer scalar
   subroutine output_integer(self,scalar)
     implicit none
     class(dino_type),  intent(inout) :: self
@@ -232,10 +232,10 @@ contains
        stop 1
     end if
     write(self%file_handle,*) scalar
-    
+
   end subroutine output_integer
   !> subroutine to write out a real
-  !> @param real scalar 
+  !> @param real scalar
   subroutine output_real(self,scalar)
     implicit none
     class(dino_type), intent(inout) :: self
@@ -247,11 +247,11 @@ contains
        stop 1
     end if
     write(self%file_handle,*) scalar
-    
+
   end subroutine output_real
 
-  !> subroutine to read in an integer 
-  !> @param integer scalar 
+  !> subroutine to read in an integer
+  !> @param integer scalar
   subroutine input_integer(self,scalar)
     implicit none
     class(dino_type),  intent(inout) :: self
@@ -265,8 +265,8 @@ contains
     read(self%file_handle,*) scalar
   end subroutine input_integer
 
-  !> subroutine to read in an real 
-  !> @param real scalar 
+  !> subroutine to read in an real
+  !> @param real scalar
   subroutine input_real(self,scalar)
     implicit none
     class(dino_type),  intent(inout) :: self
@@ -302,8 +302,8 @@ contains
     if( allocated(self%gnu_dummy) ) then
        deallocate(self%gnu_dummy)
     end if
-    
+
   end subroutine dino_destructor
-  
+
 end module dino_mod
 

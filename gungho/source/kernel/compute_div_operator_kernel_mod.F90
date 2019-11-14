@@ -47,7 +47,7 @@ module compute_div_operator_kernel_mod
 
 contains
 
-!> @brief Computes the divergence operator 
+!> @brief Computes the divergence operator
 !! @param[in] cell Cell number
 !! @param[in] nlayers Number of layers.
 !! @param[in] ncell_3d ncell*ndf
@@ -127,23 +127,23 @@ subroutine compute_div_operator_code(cell, nlayers, ncell_3d,          &
         do qp2 = 1, nqp_v
           do qp1 = 1, nqp_h
             if ( rehabilitate ) then
-              ! With rehabilitation 
+              ! With rehabilitation
               !   divergence mapping is div(x) -> ! \hat{div}(\hat{x})
               integrand = wqp_h(qp1)*wqp_v(qp2)                               &
-                        *basis_w3(1,df3,qp1,qp2)*diff_basis_w2(1,df2,qp1,qp2) 
+                        *basis_w3(1,df3,qp1,qp2)*diff_basis_w2(1,df2,qp1,qp2)
             else
               ! Without rehabilitation
               !   divergence mapping is div(x) -> ! \hat{div}(\hat{x})/det(J)
               integrand = wqp_h(qp1)*wqp_v(qp2)                               &
                         *basis_w3(1,df3,qp1,qp2)*diff_basis_w2(1,df2,qp1,qp2) &
-                        /dj(qp1,qp2) 
-            end if                      
+                        /dj(qp1,qp2)
+            end if
             div(df3,df2,ik) = div(df3,df2,ik) + integrand
           end do
         end do
       end do
     end do
-  end do 
+  end do
 end subroutine compute_div_operator_code
 
 end module compute_div_operator_kernel_mod

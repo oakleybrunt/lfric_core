@@ -5,7 +5,7 @@
 !-----------------------------------------------------------------------------
 
 module get_unit_test_q3x3x3_basis_mod
-! A module containing a collection of helper routines that provide canned 
+! A module containing a collection of helper routines that provide canned
 ! basis functions (and differential basis functions) for lowest order
 ! function spaces with a 3x3x3 quadrature for use when writing
 ! unit tests of kernels
@@ -38,11 +38,11 @@ module get_unit_test_q3x3x3_basis_mod
             get_wchi_q3x3x3_diff_basis
 
   contains
-  
+
 !---------------------------------------------------------------------
 
-  subroutine get_w0_q3x3x3_basis(basis_w0) 
-    ! Return the basis function for a field on a W0 function space 
+  subroutine get_w0_q3x3x3_basis(basis_w0)
+    ! Return the basis function for a field on a W0 function space
     implicit none
     real(r_def), allocatable, intent(out) :: basis_w0(:,:,:,:)
 
@@ -125,8 +125,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w0_q3x3x3_diff_basis(diff_basis_w0) 
-    ! Return the diff basis function for a field on a W0 function space 
+  subroutine get_w0_q3x3x3_diff_basis(diff_basis_w0)
+    ! Return the diff basis function for a field on a W0 function space
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_w0(:,:,:,:)
 
@@ -353,8 +353,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w1_q3x3x3_basis(basis_w1) 
-    ! Return the basis function for a field on a W1 function space 
+  subroutine get_w1_q3x3x3_basis(basis_w1)
+    ! Return the basis function for a field on a W1 function space
     implicit none
     real(r_def), allocatable, intent(out) :: basis_w1(:,:,:,:)
 
@@ -688,8 +688,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w1_q3x3x3_diff_basis(diff_basis_w1) 
-    ! Return the diff basis function for a field on a W1 function space 
+  subroutine get_w1_q3x3x3_diff_basis(diff_basis_w1)
+    ! Return the diff basis function for a field on a W1 function space
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_w1(:,:,:,:)
 
@@ -1023,8 +1023,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w2_q3x3x3_basis(basis_w2) 
-    ! Return the basis function for a field on a W2 function space 
+  subroutine get_w2_q3x3x3_basis(basis_w2)
+    ! Return the basis function for a field on a W2 function space
     implicit none
     real(r_def), allocatable, intent(out) :: basis_w2(:,:,:,:)
 
@@ -1197,8 +1197,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w2_q3x3x3_diff_basis(diff_basis_w2) 
-    ! Return the diff basis function for a field on a W2 function space 
+  subroutine get_w2_q3x3x3_diff_basis(diff_basis_w2)
+    ! Return the diff basis function for a field on a W2 function space
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_w2(:,:,:,:)
 
@@ -1264,8 +1264,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w2v_q3x3x3_basis(basis_w2v) 
-    ! Return the basis function for a field on a W2V function space 
+  subroutine get_w2v_q3x3x3_basis(basis_w2v)
+    ! Return the basis function for a field on a W2V function space
     implicit none
     real(r_def), allocatable, intent(out) :: basis_w2v(:,:,:,:)
 
@@ -1330,8 +1330,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w2v_q3x3x3_diff_basis(diff_basis_w2v) 
-    ! Return the diff basis function for a field on a W2V function space 
+  subroutine get_w2v_q3x3x3_diff_basis(diff_basis_w2v)
+    ! Return the diff basis function for a field on a W2V function space
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_w2v(:,:,:,:)
 
@@ -1360,8 +1360,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w2h_q3x3x3_basis(basis_w2h) 
-    ! Return the basis function for a field on a W2H function space 
+  subroutine get_w2h_q3x3x3_basis(basis_w2h)
+    ! Return the basis function for a field on a W2H function space
     implicit none
     real(r_def), allocatable, intent(out) :: basis_w2h(:,:,:,:)
 
@@ -1480,8 +1480,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w2h_q3x3x3_diff_basis(diff_basis_w2h) 
-    ! Return the diff basis function for a field on a W2H function space 
+  subroutine get_w2h_q3x3x3_diff_basis(diff_basis_w2h)
+    ! Return the diff basis function for a field on a W2H function space
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_w2h(:,:,:,:)
 
@@ -1529,7 +1529,7 @@ module get_unit_test_q3x3x3_basis_mod
 !---------------------------------------------------------------------
 
   subroutine get_w2broken_q3x3x3_basis(basis_w2broken)
-    ! Return the basis function for a field on a W2broken function space 
+    ! Return the basis function for a field on a W2broken function space
     implicit none
     real(r_def), allocatable, intent(out) :: basis_w2broken(:,:,:,:)
 
@@ -1540,20 +1540,20 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w2broken_q3x3x3_diff_basis(diff_basis_w2broken) 
-    ! Return the diff basis function for a field on a W2broken function space 
+  subroutine get_w2broken_q3x3x3_diff_basis(diff_basis_w2broken)
+    ! Return the diff basis function for a field on a W2broken function space
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_w2broken(:,:,:,:)
 
     ! W2broken has the same differential basis functions as w2, so use those
-    call get_w2_q3x3x3_diff_basis(diff_basis_w2broken) 
+    call get_w2_q3x3x3_diff_basis(diff_basis_w2broken)
 
   end subroutine get_w2broken_q3x3x3_diff_basis
 
 !---------------------------------------------------------------------
 
-  subroutine get_w2trace_q3x3x3_basis(basis_w2trace) 
-    ! Return the basis function for a field on a W2trace function space 
+  subroutine get_w2trace_q3x3x3_basis(basis_w2trace)
+    ! Return the basis function for a field on a W2trace function space
     implicit none
     real(r_def), allocatable, intent(out) :: basis_w2trace(:,:,:,:)
 
@@ -1618,8 +1618,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w2trace_q3x3x3_diff_basis(diff_basis_w2trace) 
-    ! Return the diff basis function for a field on a W2trace function space 
+  subroutine get_w2trace_q3x3x3_diff_basis(diff_basis_w2trace)
+    ! Return the diff basis function for a field on a W2trace function space
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_w2trace(:,:,:,:)
 
@@ -1792,8 +1792,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w3_q3x3x3_basis(basis_w3) 
-    ! Return the basis function for a field on a W3 function space 
+  subroutine get_w3_q3x3x3_basis(basis_w3)
+    ! Return the basis function for a field on a W3 function space
     implicit none
     real(r_def), allocatable, intent(out) :: basis_w3(:,:,:,:)
 
@@ -1813,8 +1813,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w3_q3x3x3_diff_basis(diff_basis_w3) 
-    ! Return the diff basis function for a field on a W3 function space 
+  subroutine get_w3_q3x3x3_diff_basis(diff_basis_w3)
+    ! Return the diff basis function for a field on a W3 function space
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_w3(:,:,:,:)
 
@@ -1852,8 +1852,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_wtheta_q3x3x3_basis(basis_wtheta) 
-    ! Return the basis function for a field on a Wtheta function space 
+  subroutine get_wtheta_q3x3x3_basis(basis_wtheta)
+    ! Return the basis function for a field on a Wtheta function space
     implicit none
     real(r_def), allocatable, intent(out) :: basis_wtheta(:,:,:,:)
 
@@ -1882,8 +1882,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_wtheta_q3x3x3_diff_basis(diff_basis_wtheta) 
-    ! Return the diff basis function for a field on a Wtheta function space 
+  subroutine get_wtheta_q3x3x3_diff_basis(diff_basis_wtheta)
+    ! Return the diff basis function for a field on a Wtheta function space
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_wtheta(:,:,:,:)
 
@@ -1949,8 +1949,8 @@ module get_unit_test_q3x3x3_basis_mod
 !---------------------------------------------------------------------
 
 
-  subroutine get_wchi_q3x3x3_basis(basis_wchi) 
-    ! Return the basis function for a field on a Wchi function space 
+  subroutine get_wchi_q3x3x3_basis(basis_wchi)
+    ! Return the basis function for a field on a Wchi function space
     implicit none
     real(r_def), allocatable, intent(out) :: basis_wchi(:,:,:,:)
 
@@ -2033,8 +2033,8 @@ module get_unit_test_q3x3x3_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_wchi_q3x3x3_diff_basis(diff_basis_wchi) 
-    ! Return the diff basis function for a field on a Wchi function space 
+  subroutine get_wchi_q3x3x3_diff_basis(diff_basis_wchi)
+    ! Return the diff basis function for a field on a Wchi function space
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_wchi(:,:,:,:)
 

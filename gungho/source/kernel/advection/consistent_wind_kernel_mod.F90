@@ -6,10 +6,10 @@
 !
 !-------------------------------------------------------------------------------
 !> @brief Modify the vertical wind to include consistent computation of grid
-!>        metric 
+!>        metric
 !> @details Modify the vertical wind profile so that:
 !>          w => w + u*(dz/dx - dz/dx_A) + v*(dz/dy - dz/dy_A)
-!>          where subscript A indicates computation of terms by the advection 
+!>          where subscript A indicates computation of terms by the advection
 !>          operator
 module consistent_wind_kernel_mod
 
@@ -19,7 +19,7 @@ use argument_mod,      only : arg_type, func_type, mesh_data_type,  &
                               ANY_SPACE_1,                          &
                               GH_BASIS, GH_DIFF_BASIS,              &
                               CELLS, GH_EVALUATOR
-use constants_mod,     only : r_def, i_def      
+use constants_mod,     only : r_def, i_def
 use fs_continuity_mod, only : Wtheta, W2
 use kernel_mod,        only : kernel_type
 
@@ -69,21 +69,21 @@ contains
 !>@param[in]     undf_w2 Total number of degrees of freedom for W2
 !>@param[in]     map_w2 Dofmap of the wind field
 !>@param[in]     basis_w2 Basis function of the wind space evaluated on
-!>                        W2 nodal points 
+!>                        W2 nodal points
 !>@param[in]     ndf_wt Number of degrees of freedom per cell for Wtheta
 !>@param[in]     undf_wt Total number of degrees of freedom for Wtheta
 !>@param[in]     map_wt Dofmap of the metric field
 !>@param[in]     ndf_wx Number of degrees of freedom per cell for the coordinate space
 !>@param[in]     undf_wx Total number of degrees of freedom for the coordinate space
-!>@param[in]     map_wx Dofmap of the coordinate space 
+!>@param[in]     map_wx Dofmap of the coordinate space
 !>@param[in]     diff_basis_wx Differential of basis function of the coordinate space evaluated on
-!>                             W2 nodal points 
+!>                             W2 nodal points
 subroutine consistent_wind_code(nlayers,                   &
                                 consistent_wind,           &
                                 wind,                      &
                                 theta_metrics,             &
                                 chi1, chi2, chi3,          &
-                                ndf_w2,                    &           
+                                ndf_w2,                    &
                                 undf_w2,                   &
                                 map_w2,                    &
                                 basis_w2,                  &
@@ -96,7 +96,7 @@ subroutine consistent_wind_code(nlayers,                   &
                                 diff_basis_wx )
 
   implicit none
-   
+
   ! Arguments
   integer(kind=i_def), intent(in) :: nlayers
   integer(kind=i_def), intent(in) :: ndf_wt, undf_wt, &
@@ -117,7 +117,7 @@ subroutine consistent_wind_code(nlayers,                   &
 
   ! Local variables
   integer(kind=i_def) :: k, df, df2
-  
+
   real(kind=r_def) :: dz, dzdx, dzdy
   real(kind=r_def), dimension(3,0:nlayers) :: u_av
 
@@ -142,9 +142,9 @@ subroutine consistent_wind_code(nlayers,                   &
         dzdy = dzdy + chi3(map_wx(df)+k)*diff_basis_wx(2,df,df2)
         dz   = dz   + chi3(map_wx(df)+k)*diff_basis_wx(3,df,df2)
     end do
-    
+
     consistent_wind(map_w2(df2)+k) = consistent_wind(map_w2(df2)+k) &
-      + (u_av(1,k)*dzdx + u_av(2,k)*dzdy - theta_metrics(map_wt(1)+k))/dz                                  
+      + (u_av(1,k)*dzdx + u_av(2,k)*dzdy - theta_metrics(map_wt(1)+k))/dz
   end do layer_loop
   ! Can leave first & last w points unchanged since we want to enforce zero flux
   ! boundary conditions

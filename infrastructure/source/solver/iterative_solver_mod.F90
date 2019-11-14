@@ -1,8 +1,8 @@
-!-------------------------------------------------------------------------------
+!------------------------------------------------------------------------------
 ! Copyright (c) 2017,  Met Office, on behalf of HMSO and Queen's Printer
 ! For further details please refer to the file LICENCE.original which you
 ! should have received as part of this distribution.
-!-------------------------------------------------------------------------------
+!------------------------------------------------------------------------------
 
 !> @brief Abstract base class for iterative solver
 !>
@@ -69,7 +69,7 @@ module iterative_solver_mod
   !! ------------------------------------------------ !!
 
   !! ---  Conjugate Gradient type declaration and interfaces --- !!
-  
+
   type, public, extends(abstract_iterative_solver_type) :: conjugate_gradient_type
      private
    contains
@@ -83,8 +83,8 @@ module iterative_solver_mod
   end interface
 
   ! the constructor will be in a submodule
-  interface 
-     module function cg_constructor( lin_op, prec, r_tol, a_tol, max_iter) & 
+  interface
+     module function cg_constructor( lin_op, prec, r_tol, a_tol, max_iter) &
           result(self)
        class(abstract_linear_operator_type), target, intent(in) :: lin_op
        class(abstract_preconditioner_type),  target, intent(in) :: prec
@@ -94,8 +94,8 @@ module iterative_solver_mod
        type(conjugate_gradient_type) :: self
      end function
   end interface
-  
-  interface 
+
+  interface
      module subroutine cg_solve(self, x, b)
        class(conjugate_gradient_type), intent(inout) :: self
        class(abstract_vector_type),    intent(inout) :: x
@@ -116,8 +116,8 @@ module iterative_solver_mod
      module procedure bicgstab_constructor
   end interface
 
-  interface 
-     module function bicgstab_constructor( lin_op, prec, r_tol, a_tol, max_iter) & 
+  interface
+     module function bicgstab_constructor( lin_op, prec, r_tol, a_tol, max_iter) &
           result(self)
        class(abstract_linear_operator_type), target, intent(in) :: lin_op
        class(abstract_preconditioner_type),  target, intent(in) :: prec
@@ -127,14 +127,14 @@ module iterative_solver_mod
        type(bicgstab_type) :: self
      end function
   end interface
-  
-  interface 
+
+  interface
      module subroutine bicgstab_solve(self, x, b)
        class(bicgstab_type),           intent(inout) :: self
        class(abstract_vector_type),    intent(inout) :: x
        class(abstract_vector_type),    intent(inout) :: b
      end subroutine
-  end interface  
+  end interface
 
 
   !! --- GMRES type declarations and interfaces --- !!
@@ -151,8 +151,8 @@ module iterative_solver_mod
      module procedure gmres_constructor
   end interface
 
-  interface 
-     module function gmres_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) & 
+  interface
+     module function gmres_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) &
           result(self)
        class(abstract_linear_operator_type), target, intent(in) :: lin_op
        class(abstract_preconditioner_type),  target, intent(in) :: prec
@@ -163,14 +163,14 @@ module iterative_solver_mod
        type(gmres_type) :: self
      end function gmres_constructor
   end interface
-  
-  interface 
+
+  interface
      module subroutine gmres_solve(self, x, b)
        class(gmres_type),              intent(inout) :: self
        class(abstract_vector_type),    intent(inout) :: x
        class(abstract_vector_type),    intent(inout) :: b
      end subroutine gmres_solve
-  end interface  
+  end interface
 
   !! --- FGMRES type declarations and interfaces --- !!
   type, public, extends(abstract_iterative_solver_type) :: fgmres_type
@@ -186,8 +186,8 @@ module iterative_solver_mod
      module procedure fgmres_constructor
   end interface
 
-  interface 
-     module function fgmres_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) & 
+  interface
+     module function fgmres_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) &
           result(self)
        class(abstract_linear_operator_type), target, intent(in) :: lin_op
        class(abstract_preconditioner_type),  target, intent(in) :: prec
@@ -198,15 +198,15 @@ module iterative_solver_mod
        type(fgmres_type) :: self
      end function fgmres_constructor
   end interface
-  
-  interface 
+
+  interface
      module subroutine fgmres_solve(self, x, b)
        class(fgmres_type),              intent(inout) :: self
        class(abstract_vector_type),    intent(inout) :: x
        class(abstract_vector_type),    intent(inout) :: b
      end subroutine fgmres_solve
-  end interface  
- 
+  end interface
+
   !! --- GCR type declarations and interfaces --- !!
   type, public, extends(abstract_iterative_solver_type) :: gcr_type
      private
@@ -221,8 +221,8 @@ module iterative_solver_mod
      module procedure gcr_constructor
   end interface
 
-  interface 
-     module function gcr_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) & 
+  interface
+     module function gcr_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) &
           result(self)
        class(abstract_linear_operator_type), target, intent(in) :: lin_op
        class(abstract_preconditioner_type),  target, intent(in) :: prec
@@ -233,17 +233,17 @@ module iterative_solver_mod
        type(gcr_type) :: self
      end function gcr_constructor
   end interface
-  
-  interface 
+
+  interface
      module subroutine gcr_solve(self, x, b)
        class(gcr_type),              intent(inout) :: self
        class(abstract_vector_type),  intent(inout) :: x
        class(abstract_vector_type),  intent(inout) :: b
      end subroutine gcr_solve
-  end interface 
+  end interface
 
   !! ---  Precondition only type declaration and interfaces --- !!
-  
+
   type, public, extends(abstract_iterative_solver_type) :: precondition_only_type
      private
    contains
@@ -257,8 +257,8 @@ module iterative_solver_mod
   end interface
 
   ! the constructor will be in a submodule
-  interface 
-     module function precondition_only_constructor( lin_op, prec, r_tol, a_tol) & 
+  interface
+     module function precondition_only_constructor( lin_op, prec, r_tol, a_tol) &
           result(self)
        class(abstract_linear_operator_type), target, intent(in) :: lin_op
        class(abstract_preconditioner_type),  target, intent(in) :: prec
@@ -267,8 +267,8 @@ module iterative_solver_mod
        type(precondition_only_type) :: self
      end function
   end interface
-  
-  interface 
+
+  interface
      module subroutine precondition_only_solve(self, x, b)
        class(precondition_only_type), intent(inout) :: self
        class(abstract_vector_type),   intent(inout) :: x
@@ -277,7 +277,7 @@ module iterative_solver_mod
   end interface
 
   !! ---  Jacobi type declaration and interfaces --- !!
-  
+
   type, public, extends(abstract_iterative_solver_type) :: jacobi_type
      private
    contains
@@ -291,8 +291,8 @@ module iterative_solver_mod
   end interface
 
   ! the constructor will be in a submodule
-  interface 
-     module function jacobi_constructor( lin_op, prec, r_tol, a_tol, max_iter) & 
+  interface
+     module function jacobi_constructor( lin_op, prec, r_tol, a_tol, max_iter) &
           result(self)
        class(abstract_linear_operator_type), target, intent(in) :: lin_op
        class(abstract_preconditioner_type),  target, intent(in) :: prec
@@ -302,8 +302,8 @@ module iterative_solver_mod
        type(jacobi_type) :: self
      end function
   end interface
-  
-  interface 
+
+  interface
      module subroutine jacobi_solve(self, x, b)
        class(jacobi_type), intent(inout) :: self
        class(abstract_vector_type),    intent(inout) :: x
@@ -333,7 +333,7 @@ contains
     real(kind=r_def),                             intent(in) :: a_tol
     integer(kind=i_def),                          intent(in) :: max_iter
     type(conjugate_gradient_type) :: self
-    
+
     self%lin_op => lin_op
     self%prec   => prec
     self%r_tol  = r_tol
@@ -358,8 +358,8 @@ contains
     real(kind=r_def)    :: alpha, beta
     real(kind=r_def)    :: r_nrm, r_nrm_0, r_nrm_old, rz, rz_new
     logical             :: converged
-    
-    ! temporary vectors 
+
+    ! temporary vectors
     class(abstract_vector_type), allocatable :: r
     class(abstract_vector_type), allocatable :: p
     class(abstract_vector_type), allocatable :: z
@@ -385,13 +385,13 @@ contains
       call log_event(log_scratch_space, LOG_LEVEL_INFO)
       return
     end if
-    
+
     write(log_scratch_space,'(A,E15.8)')  &
          "cg starting ||r|| = ||b - A.x|| = ", r_nrm_0
     call log_event(log_scratch_space,LOG_LEVEL_DEBUG)
 
     call z%set_scalar(0.0_r_def)
-    call self%prec%apply(r,z)         ! z = P^{-1}.r    
+    call self%prec%apply(r,z)         ! z = P^{-1}.r
     rz = r%dot(z)                        ! rz = <r,z>
     r_nrm_old = r_nrm_0
     call p%copy(z)
@@ -407,7 +407,7 @@ contains
        r_nrm = r%norm()                  ! r = ||r||_2
        write(log_scratch_space,'(I6, "    ",E12.5,"   ",E12.5,"   ",F8.4)')&
             iter, r_nrm, r_nrm/r_nrm_0, r_nrm/r_nrm_old
-       call log_event(log_scratch_space,LOG_LEVEL_DEBUG)       
+       call log_event(log_scratch_space,LOG_LEVEL_DEBUG)
        ! exit if either absolute or relative tolerance is reached
        if (      ( r_nrm/r_nrm_0 <= self%r_tol ) &
             .or. ( r_nrm <= self%a_tol ) ) then
@@ -446,8 +446,8 @@ contains
   !> @param[in] r_tol real, the relative tolerance halting condition
   !> @param[in] a_tol real, the absolute tolerance halting condition
   !> @param[in] max_inter, integer the maximum number of iterations
-  !> @return the constructed conjugate gradient solver  
-  module function bicgstab_constructor( lin_op, prec, r_tol, a_tol, max_iter) & 
+  !> @return the constructed conjugate gradient solver
+  module function bicgstab_constructor( lin_op, prec, r_tol, a_tol, max_iter) &
        result(self)
     implicit none
     class(abstract_linear_operator_type), target, intent(in) :: lin_op
@@ -456,7 +456,7 @@ contains
     real(kind=r_def),                             intent(in) :: a_tol
     integer(kind=i_def),                          intent(in) :: max_iter
     type(bicgstab_type) :: self
-    
+
     write(log_scratch_space,'(A)') "bicgstab_constructor:"
     call log_event(log_scratch_space, LOG_LEVEL_INFO)
     self%lin_op => lin_op
@@ -486,7 +486,7 @@ contains
     class(abstract_vector_type), allocatable :: s
     class(abstract_vector_type), allocatable :: y
     class(abstract_vector_type), allocatable :: z
-    
+
     !temporary scalars
     real(kind=r_def) :: alpha, beta, rho, omega, rho_old
     real(kind=r_def) :: err, sc_err, tt, ts
@@ -499,7 +499,7 @@ contains
     call r%copy(b)
 
     ! v = Ax
-    call x%duplicate(v)    
+    call x%duplicate(v)
     call v%set_scalar(0.0_r_def)
     call self%lin_op%apply(x,v)
     ! r = b - Ax
@@ -507,7 +507,7 @@ contains
     ! store initial residual
     call r%duplicate(r0)
     call r0%copy(r)
-       
+
     sc_err = r%norm()
 
   ! Check if r == 0 (to avoid divide by zero problems)
@@ -517,8 +517,8 @@ contains
        call log_event(log_scratch_space, LOG_LEVEL_INFO)
        return
     end if
-    
-    sc_err = max(sc_err,self%a_tol)    
+
+    sc_err = max(sc_err,self%a_tol)
     write( log_scratch_space, '(A,E15.8)' ) &
          " bicgstab starting ... ||r|| = ||b - A.x|| = ", sc_err
     call log_event(log_scratch_space, LOG_LEVEL_DEBUG)
@@ -536,7 +536,7 @@ contains
 
     call x%duplicate(y)
     call x%duplicate(z)
-   
+
     do iter = 1, self%max_iter
        rho = r%dot(r0)
        beta = (rho/rho_old) * (alpha/omega)
@@ -590,17 +590,17 @@ contains
         exit
       end if
     end do
-    
+
     if(iter >= self%max_iter) then
        write(log_scratch_space, '(A, I3, A, E15.8)') &
            "bicgstab: NOT converged in", iter, " iters, Res=", err
       call log_event( log_scratch_space, LOG_LEVEL_ERROR )
     end if
-   
+
   end subroutine bicgstab_solve
-  
-end submodule bicgstab_smod 
-   
+
+end submodule bicgstab_smod
+
 submodule(iterative_solver_mod) gmres_smod
 contains
   !> constructs a <code>gmres_type</code> solver
@@ -612,18 +612,18 @@ contains
   !> @param[in] r_tol real, the relative tolerance halting condition
   !> @param[in] a_tol real, the absolute tolerance halting condition
   !> @param[in] max_iter, integer the maximum number of iterations
-  !> @return the constructed GMRES solver    
-  module function gmres_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) & 
+  !> @return the constructed GMRES solver
+  module function gmres_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) &
        result(self)
     implicit none
     class(abstract_linear_operator_type), target, intent(in) :: lin_op
     class(abstract_preconditioner_type),  target, intent(in) :: prec
-    integer(kind=i_def),                          intent(in) :: gcrk    
+    integer(kind=i_def),                          intent(in) :: gcrk
     real(kind=r_def),                             intent(in) :: r_tol
     real(kind=r_def),                             intent(in) :: a_tol
     integer(kind=i_def),                          intent(in) :: max_iter
     type(gmres_type) :: self
-    
+
     self%lin_op => lin_op
     self%prec   => prec
     self%gcrk   = gcrk
@@ -637,7 +637,7 @@ contains
   !> @param[inout] b an abstract vector which will be an actual vector of unkown extended type
   !! This the "RHS" or boundary conditions,
   !> @param[inout] x an abstract vector which is the solution
-  !> @param[self] The solver which has pointers to the lin_op and preconditioner  
+  !> @param[self] The solver which has pointers to the lin_op and preconditioner
   module subroutine gmres_solve(self, x, b)
     implicit none
     class(gmres_type),              intent(inout) :: self
@@ -647,7 +647,7 @@ contains
     ! temporary vectors
     class(abstract_vector_type), allocatable :: s
     class(abstract_vector_type), allocatable :: w
-    class(abstract_vector_type), allocatable :: Ax    
+    class(abstract_vector_type), allocatable :: Ax
     class(abstract_vector_type), allocatable :: res
     class(abstract_vector_type), allocatable, dimension(:) :: v
 
@@ -668,7 +668,7 @@ contains
     call self%lin_op%apply(x,Ax)
     call res%copy(b)
     call res%axpy(-1.0_r_def,Ax)
-    
+
     sc_err = res%norm()
 
     ! Check if r == 0 (to avoid divide by zero problems)
@@ -677,9 +677,9 @@ contains
            "gmres converged in 0 iterations... ||b|| = ", sc_err
       call log_event(log_scratch_space, LOG_LEVEL_INFO)
       return
-    end if    
+    end if
 
-    sc_err = max(sc_err,self%a_tol)    
+    sc_err = max(sc_err,self%a_tol)
     write( log_scratch_space, '(A,E15.8,":",E15.8)' ) &
          "GMRES starting ... ||r|| = ||b - A.x||", res%norm(),sc_err
     call log_event(log_scratch_space, LOG_LEVEL_INFO)
@@ -690,7 +690,7 @@ contains
     call x%duplicate(w)
 
     allocate(v(self%gcrk), source=x)
-    
+
     allocate( h(self%gcrk+1, self%gcrk) )
     allocate( g(self%gcrk+1) )
     allocate( u(self%gcrk) )
@@ -705,9 +705,9 @@ contains
 
        g(:) = 0.0_r_def
        g(1) = beta
-          
+
        do iv = 1, self%gcrk
-          
+
           call w%copy(v(iv))
           ! apply the operator
           call self%lin_op%apply( w, s )
@@ -760,7 +760,7 @@ contains
           call s%copy(v(iv))
           call x%axpy(u(iv), s)
        end do
-       
+
        ! check for convergence
        call Ax%set_scalar(0.0_r_def)
        call self%lin_op%apply(x, Ax)
@@ -788,7 +788,7 @@ contains
     end if
 
     deallocate(h, g, u)
-    
+
   end subroutine gmres_solve
 end submodule gmres_smod
 
@@ -803,18 +803,18 @@ contains
   !> @param[in] r_tol real, the relative tolerance halting condition
   !> @param[in] a_tol real, the absolute tolerance halting condition
   !> @param[in] max_iter, integer the maximum number of iterations
-  !> @return the constructed fGMRES solver    
-  module function fgmres_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) & 
+  !> @return the constructed fGMRES solver
+  module function fgmres_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) &
        result(self)
     implicit none
     class(abstract_linear_operator_type), target, intent(in) :: lin_op
     class(abstract_preconditioner_type),  target, intent(in) :: prec
-    integer(kind=i_def),                          intent(in) :: gcrk    
+    integer(kind=i_def),                          intent(in) :: gcrk
     real(kind=r_def),                             intent(in) :: r_tol
     real(kind=r_def),                             intent(in) :: a_tol
     integer(kind=i_def),                          intent(in) :: max_iter
     type(fgmres_type) :: self
-    
+
     self%lin_op => lin_op
     self%prec   => prec
     self%gcrk   = gcrk
@@ -824,13 +824,13 @@ contains
   end function fgmres_constructor
 
   !> fgmres_solve. Over-rides the abstract interface to do the actual solve.
-  !> @detail The solver implements flexible right-preconditioning, i.e. is solving A.M{-1}.M.x = b 
+  !> @detail The solver implements flexible right-preconditioning, i.e. is solving A.M{-1}.M.x = b
   !>         as 1)  A.M{-1}.y = b
   !>            2)  M{-1}y = x
   !> @param[inout] b an abstract vector which will be an actual vector of unkown extended type
   !! This the "RHS" or boundary conditions,
   !> @param[inout] x an abstract vector which is the solution
-  !> @param[self] The solver which has pointers to the lin_op and preconditioner  
+  !> @param[self] The solver which has pointers to the lin_op and preconditioner
   module subroutine fgmres_solve(self, x, b)
     implicit none
     class(fgmres_type),              intent(inout) :: self
@@ -841,7 +841,7 @@ contains
     class(abstract_vector_type), allocatable :: s
     class(abstract_vector_type), allocatable :: w
     class(abstract_vector_type), allocatable :: dx
-    class(abstract_vector_type), allocatable :: Ax    
+    class(abstract_vector_type), allocatable :: Ax
     class(abstract_vector_type), allocatable :: res
     class(abstract_vector_type), allocatable, dimension(:) :: v, Pv
 
@@ -860,9 +860,9 @@ contains
     call x%duplicate(Ax)
     call Ax%set_scalar(0.0_r_def)
 
-    call x%duplicate(res) 
+    call x%duplicate(res)
     call res%copy(b) ! assumes Ax is zero initial guess
-    
+
     sc_err = res%norm()
 
     ! Check if r == 0 (to avoid divide by zero problems)
@@ -871,9 +871,9 @@ contains
            "fGMRES converged in 0 iterations... ||b|| = ", sc_err
       call log_event(log_scratch_space, LOG_LEVEL_INFO)
       return
-    end if    
+    end if
 
-    sc_err = max(sc_err,self%a_tol)    
+    sc_err = max(sc_err,self%a_tol)
     write( log_scratch_space, '(A,E15.8,":",E15.8)' ) &
          "fGMRES starting ... ||b|| = ", b%norm(),sc_err
     call log_event(log_scratch_space, LOG_LEVEL_INFO)
@@ -891,21 +891,21 @@ contains
     call v(1)%scale(1.0_r_def/beta)
 
     allocate(Pv(self%gcrk), source=x)
-    
+
     allocate( h(self%gcrk+1, self%gcrk) )
     allocate( g(self%gcrk+1) )
     allocate( u(self%gcrk) )
-    
+
     g(:)   = 0.0_r_def
     g(1)   = beta
 
     ! initialisation complete, lets go to work.
     do iter = 1, self%max_iter
        do iv = 1, self%gcrk
-          
+
           call self%prec%apply(v(iv), Pv(iv))
           ! apply the operator
-          call self%lin_op%apply( Pv(iv), s )          
+          call self%lin_op%apply( Pv(iv), s )
           call w%copy(s)
           ! compute the h values
           do ivj = 1, iv
@@ -952,7 +952,7 @@ contains
           ! y, x : y = Px
           call dx%axpy(u(iv), Pv(iv))
        end do
-       
+
        ! check for convergence
        call self%lin_op%apply(dx, Ax)
        call res%copy(Ax)
@@ -985,10 +985,10 @@ contains
     end if
 
     call x%axpy(1.0_r_def, dx)
-       
+
     deallocate(h, g, u)
     deallocate(v)
-    
+
   end subroutine fgmres_solve
 end submodule fgmres_smod
 
@@ -1003,18 +1003,18 @@ contains
   !> @param[in] r_tol real, the relative tolerance halting condition
   !> @param[in] a_tol real, the absolute tolerance halting condition
   !> @param[in] max_iter, integer the maximum number of iterations
-  !> @return the constructed GCR solver    
-  module function gcr_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) & 
+  !> @return the constructed GCR solver
+  module function gcr_constructor( lin_op, prec, gcrk, r_tol, a_tol, max_iter) &
        result(self)
     implicit none
     class(abstract_linear_operator_type), target, intent(in) :: lin_op
     class(abstract_preconditioner_type),  target, intent(in) :: prec
-    integer(kind=i_def),                          intent(in) :: gcrk    
+    integer(kind=i_def),                          intent(in) :: gcrk
     real(kind=r_def),                             intent(in) :: r_tol
     real(kind=r_def),                             intent(in) :: a_tol
     integer(kind=i_def),                          intent(in) :: max_iter
     type(gcr_type) :: self
-    
+
     self%lin_op => lin_op
     self%prec   => prec
     self%gcrk   = gcrk
@@ -1030,7 +1030,7 @@ contains
   !> @param[inout] b an abstract vector which will be an actual vector of unkown extended type
   !! This the "RHS" or boundary conditions,
   !> @param[inout] x an abstract vector which is the solution
-  !> @param[self] The solver which has pointers to the lin_op and preconditioner  
+  !> @param[self] The solver which has pointers to the lin_op and preconditioner
   module subroutine gcr_solve(self, x, b)
     implicit none
     class(gcr_type),              intent(inout) :: self
@@ -1051,17 +1051,17 @@ contains
     integer(kind=i_def) :: iv, ivj, iv_final, iter
 
     call x%duplicate(dx)
-    call x%duplicate(res) 
-    call x%duplicate(Ax) 
+    call x%duplicate(res)
+    call x%duplicate(Ax)
 
     ! initial guess
     call dx%set_scalar(0.0_r_def)
     call self%prec%apply( b, dx )
     call self%lin_op%apply( dx, Ax )
-    !res = b - Ax 
+    !res = b - Ax
     call res%copy(b)
     call res%axpy(-1.0_r_def, Ax)
-    
+
     !sc_err = res%norm()
     sc_err = b%norm()
 
@@ -1071,9 +1071,9 @@ contains
            "GCR converged in 0 iterations... ||b|| = ", sc_err
       call log_event(log_scratch_space, LOG_LEVEL_INFO)
       return
-    end if    
+    end if
 
-    sc_err = max(sc_err,self%a_tol)    
+    sc_err = max(sc_err,self%a_tol)
     write( log_scratch_space, '(A,E15.8,":",E15.8)' ) &
          "GCR starting ... ||b|| = ", b%norm(),sc_err
     call log_event(log_scratch_space, LOG_LEVEL_INFO)
@@ -1081,11 +1081,11 @@ contains
 
     allocate(v(self%gcrk), source=x)
     allocate(Pv(self%gcrk), source=x)
-    
+
     ! initialisation complete, lets go to work.
     do iter = 1, self%max_iter
        do iv = 1, self%gcrk
-          
+
           ! apply the preconditioner
           call self%prec%apply( res, Pv(iv) )
           ! apply the operator
@@ -1093,16 +1093,16 @@ contains
 
           do ivj = 1, iv-1
             alpha = v(iv)%dot(v(ivj))
-            call v(iv)%axpy(-alpha, v(ivj)) 
-            call Pv(iv)%axpy(-alpha, Pv(ivj)) 
+            call v(iv)%axpy(-alpha, v(ivj))
+            call Pv(iv)%axpy(-alpha, Pv(ivj))
           end do
           alpha = v(iv)%norm()
           beta  = 1.0_r_def/alpha
-          call v(iv)%scale(beta) 
-          call Pv(iv)%scale(beta) 
+          call v(iv)%scale(beta)
+          call Pv(iv)%scale(beta)
           alpha = res%dot(v(iv))
-          call dx%axpy(alpha, Pv(iv)) 
-          call res%axpy(-alpha, v(iv)) 
+          call dx%axpy(alpha, Pv(iv))
+          call res%axpy(-alpha, v(iv))
 
           err = res%norm()/sc_err
           iv_final = iv
@@ -1122,11 +1122,11 @@ contains
             self%max_iter, " iters, Res=", err
        call log_event( log_scratch_space, LOG_LEVEL_ERROR )
     end if
-     
+
     call x%axpy(1.0_r_def, dx)
-     
+
     deallocate(v ,Pv)
-    
+
   end subroutine gcr_solve
 end submodule gcr_smod
 
@@ -1149,7 +1149,7 @@ contains
     real(kind=r_def),                             intent(in) :: r_tol
     real(kind=r_def),                             intent(in) :: a_tol
     type(precondition_only_type) :: self
-    
+
     self%lin_op => lin_op
     self%prec   => prec
     self%r_tol  = r_tol
@@ -1170,11 +1170,11 @@ contains
 
     class(abstract_vector_type), allocatable     :: res
     real(r_def)                                  :: e, e0
-    class(abstract_vector_type), allocatable     :: Ax    
+    class(abstract_vector_type), allocatable     :: Ax
 
 
     call log_event("Precondition only starting", LOG_LEVEL_DEBUG)
-    call self%prec%apply(b,x)         ! x = P^{-1}.b  
+    call self%prec%apply(b,x)         ! x = P^{-1}.b
 
     ! Compute initial and final error
     call b%duplicate(res)
@@ -1212,7 +1212,7 @@ contains
     real(kind=r_def),                             intent(in) :: a_tol
     integer(kind=i_def),                          intent(in) :: max_iter
     type(jacobi_type) :: self
-    
+
     self%lin_op   => lin_op
     self%prec     => prec
     self%r_tol    = r_tol
@@ -1236,8 +1236,8 @@ contains
     integer(kind=i_def) :: iter
     real(kind=r_def)    :: r_nrm, r_nrm_0
     logical             :: converged
-    
-    ! temporary vectors 
+
+    ! temporary vectors
     class(abstract_vector_type), allocatable :: r
     class(abstract_vector_type), allocatable :: z
 
@@ -1257,7 +1257,7 @@ contains
 
       ! Check for convergence
       r_nrm = r%norm()
-      if ( iter == 1 ) r_nrm_0 = r_nrm 
+      if ( iter == 1 ) r_nrm_0 = r_nrm
       if (      ( r_nrm/r_nrm_0 <= self%r_tol ) &
            .or. ( r_nrm <= self%a_tol ) ) then
          converged=.true.

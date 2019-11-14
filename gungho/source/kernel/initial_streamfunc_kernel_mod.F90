@@ -47,7 +47,7 @@ end type
 public initial_streamfunc_code
 contains
 
-!> @brief Computes the righthand side of the galerkin projection of a 
+!> @brief Computes the righthand side of the galerkin projection of a
 !>        stream function given by an analytical expression
 !> @details Computes rhs = int (c . psi dV) for a vector field psi whose
 !!          vertical components contain the values of a stream function given by a
@@ -97,7 +97,7 @@ subroutine initial_streamfunc_code(nlayers,                            &
   integer(kind=i_def), dimension(ndf),     intent(in) :: map
   integer(kind=i_def), dimension(ndf_chi), intent(in) :: map_chi
 
-  real(kind=r_def), intent(in), dimension(3,ndf,    nqp_h,nqp_v) :: basis 
+  real(kind=r_def), intent(in), dimension(3,ndf,    nqp_h,nqp_v) :: basis
   real(kind=r_def), intent(in), dimension(3,ndf_chi,nqp_h,nqp_v) :: chi_diff_basis
   real(kind=r_def), intent(in), dimension(1,ndf_chi,nqp_h,nqp_v) :: chi_basis
 
@@ -147,11 +147,11 @@ subroutine initial_streamfunc_code(nlayers,                            &
         if ( geometry == geometry_spherical ) then
           call xyz2llr(xyz(1), xyz(2), xyz(3), llr(1), llr(2), llr(3))
           psi_spherical = analytic_streamfunction(llr, profile, 3, option3)
-          psi_physical = sphere2cart_vector(psi_spherical,llr) 
+          psi_physical = sphere2cart_vector(psi_spherical,llr)
         else
           psi_physical = analytic_streamfunction(xyz, profile, 2, option2)
         end if
-        do df = 1, ndf 
+        do df = 1, ndf
           integrand = dot_product(matmul(transpose(jac_inv(:,:,qp1,qp2)),&
                                          basis(:,df,qp1,qp2)),psi_physical)*dj(qp1,qp2)
           rhs(map(df) + k) = rhs(map(df) + k) &

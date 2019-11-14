@@ -9,11 +9,11 @@
 !> @brief Adds a Held-Suarez forcing
 
 !> @details Kernel adds a Held-Suarez forcing based on Wedi and Smolarkiewicz 2009:
-!> Wedi, N. P. and Smolarkiewicz, P. K. (2009), A framework for testing global 
+!> Wedi, N. P. and Smolarkiewicz, P. K. (2009), A framework for testing global
 !> non-hydrostatic models. Q.J.R. Meteorol. Soc., 135: 469-484. doi: 10.1002/qj.377
 
 module held_suarez_kernel_mod
-  
+
 use argument_mod,             only: arg_type, func_type,                 &
                                     GH_FIELD, GH_WRITE, GH_READ,         &
                                     GH_INC, GH_READWRITE,                &
@@ -56,15 +56,15 @@ end type
 !-------------------------------------------------------------------------------
 ! Local parameters
 !-------------------------------------------------------------------------------
-! Held-Suarez parameters 
+! Held-Suarez parameters
 real(kind=r_def), parameter :: SIGMA_B = 0.7_r_def  ! non-dimensional pressure threshold
 ! Relaxation and damping coefficients
 real(kind=r_def), parameter :: KF = 1.0_r_def/86400.0_r_def ! 1 day-1
 real(kind=r_def), parameter :: KA = KF/40.0_r_def   ! 1/40 day-1
 real(kind=r_def), parameter :: KS = KF/4.0_r_def    ! 1/4 day-1
 
-real(kind=r_def), parameter :: T_MIN            = 200.0_r_def ! Minimum/Stratospheric temperature 
-real(kind=r_def), parameter :: T_SURF           = 315.0_r_def ! surface temperature 
+real(kind=r_def), parameter :: T_MIN            = 200.0_r_def ! Minimum/Stratospheric temperature
+real(kind=r_def), parameter :: T_SURF           = 315.0_r_def ! surface temperature
 real(kind=r_def), parameter :: DT_EQ_POLE       = 60.0_r_def  ! Equator-Pole Temp diff (deltaT)_y
 real(kind=r_def), parameter :: STATIC_STABILITY = 10.0_r_def  ! Static Stability temperature (delta \theta)_z
 
@@ -82,8 +82,8 @@ contains
 !! @param[inout] u Wind
 !! @param[in] theta Potential temperature
 !! @param[in] exner Pressure
-!! @param[in] chi_1 X component of the coordinate 
-!! @param[in] chi_2 Y component of the coordinate 
+!! @param[in] chi_1 X component of the coordinate
+!! @param[in] chi_2 Y component of the coordinate
 !! @param[in] chi_3 Z component of the coordinate
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 Number of unique degrees of freedom for w2
@@ -115,7 +115,7 @@ subroutine held_suarez_code(nlayers,                                           &
                             ndf_chi, undf_chi, map_chi, basis_chi,             &
                             diff_basis_chi, nqp_h, nqp_v, wqp_h, wqp_v         &
                             )
-  
+
   use coordinate_jacobian_mod,  only: coordinate_jacobian
 
   implicit none
@@ -123,7 +123,7 @@ subroutine held_suarez_code(nlayers,                                           &
   ! Arguments
   integer(kind=i_def), intent(in) :: nlayers
 
-  integer(kind=i_def), intent(in) :: ndf_w0, undf_w0  
+  integer(kind=i_def), intent(in) :: ndf_w0, undf_w0
   integer(kind=i_def), intent(in) :: ndf_w2, undf_w2
   integer(kind=i_def), intent(in) :: ndf_w3, undf_w3
   integer(kind=i_def), intent(in) :: ndf_chi, undf_chi
@@ -139,10 +139,10 @@ subroutine held_suarez_code(nlayers,                                           &
   real(kind=r_def), dimension(1, ndf_w0, nqp_h, nqp_v), intent(in) :: basis_w0
 
   integer(kind=i_def), dimension(ndf_w2),  intent(in)              :: map_w2
-  real(kind=r_def), dimension(3, ndf_w2, nqp_h, nqp_v), intent(in) :: basis_w2 
+  real(kind=r_def), dimension(3, ndf_w2, nqp_h, nqp_v), intent(in) :: basis_w2
 
   integer(kind=i_def), dimension(ndf_w3),  intent(in)              :: map_w3
-  real(kind=r_def), dimension(1, ndf_w3, nqp_h, nqp_v), intent(in) :: basis_w3 
+  real(kind=r_def), dimension(1, ndf_w3, nqp_h, nqp_v), intent(in) :: basis_w3
 
   integer(kind=i_def), dimension(ndf_chi),  intent(in)              :: map_chi
   real(kind=r_def), dimension(1, ndf_chi, nqp_h, nqp_v), intent(in) :: basis_chi
@@ -157,7 +157,7 @@ subroutine held_suarez_code(nlayers,                                           &
   real(kind=r_def)            :: theta_eq
   real(kind=r_def)            :: lon, r
   integer(kind=i_def)         :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_chi)         :: chi_1_at_dof, chi_2_at_dof, chi_3_at_dof
   real(kind=r_def), dimension(ndf_w3)          :: exner_at_dof
   real(kind=r_def), dimension(ndf_w2)          :: u_at_dof
@@ -171,7 +171,7 @@ subroutine held_suarez_code(nlayers,                                           &
 
   real(kind=r_def) :: exner0 ! lowest level exner value
   real(kind=r_def) :: sigma  ! exner/exner0
-             
+
   exner0 = 0.0_r_def
   dtheta(:) = 0.0_r_def
   du(:) = 0.0_r_def
@@ -188,19 +188,19 @@ subroutine held_suarez_code(nlayers,                                           &
    end do
    do df = 1, ndf_w0
      theta_at_dof(df) = theta( map_w0(df) + k )
-   end do   
+   end do
    do df = 1, ndf_w2
      u_at_dof(df) = u( map_w2(df) + k )
-   end do  
+   end do
    do df = 1, ndf_w3
      exner_at_dof(df) = exner( map_w3(df) + k )
-   end do 
-   ! Compute integrals over each cell       
+   end do
+   ! Compute integrals over each cell
     do qp2 = 1, nqp_v
       do qp1 = 1, nqp_h
-        exner_at_quad = 0.0_r_def 
+        exner_at_quad = 0.0_r_def
         do df = 1, ndf_w3
-          exner_at_quad  = exner_at_quad + exner_at_dof(df)*basis_w3(1,df,qp1,qp2) 
+          exner_at_quad  = exner_at_quad + exner_at_dof(df)*basis_w3(1,df,qp1,qp2)
         end do
         theta_at_quad = 0.0_r_def
         chi_at_quad(:) = 0.0_r_def
@@ -214,9 +214,9 @@ subroutine held_suarez_code(nlayers,                                           &
           chi_at_quad(3)     = chi_at_quad(3) + chi_3_at_dof(df)*basis_chi(1,df,qp1,qp2)
         end do
 
-        ! Now calculate rhs for theta 
+        ! Now calculate rhs for theta
         call xyz2llr(chi_at_quad(1), chi_at_quad(2), chi_at_quad(3), lon, lat_at_quad, r)
-        u_at_quad(:) = 0.0_r_def 
+        u_at_quad(:) = 0.0_r_def
         do df = 1, ndf_w2
           u_at_quad(:) = u_at_quad(:) &
              + u_at_dof(df)*basis_w2(:,df,qp1,qp2)
@@ -230,9 +230,9 @@ subroutine held_suarez_code(nlayers,                                           &
           sigma = (exner_at_quad/exner0)**(1.0_r_def/kappa)
         end if
 
-        theta_eq = held_suarez_equilibrium_theta(exner_at_quad, lat_at_quad) 
+        theta_eq = held_suarez_equilibrium_theta(exner_at_quad, lat_at_quad)
         do df = 1, ndf_w0
-          dtheta_at_dof(df) = dtheta_at_dof(df) & 
+          dtheta_at_dof(df) = dtheta_at_dof(df) &
              - held_suarez_newton_frequency(sigma, lat_at_quad) * &
              (theta_at_quad - theta_eq)
         end do
@@ -252,10 +252,10 @@ subroutine held_suarez_code(nlayers,                                           &
       end do
     end do
     do df = 1, ndf_w0
-      dtheta(map_w0(df) + k) = dtheta(map_w0(df) + k) + dtheta_at_dof(df) 
+      dtheta(map_w0(df) + k) = dtheta(map_w0(df) + k) + dtheta_at_dof(df)
     end do
     do df = 1, ndf_w2
-      du(map_w2(df) + k) = du(map_w2(df) + k) + du_at_dof(df) 
+      du(map_w2(df) + k) = du(map_w2(df) + k) + du_at_dof(df)
     end do
   end do
 
@@ -285,7 +285,7 @@ function held_suarez_newton_frequency(sigma, lat) result(held_suarez_frequency)
 
   implicit none
 
-  real(kind=r_def), intent(in) :: sigma 
+  real(kind=r_def), intent(in) :: sigma
   real(kind=r_def), intent(in) :: lat
   real(kind=r_def)             :: held_suarez_frequency
   real(kind=r_def)             :: sigma_func
@@ -297,7 +297,7 @@ function held_suarez_newton_frequency(sigma, lat) result(held_suarez_frequency)
   held_suarez_frequency = held_suarez_frequency*scaling_factor
 
 end function held_suarez_newton_frequency
- 
+
 !> @brief Function to calculate the damping coefficent for held-suarez
 !! @param[in] sigma Nondimensional pressure p/p_surf
 !! @return held_suarez_damping_rate Damping coefficent
@@ -305,7 +305,7 @@ function held_suarez_damping(sigma) result(held_suarez_damping_rate)
 
   implicit none
 
-  real(kind=r_def), intent(in) :: sigma 
+  real(kind=r_def), intent(in) :: sigma
   real(kind=r_def)             :: held_suarez_damping_rate
   real(kind=r_def) :: sigma_func
 

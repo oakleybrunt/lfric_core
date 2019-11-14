@@ -20,7 +20,7 @@ module single_to_multi_kernel_mod
 
   private
 
-  !> Kernel metadata for PSyclone 
+  !> Kernel metadata for PSyclone
   type, public, extends(kernel_type) :: single_to_multi_kernel_type
       private
       type(arg_type) :: meta_args(3) = (/               &

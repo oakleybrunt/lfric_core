@@ -5,8 +5,8 @@
 !-----------------------------------------------------------------------------
 
 module get_unit_test_entity_map_mod
-! A module containing a collection of helper routines that provide canned 
-! entity maps which (for each function space) list the entities on which each 
+! A module containing a collection of helper routines that provide canned
+! entity maps which (for each function space) list the entities on which each
 ! dof lives on a reference cube
 ! Separate functions are supplied for lowest order and "higher order".
 ! Essentially the list of entities is:
@@ -65,7 +65,7 @@ subroutine get_w1_o0_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map(12 ) )
   entity_map = (/ 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, &
                   2009, 2010, 2011, 2012 /)
@@ -79,10 +79,10 @@ subroutine get_w2_o0_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map( 6 ))
   entity_map = (/ 1001, 1002, 1003, 1004, 1005, 1006 /)
- 
+
 end subroutine get_w2_o0_entity_map
 
 !------------------------------------------------------
@@ -92,7 +92,7 @@ subroutine get_w3_o0_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map( 1 ))
   entity_map = (/    1 /)
 
@@ -105,7 +105,7 @@ subroutine get_w2trace_o0_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
-  
+
   allocate(entity_map( 6 ))
   entity_map = (/ 1001, 1002, 1003, 1004, 1005, 1006 /)
 
@@ -118,10 +118,10 @@ subroutine get_w2broken_o0_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map( 6 ))
   entity_map = (/ 1001, 1002, 1003, 1004, 1005, 1006 /)
- 
+
 end subroutine get_w2broken_o0_entity_map
 
 !------------------------------------------------------
@@ -131,7 +131,7 @@ subroutine get_wchi_o0_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map( 1 ))
   entity_map = (/    1 /)
 
@@ -144,7 +144,7 @@ subroutine get_w2v_o0_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map( 2 ))
   entity_map = (/ 1005, 1006 /)
 
@@ -157,7 +157,7 @@ subroutine get_w2h_o0_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map( 4 ))
   entity_map = (/ 1001, 1002, 1003, 1004 /)
 
@@ -170,7 +170,7 @@ subroutine get_wtheta_o0_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
-  
+
   allocate(entity_map( 2 ))
   entity_map = (/ 1005, 1006 /)
 
@@ -201,7 +201,7 @@ subroutine get_w1_o1_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map(54 ) )
   entity_map = (/    1,    1,    1,    1,    1,    1, 1001, 1001, &
                   1001, 1001, 1002, 1002, 1002, 1002, 1003, 1003, &
@@ -220,7 +220,7 @@ subroutine get_w2_o1_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map(36 ))
   entity_map = (/    1,    1,    1,    1,    1,    1,    1,    1, &
                      1,    1,    1,    1, 1001, 1001, 1001, 1001, &
@@ -238,7 +238,7 @@ subroutine get_w3_o1_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map( 8 ))
   entity_map = (/    1,    1,    1,    1,    1,    1,    1,    1 /)
 
@@ -251,7 +251,7 @@ subroutine get_w2trace_o1_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
-  
+
   allocate(entity_map(24 ))
   entity_map = (/ 1001, 1001, 1001, 1001, 1002, 1002, 1002, 1002, &
                   1003, 1003, 1003, 1003, 1004, 1004, 1004, 1004, &
@@ -266,7 +266,7 @@ subroutine get_w2broken_o1_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map(36 ))
   entity_map = (/    1,    1,    1,    1,    1,    1,    1,    1, &
                      1,    1,    1,    1, 1001, 1001, 1001, 1001, &
@@ -284,7 +284,7 @@ subroutine get_wchi_o1_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
- 
+
   allocate(entity_map( 8 ))
   entity_map = (/    1,    1,    1,    1,    1,    1,    1,    1 /)
 
@@ -326,7 +326,7 @@ subroutine get_wtheta_o1_entity_map(entity_map)
   implicit none
 
   integer(i_def), intent(out),allocatable :: entity_map(:)
-  
+
   allocate(entity_map(12 ))
   entity_map = (/    1,    1,    1,    1, 1005, 1005, 1005, 1005, &
                   1006, 1006, 1006, 1006 /)

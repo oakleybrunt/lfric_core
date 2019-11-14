@@ -80,7 +80,7 @@ contains
   !> @param[in] target_global_mesh_id  ID of target global mesh object
   !> @param[in] map        Global cell ids in target global mesh object which
   !>                       overlap specified cells in the source global mesh
-  !>                       object. 
+  !>                       object.
   !> @return    global_mesh_map_type
   !============================================================================
   function global_mesh_map_constructor ( source_global_mesh_id, &

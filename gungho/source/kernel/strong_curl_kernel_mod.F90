@@ -93,7 +93,7 @@ subroutine strong_curl_code(nlayers,                         &
       do df1 = 1,ndf1
         curl_u(:) = curl_u(:) + u(map1(df1)+k)*diff_basis_w1(:,df1,df2)
       end do
-      xi( map2(df2)+k ) = dot_product(basis_w2(:,df2,df2),curl_u) 
+      xi( map2(df2)+k ) = dot_product(basis_w2(:,df2,df2),curl_u)
     end do
   end do
 

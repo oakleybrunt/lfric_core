@@ -10,7 +10,7 @@
 !>   * abstract operator base type
 !>   * locally assembled operator (i.e. the stencil is assembled in each cell
 !>      of the 3d grid)
-!>   * columnwise assembled operator for horizontally discontinuous spaces 
+!>   * columnwise assembled operator for horizontally discontinuous spaces
 !>      (i.e. the matrix is assembled in each vertical column of the grid)
 module operator_mod
 
@@ -18,7 +18,7 @@ module operator_mod
   use function_space_mod,       only : function_space_type
   use mesh_mod,                 only : mesh_type
   use log_mod,                  only : log_event, LOG_LEVEL_ERROR
-    
+
   implicit none
 
   private
@@ -32,7 +32,7 @@ module operator_mod
   !> Objects of this type hold all the data of the operator privately.
   !>
   type,   public :: base_operator_type
-     private 
+     private
     !> Each operator has pointers to the two function spaces on which it is
     !! defined as a map from one to the other
      type( function_space_type ), pointer :: fs_from => null( )
@@ -67,7 +67,7 @@ module operator_mod
 
     !> Allocatable array of type real which holds the values of the operator
     real(kind=r_def), allocatable         :: local_stencil( :, :, : )
-    !> Size of the outermost dimemsion of the local_stencil array, equal to 
+    !> Size of the outermost dimemsion of the local_stencil array, equal to
     !! ncell*nlayers
     integer(i_def) :: ncell_3d
 
@@ -121,7 +121,7 @@ module operator_mod
     !> number of dofs associated with horizontal faces
     integer(i_def) :: ndof_face_to, ndof_face_from
     !> number of dofs associated with interior of cells
-    integer(i_def) :: ndof_interior_to, ndof_interior_from 
+    integer(i_def) :: ndof_interior_to, ndof_interior_from
     !> total number of dofs associated with a cell
     integer(i_def) :: ndof_cell_to, ndof_cell_from
     !> data array for banded matrix storage
@@ -137,9 +137,9 @@ module operator_mod
     !> columnwise dof-map \f$\tilde{\pi}_{from}\f$, ordering which makes the
     !> matrix banded (from-space)
     integer(kind=i_def), allocatable :: column_banded_dofmap_from( :, : )
-    !> indirection map \f$\mu_{to} := \pi_{to}\circ\tilde{\pi}^{-1}_{to}\f$ 
+    !> indirection map \f$\mu_{to} := \pi_{to}\circ\tilde{\pi}^{-1}_{to}\f$
     integer(kind=i_def), allocatable :: indirection_dofmap_to( :)
-    !> indirection map \f$\mu_{from} := \pi_{from}\circ\tilde{\pi}^{-1}_{from}\f$ 
+    !> indirection map \f$\mu_{from} := \pi_{from}\circ\tilde{\pi}^{-1}_{from}\f$
     integer(kind=i_def), allocatable :: indirection_dofmap_from( :)
 
   contains
@@ -170,7 +170,7 @@ module operator_mod
     procedure         :: columnwise_operator_product
     procedure         :: columnwise_operator_sum
 
-  end type columnwise_operator_type 
+  end type columnwise_operator_type
 
  interface columnwise_operator_type
     module procedure columnwise_operator_constructor, &
@@ -182,8 +182,8 @@ module operator_mod
   !> This is an accessor class that allows access to the actual operator information
   !> with each element accessed via a public pointer.
   !>
- type, public :: operator_proxy_type 
-     
+ type, public :: operator_proxy_type
+
     private
 
     !> Each operator has pointers to the function spaces which it lives "between"
@@ -204,12 +204,12 @@ module operator_mod
   !> This is an accessor class that allows access to the actual columnwise
   !> operator information within each element accessed via a public pointer.
   !>
-  type, public :: columnwise_operator_proxy_type 
+  type, public :: columnwise_operator_proxy_type
 
     private
 
     integer(kind=i_def), allocatable :: gnu_dummy(:)
-    !> Each operator has pointers to the function spaces which it 
+    !> Each operator has pointers to the function spaces which it
     !> maps "between"
     type( function_space_type ), pointer, public :: fs_to
     type( function_space_type ), pointer, public :: fs_from
@@ -234,9 +234,9 @@ module operator_mod
     !> columnwise dof-map \f$\tilde{\pi}_{from}\f$, ordering which makes the
     !> matrix banded (from-space)
     integer(kind=i_def), public, pointer :: column_banded_dofmap_from( :, : )
-    !> indirection map \f$\mu_{to} := \pi_{to}\circ\tilde{\pi}^{-1}_{to}\f$ 
+    !> indirection map \f$\mu_{to} := \pi_{to}\circ\tilde{\pi}^{-1}_{to}\f$
     integer(kind=i_def), public, pointer :: indirection_dofmap_to( :)
-    !> indirection map \f$\mu_{from} := \pi_{from}\circ\tilde{\pi}^{-1}_{from}\f$ 
+    !> indirection map \f$\mu_{from} := \pi_{from}\circ\tilde{\pi}^{-1}_{from}\f$
     integer(kind=i_def), public, pointer :: indirection_dofmap_from( :)
 
   contains
@@ -284,7 +284,7 @@ contains
     implicit none
     class(base_operator_type), intent(in) :: self
     integer(i_def) :: fs
-    
+
     fs = self%fs_from%which()
 
     return
@@ -382,8 +382,8 @@ contains
 
     class(operator_type), intent(inout) :: self
 
-    nullify(self%fs_to) 
-    nullify(self%fs_from) 
+    nullify(self%fs_to)
+    nullify(self%fs_from)
     if(allocated(self%local_stencil)) then
        deallocate(self%local_stencil)
     end if
@@ -406,7 +406,7 @@ contains
 
   !> Construct an <code>columnwise_operator_type</code> object.
   !>
-  !> The default values of alpha, beta, gamma_m and gamma_p are derived from 
+  !> The default values of alpha, beta, gamma_m and gamma_p are derived from
   !> the function spaces.
   !>
   !> @param [in] fs_from the function space that the operator maps from
@@ -484,7 +484,7 @@ contains
    ! build dof-maps
     call self%build_dofmaps()
   end function columnwise_operator_constructor_custom
-  
+
   !> @brief calculate data members that depend on the function space
   !>        and mesh
   !> param [inout] self instance of the type itself
@@ -507,7 +507,7 @@ contains
        call log_event("Operator_mod:extract_mesh_fs_info():Function space " // &
           "mapped to in columnwise operator is not horizontally discontinuous",&
           LOG_LEVEL_ERROR)
-    endif 
+    endif
     if (self%ndof_cell_from /= self%fs_from%get_ndf()) then
        call log_event("Operator_mod:extract_mesh_fs_info():Function space " //   &
           "mapped from in columnwise operator is not horizontally discontinuous",&
@@ -527,7 +527,7 @@ contains
 
   end subroutine extract_mesh_fs_info
 
-  !> @brief Allocate memory 
+  !> @brief Allocate memory
   !> param [inout] self instance of the type itself
   subroutine allocate_memory(self)
     implicit none
@@ -580,7 +580,7 @@ contains
     ! x_small = absolute value of smaller number
     x_large = abs(a)
     x_small = abs(b)
-    if (x_large < x_small) then 
+    if (x_large < x_small) then
        ! Swap numbers if abs(a) < abs(b)
        x_tmp = x_large
        x_large = x_small
@@ -607,7 +607,7 @@ contains
   !> * column_dofmap_XX(i,k): offset (relative to index of first unknown in
   !>   column) of the i-th dof on level k, using the native DYNAMO
   !>   ordering
-  !> * column_banded_dofmap_XX(i,k): offset (relative to first index of first 
+  !> * column_banded_dofmap_XX(i,k): offset (relative to first index of first
   !>   unknown in the column) of the i-th dof on level k, using an ordering
   !>   which makes the columnwise assembled matrix banded
   !> * indirection_map_XX = column_dofmap_XX^{-1}*column_banded_dofmap_XX
@@ -628,10 +628,10 @@ contains
     ! entries
     if (any(dofmap_to(2:)<dofmap_to(1))) then
        call log_event("First entry in dofmap is not smallest entry for to-space", LOG_LEVEL_ERROR)
-    endif 
+    endif
     if (any(dofmap_from(2:)<dofmap_from(1))) then
        call log_event("First entry in dofmap is not smallest entry for from-space",LOG_LEVEL_ERROR)
-    endif 
+    endif
 
     nlayers = self%fs_to%get_nlayers()
     do k=1, nlayers
@@ -659,8 +659,8 @@ contains
   subroutine columnwise_operator_destructor(self)
     implicit none
     type(columnwise_operator_type), intent(inout) :: self
-    nullify(self%fs_to) 
-    nullify(self%fs_from) 
+    nullify(self%fs_to)
+    nullify(self%fs_from)
     ! Columnwise banded matrix
     if(allocated(self%columnwise_matrix)) then
        deallocate(self%columnwise_matrix)
@@ -816,9 +816,9 @@ contains
   subroutine destroy_col_op_proxy(self)
     implicit none
     type(columnwise_operator_proxy_type) :: self
-    if(allocated(self%gnu_dummy)) then 
+    if(allocated(self%gnu_dummy)) then
        deallocate(self%gnu_dummy)
-    end if 
+    end if
     nullify( self%fs_to )
     nullify(self%fs_from)
     nullify(self%columnwise_matrix)

@@ -509,7 +509,7 @@ contains
     this%number_edges          = 2 * this%number_2d_edges &
                                    + this%number_2d_vertices
 
-    ! Information about the horizontal entities of the 
+    ! Information about the horizontal entities of the
     ! 3D reference element
     this%number_horizontal_faces = this%number_2d_faces
     this%number_horizontal_edges = 2*this%number_2d_edges
@@ -648,7 +648,7 @@ contains
   end function get_number_horizontal_edges
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> @brief Gets the number of faces in the horizontal, these are faces whose 
+  !> @brief Gets the number of faces in the horizontal, these are faces whose
   !>        normals are in the horizontal directions
   !>
   !> @return Positive integer.
@@ -665,7 +665,7 @@ contains
   end function get_number_horizontal_faces
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> @brief Gets the number of faces in the vertical, these are faces whose 
+  !> @brief Gets the number of faces in the vertical, these are faces whose
   !>        normals are in the vertical direction. The answer will always be 2
   !>
   !> @return Positive integer.

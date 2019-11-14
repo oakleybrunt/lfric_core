@@ -4,11 +4,11 @@
 ! which you should have received as part of this distribution.
 !-----------------------------------------------------------------------
 !> @brief Provides functionality for analytic orography related classes.
-!> 
+!>
 !> @details Contains abstract orography type definition and abstract interface
-!>          which set up templates to calculate analytic orography profiles. 
-!>          This functionality is later used to assign analytic orography 
-!>          profiles for Schar and Witch-of-Agnesi mountains in spherical and 
+!>          which set up templates to calculate analytic orography profiles.
+!>          This functionality is later used to assign analytic orography
+!>          profiles for Schar and Witch-of-Agnesi mountains in spherical and
 !>          Cartesian coordinates.
 !-------------------------------------------------------------------------------
 module analytic_orography_mod

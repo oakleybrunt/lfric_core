@@ -18,7 +18,7 @@ use constants_mod,     only: i_def
 contains
 
   subroutine set_derived_config(gh)
-    
+
     implicit none
     logical, intent(in) :: gh
 

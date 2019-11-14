@@ -62,7 +62,7 @@ contains
 !! @param[in] ndf_w1 Number of degrees of freedom per cell for w1
 !! @param[in] undf_w1  Number of unique degrees of freedom  for w1
 !! @param[in] map_w1 Dofmap for the cell at the base of the column for w1
-!! @param[in] w1_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w1_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] xi Absolute vorticity
 !! @param[in] ndf_w0 Number of degrees of freedom per cell for w0
 !! @param[in] undf_w0 Number of unique degrees of freedom  for w0
@@ -71,7 +71,7 @@ contains
 !! @param[in] ndf_chi Number of degrees of freedom per cell for chi
 !! @param[in] undf_chi Number of unique degrees of freedom  for chi
 !! @param[in] map_chi Dofmap for the cell at the base of the column for chi
-!! @param[in] chi_diff_basis Differential basis functions evaluated at gaussian quadrature points 
+!! @param[in] chi_diff_basis Differential basis functions evaluated at gaussian quadrature points
 !! @param[in] theta Potential temperature
 !! @param[in] chi1 First component of the coordinate field
 !! @param[in] chi2 Second component of the coordinate field
@@ -132,7 +132,7 @@ subroutine compute_total_pv_code(                                               
   real(kind=r_def), dimension(3,3,nqp_h,nqp_v) :: jac, jac_inv
 
   do k = 0, nlayers-1
-  ! Extract element arrays of chi and theta    
+  ! Extract element arrays of chi and theta
     do df = 1, ndf_chi
       chi1_e(df) = chi1( map_chi(df) + k )
       chi2_e(df) = chi2( map_chi(df) + k )
@@ -140,7 +140,7 @@ subroutine compute_total_pv_code(                                               
     end do
     call coordinate_jacobian(ndf_chi, nqp_h, nqp_v, chi1_e, chi2_e, chi3_e,  &
                              chi_diff_basis, jac, dj)
-    call coordinate_jacobian_inverse(nqp_h, nqp_v, jac, dj, jac_inv)  
+    call coordinate_jacobian_inverse(nqp_h, nqp_v, jac, dj, jac_inv)
     do df = 1, ndf_w0
       theta_e(df)  = theta(  map_w0(df) + k )
     end do

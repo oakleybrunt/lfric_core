@@ -177,7 +177,7 @@ contains
 
   end subroutine test_all
 
-  subroutine div_operator( div ) 
+  subroutine div_operator( div )
     use constants_mod, only: r_def
     implicit none
 
@@ -191,7 +191,7 @@ contains
 
   d32 = real(reshape( [ &
   -1, 1, 1, -1, -1, 1 &
- ], shape(d32) ),r_def) 
+ ], shape(d32) ),r_def)
 
   div = 300_r_def*matmul(m3,d32)
 

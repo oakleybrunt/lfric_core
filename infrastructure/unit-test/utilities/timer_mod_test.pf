@@ -61,7 +61,7 @@ contains
   subroutine test_timer_internals(this)
 
     use timer_mod, only: init_timer, timer, get_routine_name, &
-                         get_routine_total_calls 
+                         get_routine_total_calls
 
     implicit none
 
@@ -97,7 +97,7 @@ contains
     @assertEqual(1_i_long,num_calls)
     num_calls = get_routine_total_calls(2)
     @assertEqual(10_i_long,num_calls)
-   
+
   end subroutine test_timer_internals
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -118,11 +118,11 @@ contains
     call timer('test_sleep')
     call sleep(1)
     call timer('test_sleep')
-    call calculate_timer_stats()    
+    call calculate_timer_stats()
     val = get_mean_time(1)
     ! assume a tolerance for system variation.
     @assertEqual(1.0_r_double, val, 1e-2_r_double)
-    
+
   end subroutine test_timer_timings
 
 end module timer_mod_test

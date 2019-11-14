@@ -4,7 +4,7 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> Test the computation of consistent winds 
+!> Test the computation of consistent winds
 module consistent_wind_kernel_mod_test
 
   use constants_mod, only : i_def, r_def
@@ -29,7 +29,7 @@ contains
 
     use consistent_wind_kernel_mod, only: consistent_wind_code
 
-    implicit none 
+    implicit none
 
     class(consistent_wind_test_type), intent(inout) :: this
 
@@ -134,7 +134,7 @@ contains
                               wind,                      &
                               metrics,                   &
                               x, y, z,                   &
-                              ndf_w2,                    &           
+                              ndf_w2,                    &
                               undf_w2,                   &
                               map_w2,                    &
                               basis,                     &
@@ -144,7 +144,7 @@ contains
                               ndf_wx,                    &
                               undf_wx,                   &
                               map_wx,                    &
-                              diff_basis) 
+                              diff_basis)
     answer = u0
 
     @assertEqual(answer, consistent_wind(map_w2(6)) , tol)

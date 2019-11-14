@@ -8,7 +8,7 @@
 
 !> @brief Kernel computes the omega (rotation) for the u-equation.
 
-!> @details The kernel computes the element rotation (omega) vector in W2 space for 
+!> @details The kernel computes the element rotation (omega) vector in W2 space for
 !> the RHS of momentum equation on both F-PLANE and the SPHERE
 
 module rotation_vector_mod
@@ -28,7 +28,7 @@ contains
 ! Contained functions/subroutines
 !-------------------------------------------------------------------------------
 !> Subroutine Computes the element rotation (omega) vector in W2 space for the
-!! RHS of momentum equation on the F-PLANE. 
+!! RHS of momentum equation on the F-PLANE.
 !! @param[in] ngp_h          Number of quadrature points in horizontal direction
 !! @param[in] ngp_v          Number of quadrature points in vertical direction
 !! @param[in] omegaf         Planetary rotation rate
@@ -36,7 +36,7 @@ contains
 !! @param[out] rotation_vec  Rotation vector on quadrature points
 subroutine rotation_vector_fplane(ngp_h, ngp_v, omegaf, latitude, rotation_vec)
 !-------------------------------------------------------------------------------
-! Compute the rotation vector Omega = (0, 2*cos(lat), 2*sin(lat)) on quadrature points 
+! Compute the rotation vector Omega = (0, 2*cos(lat), 2*sin(lat)) on quadrature points
 !-------------------------------------------------------------------------------
 
 implicit none
@@ -50,7 +50,7 @@ integer :: i, j
 rotation_vec = 0.0_r_def
 
 do j = 1, ngp_v
-  do i = 1, ngp_h 
+  do i = 1, ngp_h
      rotation_vec(1,i,j) = 0.0_r_def
      rotation_vec(2,i,j) = 2.0_r_def*omegaf*cos(latitude)
      rotation_vec(3,i,j) = 2.0_r_def*omegaf*sin(latitude)
@@ -74,7 +74,7 @@ end subroutine rotation_vector_fplane
 !! @param[out] rotation_vec  Holds the values of the rotation vector on quadrature points
 subroutine rotation_vector_sphere(ndf_chi, ngp_h, ngp_v, chi_1, chi_2, chi_3, chi_basis, rotation_vec)
 !-------------------------------------------------------------------------------
-! Compute the rotation vector Omega = (0, 2*cos(lat), 2*sin(lat)) on quadrature points 
+! Compute the rotation vector Omega = (0, 2*cos(lat), 2*sin(lat)) on quadrature points
 !-------------------------------------------------------------------------------
 
 use coord_transform_mod, only: xyz2llr, sphere2cart_vector
@@ -95,21 +95,21 @@ long = 0.0_r_def
 rotation_vec = 0.0_r_def
 
 do j = 1, ngp_v
-  do i = 1, ngp_h  
-    x = 0.0_r_def  
-    y = 0.0_r_def 
-    z = 0.0_r_def   
+  do i = 1, ngp_h
+    x = 0.0_r_def
+    y = 0.0_r_def
+    z = 0.0_r_def
     do df = 1, ndf_chi
         x = x + chi_1(df)*chi_basis(1,df,i,j)
         y = y + chi_2(df)*chi_basis(1,df,i,j)
         z = z + chi_3(df)*chi_basis(1,df,i,j)
-    end do 
+    end do
     call xyz2llr(x,y,z,long,lat,r)
     rotation_vec(1,i,j) = 0.0_r_def
     rotation_vec(2,i,j) = 2.0_r_def*scaled_omega*cos(lat)
     rotation_vec(3,i,j) = 2.0_r_def*scaled_omega*sin(lat)
 
-    llr = (/long, lat, r/) 
+    llr = (/long, lat, r/)
     rotation_vec(:,i,j) = sphere2cart_vector( rotation_vec(:,i,j),llr)
   end do
 end do

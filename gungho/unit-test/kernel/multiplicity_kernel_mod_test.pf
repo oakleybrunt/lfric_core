@@ -16,7 +16,7 @@ module multiplicity_kernel_mod_test
 
   use pFUnit_Mod
 
-  implicit none 
+  implicit none
 
   private
   public :: test_all
@@ -94,19 +94,19 @@ contains
     do cell = 1, ncells
 
       call multiplicity_code(nlayers,           &
-                             field,             & 
-                             ndf,               & 
+                             field,             &
+                             ndf,               &
                              undf,              &
                              map_field(:, cell) &
                              )
-    end do 
+    end do
     cell = 1
     ! Check edges at bottom of first layer. Each is visited by 2 neighbours
     answer = 2.0_r_def
     do df = 1,4
       @assertEqual(answer, field(map_field(df, cell) ), tol)
     end do
-    ! Other edges are visited by either 4 cells on first level or 2 cells on 
+    ! Other edges are visited by either 4 cells on first level or 2 cells on
     ! first level plus 2 cells on second level.
     answer = 4.0_r_def
     do df = 5,12
@@ -130,12 +130,12 @@ contains
     do cell = 1, ncells
 
       call multiplicity_code(nlayers,           &
-                             field,             & 
-                             ndf,               & 
+                             field,             &
+                             ndf,               &
                              undf,              &
                              map_field(:, cell) &
                              )
-    end do 
+    end do
     cell = 1
 
     ! Check side faces of first layer

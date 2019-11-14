@@ -118,7 +118,7 @@ contains
                                   nlayers )
     call get_w0_q3x3x3_basis(this%basis_w0)
     call get_w0_m3x3_dofmap(this%map_w0)
-    
+
     call get_w3_m3x3_q3x3x3_size( this%ndf_w3, this%undf_w3, ncells, &
                                   dim_space, dim_space_diff, &
                                   nqp_h, nqp_v, &

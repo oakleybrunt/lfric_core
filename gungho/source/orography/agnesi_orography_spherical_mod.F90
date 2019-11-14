@@ -3,23 +3,23 @@
 ! For further details please refer to the file COPYRIGHT.txt
 ! which you should have received as part of this distribution.
 !-----------------------------------------------------------------------
-!> @brief Calculates Witch-of-Agnesi mountain orography profile in spherical 
-!>        coordinates. 
+!> @brief Calculates Witch-of-Agnesi mountain orography profile in spherical
+!>        coordinates.
 !>
-!> @details This module contains type definition and routines to calculate 
-!>          analytic orography profile of Witch-of-Agnesi mountain function from 
-!>          spherical coordinates: longitude (lambda) and latitude (phi). 
-!>          Reference: Wedi and Smolarkiewicz (2009), Section 4.1.  
+!> @details This module contains type definition and routines to calculate
+!>          analytic orography profile of Witch-of-Agnesi mountain function from
+!>          spherical coordinates: longitude (lambda) and latitude (phi).
+!>          Reference: Wedi and Smolarkiewicz (2009), Section 4.1.
 !>          Witch-of-Agnesi mountain parameters in spherical coordinates are:
 !>          mountain_height - Height of Witch-of-Agnesi mountain function (m),
-!>          half_width - Half-width of Witch-of-Agnesi mountain function (m), 
-!>          lambda_centre - Longitudinal centre of Witch-of-Agnesi mountain 
+!>          half_width - Half-width of Witch-of-Agnesi mountain function (m),
+!>          lambda_centre - Longitudinal centre of Witch-of-Agnesi mountain
 !>                          function (radian),
-!>          phi_centre - Latitudinal centre of Witch-of-Agnesi mountain 
+!>          phi_centre - Latitudinal centre of Witch-of-Agnesi mountain
 !>                       function (radian),
-!>          lambda_focus - Longitudinal parameter of Witch-of-Agnesi mountain 
+!>          lambda_focus - Longitudinal parameter of Witch-of-Agnesi mountain
 !>                         function's centre (radian),
-!>          phi_focus - Latitudinal parameter of Witch-of-Agnesi mountain 
+!>          phi_focus - Latitudinal parameter of Witch-of-Agnesi mountain
 !>                     function's centre (radian).
 !-------------------------------------------------------------------------------
 module agnesi_orography_spherical_mod
@@ -30,12 +30,12 @@ module agnesi_orography_spherical_mod
   implicit none
 
   private
-  !> @brief Holds parameters and methods used to calculate Witch-of-Agnesi 
+  !> @brief Holds parameters and methods used to calculate Witch-of-Agnesi
   !>        orography profile in spherical coordinates.
   type, public, extends(analytic_orography_type) :: agnesi_spherical_type
 
     private
-    ! Witch-of-Agnesi mountain function parameters in spherical coordinates 
+    ! Witch-of-Agnesi mountain function parameters in spherical coordinates
     real(kind=r_def) :: mountain_height
     real(kind=r_def) :: half_width
     real(kind=r_def) :: lambda_centre
@@ -54,17 +54,17 @@ module agnesi_orography_spherical_mod
   ! Constructor for agnesi_spherical_type
   interface agnesi_spherical_type
     module procedure agnesi_spherical_constructor
-  end interface 
+  end interface
 
 contains
 
   !=============================================================================
-  !> @brief Constructor for the Witch-of-Agnesi mountain function in spherical 
-  !>        coordinates. 
+  !> @brief Constructor for the Witch-of-Agnesi mountain function in spherical
+  !>        coordinates.
   !>
-  !> @param[in] mountain_height Height of mountain function read from 
+  !> @param[in] mountain_height Height of mountain function read from
   !>                            namelist (m)
-  !> @param[in] half_width      Half-width of mountain function read from 
+  !> @param[in] half_width      Half-width of mountain function read from
   !>                            namelist (m)
   !> @param[in] lambda_centre   Longitudinal centre of mountain function read
   !>                            from namelist (m)
@@ -72,10 +72,10 @@ contains
   !>                            from namelist (m)
   !> @param[in] lambda_focus    Longitudinal parameter of mountain function read
   !>                            from namelist (m)
-  !> @param[in] phi_focus       Latitudinal parameter of mountain function read 
+  !> @param[in] phi_focus       Latitudinal parameter of mountain function read
   !>                            from namelist (m)
   !> @return    self            An object of type agnesi_spherical_type
-  !=============================================================================   
+  !=============================================================================
   type(agnesi_spherical_type) function agnesi_spherical_constructor(     &
                                                         mountain_height, &
                                                         half_width,      &
@@ -89,7 +89,7 @@ contains
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     real(kind=r_def), intent(in) :: mountain_height, &
                                     half_width,      &
                                     lambda_centre,   &
@@ -109,43 +109,43 @@ contains
   end function agnesi_spherical_constructor
 
   !=============================================================================
-  !> @brief Calculates Witch-of-Agnesi mountain function in spherical coordinates. 
+  !> @brief Calculates Witch-of-Agnesi mountain function in spherical coordinates.
   !>
   !> @param[in] self      An object of type agnesi_spherical_type
   !> @param[in] chi_1     Longitude (lambda) (radian)
   !> @param[in] chi_2     Latitude (phi) (radian)
-  !> @return    chi_surf  Surface height (m)  
-  !=============================================================================  
+  !> @return    chi_surf  Surface height (m)
+  !=============================================================================
   function agnesi_orography_spherical(self, chi_1, chi_2) result(chi_surf)
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(agnesi_spherical_type), intent(in) :: self
     real(kind=r_def),             intent(in) :: chi_1, chi_2
-    real(kind=r_def)                         :: chi_surf   
+    real(kind=r_def)                         :: chi_surf
     ! Internal variables
     real(kind=r_def) :: chisurf_arg(2)
 
     ! Calculate transformed/scaled function arguments
     call agnesi_coordinate_spherical(self, chi_1, chi_2, chisurf_arg)
 
-    ! Calculate Witch-of-Agnesi mountain surface height 
+    ! Calculate Witch-of-Agnesi mountain surface height
     ! Reference: Wedi and Smolarkiewicz (2009), Section 4.1., Eq. 9
     chi_surf = self%mountain_height/(1.0_r_def + sum(chisurf_arg**2))
 
     return
   end function agnesi_orography_spherical
-  
+
   !=============================================================================
-  !> @brief Transforms/scales coordinate for spherical Witch-of-Agnesi mountain 
-  !>        function. 
+  !> @brief Transforms/scales coordinate for spherical Witch-of-Agnesi mountain
+  !>        function.
   !>
   !> @param[in]  self         An object of type agnesi_spherical_type
   !> @param[in]  chi_1        Longitude (lambda) (radian)
   !> @param[in]  chi_2        Latitude (phi) (radian)
-  !> @param[out] chisurf_arg  Witch-of-Agnesi mountain function 
-  !>                          transformed/scaled arguments  
+  !> @param[out] chisurf_arg  Witch-of-Agnesi mountain function
+  !>                          transformed/scaled arguments
   !=============================================================================
   subroutine agnesi_coordinate_spherical(self, chi_1, chi_2, chisurf_arg)
 
@@ -153,10 +153,10 @@ contains
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(agnesi_spherical_type), intent(in)  :: self
     real(kind=r_def),             intent(in)  :: chi_1, chi_2
-    real(kind=r_def),             intent(out) :: chisurf_arg(2)   
+    real(kind=r_def),             intent(out) :: chisurf_arg(2)
     ! Internal variables
     real(kind=r_def) :: half_width_agnesi(2), half_width_focus
     real(kind=r_def) :: sinp_foc, cosp_foc, sinp_cen, cosp_cen
@@ -192,18 +192,18 @@ contains
   end subroutine agnesi_coordinate_spherical
 
   !=============================================================================
-  !> @brief Writes out parameters of Witch-of-Agnesi mountain function in 
-  !>        spherical coordinates. 
+  !> @brief Writes out parameters of Witch-of-Agnesi mountain function in
+  !>        spherical coordinates.
   !>
   !> @param[in] self An object of type agnesi_spherical_type
-  !=============================================================================   
+  !=============================================================================
   subroutine write_agnesi_spherical_type(self)
 
     use constants_mod, only : str_short, str_max_filename
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(agnesi_spherical_type), intent(in) :: self
     ! Temporary write variables
     integer(kind=i_def),             parameter :: funit = 777
@@ -213,8 +213,8 @@ contains
 
     ! Temporary write
     open(funit, file = trim(fname), status = 'replace')
-    write(funit,'(A)') & 
-          "Witch-of-Agnesi mountain parameters in spherical coordinates: " 
+    write(funit,'(A)') &
+          "Witch-of-Agnesi mountain parameters in spherical coordinates: "
     write(funit, fmtreal) "mountain_height = ", self%mountain_height
     write(funit, fmtreal) "half_width      = ", self%half_width
     write(funit, fmtreal) "lambda_centre   = ", self%lambda_centre
@@ -225,6 +225,6 @@ contains
 
     return
   end subroutine write_agnesi_spherical_type
-  
+
 end module agnesi_orography_spherical_mod
 

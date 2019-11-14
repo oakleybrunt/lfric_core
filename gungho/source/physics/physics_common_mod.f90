@@ -6,9 +6,9 @@
 !
 !-------------------------------------------------------------------------------
 
-!> @brief Collection of routines that are needed for physics. 
+!> @brief Collection of routines that are needed for physics.
 
-!> @detail Collection of routines that are needed for physics. These may be 
+!> @detail Collection of routines that are needed for physics. These may be
 !>         replaced/overloaded by specific schemes as they are brought in from
 !>         the UM
 
@@ -25,7 +25,7 @@ contains
   ! Function to return the saturation mr over water
   ! Based on tetans formula
   ! QS=3.8/(P*EXP(-17.2693882*(T-273.15)/(T-35.86))-6.109)
-  function qsaturation (T, p)    
+  function qsaturation (T, p)
     implicit none
     real(r_def), intent(IN) :: T, p
     real(r_def) :: Qsaturation

@@ -236,7 +236,7 @@ contains
     f1_ptr => f1
 
     ! Make a field pointer object based on the above field
-    field_pointer = field_pointer_type( f1_ptr )   
+    field_pointer = field_pointer_type( f1_ptr )
 
     ! Check that the pointer held in the object is the same as the original
     @assertEqual ( .true., associated( field_pointer%field_ptr, f1_ptr ) )

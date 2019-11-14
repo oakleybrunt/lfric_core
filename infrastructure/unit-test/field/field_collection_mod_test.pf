@@ -128,7 +128,7 @@ contains
     ! Extract the field called 'test_field' into test_field2
     returned_field1 => test_field_collection1%get_field('test_field1')
     returned_field1_p = returned_field1%get_proxy()
-    
+
     ! Check that test_field2 has 99.0 in the first dof
     @assertEqual(99.0, returned_field1_p%data(1), tol)
 
@@ -140,7 +140,7 @@ contains
     ! Change the data in the original field
     returned_field1_p%data(1)=999.0
 
-    ! Check that the reference to that field has been updated    
+    ! Check that the reference to that field has been updated
     returned_field2 => test_field_collection2%get_field('test_field1')
     returned_field2_p = returned_field2%get_proxy()
     @assertEqual(999.0, returned_field2_p%data(1), tol)
@@ -163,7 +163,7 @@ contains
     type(field_collection_type)                      :: f_collection_copy
 
     real(r_def), parameter :: tol = 1.0e-6_r_def
-    
+
     f_collection = field_collection_type("test_field_collection1")
 
     ! Assert the copy has preserved the name.
@@ -183,7 +183,7 @@ contains
     ! Copy the collection, and get hold of the copied field.
     f_collection_copy = f_collection
     returned_field => f_collection_copy % get_field( 'test_field1' )
-    
+
     ! Check the name is the same, but that changing the data on one field
     ! doesn't change the data in the copy.
     @assertEqual(test_field1 % get_name(), returned_field % get_name())
@@ -207,7 +207,7 @@ contains
     f_collection_copy = f_collection
     returned_field => f_collection_copy % get_field('test_field2')
     @assertTrue(associated(test_field2_ptr, returned_field))
-    
+
     ! Now if we nullify the original field pointer, we should still be able to use the
     ! pointer from the copied collection, and we should be pointing at the same data.
     nullify(test_field2_ptr)

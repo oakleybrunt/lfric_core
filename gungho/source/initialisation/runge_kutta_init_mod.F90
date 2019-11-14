@@ -5,7 +5,7 @@
 !-----------------------------------------------------------------------------
 
 !>@brief Intialisation module for the Runge-Kutta method, sets the
-!!number of stages and coefficients 
+!!number of stages and coefficients
 module runge_kutta_init_mod
 
   use constants_mod,     only: r_def, i_def
@@ -41,8 +41,8 @@ implicit none
       allocate ( ak (num_rk_stage,num_rk_stage) )
       ak(1,:) = (/ 1.0_r_def,  0.0_r_def,  0.0_r_def /)
       ak(2,:) = (/ 0.25_r_def, 0.25_r_def, 0.0_r_def /)
-      ak(3,:) = (/ 1.0_r_def,  1.0_r_def,  4.0_r_def /)/6.0_r_def  
- 
+      ak(3,:) = (/ 1.0_r_def,  1.0_r_def,  4.0_r_def /)/6.0_r_def
+
     case(runge_kutta_method_ssp4)
       num_rk_stage = 4
       allocate ( ak (num_rk_stage,num_rk_stage) )

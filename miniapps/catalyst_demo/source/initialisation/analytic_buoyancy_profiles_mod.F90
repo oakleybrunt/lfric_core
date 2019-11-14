@@ -41,7 +41,7 @@ function analytic_buoyancy(chi) result(buoyancy)
   real(kind=r_def)             :: long, lat, radius
   real(kind=r_def)             :: pressure, density
   real(kind=r_def)             :: theta_0, theta_p
-          
+
   if ( geometry == geometry_spherical ) then
     call xyz2llr(chi(1),chi(2),chi(3),long,lat,radius)
     call reference_profile(pressure, density, theta_0, chi, test_gravity_wave)

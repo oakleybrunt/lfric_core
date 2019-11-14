@@ -56,7 +56,7 @@ contains
 !! @param[in] ndf_2 Number of degrees of freedom per cell for the field to be advected
 !! @param[in] undf_2  Number of unique degrees of freedom for the advected field
 !! @param[in] map_2 Dofmap for the cell at the base of the column for the field to be advected
-!! @param[in] basis_2 Basis functions evaluated at gaussian quadrature points 
+!! @param[in] basis_2 Basis functions evaluated at gaussian quadrature points
 subroutine sample_field_code(nlayers,                                           &
                              field_1, multiplicity, field_2,                    &
                              ndf_1, undf_1, map_1,                              &
@@ -85,7 +85,7 @@ subroutine sample_field_code(nlayers,                                           
       f_at_node = 0.0_r_def
       do df_2 = 1,ndf_2
         f_at_node = f_at_node + field_2(map_2(df_2)+k)*basis_2(1,df_2,df)
-      end do     
+      end do
       ijk = map_1(df) + k
       field_1( ijk ) = field_1( ijk ) + f_at_node/multiplicity( ijk )
     end do

@@ -79,7 +79,7 @@ contains
   !! @param[in] wtheta_map Dofmap for the theta space
   !! @param[inout] r_u_bd Right hand side of the momentum equation
   !! @param[in] exner Exner pressure
-  !! @param[in] theta Potential temperature    
+  !! @param[in] theta Potential temperature
   !! @param[in] moist_dyn_gas Gas factor (1 + m_v / epsilon)
   !! @param[in] moist_dyn_tot Total mass factor (1 + sum m_x)
   !! @param[in] moist_dyn_fac Water factor

@@ -213,10 +213,10 @@ contains
           matrixentry &
              = columnwise_op_DT_D_p%columnwise_matrix(j-j_minus+1,i,cell)
           @assertEqual( densematrix_DT_D(i,j), matrixentry, tol )
-          
+
        end do
     end do
-    
+
     deallocate(densematrix_D)
     deallocate(densematrix_DT_D)
 

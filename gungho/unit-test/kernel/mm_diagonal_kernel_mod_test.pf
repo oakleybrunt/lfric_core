@@ -93,7 +93,7 @@ contains
                                    undf,            &
                                    this%map(:,cell) &
                                    )
-    end do 
+    end do
     this%answer = (/ 4.0_r_def, 6.0_r_def, 8.0_r_def, 6.0_r_def, 4.0_r_def /)
     @assertEqual(this%answer, this%mm_diag, tol)
 

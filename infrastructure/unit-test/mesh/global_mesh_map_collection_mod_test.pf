@@ -15,7 +15,7 @@ module global_mesh_map_collection_mod_test
   use pFUnit_Mod
 
   implicit none
-  
+
   private
   public :: test_all
 
@@ -108,18 +108,18 @@ contains
     do i=1, ncells_source
       call test_global_mesh_map%get_cell_map([i], tmp_gid_map)
       data_gid_map(:,1) = SourceToTarget_gid_map(:,i)
-      @assertEqual( tmp_gid_map, data_gid_map ) 
+      @assertEqual( tmp_gid_map, data_gid_map )
     end do
-    
+
     ! Test that a null pointer is returned if no map is present
     test_global_mesh_map =>                                         &
         global_mesh_map_collection%get_global_mesh_map( source_id,  &
                                                         source_id )
-    @assertNotAssociated(test_global_mesh_map) 
+    @assertNotAssociated(test_global_mesh_map)
 
     ! Tear down the collection
     call global_mesh_map_collection%clear()
- 
+
   end subroutine test_all
 
 end module global_mesh_map_collection_mod_test

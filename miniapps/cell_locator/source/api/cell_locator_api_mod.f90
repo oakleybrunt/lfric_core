@@ -16,7 +16,7 @@ module cell_locator_api_mod
                                            geometry_spherical
   use fs_continuity_mod,             only: W0, W3
   use mesh_mod,                      only: mesh_type
-  use mesh_collection_mod,           only: mesh_collection 
+  use mesh_collection_mod,           only: mesh_collection
   use function_space_mod,            only: function_space_type
   use function_space_collection_mod, only: function_space_collection
   use project_output_mod,            only: project_output
@@ -61,34 +61,34 @@ module cell_locator_api_mod
     ! Copy of mesh vertices which will be passed as a pointer to the C++ code
     !=========================================================================
     !< Source grid vertices
-    real(c_double), allocatable       :: vert_coords(:)        
+    real(c_double), allocatable       :: vert_coords(:)
 
     !=========================================================================
     ! Opaque handle:
     !=========================================================================
     !< Address of pointer to C++ object
-    type(c_ptr)                       :: address_of_cpp_ptr    
+    type(c_ptr)                       :: address_of_cpp_ptr
 
     !=========================================================================
     ! Interpolation results:
     !=========================================================================
     !< Target points, dimensions are (3, npts)
-    real(r_def), allocatable          :: target_points(:, :)   
+    real(r_def), allocatable          :: target_points(:, :)
 
     !< Parametric coordinates, dimensions are (3, npts)
-    real(r_def), allocatable          :: pcoords(:, :)         
+    real(r_def), allocatable          :: pcoords(:, :)
 
     !< Interpolation errors, dimension (npts)
-    real(r_def), allocatable          :: dist_error_square(:)  
+    real(r_def), allocatable          :: dist_error_square(:)
 
     !< Cell indices, 0 based, dimension (npts)
-    integer(c_long_long), allocatable :: cell_ids_0(:)         
+    integer(c_long_long), allocatable :: cell_ids_0(:)
 
     !< Point Ids, 0 based, dimension (npts)
-    integer(i_def), allocatable       :: point_ids_0(:)        
+    integer(i_def), allocatable       :: point_ids_0(:)
 
     !< Number of target points found
-    integer(i_def)                    :: number_points_found   
+    integer(i_def)                    :: number_points_found
 
     !==========================================================================
     ! MPI:
@@ -133,13 +133,13 @@ module cell_locator_api_mod
 
     ier = mnt_celllocator_new( self%address_of_cpp_ptr )
 
-    ! Read the target points from configuration file. This will allocate 
+    ! Read the target points from configuration file. This will allocate
     ! self%target_points and self%cell_ids_0, etc.
     call cell_locator_api_read_points( self, input_target_points_filename, &
                                        'target_points', ier )
     if ( ier /= 0 ) then
       call log_event( &
-          'cell_locator_api_constructor: Error occurred when reading target ' & 
+          'cell_locator_api_constructor: Error occurred when reading target ' &
            // 'point file "' &
            // input_target_points_filename // '"', LOG_LEVEL_ERROR )
     endif
@@ -156,8 +156,8 @@ module cell_locator_api_mod
     implicit none
     class(cell_locator_api_type), intent(inout) :: self
     integer(i_def), intent(out)                 :: ier
-   
-    if ( allocated( self%vert_coords ) ) deallocate( self%vert_coords ) 
+
+    if ( allocated( self%vert_coords ) ) deallocate( self%vert_coords )
     if ( allocated( self%pcoords ) ) deallocate( self%pcoords )
     if ( allocated( self%dist_error_square ) ) &
                     deallocate( self%dist_error_square )
@@ -178,7 +178,7 @@ module cell_locator_api_mod
     integer(i_def)                             :: ier
 
     call self%clear( ier )
-   
+
   end subroutine cell_locator_api_destructor
 
 
@@ -217,8 +217,8 @@ module cell_locator_api_mod
     self%my_mpi_rank = get_comm_rank()
     self%num_mpi_ranks = get_comm_size()
 
-    ! Construct a string of the type '0012345' where 12345 is 
-    ! the MPI rank (number of preceding zeros are dependent on number 
+    ! Construct a string of the type '0012345' where 12345 is
+    ! the MPI rank (number of preceding zeros are dependent on number
     ! of ranks)
     self%my_mpi_rank_string = ''
 
@@ -289,14 +289,14 @@ module cell_locator_api_mod
 
     if (  geometry == geometry_spherical ) then
 
-      ! Convert to spherical geometry and compute min/max of elevation. In principle we 
+      ! Convert to spherical geometry and compute min/max of elevation. In principle we
       ! could have used "call invoke_pointwise_convert_xyz2llr( coord_output )" to convert
       ! the coordinates from cartesian to lon-lat-elevation but this would have required us
       ! to invoke:
       ! do i = 1, 3
-      !   call coord_output(i)%halo_exchange(depth=1) 
+      !   call coord_output(i)%halo_exchange(depth=1)
       ! end do
-      ! to synchronise the halo. To avoid the communication cost from halo exchange, we 
+      ! to synchronise the halo. To avoid the communication cost from halo exchange, we
       ! perform our own conversion (taking advantage of computing the min/max of elevation
       ! along the way)
       minz = huge( 1._r_def )
@@ -329,7 +329,7 @@ module cell_locator_api_mod
       enddo
 
       ! Add/subtract periodic length.
-      ! minimise the differences in longitude between a vertex and its base 
+      ! minimise the differences in longitude between a vertex and its base
       ! (1st) vertex. This ensures that each cell is a positive are/volume.
       idx = 0
       do i = 1, ncells_local
@@ -363,7 +363,7 @@ module cell_locator_api_mod
         self%vert_coords( 3::3 ) = z_lo + ( z_hi - z_lo ) * &
             (  self%vert_coords(3::3) - minz ) / ( maxz - minz )
       endif
-   
+
     endif ! end of spherical geometry
 
 
@@ -391,13 +391,13 @@ module cell_locator_api_mod
     if ( len_trim( vtk_grid_filename ) > 0 ) then
       vtk_grid_filename_proc = &
          self%get_proc_filename( trim( vtk_grid_filename ) )
-      ier = mnt_celllocator_dumpgrid( self%address_of_cpp_ptr, & 
+      ier = mnt_celllocator_dumpgrid( self%address_of_cpp_ptr, &
          trim( adjustl( vtk_grid_filename_proc ) ), &
          len( trim( vtk_grid_filename_proc ), c_size_t ) )
       if ( ier /= 0 ) then
-        call log_event( 'cell_locator_api_build: Error after calling ' & 
+        call log_event( 'cell_locator_api_build: Error after calling ' &
              // 'dumpgrid', &
-             LOG_LEVEL_ERROR ) 
+             LOG_LEVEL_ERROR )
       endif
     endif
 
@@ -408,7 +408,7 @@ module cell_locator_api_mod
   !> @param[in] point target point
   !> @param[out] cell_id_0 cell ID (>= 0 if found)
   !> @param[out] pcoords unit cell parametric coordinates
-  !> @param[out] dist_error_square square of interpolation error in 
+  !> @param[out] dist_error_square square of interpolation error in
   !              physical space
   !> @param[out] ier error code (0 = OK)
   subroutine cell_locator_api_find( self, point, cell_id_0, pcoords, &
@@ -421,7 +421,7 @@ module cell_locator_api_mod
     real(r_def), intent(out)                    :: pcoords(:)
     real(r_def), intent(out)                    :: dist_error_square
     integer(i_def), intent(out)                 :: ier
-        
+
     ! Local variables
     real(r_def)                                 :: interp_point1(3), &
                                                    target_point1(3), &
@@ -449,29 +449,29 @@ module cell_locator_api_mod
       ! Compute the interpolation error
       ier = mnt_celllocator_interppoint( self%address_of_cpp_ptr, cell_id_0, &
                                          pcoords1(1), interp_point1(1) )
-      if (ier == 0) then 
+      if (ier == 0) then
         dist_error_square = dot_product( interp_point1 - point, &
                                          interp_point1 - point )
       else
         write(error_str, '(I16)') ier
         call log_event( &
-            'cell_locator_api_find: Failure after calling ' & 
+            'cell_locator_api_find: Failure after calling ' &
             // 'mnt_celllocator_interp_point, error code is "' &
             // trim( adjustl( error_str ) )//'"', LOG_LEVEL_INFO )
       endif
 
     else
 
-      ! Not finding the point, may be because running in parallel (we expect 
-      ! many points not found when the local domain is smaller than the 
-      ! global domain) 
+      ! Not finding the point, may be because running in parallel (we expect
+      ! many points not found when the local domain is smaller than the
+      ! global domain)
 
       if (ier /= 0) then
         ! Wondering what error could trigger this?
         write(error_str, '(I16)') ier
         call log_event( &
             'cell_locator_api_find: Failure after calling ' &
-            // 'mnt_celllocator_find, ' & 
+            // 'mnt_celllocator_find, ' &
             // 'error code is "' &
             // trim( adjustl( error_str ) )//'"', LOG_LEVEL_INFO )
       endif
@@ -509,16 +509,16 @@ module cell_locator_api_mod
     ! Get the variable ID
     ier = nf90_inq_varid( ncid, trim(point_var_name), varid )
     if ( ier /= nf90_noerr ) then
-      call log_event( 'cell_locator_api_read_points: Could not find ' & 
+      call log_event( 'cell_locator_api_read_points: Could not find ' &
         // 'variable "' &
         //trim( point_var_name )//'"', LOG_LEVEL_ERROR )
       ier = nf90_close( ncid )
     endif
 
 
-    ! Check 
+    ! Check
     ier = nf90_inquire_variable( ncid=ncid, varid=varid, &
-                                 xtype=xtype, ndims=ndimids ) 
+                                 xtype=xtype, ndims=ndimids )
 
     if ( ndimids /= 2 ) then
       call log_event( 'cell_locator_api_read_points: variable "' &
@@ -591,7 +591,7 @@ module cell_locator_api_mod
     integer(i_def) :: oned_dims(1), twod_dims(2)
 
     !< NetCDF file name with MPI rank attached
-    character(len=1024)                         :: file_name_rk 
+    character(len=1024)                         :: file_name_rk
 
     file_name_rk = file_name
     if ( self%num_mpi_ranks > 1 ) then
@@ -616,13 +616,13 @@ module cell_locator_api_mod
       call log_event( &
         'cell_locator_api_write_results: Could not define dim "npts"', &
         LOG_LEVEL_ERROR )
-    endif    
+    endif
     ier = nf90_def_dim( ncid, "three", 3, three_dim )
     if ( ier /= nf90_noerr ) then
       call log_event( &
         'cell_locator_api_write_results: Could not define dim "three"', &
         LOG_LEVEL_ERROR )
-    endif    
+    endif
 
     ! Create variables
     oned_dims(1) = pt_dim
@@ -633,18 +633,18 @@ module cell_locator_api_mod
                         pointids_var )
     if ( ier /= nf90_noerr ) then
       call log_event( &
-        'cell_locator_api_write_results: Could not define var ' & 
+        'cell_locator_api_write_results: Could not define var ' &
         // '"point_ids_0"', &
         LOG_LEVEL_ERROR )
-    endif    
+    endif
     ier = nf90_def_var( ncid, "cell_ids_0", NF90_INT64, oned_dims, &
                         cellids_var )
     if ( ier /= nf90_noerr ) then
       call log_event( &
-        'cell_locator_api_write_results: Could not define var '& 
-        // '"cell_ids_0"', & 
+        'cell_locator_api_write_results: Could not define var '&
+        // '"cell_ids_0"', &
         LOG_LEVEL_ERROR )
-    endif    
+    endif
     ier = nf90_def_var( ncid, "pcoords", NF90_DOUBLE, twod_dims, pcoords_var )
     if ( ier /= nf90_noerr ) then
       call log_event( &
@@ -668,7 +668,7 @@ module cell_locator_api_mod
           self%point_ids_0(1:self%number_points_found) )
     if ( ier /= nf90_noerr ) then
       call log_event( &
-        'cell_locator_api_write_results: Could not write ' & 
+        'cell_locator_api_write_results: Could not write ' &
         // '"point_ids_0"', &
         LOG_LEVEL_ERROR )
     endif
@@ -676,7 +676,7 @@ module cell_locator_api_mod
             self%cell_ids_0(1:self%number_points_found) )
     if ( ier /= nf90_noerr ) then
       call log_event( &
-        'cell_locator_api_write_results: Could not write ' & 
+        'cell_locator_api_write_results: Could not write ' &
         // '"cell_ids_0"', &
         LOG_LEVEL_ERROR )
     endif
@@ -691,7 +691,7 @@ module cell_locator_api_mod
             self%dist_error_square(1:self%number_points_found) )
     if ( ier /= nf90_noerr ) then
       call log_event( &
-        'cell_locator_api_write_results: Could not write ' & 
+        'cell_locator_api_write_results: Could not write ' &
         // '"dist_error_square"', &
         LOG_LEVEL_ERROR )
     endif
@@ -737,7 +737,7 @@ module cell_locator_api_mod
   !> @return file name with process number embedded, e.g. toto_012.nc
   function cell_locator_api_get_proc_filename( self, file_name ) &
              result( indexed_filename )
-  
+
     implicit none
     class(cell_locator_api_type), intent(inout) :: self
     character(len=*), intent(in)                :: file_name
@@ -771,7 +771,7 @@ module cell_locator_api_mod
   !> @param[in] ipoint global target point index (1-based)
   !> @param[in] cell_id_0 current cell index (0-based)
   !> @param[in] pcoords current cell parametric coordinates
-  !> @param[in] dist_error_square square distance of error 
+  !> @param[in] dist_error_square square distance of error
   subroutine cell_locator_api_set_result( self, count, ipoint, cell_id_0, &
                                           pcoords, dist_error_square )
 

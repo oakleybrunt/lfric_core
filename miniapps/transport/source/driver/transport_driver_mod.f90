@@ -324,7 +324,7 @@ contains
     end do
 
     nullify( detj_at_w2, detj_at_w2_shifted, cell_orientation, &
-             cell_orientation_shifted )  
+             cell_orientation_shifted )
 
   end subroutine run_transport
 

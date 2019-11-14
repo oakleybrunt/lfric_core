@@ -107,7 +107,7 @@ contains
 !> @param[in]     ndf_rtile               No. of DOFs per cell for rtile space
 !> @param[in]     undf_rtile              No. unique of DOFs for rtile space
 !> @param[in]     map_rtile               Dofmap for rtile space column base cell
-subroutine lw_code(nlayers,                          & 
+subroutine lw_code(nlayers,                          &
                    lw_heating_rate,                  &
                    lw_down_surf,                     &
                    lw_up_tile,                       &
@@ -227,7 +227,7 @@ subroutine lw_code(nlayers,                          &
   real(r_def), dimension(0:nlayers) :: lw_down, lw_up
   real(r_def), parameter :: dl = 100.0_r_def
     ! Number of unique seeds per degree of latitude / longitude (for MCICA).
-    ! 100 per degree equates to approximately a 1km square area of the 
+    ! 100 per degree equates to approximately a 1km square area of the
     ! globe (for the Earth).
 
   ! Tiled surface fields

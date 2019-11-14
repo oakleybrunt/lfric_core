@@ -123,7 +123,7 @@ contains
     call this%exner%initialise( vector_space = this%w3_fs )
     call this%theta%initialise( vector_space = this%wt_fs )
 
-    diff_dim = chi_p(1)%vspace%get_dim_space_diff( )   
+    diff_dim = chi_p(1)%vspace%get_dim_space_diff( )
     ndf_chi  = chi_p(1)%vspace%get_ndf()
     allocate( this%diff_basis( diff_dim, ndf_chi, nqp_h, nqp_v ) )
 
@@ -251,7 +251,7 @@ contains
     undf = rho_p%vspace%get_undf()
     ndf_t  = p3t_p%fs_from%get_ndf()
     undf_t = theta_p%vspace%get_undf()
- 
+
     call chi_p(1)%vspace%compute_diff_basis_function(                    &
          this%diff_basis,ndf_chi, nqp_h, nqp_v, xp, zp )
 

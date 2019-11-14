@@ -11,6 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 from abc import ABCMeta, abstractmethod
 import logging
+import re
 from six import add_metaclass
 
 import fparser.two.Fortran2003
@@ -100,6 +101,32 @@ class FortranCharacterset(Rule):
             else:
                 raise Exception('Parser in unknown state: ' + state)
             index += 1
+
+        return issues
+
+
+class TrailingWhitespace(Rule):
+    '''
+    Scans the source for tailing whitespace.
+    '''
+    _TRAILING_SPACE_PATTERN = re.compile(r'\s+$')
+
+    def examine(self, subject):
+        '''
+        Examines the text for white space at the end of lines. This includes empty lines.
+        :param subject: File contents as Source object.
+        :return: List of issues or empty list.
+        '''
+        issues = super(TrailingWhitespace, self).examine(subject)
+
+        text = subject.get_text()
+        line_tally = 0
+        for line in text.splitlines():
+            line_tally += 1
+            match = self._TRAILING_SPACE_PATTERN.search(line)
+            if match:
+                description = 'Found trailing white space'
+                issues.append(Issue(description, line=line_tally))
 
         return issues
 

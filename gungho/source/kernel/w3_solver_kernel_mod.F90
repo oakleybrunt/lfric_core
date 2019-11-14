@@ -53,8 +53,8 @@ contains
 !! @param[in] ndf_w3 Number of degrees of freedom per cell
 !! @param[in] undf_w3 Total number of degrees of freedom for w3
 !! @param[in] map_w3 Dofmap for the cell at the base of the column
-!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points 
-!! @param[inout] x Output vector 
+!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points
+!! @param[inout] x Output vector
 !! @param[in] rhs Input vector
 !! @param[in] ndf_chi Number of degrees of freedom per cell for chi
 !! @param[in] undf_chi Total number of degrees of freedom for chi
@@ -74,15 +74,15 @@ subroutine solver_w3_code(nlayers,                                    &
                           ndf_chi, undf_chi, map_chi, chi_diff_basis,     &
                           nqp_h, nqp_v, wqp_h, wqp_v                  &
                          )
-                         
-  use matrix_invert_mod,       only : matrix_invert 
-  use coordinate_jacobian_mod, only : coordinate_jacobian 
+
+  use matrix_invert_mod,       only : matrix_invert
+  use coordinate_jacobian_mod, only : coordinate_jacobian
 
   implicit none
 
-  ! needs to compute the integral of rho_df * P 
-  ! P_analytic over a single column    
-  
+  ! needs to compute the integral of rho_df * P
+  ! P_analytic over a single column
+
   !Arguments
   integer, intent(in) :: nlayers, nqp_h, nqp_v
   integer, intent(in) :: ndf_w3, undf_w3, ndf_chi, undf_chi
@@ -95,12 +95,12 @@ subroutine solver_w3_code(nlayers,                                    &
   real(kind=r_def), dimension(undf_chi), intent(in)    :: chi_1, chi_2, chi_3
 
   real(kind=r_def), dimension(nqp_h), intent(in)      ::  wqp_h
-  real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v  
+  real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
 
   !Internal variables
   integer               :: df1, df2, k
   integer               :: qp1, qp2
-  
+
   real(kind=r_def) :: x_e(ndf_w3), rhs_e(ndf_w3)
   real(kind=r_def) :: integrand
   real(kind=r_def), dimension(ndf_w3,ndf_w3) :: mass_matrix_w3, inv_mass_matrix_w3
@@ -133,10 +133,10 @@ subroutine solver_w3_code(nlayers,                                    &
     call matrix_invert(mass_matrix_w3,inv_mass_matrix_w3,ndf_w3)
     x_e = matmul(inv_mass_matrix_w3,rhs_e)
     do df1 = 1,ndf_w3
-      x(map_w3(df1)+k) = x_e(df1) 
+      x(map_w3(df1)+k) = x_e(df1)
     end do
   end do
-  
+
 end subroutine solver_w3_code
 
 end module w3_solver_kernel_mod

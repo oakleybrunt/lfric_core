@@ -11,13 +11,13 @@
 !> inverse pressure mass matrix), i.e.
 !>
 !> \f[
-!> H_z = 1 + M_3^{-1}\left(\omega_c^2 \Delta_h 
+!> H_z = 1 + M_3^{-1}\left(\omega_c^2 \Delta_h
 !>                       + \omega_c^2/(1+\omega_N^2) D_z M_{u,z,inv} D_z^T)
 !>                   \right)
 !> \f]
 !> and \f$\Delta_h = \diag(D_h M_{u,h,inv} D_h^T) \f$. The lumped inverse mass
 !> matrices are given by \f$M_{u,*,inv}\f$.
-!> 
+!>
 
 module pressure_precon_alg_mod
   use vector_mod,                      only : abstract_vector_type
@@ -28,7 +28,7 @@ module pressure_precon_alg_mod
                                               LOG_LEVEL_ERROR, &
                                               log_scratch_space
   use constants_mod,                   only : i_def, r_def
-            
+
   implicit none
 
   type, public, extends(abstract_preconditioner_type) :: pressure_preconditioner_type
@@ -71,10 +71,10 @@ contains
   !>@brief Apply the preconditioner to calculate \f$y = P.x = x\f$
   !>
   !>@details Apply the vertical preconditioner \f$y = H_z^{-1}x\f$
-  !> 
+  !>
   !>@param[inout] self instance of type pressure_preconditioner_type
   !>@param[inout] x field-vector containing the right hand side of the pressure
-  !>@param[inout] y field-vector containing the solution 
+  !>@param[inout] y field-vector containing the solution
   subroutine apply_pressure_preconditioner(self, x, y)
     use si_operators_alg_mod, only: get_tri_precon
     use tri_solve_kernel_mod, only: tri_solve_kernel_type
@@ -103,7 +103,7 @@ contains
     end select
 
     nullify(tri)
-    
+
   end subroutine apply_pressure_preconditioner
 
   !>@brief Destructor

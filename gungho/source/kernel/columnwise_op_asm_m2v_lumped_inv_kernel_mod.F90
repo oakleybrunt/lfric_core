@@ -12,7 +12,7 @@
 !> (LMA) for the vertical velocity mass matrix. The inverse of this diagonal is
 !> then assembled into a CMA. Note that this CMA is diagonal, i.e. it has
 !> parameters \f$\alpha=\beta=1\f$ and \f$\gamma_-=\gamma_+=0\f$.
-!> 
+!>
 
 module columnwise_op_asm_m2v_lumped_inv_kernel_mod
 
@@ -22,7 +22,7 @@ use argument_mod,            only : arg_type, func_type,                    &
                                     GH_READ, GH_WRITE,                      &
                                     ANY_SPACE_1,                            &
                                     GH_COLUMN_BANDED_DOFMAP,                &
-                                    CELLS 
+                                    CELLS
 
 use constants_mod,           only : r_def, i_def
 
@@ -52,7 +52,7 @@ contains
 
 !> @brief The subroutine which is called directly from the PSY layer and
 !> assembles the LMA into a CMA
-!> @details Given an LMA representation of local operator for the 
+!> @details Given an LMA representation of local operator for the
 !> vertical velocity mass matrix, assemble the columnwise matrix
 !> which represents the inverse lumped mass matrix
 !>
@@ -86,7 +86,7 @@ subroutine columnwise_op_asm_m2v_lumped_inv_kernel_code(cell,                   
                                                         column_banded_dofmap)
 
   implicit none
-  
+
   ! Arguments
   integer(kind=i_def),                                      intent(in)  :: cell
   integer(kind=i_def),                                      intent(in)  :: nlayers
@@ -124,7 +124,7 @@ subroutine columnwise_op_asm_m2v_lumped_inv_kernel_code(cell,                   
   end do
 
   ! Calculate inverse of diagonal entries
-  where (columnwise_matrix(:,:,cell) /= 0.0_r_def) 
+  where (columnwise_matrix(:,:,cell) /= 0.0_r_def)
      columnwise_matrix(:,:,cell) = 1.0_r_def/columnwise_matrix(:,:,cell)
   end where
 

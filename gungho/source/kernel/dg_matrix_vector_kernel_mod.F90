@@ -48,13 +48,13 @@ contains
 !! @param[in] map1 Dofmap for the cell at the base of the column for the output field
 !! @param[in] map2 Dofmap for the cell at the base of the column for the input field
 !! @param[in] ndf2 Number of degrees of freedom per cell for the input field
-!! @param[in] undf2 Unique number of degrees of freedom for the input field 
+!! @param[in] undf2 Unique number of degrees of freedom for the input field
 !! @param[in] x input data
 !> @param[inout] lhs Output lhs (A*x)
 !! @param[in] matrix Matrix values in LMA form
 subroutine dg_matrix_vector_code(cell,        &
                                  nlayers,     &
-                                 lhs, x,      & 
+                                 lhs, x,      &
                                  ncell_3d,    &
                                  matrix,      &
                                  ndf1, undf1, map1, &
@@ -73,18 +73,18 @@ subroutine dg_matrix_vector_code(cell,        &
   real(kind=r_def), dimension(ndf1,ndf2,ncell_3d), intent(in)    :: matrix
 
   !Internal variables
-  integer                           :: df, k, ik 
+  integer                           :: df, k, ik
   real(kind=r_def), dimension(ndf2) :: x_e
   real(kind=r_def), dimension(ndf1) :: lhs_e
 
   do k = 0, nlayers-1
-    do df = 1, ndf2  
+    do df = 1, ndf2
       x_e(df) = x(map2(df)+k)
     end do
     ik = (cell-1)*nlayers + k + 1
     lhs_e = matmul(matrix(:,:,ik),x_e)
     do df = 1,ndf1
-       lhs(map1(df)+k) = lhs_e(df) 
+       lhs(map1(df)+k) = lhs_e(df)
     end do
   end do
 end subroutine dg_matrix_vector_code

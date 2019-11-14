@@ -599,7 +599,7 @@ contains
     type(mesh_type),               pointer :: mesh           => null()
     integer(i_def),                pointer :: entity_dofs(:) => null()
 
-    integer(i_def) :: reference(12) 
+    integer(i_def) :: reference(12)
     integer(i_def) :: ndf
 
     reference(:) = 0

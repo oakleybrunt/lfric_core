@@ -10,10 +10,10 @@
 !>        upwind reconstruction
 !> @details Compute the flux for a tracer density field using a high order
 !>          polynomial fit to the integrated tracer values. The stencil used for the
-!>          polynomial is centred on the upwind cell. 
+!>          polynomial is centred on the upwind cell.
 !>          A 1D cross stencil centred around the cell is used to build the polynomial
 !>          representation of the tracer field
-!>          This method is only valid for lowest order elements 
+!>          This method is only valid for lowest order elements
 module poly1d_flux_kernel_mod
 
 use argument_mod,      only : arg_type, func_type, mesh_data_type,  &
@@ -63,7 +63,7 @@ contains
 
 !> @brief Computes the horizontal fluxes for a tracer density
 !! @param[in]  nlayers Number of layers
-!! @param[out] flux Mass flux field to compute 
+!! @param[out] flux Mass flux field to compute
 !! @param[in]  wind Wind field
 !! @param[in]  density Tracer density
 !! @param[in]  coeff Array of polynomial coefficients for interpolation
@@ -95,7 +95,7 @@ subroutine poly1d_flux_code( nlayers,              &
                              order,                &
                              nfaces_h,             &
                              out_face_normal )
-                                    
+
   implicit none
 
   ! Arguments
@@ -139,11 +139,11 @@ subroutine poly1d_flux_code( nlayers,              &
   ! ( 1, 3, 5 )
   ! ( 1, 2, 4 )
   ! ( 1, 3, 5 )
-  ! First cell is always the centre cell 
+  ! First cell is always the centre cell
   map1d(1,:) = 1
   do face = 1,nfaces_h
     do stencil = 2,order+1
-      map1d(stencil,face) = 2 + mod(face+1,2) + 2*(stencil-2)    
+      map1d(stencil,face) = 2 + mod(face+1,2) + 2*(stencil-2)
     end do
   end do
 
@@ -153,7 +153,7 @@ subroutine poly1d_flux_code( nlayers,              &
 
   ij = stencil_map(1,1)
 
-  ! Horizontal flux computation    
+  ! Horizontal flux computation
   do k = 0, nlayers - 1
     do df = 1,nfaces_h
       ! Check if this is the upwind cell
@@ -169,7 +169,7 @@ subroutine poly1d_flux_code( nlayers,              &
       end if
     end do
   end do
-  
+
 end subroutine poly1d_flux_code
 
 end module poly1d_flux_kernel_mod

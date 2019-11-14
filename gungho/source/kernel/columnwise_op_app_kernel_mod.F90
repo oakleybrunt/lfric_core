@@ -16,7 +16,7 @@ use argument_mod,            only : arg_type, func_type,                    &
                                     GH_READ, GH_INC,                        &
                                     ANY_SPACE_1, ANY_SPACE_2,               &
                                     GH_COLUMN_INDIRECTION_DOFMAP,           &
-                                    CELLS 
+                                    CELLS
 
 use constants_mod,           only : r_def, i_def
 
@@ -29,7 +29,7 @@ implicit none
 type, public, extends(kernel_type) :: columnwise_op_app_kernel_type
   private
   type(arg_type) :: meta_args(3) = (/                                      &
-       arg_type(GH_FIELD,    GH_INC,  ANY_SPACE_1),                        &  
+       arg_type(GH_FIELD,    GH_INC,  ANY_SPACE_1),                        &
        arg_type(GH_FIELD,    GH_READ, ANY_SPACE_2),                        &
        arg_type(GH_COLUMNWISE_OPERATOR, GH_READ, ANY_SPACE_1, ANY_SPACE_2) &
        /)
@@ -64,12 +64,12 @@ contains
   !> @param [in] map1 dofmap for the to-space
   !> @param [in] indirection_dofmap_to indirection map for to-space
   !> @param [in] ndf2 number of degrees of freedom per cell for the from-space
-  !> @param [in] undf2 unique number of degrees of freedom for the from-space 
+  !> @param [in] undf2 unique number of degrees of freedom for the from-space
   !> @param [in] map2 dofmap for the from-space
   !> @param [in] indirection_dofmap_from indirection map for from-space
   subroutine columnwise_op_app_kernel_code(cell,                  &
                                            ncell_2d,              &
-                                           lhs, x,                & 
+                                           lhs, x,                &
                                            columnwise_matrix,     &
                                            nrow,                  &
                                            ncol,                  &

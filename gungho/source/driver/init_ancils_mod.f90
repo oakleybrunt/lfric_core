@@ -20,7 +20,7 @@ module init_ancils_mod
   use field_collection_mod,            only: field_collection_type
   use function_space_collection_mod,   only: function_space_collection
   use fs_continuity_mod,               only: W3
-  
+
   implicit none
 
   private

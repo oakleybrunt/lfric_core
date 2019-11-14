@@ -8,8 +8,8 @@
 !> @brief Holds and manages function spaces created during a model run.
 !>
 !> @details A container which holds type definition of a collection of
-!>          function spaces. The collection holds function spaces as 
-!>          singletons. It will handle the creation and storing of 
+!>          function spaces. The collection holds function spaces as
+!>          singletons. It will handle the creation and storing of
 !>          requested function spaces.
 !
 module function_space_collection_mod
@@ -214,7 +214,7 @@ function get_fs_collection_size(self) result(fs_list_length)
   integer(i_def) :: fs_list_length
 
   fs_list_length = self%fs_list%get_length()
-  
+
   return
 
 end function get_fs_collection_size

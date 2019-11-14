@@ -121,7 +121,7 @@ subroutine hydrostatic_code(nlayers,                                          &
   real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis
   real(kind=r_def), dimension(1,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_basis
   real(kind=r_def), dimension(1,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_diff_basis
-  real(kind=r_def), dimension(3,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_diff_basis   
+  real(kind=r_def), dimension(3,ndf_wt,nqp_h,nqp_v), intent(in) :: wt_diff_basis
 
   real(kind=r_def), dimension(undf_w2), intent(inout) :: r_u
   real(kind=r_def), dimension(undf_w3), intent(in)    :: exner
@@ -152,21 +152,21 @@ subroutine hydrostatic_code(nlayers,                                          &
     do df = 1, ndf_w3
       exner_e(df) = exner( map_w3(df) + k )
       phi_e(df)   = phi(map_w3(df) + k)
-    end do    
+    end do
     do df = 1, ndf_wt
       theta_v_e(df) = theta( map_wt(df) + k ) * moist_dyn_gas( map_wt(df) + k ) / &
                                                 moist_dyn_tot( map_wt(df) + k )
-    end do   
-    ! Compute the RHS integrated over one cell    
+    end do
+    ! Compute the RHS integrated over one cell
     do qp2 = 1, nqp_v
       do qp1 = 1, nqp_h
 
         ! Pressure & geopotential on quadrature points
-        exner_at_quad = 0.0_r_def 
+        exner_at_quad = 0.0_r_def
         phi_at_quad = 0.0_r_def
         do df = 1, ndf_w3
-          exner_at_quad  = exner_at_quad + exner_e(df)*w3_basis(1,df,qp1,qp2) 
-          phi_at_quad    = phi_at_quad   + phi_e(df)  *w3_basis(1,df,qp1,qp2) 
+          exner_at_quad  = exner_at_quad + exner_e(df)*w3_basis(1,df,qp1,qp2)
+          phi_at_quad    = phi_at_quad   + phi_e(df)  *w3_basis(1,df,qp1,qp2)
         end do
         ! Potential temperature terms on quadrature point
         theta_v_at_quad = 0.0_r_def
@@ -175,7 +175,7 @@ subroutine hydrostatic_code(nlayers,                                          &
           theta_v_at_quad   = theta_v_at_quad                                 &
                             + theta_v_e(df)*wt_basis(1,df,qp1,qp2)
           grad_theta_v_at_quad(:) = grad_theta_v_at_quad(:)                   &
-                                  + theta_v_e(df)*wt_diff_basis(:,df,qp1,qp2) 
+                                  + theta_v_e(df)*wt_diff_basis(:,df,qp1,qp2)
         end do
 
         do df = 1, ndf_w2
@@ -183,11 +183,11 @@ subroutine hydrostatic_code(nlayers,                                          &
           dv = w2_diff_basis(1,df,qp1,qp2)
 
           ! Pressure gradient term
-          grad_term = cp*exner_at_quad * (                             & 
+          grad_term = cp*exner_at_quad * (                             &
                       theta_v_at_quad * dv                             &
                     + dot_product( grad_theta_v_at_quad(:),v)          &
                                          )
-          ! Geopotential term                                         
+          ! Geopotential term
           geo_term = - phi_at_quad*dv
 
           r_u( map_w2(df) + k ) = r_u( map_w2(df) + k ) &

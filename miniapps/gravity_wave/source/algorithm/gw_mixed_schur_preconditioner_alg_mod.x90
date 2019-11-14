@@ -74,7 +74,7 @@ module gw_mixed_schur_preconditioner_alg_mod
                                              get_div,             &
                                              w0_id, w2_id, w3_id, &
                                              w3inv_id, wt_id
-  use initial_temperature_config_mod,  only: bvf_square  
+  use initial_temperature_config_mod,  only: bvf_square
   use timestepping_config_mod,         only: dt
   use gravity_wave_constants_config_mod, only: cs_square,  &
                                                b_space,    &
@@ -85,7 +85,7 @@ module gw_mixed_schur_preconditioner_alg_mod
   use preconditioner_mod,              only: abstract_preconditioner_type
   use iterative_solver_mod,            only: abstract_iterative_solver_type
   use field_indices_mod,               only: igw_u, igw_p, igw_b
-  use io_config_mod,                   only: subroutine_timers 
+  use io_config_mod,                   only: subroutine_timers
   use timer_mod,                       only: timer
   use log_mod,                         only: log_event,       &
                                              LOG_LEVEL_ERROR, &
@@ -156,7 +156,7 @@ module gw_mixed_schur_preconditioner_alg_mod
      generic            :: assignment(=) => gw_mixed_schur_preconditioner_assign
   end type gw_mixed_schur_preconditioner_type
 
-  ! Overload the default structure constructor                                 
+  ! Overload the default structure constructor
   interface gw_mixed_schur_preconditioner_type
      module procedure gw_mixed_schur_preconditioner_constructor
   end interface
@@ -174,7 +174,7 @@ contains
   !>
   !> @param [in] state Current state (passed as a field-vector)
   !> @param [in] Hb_lumped_inv Lumped inverse \f$\tilde{H}_b^{-1}\f$
-  !> @param [in] pressure_solver Solver object for Helmholtz system 
+  !> @param [in] pressure_solver Solver object for Helmholtz system
   !> @return self the constructed preconditioner object
   function gw_mixed_schur_preconditioner_constructor(state,           &
                                                      Hb_lumped_inv,   &
@@ -189,7 +189,7 @@ contains
     use matrix_vector_kernel_mod,      only: matrix_vector_kernel_type
     use transpose_matrix_vector_kernel_mod, &
          only: transpose_matrix_vector_kernel_type
-    
+
     implicit none
 
     type(field_vector_type), intent(in) :: state
@@ -237,11 +237,11 @@ contains
     call M_lumped%initialise( vector_space = wb )
     call self%Mb_lumped_inv%initialise( vector_space = wb )
     select case(b_space)
-    case(b_space_w0)  
+    case(b_space_w0)
        Mb => get_mass_matrix(w0_id)
-    case(b_space_w3)  
+    case(b_space_w3)
        Mb => get_mass_matrix(w3_id)
-    case(b_space_wtheta)  
+    case(b_space_wtheta)
        Mb => get_mass_matrix(wt_id)
     end select
     call invoke( setval_c( ones,     1.0_r_def ),               &
@@ -249,7 +249,7 @@ contains
                  matrix_vector_kernel_type(M_lumped, ones, Mb), &
                  X_divideby_Y(self%Mb_lumped_inv, ones, M_lumped) )
 
-    ! Compute Q (projection) operator 
+    ! Compute Q (projection) operator
     self%Q = operator_type( wu, wb )
     qr = quadrature_xyoz_type(element_order+2, quadrature_rule)
     call invoke( compute_q_operator_type(self%Q, qr) )
@@ -311,7 +311,7 @@ contains
     implicit none
     class(gw_mixed_schur_preconditioner_type), intent(inout) :: self
     class(abstract_vector_type),               intent(in)    :: x
-    class(abstract_vector_type),               intent(inout) :: y    
+    class(abstract_vector_type),               intent(inout) :: y
 
     if ( subroutine_timers ) call timer('gw_mixed_schur_preconditioner_alg')
     select type(x)
@@ -324,7 +324,7 @@ contains
 
           ! STEP 1: Build RHS for Helmholtz system
           call self%build_pressure_rhs(x)
-       
+
           ! STEP 2: Solve Helmholtz system
           ! Krylov solver to obtain pressure increment
           call invoke (setval_c(self%p_inc, 0.0_r_def) )
@@ -374,7 +374,7 @@ contains
     type(field_vector_type),                   intent(in)    :: rhs0
 
     type(operator_type), pointer :: div => null(), M3_inv => null()
-    
+
     real(kind=r_def) :: const1, const2
 
     ! rhs_u = R_u + alpha * dt * Q * Mb^-1 * R_b

@@ -63,7 +63,7 @@ contains
 !! @param[in] ndf_wx Number of degrees of freedom per cell for the coordinates
 !! @param[in] undf_wx Number of unique degrees of freedom for the coordinates
 !! @param[in] map_wx Dofmap for the cell at the base of the column for the coordinates
-!! @param[in] diff_basis_wx Differential basis functions for the coordinate fields evaluated 
+!! @param[in] diff_basis_wx Differential basis functions for the coordinate fields evaluated
 !!            at the nodes of field
 subroutine scale_by_detj_code(nlayers,                 &
                               field,                   &
@@ -76,7 +76,7 @@ subroutine scale_by_detj_code(nlayers,                 &
   use coordinate_jacobian_mod, only: pointwise_coordinate_jacobian
 
   implicit none
-                           
+
   ! Arguments
   integer(kind=i_def),                    intent(in) :: nlayers
   integer(kind=i_def),                    intent(in) :: ndf_ws, undf_ws, &
@@ -95,7 +95,7 @@ subroutine scale_by_detj_code(nlayers,                 &
   real(kind=r_def), dimension(3,3)       :: jac
   real(kind=r_def)                       :: detj
   real(kind=r_def), dimension(0:nlayers) :: detj_av, f_av
- 
+
   detj_av = 0.0_r_def
   f_av  = 0.0_r_def
   do k = 0, nlayers-1
@@ -104,14 +104,14 @@ subroutine scale_by_detj_code(nlayers,                 &
       chi2_e(df) = chi2(map_wx(df) + k)
       chi3_e(df) = chi3(map_wx(df) + k)
     end do
-     
+
     do df = 1,ndf_ws
-      ! Compute detj at dof points 
+      ! Compute detj at dof points
       call pointwise_coordinate_jacobian(ndf_wx, chi1_e, chi2_e, chi3_e,  &
                                          diff_basis_wx(:,:,df), &
                                          jac, detj)
       detj_av(k + df-1) = detj_av(k + df-1) + detj
-      f_av(k + df-1)    = f_av(k + df-1) +  field(map_ws(df)+k) 
+      f_av(k + df-1)    = f_av(k + df-1) +  field(map_ws(df)+k)
     end do
   end do
 

@@ -182,7 +182,7 @@ function analytic_density(chi, choice, time) result(density)
     lat  = chi(2)
     l1 = sqrt((long-x1)**2 + (lat-y1)**2)
     l2 = sqrt((long-x2)**2 + (lat-y2)**2)
-  end if 
+  end if
 
   select case( choice )
 
@@ -192,7 +192,7 @@ function analytic_density(chi, choice, time) result(density)
          test_shallow_conv )
     call reference_profile(pressure, density, temperature, chi, choice)
 
-  case ( test_cold_bubble_x, test_cold_bubble_y ) 
+  case ( test_cold_bubble_x, test_cold_bubble_y )
     if ( choice == test_cold_bubble_x ) then
       id = 1
     else
@@ -208,7 +208,7 @@ function analytic_density(chi, choice, time) result(density)
 
   !> No perturbation needed for warm bubble tests so just use background
   !> (isentropic) value
-  case ( test_warm_bubble, test_warm_bubble_3d  ) 
+  case ( test_warm_bubble, test_warm_bubble_3d  )
     call reference_profile(pressure, density, temperature, chi, choice)
   case( test_gaussian_hill )
     h1 = tracer_max*exp( -(l1/r1)**2 )
@@ -308,14 +308,14 @@ function analytic_density(chi, choice, time) result(density)
   case( test_cos_phi )
     density = tracer_max*cos(lat)**4
 
-  case( test_cosine_bubble ) 
+  case( test_cosine_bubble )
     l1 = sqrt( ((chi(1) - x1)/r1)**2 + ((chi(3) - y1)/r2)**2 )
     if ( l1 < 1.0_r_def ) then
       density = tracer_background + tracer_max*cos(0.5_r_def*l1*PI)**2
     else
       density = tracer_background
     end if
-    
+
   case default
     write( log_scratch_space, '(A)' )  'Invalid density profile choice, stopping'
     call log_event( log_scratch_space, LOG_LEVEL_ERROR )

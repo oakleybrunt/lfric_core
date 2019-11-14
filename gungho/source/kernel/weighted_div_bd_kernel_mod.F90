@@ -160,12 +160,12 @@ contains
           theta_next_e(df) = theta(stencil_wtheta_map(df, face+1) + k)
         end do
         do qp = 1, nqp
-          theta_at_fquad      = 0.0_r_def 
-          theta_next_at_fquad = 0.0_r_def               
+          theta_at_fquad      = 0.0_r_def
+          theta_next_at_fquad = 0.0_r_def
           do df = 1, ndf_wtheta
             theta_at_fquad       = theta_at_fquad      + theta_e(df)     *wtheta_basis_face(1,df,qp,face)
             theta_next_at_fquad  = theta_next_at_fquad + theta_next_e(df)*wtheta_basis_face(1,df,qp,face_next)
-          end do                
+          end do
           do df3 = 1, ndf_w3
             do df2 = 1, ndf_w2
               v_dot_n  = dot_product(w2_basis_face(:,df2,qp,face),out_face_normal(:,face))

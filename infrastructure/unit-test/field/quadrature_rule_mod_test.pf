@@ -8,7 +8,7 @@
 !>
 module quadrature_rule_mod_test
 
-  implicit none 
+  implicit none
 
 contains
 
@@ -22,7 +22,7 @@ contains
     implicit none
 
     integer(kind=i_def), parameter    :: nq = 3
-    real(kind=r_def), dimension(nq,2) :: xwq, xw 
+    real(kind=r_def), dimension(nq,2) :: xwq, xw
     real(kind=r_def), parameter       :: tol  = 1.0e-14_r_def
 
     type(quadrature_rule_gaussian_type)      :: gl

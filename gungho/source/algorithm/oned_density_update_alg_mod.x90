@@ -71,7 +71,7 @@ contains
     type(operator_type), pointer :: mm_w3 => null()
 
     rho_fs => rho_in%get_function_space()
-    u_fs   => dep_pts%get_function_space() 
+    u_fs   => dep_pts%get_function_space()
 
     call a0%initialise( vector_space = rho_fs )
     call a1%initialise( vector_space = rho_fs )

@@ -13,7 +13,7 @@ module dino_mod_test
   use dino_mod,     only : dino_type
   use constants_mod, only      : i_def, r_def
 
-  implicit none 
+  implicit none
 
   private
 
@@ -39,7 +39,7 @@ contains
 
     class(dino_test_type), intent(inout) :: this
     integer(kind=i_def) :: stat
-    
+
     ! delete the dinodump file if it exists before starting the test
     open(unit=1234, iostat=stat, file='dinodump.dat', status='old')
     if (stat == 0) close(1234, status='delete')
@@ -76,9 +76,9 @@ contains
 
     ! fuzzy tests for floating point numbers
     epsilon = 1.0e-14_r_def
-    
+
     ! output first.
-    
+
     ! make the writer
     dino_out = dino_type()
     d1_out = 3
@@ -104,7 +104,7 @@ contains
           end do
        end do
     end do
-    
+
     ! Do the o Write out the data ...
     call dino_out%output_scalar(d1_out)
     call dino_out%output_array(ai1_out,d1_out)
@@ -113,7 +113,7 @@ contains
     call dino_out%output_array(ar3_out,ai1_out(1),ai1_out(2),ai1_out(3))
     ! close the file
    call dino_out%io_close()
-    
+
     ! now do the i in the same order as the o
     !open the reader
     dino_in = dino_type()
@@ -139,7 +139,7 @@ contains
     @assertEqual(ai2_out,ai2_in)
     @assertEqual(ar1_out,ar1_in,epsilon)
     @assertEqual(ar3_out,ar3_in,epsilon)
-    
+
     ! clean up.
     deallocate(ai1_out,ar1_out,ai2_out,ar3_out)
     deallocate(ai1_in,ar1_in,ai2_in,ar3_in)

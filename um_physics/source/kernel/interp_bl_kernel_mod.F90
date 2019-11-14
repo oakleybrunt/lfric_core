@@ -10,7 +10,7 @@
 !>         so that wind increments can be calculated in their native space
 
 module interp_bl_kernel_mod
-  
+
   use kernel_mod,               only: kernel_type
   use argument_mod,             only: arg_type, func_type,                 &
                                       GH_FIELD, GH_INC, GH_READ, CELLS,    &
@@ -107,10 +107,10 @@ contains
                             ndf_w2,        &
                             undf_w2,       &
                             map_w2)
- 
+
     !---------------------------------------
     ! UM modules containing switches or global constants
-    !--------------------------------------- 
+    !---------------------------------------
     use nlsizes_namelist_mod, only: bl_levels
 
     implicit none

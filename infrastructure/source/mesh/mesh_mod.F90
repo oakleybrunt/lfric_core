@@ -370,7 +370,7 @@ contains
     real(r_def), allocatable :: vertex_coords_2d(:,:)
 
     ! is_spherical = True: vertex_coords_2d is in lat,lon coords,
-    !                  False: vertex_coords_2d is in x,y coords   
+    !                  False: vertex_coords_2d is in x,y coords
     logical(l_def) :: is_spherical
 
     call extrusion%get_reference_element( global_mesh, &

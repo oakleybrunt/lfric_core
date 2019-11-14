@@ -5,24 +5,24 @@
 !-----------------------------------------------------------------------------
 !>@brief Routines for testing the CMA data structures and kernels
 !>
-!>@details This module contains several routines for testing the correctness of 
+!>@details This module contains several routines for testing the correctness of
 !>         CMA operator kernels. It checks that the following operations are carried out
 !>         directly:
 !>
 !>         * A CMA operator can be applied to a field (compare to result from equivalent
 !>           operator application in LMA representation).
-!>         * Two CMA operators can be multiplied to obtain a new CMA (compare result of 
+!>         * Two CMA operators can be multiplied to obtain a new CMA (compare result of
 !>           combined CMA operator application to successive application of the two
 !>           operators in LMA representation).
-!>         * Two CMA operator can be added to obtain a new CMA (compare result of 
+!>         * Two CMA operator can be added to obtain a new CMA (compare result of
 !>           combined CMA operator application to successive application of the two
 !>           operators in LMA representation).
 !>         * The equation \f$Au=b\f$ can be solved for \f$u\f$ if \f$A\f$ is a CMA
-!>           operator. For this, calculate \f$b=Au_{in}\f$ where \f$u_{in}\f$ is a 
+!>           operator. For this, calculate \f$b=Au_{in}\f$ where \f$u_{in}\f$ is a
 !>           given field and compare \f$u\f$ and \f$u_{in}\f$.
-!>         * The diagonal of a vertical velocity mass matrix can be extracted and 
-!>           stored in a CMA (this is tested implicitly, since this CMA is used 
-!>           in the construction in the term \f$D_vM_{2,v,inv}D_v^T\f$ in the 
+!>         * The diagonal of a vertical velocity mass matrix can be extracted and
+!>           stored in a CMA (this is tested implicitly, since this CMA is used
+!>           in the construction in the term \f$D_vM_{2,v,inv}D_v^T\f$ in the
 !>           Helmholtz operator. This test currently only works reliably if the code
 !>           is run on one processor.
 !>
@@ -104,8 +104,8 @@ module cma_test_algorithm_mod
   ! Fields (temporaries used for testing)
   ! pressure space
   type(field_type) :: p_in,           &
-                      p_tmp,          &  
-                      p_out,          &  
+                      p_tmp,          &
+                      p_out,          &
                       p_out_cma
   ! Velocity space
   type(field_type) :: u_v_in,                &
@@ -130,8 +130,8 @@ module cma_test_algorithm_mod
   type(columnwise_operator_type) :: mm_vel_v_cma
   type(columnwise_operator_type) :: grad_v_cma
   type(columnwise_operator_type) :: mm_pressure_cma
-  type(columnwise_operator_type) :: mm_vel_v_inv_diag_cma 
-  ! Bool to avoid initialising this module multiple times, set to .true. in first 
+  type(columnwise_operator_type) :: mm_vel_v_inv_diag_cma
+  ! Bool to avoid initialising this module multiple times, set to .true. in first
   ! call to cma_test_init().
   logical :: is_initialised = .false.
 
@@ -150,7 +150,7 @@ contains
 
   !>@brief Initialise module
   !>@details Create operators which will be assembled into CMAs, assemble CMAs.
-  !>         Also carries out some checks to ensure that the mesh is 
+  !>         Also carries out some checks to ensure that the mesh is
   !>         of an appropriate size (if the grid spacing is too small or too larger,
   !>         the two terms in the Helmholtz operator might have very different magnitude
   !>         distorting the test results).
@@ -228,7 +228,7 @@ contains
     grad_v                = operator_type( fs_vel_v, fs_pressure )
     call mm_vel_v_diag%initialise( fs_vel_v )
     call mm_vel_h_diag%initialise( fs_vel_h )
-    ! NOTE: These are separate invokes as chi is defined as any space and 
+    ! NOTE: These are separate invokes as chi is defined as any space and
     ! PSyclone does not support multiple any_spaces in the same invoke
     call invoke( compute_mass_matrix_kernel_w2_type( mm_vel_v, chi, qr ) )
     call invoke( compute_mass_matrix_kernel_w2_type( mm_vel_h, chi, qr ) )
@@ -251,9 +251,9 @@ contains
                  mm_diagonal_assembled_kernel_type( mm_vel_h_diag, mm_vel_h ) )
 
     ! Enforce (vertical) BCs for velocity space on all relevant operators
-    call invoke_enforce_operator_bc_kernel_type( mm_vel_v ) 
-    call invoke_enforce_operator_bc_kernel_type( div_v ) 
-    call invoke_enforce_operator_bc_kernel_type( grad_v ) 
+    call invoke_enforce_operator_bc_kernel_type( mm_vel_v )
+    call invoke_enforce_operator_bc_kernel_type( div_v )
+    call invoke_enforce_operator_bc_kernel_type( grad_v )
 
     ! Create and assemble CMA representations of operators
     ! Pressure mass matrix
@@ -289,7 +289,7 @@ contains
 
   !>@brief Check if two fields are idential up to some tolerance
   !>@details Auxilliary routine which calculates the relative difference
-  !>         \f$\delta = ||x_1-x_2||/||x_1||\f$ of two fields 
+  !>         \f$\delta = ||x_1-x_2||/||x_1||\f$ of two fields
   !>         \f$x_1\f$ and \f$x_2\f$ in the L2 norm. If this difference
   !>         is smaller than a given tolerance \f$\epsilon\f$, it will print
   !>         out a string with a PASS message, otherwise it will print a FAIL
@@ -442,7 +442,7 @@ contains
                                                       helmholtz_cma,     &
                                                       alpha,             &
                                                       beta) )
-    
+
   end subroutine assemble_helmholtz_cma
 
   !> @brief Test application of pressure mass matrix
@@ -551,7 +551,7 @@ contains
     call invoke( columnwise_op_app_kernel_type( p_out_cma,   &
                                                 u_v_in,      &
                                                 div_v_mm_vel_v_cma ), &
-    ! Successively apply operators in LMA representation: 
+    ! Successively apply operators in LMA representation:
     ! first M_{u,v}, then D_v
                  matrix_vector_kernel_type( u_v_tmp,      &
                                             u_v_in,       &
@@ -565,8 +565,8 @@ contains
   end subroutine test_cma_multiply_div_v_mass_v
 
   !>@brief Test multiplication of two CMA operators (gradient and divergence)
-  !>@details Multiply the (vertical-only) gradient (i.e. the transpose of 
-  !>         the divergence operator) with the (vertical-only) divergence operator 
+  !>@details Multiply the (vertical-only) gradient (i.e. the transpose of
+  !>         the divergence operator) with the (vertical-only) divergence operator
   !>         and compare to the separate application of the two operators
   !>         in LMA representation.
   !> @param[in] tolerance Error tolerance for comparison
@@ -612,7 +612,7 @@ contains
   end subroutine test_cma_multiply_grad_v_div_v
 
   !>@brief Test addition of two CMA operators
-  !>@details Construct the Helmholtz CMA operator 
+  !>@details Construct the Helmholtz CMA operator
   !>         \f$H = \alpha M_3 + \beta D_v D_v^T\f$ in the CMA
   !>         representation. Compare the result of applying \f$A\f$
   !>         to applying the operators individually.
@@ -687,7 +687,7 @@ contains
   !>         and apply it to a pressure field \f$p_{in}\f$ with exactly one entry to
   !>         obtain \f$p_{out}^{CMA}\f$. Apply
   !>         \f$D_h M_{2,h,inv} D_h\f$ in LMA representation to the same field to
-  !>         obtain \f$p_{out}\f$. Then the dot-products \f$p_{out}.p_{in}\f$ and 
+  !>         obtain \f$p_{out}\f$. Then the dot-products \f$p_{out}.p_{in}\f$ and
   !>         \f$p_{out}^{CMA}.p_{in}\f$ should be identical.
   !>
   !>         This test currently only works reliably on one processor.
@@ -709,10 +709,10 @@ contains
                  setval_c( p_out_cma, 0.0_r_def               ),     &
                  setval_c( u_h_tmp,   0.0_r_def               ) )
 
-    ! NOTE: CMA invokes are separate as joining them returns error in 
+    ! NOTE: CMA invokes are separate as joining them returns error in
     ! integration test. Example for Gnu:
     ! Error: Symbol 'diag_dhmdht_cma_ncol' at (1) has no IMPLICIT type
- 
+
     ! Build CMA representation of operator \f$diag(D_h M_{2,h,inv} D_h^T)\f$
     diag_DhMDht_cma = columnwise_operator_type ( fs_pressure, fs_pressure )
     call invoke( columnwise_op_asm_diag_hmht_kernel_type( div_h,      &
@@ -742,6 +742,6 @@ contains
 
     call compare_fields(p_out_masked, p_out_masked_cma, tolerance,label)
 
-  end subroutine test_cma_diag_DhMDhT 
+  end subroutine test_cma_diag_DhMDhT
 
 end module cma_test_algorithm_mod

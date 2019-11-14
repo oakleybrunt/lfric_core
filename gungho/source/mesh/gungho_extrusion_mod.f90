@@ -90,7 +90,7 @@ contains
                                                       number_of_layers ) )
       case (method_um_L38_29t_9s_40km)
         allocate( new, source=um_L38_29t_9s_40km_extrusion_type( atmosphere_bottom, &
-                                                                 domain_top,        & 
+                                                                 domain_top,        &
                                                                  number_of_layers ) )
       case (method_quadratic)
         allocate( new, source=quadratic_extrusion_type( atmosphere_bottom, &
@@ -114,7 +114,7 @@ contains
   end function create_extrusion
 
   !> @brief Creates vertical mesh extrusion for vertically shifted mesh.
-  !> @details Creates vertically shifted mesh with nlayers+1 with the top and 
+  !> @details Creates vertically shifted mesh with nlayers+1 with the top and
   !>          bottom levels having half the cell height of the normal extrusion.
   !> @return new     Extrusion class
   function create_shifted_extrusion() result(new)

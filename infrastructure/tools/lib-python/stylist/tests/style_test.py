@@ -105,5 +105,6 @@ class TestLFRicStyle(object):
         unit_under_test = stylist.style.LFRicStyle()
 
         assert unit_under_test.list_rules() == ['FortranCharacterset',
+                                                'TrailingWhitespace',
                                                 'MissingImplicit',
                                                 'MissingOnly']

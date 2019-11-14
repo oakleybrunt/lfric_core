@@ -29,7 +29,7 @@ module assign_orography_field_spherical_mod_test
   @testCase
   type, public, extends(MPITestCase) :: assign_orography_field_spherical_test_type
     real(r_def) :: mountain_height
-    real(r_def) :: half_width 
+    real(r_def) :: half_width
     real(r_def) :: lambda_centre_dec
     real(r_def) :: phi_centre_dec
     real(r_def) :: lambda_focus_dec
@@ -90,7 +90,7 @@ contains
 
     ! Set mesh configuration
     call feign_base_mesh_config(                                    &
-                         filename        = filename,                & 
+                         filename        = filename,                &
                          prime_mesh_name = mesh_name,               &
                          geometry        = geometry_spherical,      &
                          partitioner     = partitioner_cubedsphere, &
@@ -228,7 +228,7 @@ contains
     ! Get domain top
     height_domain_top = domain_top + height_flat_surface
     ! Create uniform chi_3 field
-    call mesh%get_eta(eta) 
+    call mesh%get_eta(eta)
     do i = 1, undf
       chi_3(i) = eta2z_linear(eta(i-1), height_flat_surface, height_domain_top)
     end do

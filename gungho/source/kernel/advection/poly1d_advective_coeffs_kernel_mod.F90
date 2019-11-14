@@ -7,7 +7,7 @@
 !-------------------------------------------------------------------------------
 
 !> @brief Compute the coefficients for reconstructing a
-!>        a  1D horizontal upwind polynomial representation of a tracer field on the 
+!>        a  1D horizontal upwind polynomial representation of a tracer field on the
 !>        faces of a cell
 !> @details Compute the coefficients of the advective update of a tracer field using a high order
 !>          1D polynomial fit to the integrated tracer values over a given stencil.
@@ -15,9 +15,9 @@
 !>          A symmetric polynomial is used containing all monomials up to the
 !>          desired order, i.e. order = 2: 1 + x + x^2
 !>          This is exactly fitted over all cells in the stencil
-!>          The methodology is inspired by that of Thuburn et.al GMD 2014 for 
+!>          The methodology is inspired by that of Thuburn et.al GMD 2014 for
 !>          2D reconstructions
-!>          This method is only valid for lowest order elements  
+!>          This method is only valid for lowest order elements
 module poly1d_advective_coeffs_kernel_mod
 
 use argument_mod,      only : arg_type, func_type, mesh_data_type,  &
@@ -80,7 +80,7 @@ contains
 !>@param[in] stencil_size_wx Number of cells in the coordinate space stencil
 !>@param[in] smap_wx Stencil dofmap of the coordinate space stencil
 !>@param[in] basis_wx Basis function of the coordinate space evaluated on
-!!                    quadrature points. The vertical aspect must be on GLL points 
+!!                    quadrature points. The vertical aspect must be on GLL points
 !>@param[in] edge_basis_wx Basis function of the coordinate space evaluated on
 !!                         quadrature points on the horizontal edges
 !>@param[in] order Polynomial order for flux computations
@@ -118,7 +118,7 @@ subroutine poly1d_advective_coeffs_code(nlayers,                   &
   use poly_helper_functions_mod, only: local_distance_1d
 
   implicit none
-   
+
   ! Arguments
   integer(kind=i_def), intent(in) :: order
   integer(kind=i_def), intent(in) :: nfaces_h
@@ -173,11 +173,11 @@ subroutine poly1d_advective_coeffs_code(nlayers,                   &
   ! ( 1, 3, 5 )
   ! ( 1, 2, 4 )
   ! ( 1, 3, 5 )
-  ! First cell is always the centre cell 
+  ! First cell is always the centre cell
   map1d(1,:) = 1
   do edge = 1,nfaces_h
     do stencil = 2,order+1
-      map1d(stencil,edge) = 2 + mod(edge+1,2) + 2*(stencil-2)      
+      map1d(stencil,edge) = 2 + mod(edge+1,2) + 2*(stencil-2)
     end do
   end do
 
@@ -208,7 +208,7 @@ subroutine poly1d_advective_coeffs_code(nlayers,                   &
 
   ! Loop over all layers: goes to nalyers to pick up top point
   layer_loop: do k = 0, nlayers
-    ! Position vector of bottom of this cell unless very last point in 
+    ! Position vector of bottom of this cell unless very last point in
     ! which case use the top of the cell
     x0 = 0.0_r_def
     do df = 1, ndf_wx
@@ -244,7 +244,7 @@ subroutine poly1d_advective_coeffs_code(nlayers,                   &
         if ( k > 0 .and. k < nlayers ) &
             area(stencil) =  area(stencil) &
             + mdwt(smap_wt( 2, map1d(stencil,edge)) + k-1)
-        ! Integrate monomials over this cell 
+        ! Integrate monomials over this cell
         quadrature_loop: do qp = 1, nqp_h
           ! First: Compute physical coordinate of each quadrature point
           xq = 0.0_r_def
@@ -253,7 +253,7 @@ subroutine poly1d_advective_coeffs_code(nlayers,                   &
             xq(:) = xq(:) + (/ chi1(ijk), chi2(ijk), chi3(ijk) /)*basis_wx(1,df,qp,qv(k))
           end do
           xq(3) = ispherical*xq(3) + (1_i_def-ispherical)*x0(3)
-          ! Second: Compute the local coordinate of each quadrature point from the 
+          ! Second: Compute the local coordinate of each quadrature point from the
           !         physical coordinate
           xx = local_distance_1d(x0, xq, xn1, spherical)
           ! Third: Compute each needed monomial in terms of the local coordinate
@@ -271,7 +271,7 @@ subroutine poly1d_advective_coeffs_code(nlayers,                   &
       call matrix_invert(int_monomial, inv_int_monomial, nmonomial)
 
       ! Initialise polynomial coeffficients to zero
-      coeff(:,edge,smap_wt(1,1)+k) = 0.0_r_def    
+      coeff(:,edge,smap_wt(1,1)+k) = 0.0_r_def
       ! Loop over quadrature points on this edge
       edge_quadrature_loop: do qp = 1,nqp_e
 
@@ -286,7 +286,7 @@ subroutine poly1d_advective_coeffs_code(nlayers,                   &
         xx = local_distance_1d(x0, xq, xn1, spherical)
 
         ! Evaluate polynomial fit
-        ! Loop over monomials       
+        ! Loop over monomials
         do stencil = 1, order+1
           monomial(stencil) = xx**(stencil-1)
         end do
@@ -297,7 +297,7 @@ subroutine poly1d_advective_coeffs_code(nlayers,                   &
           coeff(stencil,edge,smap_wt(1,1)+k) = dot_product(monomial,beta)*area(stencil)
         end do
       end do edge_quadrature_loop
-    end do edge_loop    
+    end do edge_loop
   end do layer_loop
   deallocate( int_monomial, inv_int_monomial )
 

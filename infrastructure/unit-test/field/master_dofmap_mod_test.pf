@@ -8,7 +8,7 @@
 !>
 module master_dofmap_mod_test
 
-  implicit none 
+  implicit none
 
 
 contains

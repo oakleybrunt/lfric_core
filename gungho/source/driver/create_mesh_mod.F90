@@ -4,7 +4,7 @@
 ! under which the code may be used
 !-----------------------------------------------------------------------------
 !> @brief Set up and destroy partitioned 3D mesh(es)
-!> @details Contains routines to: i) read global ugrid meshes and set up 
+!> @details Contains routines to: i) read global ugrid meshes and set up
 !>          partitioned 3D mesh(es) ii) destroy partitioned mesh(es)
 module create_mesh_mod
 
@@ -89,7 +89,7 @@ subroutine init_mesh( local_rank, total_ranks, prime_mesh_id, twod_mesh_id, shif
 
   ! max_stencil_depth is the maximum depth (of cells outside the cell over
   ! which the stencil is based) of the stencil to be used on fields with
-  ! this partition. 
+  ! this partition.
   !
   ! A single cell stencil will, therefore, have a  max_stencil_depth=0.
   ! A nine-point square region stencil will have max_stencil_depth=1
@@ -177,7 +177,7 @@ subroutine init_mesh( local_rank, total_ranks, prime_mesh_id, twod_mesh_id, shif
     ! For automatic partitioning, try to partition into the squarest
     ! possible partitions by finding the two factors of ranks_per_panel
     ! that are closest to sqrt(ranks_per_panel). If two factors can't
-    ! be found after max_factor_iters attempts, they would provide 
+    ! be found after max_factor_iters attempts, they would provide
     ! partitions that are too un-square, so an error is produced.
     start_factor  = nint(sqrt(real(ranks_per_panel, kind=r_def)), kind=i_def)
     end_factor    = max(1,(start_factor-max_factor_iters))
@@ -237,7 +237,7 @@ subroutine init_mesh( local_rank, total_ranks, prime_mesh_id, twod_mesh_id, shif
   end if
 
   ! Interrogate ugrid file to get the names of all the
-  ! contained mesh topologies 
+  ! contained mesh topologies
   allocate( ncdf_quad_type :: file_handler )
   call ugrid_2d%set_file_handler( file_handler )
   call ugrid_2d%get_nmeshes( trim(filename), n_meshes )
@@ -247,7 +247,7 @@ subroutine init_mesh( local_rank, total_ranks, prime_mesh_id, twod_mesh_id, shif
 
   ! Read in prime mesh only
   ! Other meshes may need to be read in when multiple meshes
-  ! are use i.e. in function space chains. 
+  ! are use i.e. in function space chains.
   do i=1, n_meshes
     if (trim(mesh_names(i)) == trim(prime_mesh_name)) then
       global_mesh_id = global_mesh_collection %                 &
@@ -333,7 +333,7 @@ subroutine final_mesh()
     call mesh_collection%clear()
     deallocate(mesh_collection)
   end if
- 
+
 end subroutine final_mesh
 
 end module create_mesh_mod

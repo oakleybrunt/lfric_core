@@ -19,7 +19,7 @@ module stencil_dofmap_mod_test
                                  mesh_collection
   use mesh_mod,            only: mesh_type, PLANE_BI_PERIODIC
 
-  implicit none 
+  implicit none
 
   private
 
@@ -141,9 +141,9 @@ contains
 
     ! Allocate the maps
     ncells = mesh_dimension_x * mesh_dimension_y
-    
+
     allocate( master_map_init(ndf,0:ncells))
-    ! Number all the dofs. Numbers are arbitrary. But aligning with cell number makes 
+    ! Number all the dofs. Numbers are arbitrary. But aligning with cell number makes
     ! error messages easier to understand
     do cell = 1,ncells
       do df = 1,ndf

@@ -6,7 +6,7 @@
 
 !> This is a code that uses the LFRic infrastructure to build a model that
 !> includes the GungHo dynamical core and physics parametrisation schemes
-!> that are currently provided through the use of unified model code. 
+!> that are currently provided through the use of unified model code.
 
 !> @brief Main program used to illustrate an atmospheric model built using
 !>        LFRic infrastructure

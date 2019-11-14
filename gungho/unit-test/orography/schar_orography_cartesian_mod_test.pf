@@ -3,7 +3,7 @@
 ! For further details please refer to the file COPYRIGHT.txt
 ! which you should have received as part of this distribution.
 !-----------------------------------------------------------------------
-!> @brief Test suite to verify calculation of Schar mountain orography profile 
+!> @brief Test suite to verify calculation of Schar mountain orography profile
 !>        in Cartesian coordinates.
 !-------------------------------------------------------------------------------
 module schar_orography_cartesian_mod_test
@@ -28,9 +28,9 @@ module schar_orography_cartesian_mod_test
   @testCase
   type, public, extends(MPITestCase) :: schar_orography_cartesian_test_type
     real(r_def)         :: mountain_height
-    real(r_def)         :: half_width_x  
+    real(r_def)         :: half_width_x
     real(r_def)         :: half_width_y
-    real(r_def)         :: wavelength 
+    real(r_def)         :: wavelength
     real(r_def)         :: x_centre
     real(r_def)         :: y_centre
     integer(kind=i_def) :: direction
@@ -155,7 +155,7 @@ contains
                                                       partitioner_biperiodic
     use extrusion_mod,                         only : uniform_extrusion_type
     use mesh_constructor_helper_functions_mod, only : domain_size_type
-    use orography_helper_functions_mod,        only : calc_domain_size_horizontal 
+    use orography_helper_functions_mod,        only : calc_domain_size_horizontal
 
     implicit none
     ! Arguments
@@ -165,7 +165,7 @@ contains
     integer(i_def)                            :: mesh_id
     type(global_mesh_type),           pointer :: global_mesh => null()
     type(mesh_type),                  pointer :: mesh => null()
-    type(domain_size_type)                    :: domain_size 
+    type(domain_size_type)                    :: domain_size
     type(partition_type)                      :: partition
     procedure(partitioner_interface), pointer :: partitioner_ptr => null()
     type(uniform_extrusion_type)              :: extrusion

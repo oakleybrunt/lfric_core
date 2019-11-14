@@ -4,7 +4,7 @@
 ! should have received as part of this distribution.
 !-------------------------------------------------------------------------------
 
-!>@brief Abstract vector type for fields to use the new solver API and 
+!>@brief Abstract vector type for fields to use the new solver API and
 !!       extended vector types for particular solvers.
 
 module field_vector_mod
@@ -17,7 +17,7 @@ module field_vector_mod
   use vector_mod,                    only : abstract_vector_type
 
   implicit none
-  private 
+  private
 
   type, public, extends(abstract_vector_type) :: field_vector_type
      !> The array holding the fields
@@ -57,7 +57,7 @@ module field_vector_mod
      !> @param[in, out] x  vector, an array of fields
      procedure, public  :: aypx => aypx_field_vector
      !> multiply a field vector by a scalar
-     !> @param [in] scalar real     
+     !> @param [in] scalar real
      procedure, public  :: duplicate => duplicate_field_vector
      !> copy a vector of this type
      !> param[in] source, the vector to be copied
@@ -72,27 +72,27 @@ module field_vector_mod
      procedure, private :: aypx_field_vector
      procedure, private :: scale_field_vector
      procedure, private :: duplicate_field_vector
-!   infractructure procedures 
+!   infractructure procedures
      procedure, private :: field_vector_type_assign
      generic            :: assignment(=) => field_vector_type_assign
      final              :: field_vector_destroy
-  end type field_vector_type 
-  
+  end type field_vector_type
+
   interface field_vector_type
      module procedure field_vector_constructor
   end interface
 
 contains
 
-  ! compute the norm of a field vector  
+  ! compute the norm of a field vector
   function norm_field_vector(self) result(normal)
     implicit none
     class(field_vector_type), intent(in) :: self
     real(kind=r_def)    :: normal
     integer(kind=i_def) :: fctr, nfctr
-    real(kind=r_def)    :: field_norm   
+    real(kind=r_def)    :: field_norm
     normal = 0.0_r_def
-        
+
     nfctr = size(self%vector)
     do fctr = 1, nfctr
        call invoke( X_innerproduct_X(field_norm, self%vector(fctr)) )
@@ -155,14 +155,14 @@ contains
     class(field_vector_type), intent(inout) :: self
     real(kind=r_def),         intent(in)    :: scalar
     integer(kind=i_def) :: fctr, nfctr
-    
+
     nfctr = size(self%vector)
     do fctr = 1, nfctr
        ! check we have a field set in each position
        call invoke( setval_c(self%vector(fctr), scalar) )
     end do
     self%vector_set=.true.
-    
+
   end subroutine set_field_vector_scalar
 
   ! computes y = alpha * y + x
@@ -199,7 +199,7 @@ contains
     do fctr = 1, nfctr
        call invoke( inc_a_times_X(scalar, self%vector(fctr) ) )
     end do
-    
+
   end subroutine scale_field_vector
 
   ! Copy a field into the field vector
@@ -209,29 +209,29 @@ contains
     type(field_type),             intent(in)    :: field
     integer(kind=i_def),          intent(in)    :: position
 
-    if(position > size(self%vector)) then 
-       write(log_scratch_space,'(A,2(":",I2))') & 
+    if(position > size(self%vector)) then
+       write(log_scratch_space,'(A,2(":",I2))') &
             "field_vector_mod:field position bigger than nfields", &
             size(self%vector),position
        call log_event(log_scratch_space,LOG_LEVEL_ERROR)
     end if
     self%vector_set=.true.
-    
+
     call field%copy_field(self%vector(position))
   end subroutine import_field
 
    ! Copies a field from the nominated position. The procedure a field has been
    ! set in this postition
    ! @param[in] field type(field_type), the field to export
-   ! @param[in] position integer postion in the field array where the field is 
+   ! @param[in] position integer postion in the field array where the field is
    ! located.
-  subroutine export_field(self, field, position) 
+  subroutine export_field(self, field, position)
     implicit none
     class(field_vector_type),  intent(in)    :: self
     type(field_type),             intent(inout) :: field
     integer(kind=i_def),          intent(in)    :: position
-    if(position > size(self%vector)) then 
-       write(log_scratch_space,'(A,2(":",I2))') & 
+    if(position > size(self%vector)) then
+       write(log_scratch_space,'(A,2(":",I2))') &
             "field_vector_mod:export_field:field position bigger than nfields", &
             size(self%vector),position
        call log_event(log_scratch_space,LOG_LEVEL_ERROR)
@@ -273,11 +273,11 @@ contains
                    function_space_collection%get_fs(mesh_id, elem, fs_label) )
           end do
        class default
-          write(log_scratch_space,'(A)') & 
+          write(log_scratch_space,'(A)') &
             "field_vector_mod:duplicate: type mismatch"
        call log_event(log_scratch_space,LOG_LEVEL_ERROR)
     end select
-    
+
   end subroutine duplicate_field_vector
 
   ! The destructor/finalizer
@@ -291,19 +291,19 @@ contains
   end subroutine field_vector_destroy
 
   subroutine field_vector_type_assign(self, source)
-    implicit none    
+    implicit none
     class(field_vector_type), intent(out) :: self
     class(abstract_vector_type), intent(in) :: source
     integer :: stat1
     integer :: pos, nfctr
-    
+
     ! make field_vector
-    select type (source) 
+    select type (source)
     type is (field_vector_type)
        if(.not.allocated(self%vector)) then
           allocate(self%vector(size(source%vector)),stat=stat1)
        end if
-       
+
        ! if fields don't exist set false, otherwise copy and set true
        if(source%vector_set) then
           nfctr = size(self%vector)
@@ -313,7 +313,7 @@ contains
           self%vector_set=.true.
        end if
     class default
-       write(log_scratch_space,'(A)') & 
+       write(log_scratch_space,'(A)') &
             "field_vector_mod:copy: type mismatch"
        call log_event(log_scratch_space,LOG_LEVEL_ERROR)
     end select

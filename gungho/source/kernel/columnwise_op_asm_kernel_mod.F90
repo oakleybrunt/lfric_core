@@ -16,7 +16,7 @@ use argument_mod,            only : arg_type, func_type,                    &
                                     GH_READ, GH_WRITE,                      &
                                     ANY_SPACE_1, ANY_SPACE_2,               &
                                     GH_COLUMN_BANDED_DOFMAP,                &
-                                    CELLS 
+                                    CELLS
 
 use constants_mod,           only : r_def, i_def
 
@@ -85,7 +85,7 @@ contains
                                            column_banded_dofmap_from)
 
     implicit none
-    
+
     ! Arguments
     integer(kind=i_def), intent(in) :: ndf_to, ndf_from
     integer(kind=i_def), intent(in) :: cell,  nlayers, ncell_3d, ncell_2d

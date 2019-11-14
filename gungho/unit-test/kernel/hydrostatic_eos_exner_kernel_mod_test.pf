@@ -4,7 +4,7 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> Test the pressure initialization computation using equation of state in 
+!> Test the pressure initialization computation using equation of state in
 !> lowest level
 module hydrostatic_eos_exner_kernel_mod_test
 

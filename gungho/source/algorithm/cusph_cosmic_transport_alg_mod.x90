@@ -80,11 +80,11 @@ contains
 
 
     time = dt*real(timestep,r_def)
-     
+
     if ( profile /= profile_sbr_streamfunction .and.  &
          profile /= profile_dcmip301_streamfunction ) then
-      ! Recompute the (time varying) wind if not using streamfunction 
-      ! formulation. Streamfunction formulation does not currently 
+      ! Recompute the (time varying) wind if not using streamfunction
+      ! formulation. Streamfunction formulation does not currently
       ! support time varying wind so we do not recompute it if that is
       ! the choosen setup
       call invoke( name = "Initialise U",                     &
@@ -94,10 +94,10 @@ contains
                    enforce_bc_kernel_type( r_u ) )
       call mass_matrix_solver_alg(u, r_u)
     end if
-    
+
     call invoke( setval_X(u_n, u), &
                  setval_X(u_np1, u) )
-    
+
     nullify(w2_fs, w3_fs, chi)
 
   end subroutine set_winds

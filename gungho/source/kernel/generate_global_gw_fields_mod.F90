@@ -53,7 +53,7 @@ implicit none
   real(kind=r_def), parameter :: T_EQUATOR = 300.0_r_def,   &     ! Temperature at Equator
                                  ZTOP      = 10000.0_r_def        ! Model Top
 
-  real(kind=r_def) :: bigG                                    ! G constant from DCMIP formulation                            
+  real(kind=r_def) :: bigG                                    ! G constant from DCMIP formulation
   real(kind=r_def) :: tsurf, psurf                            ! Surface temperature (k) and pressure (Pa)
   real(kind=r_def) :: temperature, pressure                   ! temperature(k) and pressure (Pa)
   real(kind=r_def) :: exp_fac
@@ -70,7 +70,7 @@ implicit none
   u(2) = 0.0_r_def
   u(3) = 0.0_r_def
 
-! 
+!
   u00 = u0
   if ( rotating ) u00 = u00 + 2.0_r_def*scaled_omega*scaled_radius
   exp_fac = u00*(cos(2.0_r_def*lat)-1.0_r_def)

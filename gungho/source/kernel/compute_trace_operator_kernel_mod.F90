@@ -101,7 +101,7 @@ contains
                                           nfaces,                    &
                                           face_entity_map,           &
                                           out_face_normal )
-                                          
+
     implicit none
 
     ! Argument declarations

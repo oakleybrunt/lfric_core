@@ -46,7 +46,7 @@ module weighted_m3_kernel_mod
   public weighted_m3_code
 
 contains
-  
+
 !> @brief Computes the mass matrix for the w3 space weighted by the reference
 !!        density
 !! @param[in] cell Cell number
@@ -77,7 +77,7 @@ subroutine weighted_m3_code(cell, nlayers, ncell_3d,            &
                             scalar,                             &
                             ndf_w3, undf_w3, map_w3, basis_w3,  &
                             ndf_chi, undf_chi,                  &
-                            map_chi, diff_basis_chi,            & 
+                            map_chi, diff_basis_chi,            &
                             nqp_h, nqp_v, wqp_h, wqp_v)
 
   implicit none
@@ -126,21 +126,21 @@ subroutine weighted_m3_code(cell, nlayers, ncell_3d,            &
     ik = 1 + k + (cell-1)*nlayers
     mm(:,:,ik) = 0.0_r_def
     do qp2 = 1, nqp_v
-      do qp1 = 1, nqp_h 
+      do qp1 = 1, nqp_h
         rho_quad = 0.0_r_def
         do df = 1,ndf_w3
           rho_quad = rho_quad + rho(map_w3(df)+k)*basis_w3(1,df,qp1,qp2)
         end do
         integrand = wqp_h(qp1)*wqp_v(qp2)*scalar/rho_quad*dj(qp1,qp2)
         do df2 = 1, ndf_w3
-          do df1 = 1, ndf_w3 
+          do df1 = 1, ndf_w3
             mm(df1,df2,ik) = mm(df1,df2,ik)                    &
                            + integrand*basis_w3(1,df1,qp1,qp2) &
                                       *basis_w3(1,df2,qp1,qp2)
           end do
         end do
       end do
-    end do  
+    end do
   end do
 
 end subroutine weighted_m3_code

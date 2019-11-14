@@ -9,7 +9,7 @@
 !>
 !> function_space_pointer_type is required as a work through, as the linked list
 !> class can only hold objects which are children of the linked_list_data_type.
-!> 
+!>
 
 module function_space_pointer_mod
 
@@ -85,7 +85,7 @@ function get_target(self) result(function_space_target)
 end function get_target
 
 subroutine clear( self )
- 
+
   implicit none
 
   class(function_space_pointer_type), intent(inout) :: self
@@ -96,7 +96,7 @@ subroutine clear( self )
 end subroutine clear
 
 subroutine function_space_pointer_destructor( self )
- 
+
   implicit none
 
   type(function_space_pointer_type), intent(inout) :: self

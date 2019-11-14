@@ -49,7 +49,7 @@ contains
     type(diagonal_preconditioner_type)  :: self
     type(field_vector_type), intent(in) :: mass_matrix_diagonal
 
-    call log_event( 'Constructing diagonal preconditioner...', LOG_LEVEL_INFO )    
+    call log_event( 'Constructing diagonal preconditioner...', LOG_LEVEL_INFO )
     self%mass_matrix_diagonal = mass_matrix_diagonal
     call log_event( 'done', LOG_LEVEL_INFO )
 
@@ -97,7 +97,7 @@ contains
   !> @param [inout] self the diagonal preconditioner
   subroutine destroy_diagonal_preconditioner(self)
     implicit none
-    type(diagonal_preconditioner_type), intent(inout) :: self  
+    type(diagonal_preconditioner_type), intent(inout) :: self
   end subroutine destroy_diagonal_preconditioner
 
 end module diagonal_preconditioner_alg_mod

@@ -4,7 +4,7 @@
 ! which you should have received as part of this distribution.
 !-----------------------------------------------------------------------------
 !> @brief Applies horizontal Smagorinsky diffusion visc_h * (d2dx2 + d2dy2) to a tracer
-!>        variable in the Wtheta space for lowest order elements. 
+!>        variable in the Wtheta space for lowest order elements.
 !>
 module tracer_smagorinsky_diff_kernel_mod
 
@@ -64,7 +64,7 @@ contains
 !! @param[in] map_chi Array holding the dofmap for the cell at the base of the column for chi
 
 subroutine tracer_smagorinsky_diff_code( nlayers,                               &
-                                         theta_inc,                             & 
+                                         theta_inc,                             &
                                          theta_n,                               &
                                          map_wt_stencil_size, map_wt_stencil,   &
                                          visc_h,                                &
@@ -93,7 +93,7 @@ subroutine tracer_smagorinsky_diff_code( nlayers,                               
   real(kind=r_def), dimension(0:nlayers-1) :: idx2, idy2
   real(kind=r_def), dimension(ndf_chi)     :: chi1_e, chi2_e
 
-  !  ---------- 
+  !  ----------
   !  |    |   |
   !  |  w | i |
   !  -----x----
@@ -116,8 +116,8 @@ subroutine tracer_smagorinsky_diff_code( nlayers,                               
   end do
 
   ! Horizontal theta diffusion
-  ! Set to zero at k=0 as shear(k=0) isn't defined 
-  k = 0    
+  ! Set to zero at k=0 as shear(k=0) isn't defined
+  k = 0
   theta_inc(map_wt(1) + k) = 0.0_r_def
 
   do k = 1, nlayers - 1
@@ -128,7 +128,7 @@ subroutine tracer_smagorinsky_diff_code( nlayers,                               
     theta_inc(map_wt(1) + k) = visc_h(map_wt(1) + k) * (d2dx + d2dy)
   end do
 
-  k = nlayers    
+  k = nlayers
   theta_inc(map_wt(1) + k) = 0.0_r_def
 
 end subroutine tracer_smagorinsky_diff_code

@@ -13,7 +13,7 @@
 
 module psykal_lite_mod
 
-  use field_mod,                    only : field_type, field_proxy_type 
+  use field_mod,                    only : field_type, field_proxy_type
   use scalar_mod,                   only : scalar_type
   use operator_mod,                 only : operator_type, operator_proxy_type
   use constants_mod,                only : r_def, i_def, cache_block
@@ -195,7 +195,7 @@ contains
                                       basis_w3_face(:,:,:,:), &
                                       basis_wtheta_face(:,:,:,:)
 
-    real(kind=r_def), pointer :: wqp(:,:) => null()  
+    real(kind=r_def), pointer :: wqp(:,:) => null()
 
     integer(i_def)           :: nfaces_h
     real(r_def), allocatable :: out_face_normal(:,:)
@@ -207,7 +207,7 @@ contains
     mesh => exner_proxy%vspace%get_mesh()
     reference_element => mesh%get_reference_element()
     nfaces_h = reference_element%get_number_2d_faces()
-    
+
     do ifac = 1, num_moist_factors
       moist_dyn_proxy(ifac)= moist_dyn(ifac)%get_proxy()
     end do
@@ -674,7 +674,7 @@ contains
   !> will be introduced in #793  by modifying quadrature tools developed in ticket #761.
   !> Kernel requires mesh information (adjacent_face) that will be implemented
   !> in lfric:#986 + psylcone:#18
-  !> Invoke_weighted_proj_theta2_bd_kernel: Invoke the boundary part of the projection from w2 to wtheta operator of the lhs Helmholtz  
+  !> Invoke_weighted_proj_theta2_bd_kernel: Invoke the boundary part of the projection from w2 to wtheta operator of the lhs Helmholtz
   subroutine invoke_weighted_proj_theta2_bd_kernel_type(ptheta2, theta, s, qr)
 
       use weighted_proj_theta2_bd_kernel_mod, only : weighted_proj_theta2_bd_code
@@ -835,7 +835,7 @@ contains
 
   end subroutine invoke_divide_field
 
-!-------------------------------------------------------------------------------   
+!-------------------------------------------------------------------------------
 !> Non pointwise Kernels
 
   !-------------------------------------------------------------------------------
@@ -846,12 +846,12 @@ contains
     use nodal_coordinates_kernel_mod, only: nodal_coordinates_code
     use mesh_mod,                     only: mesh_type
     implicit none
-    
+
     type(field_type), intent(inout)      :: nodal_coords(3)
-    type(field_type), intent(in)         :: chi(3) 
+    type(field_type), intent(in)         :: chi(3)
 
     type(field_proxy_type) :: x_p(3), chi_p(3)
-   
+
     integer                 :: cell, nlayers
     integer                 :: ndf_chi, ndf_x
     integer                 :: undf_chi, undf_x
@@ -945,7 +945,7 @@ contains
     undf = f_p(1)%vspace%get_last_dof_annexed()
 
     do df = 1, undf
-      vector_in(:)  = (/ f_p(1)%data(df), f_p(2)%data(df), f_p(3)%data(df) /)              
+      vector_in(:)  = (/ f_p(1)%data(df), f_p(2)%data(df), f_p(3)%data(df) /)
       xyz(:)        = (/ x_p(1)%data(df), x_p(2)%data(df), x_p(3)%data(df) /)
       vector_out(:) = cart2sphere_vector(xyz, vector_in)
       f_p(1)%data(df) = vector_out(1)
@@ -958,7 +958,7 @@ contains
     call f_p(3)%set_dirty()
 
   end subroutine invoke_convert_cart2sphere_vector
-!-------------------------------------------------------------------------------   
+!-------------------------------------------------------------------------------
   subroutine invoke_pointwise_convert_xyz2llr( coords)
     use coord_transform_mod, only: xyz2llr
     implicit none
@@ -989,7 +989,7 @@ contains
 
   end subroutine invoke_pointwise_convert_xyz2llr
 
-!------------------------------------------------------------------------------- 
+!-------------------------------------------------------------------------------
   subroutine invoke_compute_dof_level_kernel(level)
 
   use compute_dof_level_kernel_mod, only: compute_dof_level_code
@@ -1017,12 +1017,12 @@ contains
                                 map,                                      &
                                 nodes                                     &
                                )
-  end do 
+  end do
   call l_p%set_dirty()
 
   end subroutine invoke_compute_dof_level_kernel
 
-!-------------------------------------------------------------------------------  
+!-------------------------------------------------------------------------------
 !> invoke_subgrid_coeffs: Invoke the calculation of subgrid rho coefficients
 subroutine invoke_subgrid_coeffs(a0,a1,a2,rho,cell_orientation,direction,rho_approximation_stencil_extent,halo_depth_to_compute)
 
@@ -1103,7 +1103,7 @@ subroutine invoke_subgrid_coeffs(a0,a1,a2,rho,cell_orientation,direction,rho_app
       call log_event( "Error: negative halo_depth_to_compute value in subgrid coeffs call", LOG_LEVEL_ERROR )
     endif
 
-    !NOTE: The default looping limits for this type of field would be 
+    !NOTE: The default looping limits for this type of field would be
     ! mesh%get_last_halo_cell(1) but this kernel requires a modified loop limit
     ! in order to function correctly. See ticket #1058.
     ! The kernel loops over all core and some halo cells.
@@ -1147,7 +1147,7 @@ subroutine invoke_subgrid_coeffs(a0,a1,a2,rho,cell_orientation,direction,rho_app
   end subroutine invoke_subgrid_coeffs
 
 
-!-------------------------------------------------------------------------------  
+!-------------------------------------------------------------------------------
 !> invoke_subgrid_coeffs: Invoke the calculation of subgrid rho coefficients
 !>                        The routine also includes a special type of halo
 !>                        exchange where the values in the halos need to be
@@ -1362,7 +1362,7 @@ subroutine invoke_subgrid_coeffs(a0,a1,a2,rho,cell_orientation,direction,rho_app
   end subroutine invoke_subgrid_coeffs_conservative
 
 
-!------------------------------------------------------------------------------- 
+!-------------------------------------------------------------------------------
 subroutine invoke_fv_mass_fluxes( rho,            &
                                   dep_pts,        &
                                   mass_flux,      &
@@ -1443,11 +1443,11 @@ subroutine invoke_fv_mass_fluxes( rho,            &
   if ( swap ) call rho_proxy%halo_exchange(depth=stencil_extent)
 
   mesh => rho_proxy%vspace%get_mesh()
-  ! NOTE: The default looping limits for this type of field would be 
+  ! NOTE: The default looping limits for this type of field would be
   ! mesh%get_last_halo_cell(1) but this kernel requires a modified loop limit
   ! in order to function correctly. See ticket #1058.
   ! The kernel loops over all core cells only.
-  do cell = 1, mesh%get_last_edge_cell() 
+  do cell = 1, mesh%get_last_edge_cell()
       map_rho => rho_proxy%vspace%get_cell_dofmap( cell )
       map_w2 => dep_pts_proxy%vspace%get_cell_dofmap( cell )
 
@@ -1525,7 +1525,7 @@ subroutine invoke_calc_deppts(  u_n,                  &
   type(mesh_type), pointer :: mesh => null()
   integer                  :: d
   logical                  :: swap
-  
+
   u_n_proxy    = u_n%get_proxy()
   u_np1_proxy  = u_np1%get_proxy()
   dep_pts_proxy = dep_pts%get_proxy()
@@ -1549,7 +1549,7 @@ subroutine invoke_calc_deppts(  u_n,                  &
   nlayers = u_n_proxy%vspace%get_nlayers()
 
   mesh => u_n_proxy%vspace%get_mesh()
-  !NOTE: The default looping limits for this type of field would be 
+  !NOTE: The default looping limits for this type of field would be
   ! mesh%get_last_halo_cell(1) but this kernel requires a modified loop limit
   ! in order to function correctly. See ticket #1058.
   ! The kernel loops over all core cells only.
@@ -1578,8 +1578,8 @@ subroutine invoke_calc_deppts(  u_n,                  &
 
 end subroutine invoke_calc_deppts
 
-!-------------------------------------------------------------------------------   
-!> invoke_multiply_field_data:  z =  x * y     
+!-------------------------------------------------------------------------------
+!> invoke_multiply_field_data:  z =  x * y
   subroutine invoke_multiply_field_data(field1,field2,field_res)
     use log_mod, only : log_event, LOG_LEVEL_ERROR
     use mesh_mod,only : mesh_type
@@ -1637,7 +1637,7 @@ end subroutine invoke_calc_deppts
   subroutine invoke_tracer_viscosity( theta_inc, theta_n ,t_stencil_size, chi )
 
     use tracer_viscosity_kernel_mod, only : tracer_viscosity_code
-    use mesh_mod,                    only : mesh_type 
+    use mesh_mod,                    only : mesh_type
     use stencil_dofmap_mod,          only : stencil_dofmap_type, STENCIL_CROSS
 
     implicit none
@@ -1686,7 +1686,7 @@ end subroutine invoke_calc_deppts
     cross_stencil_wt => theta_n_proxy%vspace%get_stencil_dofmap(STENCIL_CROSS, t_stencil_size)
     cross_stencil_wt_map => cross_stencil_wt%get_whole_dofmap()
     cross_stencil_wt_size = cross_stencil_wt%get_size()
-    
+
     map_chi => chi_proxy(1)%vspace%get_whole_dofmap( )
     map_t => theta_inc_proxy%vspace%get_whole_dofmap( )
 
@@ -1704,7 +1704,7 @@ end subroutine invoke_calc_deppts
                                   ndf_chi, undf_chi, map_chi(:,cell) &
                                  )
     end do
-     
+
    call theta_inc_proxy%set_dirty()
 
   end subroutine invoke_tracer_viscosity
@@ -1712,9 +1712,9 @@ end subroutine invoke_calc_deppts
   ! Needs correct loop limits in the presence of colouring for psyclone
   ! implementation
   subroutine invoke_momentum_viscosity( u_inc, u_n, u_stencil_size, chi )
-   
+
     use momentum_viscosity_kernel_mod, only : momentum_viscosity_code
-    use mesh_mod,                      only : mesh_type 
+    use mesh_mod,                      only : mesh_type
     use stencil_dofmap_mod,            only : stencil_dofmap_type, STENCIL_CROSS
 
     implicit none
@@ -1781,7 +1781,7 @@ end subroutine invoke_calc_deppts
                                     ndf_chi, undf_chi, map_chi(:,cell) &
                                    )
     end do
-     
+
    call u_inc_proxy%set_dirty()
 
   end subroutine invoke_momentum_viscosity
@@ -1823,7 +1823,7 @@ end subroutine invoke_calc_deppts
     cell_orientation_proxy = cell_orientation%get_proxy()
     w2_field_proxy = w2_field%get_proxy()
     mesh => w2_field_proxy%vspace%get_mesh()
-    
+
     nlayers = cell_orientation_proxy%vspace%get_nlayers()
     ndf_w3  = cell_orientation_proxy%vspace%get_ndf( )
     undf_w3 = cell_orientation_proxy%vspace%get_undf()
@@ -1906,7 +1906,7 @@ end subroutine invoke_calc_deppts
                                     ndf1, &
                                     ndf2, &
                                     boundary_dofs)
-    end do 
+    end do
   end subroutine invoke_enforce_operator_bc_kernel_type
 
   !-------------------------------------------------------------------------------
@@ -2138,7 +2138,7 @@ end subroutine invoke_calc_deppts
     undf_w2 = u_piola_x_p%vspace%get_undf()
 
 
-    ! NOTE: The default looping limits for this type of field would be 
+    ! NOTE: The default looping limits for this type of field would be
     ! mesh%get_last_halo_cell(1) but this kernel requires a modified loop limit
     ! in order to function correctly. See ticket #1058.
     ! The kernel loops over all core and all halo cells.
@@ -2499,9 +2499,9 @@ end subroutine invoke_calc_deppts
     !
   end subroutine invoke_hydrostatic_exner_kernel
 
-!-------------------------------------------------------------------------------   
-!> invoke_sign:  y = sign(a,x) a-scalar; x,y-vector  
-! See PSyClone issue #560   
+!-------------------------------------------------------------------------------
+!> invoke_sign:  y = sign(a,x) a-scalar; x,y-vector
+! See PSyClone issue #560
   subroutine invoke_sign(field_res, scalar, field)
 
     use log_mod,  only : log_event, LOG_LEVEL_ERROR

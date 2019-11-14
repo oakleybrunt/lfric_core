@@ -9,9 +9,9 @@
 !> @brief Contains quadrature_xoyoz_type and quadrature_xoyoz_type.
 
 !> @details This module contains the quadrature_xoyoz_type.
-!> 
-!> This type contains points and weights stored in 1D for horizontal (x & y) 
-!> and vertical (z). A proxy is used to access the data. A type bound procedure 
+!>
+!> This type contains points and weights stored in 1D for horizontal (x & y)
+!> and vertical (z). A proxy is used to access the data. A type bound procedure
 !> 'compute_function' is also available. This method uses
 !> call_function defined in function_space_type. The function is evaluated for
 !> the xoyoz arrangement
@@ -66,7 +66,7 @@ end type quadrature_xoyoz_type
 
 !> Psy layer representation of a quadrature_xoyoz type
 !>
-!> This is an accessor class that allows access to quadrature_xoyoz_type 
+!> This is an accessor class that allows access to quadrature_xoyoz_type
 !> data and information with each element accessed via a public pointer.
 !>
 type, public :: quadrature_xoyoz_proxy_type
@@ -152,7 +152,7 @@ end function init_quadrature_variable
 !> @brief Initialises the xoyoz quadrature type.
 !> @param[in] np integer, The number of points
 !> @param[in] rule quadrature_rule_type, Quadrature rule to use
-!> 
+!>
 !> @return An object of type quadrature_xoyoz_type
 function init_quadrature_symmetrical(np, rule) result (self)
 
@@ -222,7 +222,7 @@ subroutine create_quadrature(self, points_weights_x, points_weights_y, &
   self%weights_z(:) = 0.0_r_def
 
   ! Distribute the 1D points and weights
-  ! We can't use xoyoz for non quads as they do not have the threefold 
+  ! We can't use xoyoz for non quads as they do not have the threefold
   ! symmetry necessary for xoyoz rules
   self%points_x  = points_weights_x(:,1)
   self%points_y  = points_weights_y(:,1)
@@ -265,8 +265,8 @@ end function get_quadrature_proxy
 !> @brief Evaluates the a given function for on a set of 3d points.
 !> @param[in] self, The calling quadrature_type
 !> @param[in] function_to_call integer, Enumerator defining the function to call
-!> @param[in] function_space function_space_type, Function space containing the 
-!> function to evaluate 
+!> @param[in] function_space function_space_type, Function space containing the
+!> function to evaluate
 !> @param[in] ndf integer, Number of dofs
 !> @param[out] basis real, 3 dimensional array holding the evaluated
 !> function
@@ -324,7 +324,7 @@ subroutine quadrature_destructor(self)
   if(allocated(self%weights_x)) deallocate(self%weights_x)
   if(allocated(self%weights_y)) deallocate(self%weights_y)
   if(allocated(self%weights_z)) deallocate(self%weights_z)
-  
+
 end subroutine quadrature_destructor
 !--------------------------------------------------------------------------------
 

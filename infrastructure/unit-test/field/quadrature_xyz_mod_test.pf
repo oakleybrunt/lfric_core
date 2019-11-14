@@ -40,7 +40,7 @@ contains
     qr_proxy = qr%get_quadrature_proxy()
 
     epsilon = 1.0e-14_r_def
- 
+
     ! Define expected data
     test_points_xyz(1,:) = [1.127016653792583E-001_r_def, &
                             1.127016653792583E-001_r_def, &

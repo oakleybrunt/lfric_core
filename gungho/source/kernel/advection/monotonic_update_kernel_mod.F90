@@ -7,7 +7,7 @@
 !-------------------------------------------------------------------------------
 
 !> @brief Kernel which enforces monotonicity on an advective update
-!> @details Modifies the advective update A(theta) such that 
+!> @details Modifies the advective update A(theta) such that
 !>          \f[ M_\theta (theta^{n+1} - theta^{n}) + \Delta t A(\theta) \f]
 !>          Returns a monotonic theta^{n+1}. The monotonticity is enforced by
 !>          ensuring that the the implied theta^{n+1} lies within the range
@@ -54,12 +54,12 @@ contains
 
 !> @brief Computes the horizontal fluxes for a tracer density
 !! @param[in]  nlayers Number of layers
-!! @param[in,out] adv Advective update field to apply monotonicity to 
-!! @param[in]  theta Field to be advected, used to compute the advective output 
+!! @param[in,out] adv Advective update field to apply monotonicity to
+!! @param[in]  theta Field to be advected, used to compute the advective output
 !! @param[in]  stencil_size Size of the stencil (number of cells)
 !! @param[in]  stencil_map Dofmaps for the stencil
 !! @param[in]  inv_mt Lumped inverse of the Wtheta mass matrix
-!! @param[in]  dt Timestep 
+!! @param[in]  dt Timestep
 !! @param[in]  order Desired polynomial order used to reconstruct the high order theta approximation
 !! @param[in]  ndf_wt Number of degrees of freedom per cell
 !! @param[in]  undf_wt Number of unique degrees of freedom for the tracer field
@@ -75,7 +75,7 @@ subroutine monotonic_update_code( nlayers,              &
                                   ndf_wt,               &
                                   undf_wt,              &
                                   map_wt)
-                                    
+
   implicit none
 
   ! Arguments
@@ -95,9 +95,9 @@ subroutine monotonic_update_code( nlayers,              &
   ! Internal variables
   integer(kind=i_def) :: k, m, stencil, cell, p, ijkp, order, pmin, pmax
   integer(kind=i_def), allocatable, dimension(:,:) :: smap
- 
+
   real(kind=r_def) :: theta0, theta_max, theta_min, a_min, a_max
-   
+
   ! Compute the offset map for all even orders up to order
   allocate( smap(global_order+3,0:global_order/2) )
   smap(:,:) = 0
@@ -121,7 +121,7 @@ subroutine monotonic_update_code( nlayers,              &
     ! Max min across the vertical stencil
     order = min(global_order, min(2*(k-1), 2*(nlayers-1-k)))
 
-    ! These limits should be p=1,order+3k 
+    ! These limits should be p=1,order+3k
     ! and ijkp = stencil_map(1,1) + k + smap(p,order/2)
     ! but this caused a segmentation fault so for now use simpler
     ! k-1,k+1 limits

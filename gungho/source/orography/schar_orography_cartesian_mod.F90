@@ -4,22 +4,22 @@
 ! which you should have received as part of this distribution.
 !-----------------------------------------------------------------------
 !> @brief Calculates Schar mountain orography profile in Cartesian coordinates.
-!> 
-!> @details This module contains type definition and routines to calculate  
-!>          analytic orography profile of Schar mountain function from Cartesian 
+!>
+!> @details This module contains type definition and routines to calculate
+!>          analytic orography profile of Schar mountain function from Cartesian
 !>          coordinates: x and y.
-!>          Reference: Melvin et al. (2010), Section 4.4. 
+!>          Reference: Melvin et al. (2010), Section 4.4.
 !>          Schar mountain parameters in Cartesian coordinates are:
 !>          mountain_height - Height of Schar mountain function (m),
 !>          half_width_x - Half-width of Schar mountain function in
 !>                         x direction (m),
-!>          half_width_y - Half-width of Schar mountain function in 
+!>          half_width_y - Half-width of Schar mountain function in
 !>                         y direction (m),
-!>          wavelength - Wavelength of cosine part of Schar mountain  
+!>          wavelength - Wavelength of cosine part of Schar mountain
 !>                       function (m),
 !>          x_centre - x coordinate centre of Schar mountain function (m),
 !>          y_centre - y coordinate centre of Schar mountain function (m),
-!>          direction_cart - Direction of Schar mountain function 
+!>          direction_cart - Direction of Schar mountain function
 !>                           (x, y or both).
 !-------------------------------------------------------------------------------
 module schar_orography_cartesian_mod
@@ -36,7 +36,7 @@ module schar_orography_cartesian_mod
   implicit none
 
   private
-  !> @brief Holds parameters and methods used to calculate Schar orography 
+  !> @brief Holds parameters and methods used to calculate Schar orography
   !>        profile in Cartesian coordinates.
   type, public, extends(analytic_orography_type) :: schar_cartesian_type
 
@@ -55,35 +55,35 @@ module schar_orography_cartesian_mod
     procedure, public, pass(self) :: analytic_orography => schar_orography_cartesian
     procedure                     :: schar_coordinate_cartesian
     procedure                     :: write_schar_cartesian_type
-    
+
   end type schar_cartesian_type
 
   ! Constructor for schar_cartesian_type
   interface schar_cartesian_type
     module procedure schar_cartesian_constructor
-  end interface 
+  end interface
 
 contains
 
   !=============================================================================
-  !> @brief Constructor for Schar mountain function in Cartesian coordinates. 
-  !> 
+  !> @brief Constructor for Schar mountain function in Cartesian coordinates.
+  !>
   !> @param[in] mountain_height Height of mountain function read from
   !>                            namelist (m)
   !> @param[in] half_width_x    Half-width of mountain function in x direction
   !>                            read from namelist (m)
   !> @param[in] half_width_y    Half-width of mountain function in y direction
   !>                            read from namelist (m)
-  !> @param[in] wavelength      Wavelength of cosine part of  mountain function 
+  !> @param[in] wavelength      Wavelength of cosine part of  mountain function
   !>                            read from namelist (m)
   !> @param[in] x_centre        x coordinate centre of mountain function read
   !>                            from namelist (m)
   !> @param[in] y_centre        y coordinate centre of mountain function read
   !>                            from namelist (m)
-  !> @param[in] direction       Direction of mountain function read from  
+  !> @param[in] direction       Direction of mountain function read from
   !>                            namelist (x, y or both)
   !> @return    self            An object of type schar_cartesian_type
-  !=============================================================================   
+  !=============================================================================
   type(schar_cartesian_type) function schar_cartesian_constructor(     &
                                                       mountain_height, &
                                                       half_width_x,    &
@@ -91,12 +91,12 @@ contains
                                                       wavelength,      &
                                                       x_centre,        &
                                                       y_centre,        &
-                                                      direction )      & 
+                                                      direction )      &
                                                       result(self)
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     real(kind=r_def),    intent(in) :: mountain_height, &
                                        half_width_x,    &
                                        half_width_y,    &
@@ -109,7 +109,7 @@ contains
     self%mountain_height = mountain_height
     self%half_width_x    = half_width_x
     self%half_width_y    = half_width_y
-    self%wavelength      = wavelength                                               
+    self%wavelength      = wavelength
     self%x_centre        = x_centre
     self%y_centre        = y_centre
     self%direction       = direction
@@ -119,21 +119,21 @@ contains
 
   !=============================================================================
   !> @brief Calculates Schar mountain function in Cartesian coordinates.
-  !> 
+  !>
   !> @param[in] self      An object of type schar_cartesian_type
   !> @param[in] chi_1     x coordinate (m)
   !> @param[in] chi_2     y coordinate (m)
-  !> @return    chi_surf  Surface height (m)  
-  !=============================================================================  
+  !> @return    chi_surf  Surface height (m)
+  !=============================================================================
   function schar_orography_cartesian(self, chi_1, chi_2) result(chi_surf)
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(schar_cartesian_type), intent(in) :: self
     real(kind=r_def),            intent(in) :: chi_1, chi_2
-    real(kind=r_def)                        :: chi_surf  
-    ! Internal variables 
+    real(kind=r_def)                        :: chi_surf
+    ! Internal variables
     real(kind=r_def) :: chisurf_arg(2)
 
     ! Calculate transformed/scaled function arguments
@@ -147,25 +147,25 @@ contains
   end function schar_orography_cartesian
 
   !=============================================================================
-  !> @brief Transforms/scales coordinate for Cartesian Schar mountain function. 
-  !> 
+  !> @brief Transforms/scales coordinate for Cartesian Schar mountain function.
+  !>
   !> @param[in]  self         An object of type schar_cartesian_type
   !> @param[in]  chi_1        x coordinate (m)
   !> @param[in]  chi_2        y coordinate (m)
-  !> @param[out] chisurf_arg  Schar mountain function transformed/scaled 
-  !>                          arguments  
+  !> @param[out] chisurf_arg  Schar mountain function transformed/scaled
+  !>                          arguments
   !=============================================================================
   subroutine schar_coordinate_cartesian(self, chi_1, chi_2, chisurf_arg)
-  
+
     use constants_mod,                  only : PI
     use orography_helper_functions_mod, only : coord_transform_cart_biperiodic
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(schar_cartesian_type), intent(in)  :: self
     real(kind=r_def),            intent(in)  :: chi_1, chi_2
-    real(kind=r_def),            intent(out) :: chisurf_arg(2)   
+    real(kind=r_def),            intent(out) :: chisurf_arg(2)
     ! Internal variables
     real(kind=r_def)               :: chi_1_per, chi_2_per
 
@@ -187,12 +187,12 @@ contains
       case (direction_x)
         ! Exponential function argument
         chisurf_arg(1) = chi_1_per/self%half_width_x
-        ! Cosine function argument    
+        ! Cosine function argument
         chisurf_arg(2) = PI*chi_1_per/self%wavelength
       case (direction_y)
         ! Exponential function argument
         chisurf_arg(1) = chi_2_per/self%half_width_y
-        ! Cosine function argument    
+        ! Cosine function argument
         chisurf_arg(2) = PI*chi_2_per/self%wavelength
       case (direction_xy)
         ! Exponential function argument
@@ -204,23 +204,23 @@ contains
               "No valid orography directions (x, y, or xy) selected. "
         call log_event(log_scratch_space, LOG_LEVEL_ERROR)
     end select
-       
+
     return
   end subroutine schar_coordinate_cartesian
 
   !=============================================================================
-  !> @brief Writes out parameters of Schar mountain function in Cartesian 
-  !>        coordinates. 
-  !> 
+  !> @brief Writes out parameters of Schar mountain function in Cartesian
+  !>        coordinates.
+  !>
   !> @param[in] self An object of type schar_cartesian_type
-  !=============================================================================   
+  !=============================================================================
   subroutine write_schar_cartesian_type(self)
 
     use constants_mod, only : str_short, str_max_filename
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(schar_cartesian_type), intent(in) :: self
     ! Temporary write variables
     integer(kind=i_def),             parameter :: funit = 777
@@ -230,8 +230,8 @@ contains
 
     ! Temporary write
     open(funit, file = trim(fname), status = 'replace')
-    write(funit,'(A)') & 
-          "Schar mountain parameters in Cartesian coordinates: " 
+    write(funit,'(A)') &
+          "Schar mountain parameters in Cartesian coordinates: "
     write(funit, fmtreal) "mountain_height = ", self%mountain_height
     write(funit, fmtreal) "half_width_x    = ", self%half_width_x
     write(funit, fmtreal) "half_width_y    = ", self%half_width_y
@@ -243,5 +243,5 @@ contains
 
     return
   end subroutine write_schar_cartesian_type
-  
+
 end module schar_orography_cartesian_mod

@@ -4,7 +4,7 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> Test the computation of the 1d horiztonal advective update 
+!> Test the computation of the 1d horiztonal advective update
 module poly_advective_kernel_mod_test
 
   use constants_mod, only: i_def, r_def
@@ -29,7 +29,7 @@ contains
 
     use poly_advective_kernel_mod, only: poly_advective_code
 
-    implicit none 
+    implicit none
 
     class(poly_advective_test_type), intent(inout) :: this
 
@@ -52,7 +52,7 @@ contains
     real(r_def), dimension(undf_w2) :: wind
 
     integer(i_def) :: df, k
-    
+
     real(r_def), parameter :: u0 = 1.0_r_def
 
     map_wt(:) = (/ 1, 2 /)
@@ -69,8 +69,8 @@ contains
 
     do df = 1,undf_w1
       tracer(df) = 300.0_r_def + real(df,r_def)
-    end do 
-    
+    end do
+
     call poly_advective_code( nlayers,              &
                               advective,            &
                               wind,                 &

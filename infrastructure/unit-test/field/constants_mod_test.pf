@@ -10,7 +10,7 @@ module constants_mod_test
 
   use pFUnit_Mod
 
-  implicit none 
+  implicit none
 
 contains
 

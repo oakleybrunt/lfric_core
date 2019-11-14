@@ -86,7 +86,7 @@ subroutine tracer_viscosity_code(nlayers,                               &
   real(kind=r_def), dimension(0:nlayers-1) :: idx2, idy2, idz2
   real(kind=r_def), dimension(ndf_chi)     :: chi1_e, chi2_e, chi3_e
 
-  !  ---------- 
+  !  ----------
   !  |    |   |
   !  |  w | i |
   !  -----x----
@@ -110,7 +110,7 @@ subroutine tracer_viscosity_code(nlayers,                               &
     idz2(k) = 1.0_r_def/(maxval(chi3_e) - minval(chi3_e))**2
   end do
 
-  ! Theta diffusion 
+  ! Theta diffusion
   k = 0
   km = 0
   kp = k + 1
@@ -118,7 +118,7 @@ subroutine tracer_viscosity_code(nlayers,                               &
   d2dy = (theta_n(map_wt(1,3) + k)  - 2.0_r_def*theta_n(map_wt(1,1) + k) + theta_n(map_wt(1,5) + k) )*idy2(k)
   d2dz = (theta_n(map_wt(1,1) + kp) - 2.0_r_def*theta_n(map_wt(1,1) + k) + theta_n(map_wt(1,1) + km))*idz2(k)
   theta_inc(cell_map_wt(1)+k) = viscosity_mu*(d2dx + d2dy + d2dz)
-  do k = 1, nlayers-1  
+  do k = 1, nlayers-1
     km = k - 1
     kp = k + 1
     d2dx = (theta_n(map_wt(1,2) + k)  - 2.0_r_def*theta_n(map_wt(1,1) + k) + theta_n(map_wt(1,4) + k) )*idx2(k)

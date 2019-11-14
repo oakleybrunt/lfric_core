@@ -1225,7 +1225,7 @@ subroutine read_mesh( self, mesh_name, mesh_class, constructor_inputs, &
   character(str_long) :: target_mesh_names_str
 
   ! We need to ensure that netcdf receives data with the appropriate
-  ! precision to create temporary arrays to hold real data 
+  ! precision to create temporary arrays to hold real data
   ! converted from/to default precision
   real(r_ncdf), allocatable :: node_coordinates_ncdf(:,:)
   real(r_ncdf), allocatable :: face_coordinates_ncdf(:,:)
@@ -1427,7 +1427,7 @@ subroutine write_mesh( self, mesh_name, mesh_class, constructor_inputs,   &
   type(global_mesh_map_type), pointer :: mesh_map => null()
 
   ! We need to ensure that netcdf receives data with the appropriate
-  ! precision to create temporary arrays to hold real data 
+  ! precision to create temporary arrays to hold real data
   ! converted from/to default precision
 
   real(r_ncdf), allocatable :: node_coordinates_ncdf(:,:)

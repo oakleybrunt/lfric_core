@@ -43,7 +43,7 @@ module global_mesh_map_collection_mod
     !>                                  object for this global mesh map object.
     !> @param[in] target_global_mesh_id ID of the target global mesh
     !>                                  object for this global mesh map object.
-    !> @param[in] map 
+    !> @param[in] map
     !>            Global cell ids of the target global mesh object which
     !>            overlap with source global mesh cells. This arrays
     !>            should be in the dimensions of
@@ -75,7 +75,7 @@ module global_mesh_map_collection_mod
 contains
 
 !==============================================================================
-!> @brief  Constructs the collection object for objects of 
+!> @brief  Constructs the collection object for objects of
 !>         global_mesh_map_type
 !> @return The constructed global_mesh_map_collection object
 function global_mesh_map_collection_constructor() result(self)

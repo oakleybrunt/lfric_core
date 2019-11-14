@@ -58,7 +58,7 @@ contains
     integer(i_def) :: i
     real(kind=r_def) :: answer
 
-    ! Set cell coordinates    
+    ! Set cell coordinates
     dx = 2.0_r_def
     dy = 3.0_r_def
     dz = 4.0_r_def
@@ -70,7 +70,7 @@ contains
     do i = 1,8
       mapx(i) = int(i,i_def)
     end do
-    
+
     ! Basis functions
     s(1) = 1.0_r_def
     ds(:) = (/ 1.0_r_def, -1.0_r_def, 2.0_r_def /)
@@ -91,7 +91,7 @@ contains
     dgamma(:,8) = (/ -1.0_r_def,  1.0_r_def,  1.0_r_def /)
     dgamma = 0.25_r_def*dgamma
 
-    call compute_derahm_matrices_code(1_i_def, 1_i_def,        & 
+    call compute_derahm_matrices_code(1_i_def, 1_i_def,        &
                                       1_i_def, M0,             &
                                       1_i_def, M1,             &
                                       1_i_def, M2,             &
@@ -112,7 +112,7 @@ contains
                                       ndfx, ndfx,              &
                                       mapx, dgamma,            &
                                       nqp, nqp, wgt, wgt)
-   
+
     answer = (dx*dy*dz)*s(1)*s(1)
     @assertEqual(answer, M0(1,1,1), tol)
 

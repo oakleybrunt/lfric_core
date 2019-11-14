@@ -146,13 +146,13 @@ contains
                    map_w2(:,cell)   &
                    )
 
- 
-    ! The answer returns the CFL. If the kernel is correct, then 
-    ! this should be 
+
+    ! The answer returns the CFL. If the kernel is correct, then
+    ! this should be
     ! = -UFAST*DT/DX on 'x' dofs and
     ! = +UFAST*DT/DZ on 'z' dofs
     answer = cflx(map_w2(1, cell))
-    tol = 10.0_r_def*spacing(UFAST*DT/DX) 
+    tol = 10.0_r_def*spacing(UFAST*DT/DX)
     @assertEqual( answer, -UFAST*DT/DX, tol)
 
     answer = cflz(map_w2(6,cell))

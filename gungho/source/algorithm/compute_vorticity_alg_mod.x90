@@ -7,8 +7,8 @@
 !>@brief Algorithm to compute the vorticity: curl(u)
 !>@details Compute the vorticity (xi) in W1 as the projection of the weak
 !>         curl of the velocity field (u): <c,xi> = <curl(c),u>.
-!>         If the inuput u field is in the weak form (such as if we were 
-!>         advecting the residual r_u as for a SL scheme) then we first 
+!>         If the inuput u field is in the weak form (such as if we were
+!>         advecting the residual r_u as for a SL scheme) then we first
 !>         compute a strong form of u by inverting the W2 mass matrix
 module compute_vorticity_alg_mod
 
@@ -60,7 +60,7 @@ contains
     type(quadrature_xyoz_type)         :: qr
 
     if ( weak_form_u ) then
-      ! Advect u^* = M^-1 * <v,{u + beta*dt*[coriolis + pgf + grad(phi+K)]}> 
+      ! Advect u^* = M^-1 * <v,{u + beta*dt*[coriolis + pgf + grad(phi+K)]}>
       call advected_u%initialise( vector_space = u%get_function_space()  )
       call invoke( setval_c(advected_u, 0.0_r_def) )
       call mass_matrix_solver_alg(advected_u, u)
@@ -69,7 +69,7 @@ contains
       call u%copy_field(advected_u)
     end if
 
-    if ( vorticity_in_w1 ) then 
+    if ( vorticity_in_w1 ) then
       ! Compute vorticity in W1 as the weak curl of the W2 winds
       m1_lumped_inv => get_inverse_lumped_mass_matrix(w1_id)
       curl          => get_curl()
@@ -89,8 +89,8 @@ contains
       call invoke( setval_c(r_u, 0.0_r_def),                                   &
                    setval_c(u_in_w1, 0.0_r_def),                               &
                    w2_to_w1_projection_kernel_type(r_u, advected_u, qr) )
-      call mass_matrix_solver_alg( u_in_w1, r_u, .false.)  
-      call invoke( strong_curl_kernel_type(xi, u_in_w1) )  
+      call mass_matrix_solver_alg( u_in_w1, r_u, .false.)
+      call invoke( strong_curl_kernel_type(xi, u_in_w1) )
     end if
 
     nullify( m1_lumped_inv, curl, w1_fs)

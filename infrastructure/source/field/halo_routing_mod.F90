@@ -37,8 +37,8 @@ module halo_routing_mod
     integer(i_def) :: element_order
     !> Enumerated value representing the continutity of the function space
     !> that this information is valid for
-    integer(i_native) :: lfric_fs   
-    !> YAXT redistribution map 
+    integer(i_native) :: lfric_fs
+    !> YAXT redistribution map
     type(xt_redist), allocatable :: redist(:)
   contains
     !> Gets the mesh_id for which the halo_routing object is valid

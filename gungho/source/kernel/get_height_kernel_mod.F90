@@ -56,8 +56,8 @@ contains
 !>        Will only work at lowest order for now
 !! @param[in] nlayers Number of layers
 !! @param[inout] height The height field
-!! @param[in] chi_1 X component of the coordinate 
-!! @param[in] chi_2 Y component of the coordinate 
+!! @param[in] chi_1 X component of the coordinate
+!! @param[in] chi_2 Y component of the coordinate
 !! @param[in] chi_3 Z component of the coordinate
 !! @param[in] ndf_x Number of degrees of freedom per cell for height
 !! @param[in] undf_x Number of unique degrees of freedom for height
@@ -91,7 +91,7 @@ subroutine get_height_code(nlayers,                         &
   integer          :: df_chi, df_x, k
 
   real(kind=r_def) :: xyz(3), r
-  
+
   do k = 0, nlayers-1
     do df_x = 1, ndf_x
       xyz(:) = 0.0_r_def
@@ -102,12 +102,12 @@ subroutine get_height_code(nlayers,                         &
       end do
       if (geometry == geometry_spherical) then
         r = sqrt(xyz(1)**2 + xyz(2)**2 + xyz(3)**2)
-        ! NB This will result in the height above 
+        ! NB This will result in the height above
         ! the spherical representation of the planet
         ! by not necessarily the height above the bottom
         ! of the mesh
         ! This should be reviewed with ticket #562
-        r = r - scaled_radius 
+        r = r - scaled_radius
       else
         r = xyz(3)
       end if

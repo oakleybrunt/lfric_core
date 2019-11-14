@@ -71,7 +71,7 @@ contains
 !! @param[in] ndf_w3 The number of degrees of freedom per cell for w3
 !! @param[in] undf_w3 The number unique of degrees of freedom  for w3
 !! @param[in] map_w3 Dofmap for the cell at the base of the column for w3
-!! @param[in] w3_basis 4-dim array holding basis functions evaluated at gaussian quadrature points 
+!! @param[in] w3_basis 4-dim array holding basis functions evaluated at gaussian quadrature points
 !! @param[in] ndf_w2 The number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 The number unique of degrees of freedom  for w2
 !! @param[in] map_w2 Dofmap for the cell at the base of the column for w2
@@ -111,7 +111,7 @@ subroutine compute_total_energy_code(                                           
   integer, dimension(ndf_w3), intent(in) :: map_w3
   integer, dimension(ndf_wtheta), intent(in) :: map_wtheta
   integer, dimension(ndf_chi), intent(in) :: map_chi
-  
+
   real(kind=r_def), dimension(1,ndf_w3,nqp_h,nqp_v), intent(in) :: w3_basis
   real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis
   real(kind=r_def), dimension(1,ndf_wtheta,nqp_h,nqp_v), intent(in) :: wtheta_basis
@@ -121,7 +121,7 @@ subroutine compute_total_energy_code(                                           
   real(kind=r_def), dimension(undf_w2),     intent(in)  :: u
   real(kind=r_def), dimension(undf_w3),     intent(in)  :: rho, exner
   real(kind=r_def), dimension(undf_wtheta), intent(in)  :: theta
-  real(kind=r_def), dimension(undf_w3),     intent(in)  :: phi 
+  real(kind=r_def), dimension(undf_w3),     intent(in)  :: phi
   real(kind=r_def), dimension(undf_chi),    intent(in)  :: chi_1, chi_2, chi_3
 
   real(kind=r_def), dimension(nqp_h), intent(in)      ::  wqp_h
@@ -175,8 +175,8 @@ subroutine compute_total_energy_code(                                           
         rho_at_quad = 0.0_r_def
         exner_at_quad = 0.0_r_def
         do df = 1, ndf_w3
-          rho_at_quad    = rho_at_quad   + rho_e(df)  *w3_basis(1,df,qp1,qp2) 
-          exner_at_quad  = exner_at_quad + exner_e(df)*w3_basis(1,df,qp1,qp2) 
+          rho_at_quad    = rho_at_quad   + rho_e(df)  *w3_basis(1,df,qp1,qp2)
+          exner_at_quad  = exner_at_quad + exner_e(df)*w3_basis(1,df,qp1,qp2)
         end do
         theta_at_quad = 0.0_r_def
         phi_at_quad   = 0.0_r_def

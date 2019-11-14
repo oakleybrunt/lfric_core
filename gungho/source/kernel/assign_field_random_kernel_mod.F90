@@ -13,7 +13,7 @@ module assign_field_random_kernel_mod
 use argument_mod,            only : arg_type,             &
                                     GH_FIELD, GH_INC,     &
                                     ANY_SPACE_1,          &
-                                    CELLS 
+                                    CELLS
 use constants_mod,           only : r_def, i_def
 use kernel_mod,              only : kernel_type
 
@@ -46,7 +46,7 @@ contains
 !> @param[in] undf Unique number of degrees of freedom  for the output field
 !> @param[in] map Dofmap for the cell at the base of the column for the output field
 subroutine assign_field_random_code(nlayers,     &
-                                    x,           & 
+                                    x,           &
                                     ndf, undf, map)
   implicit none
   !Arguments
@@ -58,14 +58,14 @@ subroutine assign_field_random_code(nlayers,     &
   !Internal variables
   integer                           :: df, k
   real(kind=r_def), dimension(ndf) :: random_values
- 
+
   do k = 0, nlayers-1
     call random_number(random_values(:))
     do df = 1, ndf
       x(map(df)+k) = random_values(df)
     end do
   end do
- 
+
 end subroutine assign_field_random_code
 
 end module assign_field_random_kernel_mod

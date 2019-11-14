@@ -8,8 +8,8 @@
 !> @brief Holds and manages halo_routing objects created during a model run.
 !>
 !> @details A container which a collection of halo_routing objects.
-!>          The collection holds halo_routing objects as 
-!>          singletons. It will handle the creation and storing of 
+!>          The collection holds halo_routing objects as
+!>          singletons. It will handle the creation and storing of
 !>          requested halo_routing objects.
 !
 module halo_routing_collection_mod
@@ -139,7 +139,7 @@ function get_halo_routing_from_list(self, mesh_id, element_order, lfric_fs) &
       exit
     end if
 
-    ! 'cast' to the halo_routing_type 
+    ! 'cast' to the halo_routing_type
     select type(listhalo_routing => loop%payload)
       type is (halo_routing_type)
       if ( mesh_id == listhalo_routing%get_mesh_id() .and. &
@@ -169,7 +169,7 @@ subroutine clear(self)
   return
 end subroutine clear
 
-!> Destructor that will be called by the Fortran runtime environment when the 
+!> Destructor that will be called by the Fortran runtime environment when the
 !> field info collection object goes out of scope
 subroutine halo_routing_collection_destructor(self)
 

@@ -14,7 +14,7 @@
 !> e.g. MultiGrid, Physics
 !>
 !> Entry function space (Head of Chain)<br>
-!> Primal mesh <-> Coarsen(Primal)x1 <-> Coarsen(Primal)x2 
+!> Primal mesh <-> Coarsen(Primal)x1 <-> Coarsen(Primal)x2
 !> <-> Coarsen(Primal)x3<br>
 !> Primal mesh <-> Physics mesh.
 !>
@@ -78,7 +78,7 @@ contains
   !> @return  previous_function_space Pointer to the previous function
   !>                                  space in this chain
   procedure, public :: get_previous
-  
+
   !> @brief Check if a chain item exists
   !> @param[in] fs_id ID of function space to check
   !> @return answer Flag showing if item exists
@@ -154,7 +154,7 @@ if ( associated(previous_list_item) ) then
 
   previous_function_space => previous_function_space_pointer%get_target()
 
-  call create_function_space_chain_mesh_maps( previous_function_space, & 
+  call create_function_space_chain_mesh_maps( previous_function_space, &
                                               function_space )
 end if
 

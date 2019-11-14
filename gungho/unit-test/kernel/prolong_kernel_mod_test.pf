@@ -7,7 +7,7 @@
 module prolong_kernel_mod_test
   use pFUnit_mod
   use constants_mod, only : i_def, r_def
-  
+
   implicit none
   private
   public :: test_all
@@ -41,7 +41,7 @@ contains
     real(kind=r_def), allocatable, dimension(:) :: fc, ff  ! fields on coarse and fine
 
     real(r_def), parameter :: tol = 1.0e-12_r_def
-    
+
     ! set the scalars by hand
     nlayers = 3
     ncell_f_per_c = 4 ! quads
@@ -85,13 +85,13 @@ contains
     @assertEqual( ff(2), 2.0_r_def, tol)
     @assertEqual( ff(3), 2.0_r_def, tol)
 
-    
+
     deallocate( cell_map, &
                 map_f,    &
                 map_c,    &
                 fc,       &
                 ff )
-    
+
   end subroutine test_all
-  
+
 end module prolong_kernel_mod_test

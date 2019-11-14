@@ -51,7 +51,7 @@ contains
   !> Gets the target cells ids mapped to the requested source cell
   !> @param [in]  source_lid Local ID of requested source cell
   !> @return map  Pointer to array of local IDs of cells in target
-  !>              mesh which overlap with the requested local ID 
+  !>              mesh which overlap with the requested local ID
   !>              in source mesh. Argument should be of rank-1 array
   procedure, public :: get_cell_map
   !>
@@ -178,7 +178,7 @@ function get_cell_map(self, cell) result(map)
   implicit none
 
   class(mesh_map_type), target, intent(in) :: self
- 
+
   integer(i_def), intent(in) :: cell
   integer(i_def), pointer  :: map(:)
 

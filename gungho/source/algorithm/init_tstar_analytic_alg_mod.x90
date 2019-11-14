@@ -13,7 +13,7 @@ module init_tstar_analytic_alg_mod
   use constants_mod,                   only: r_def
   ! Derived Types
   use field_mod,                       only: field_type
-  
+
   implicit none
 
   private

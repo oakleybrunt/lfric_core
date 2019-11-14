@@ -12,7 +12,7 @@
 
 module psykal_lite_mol_mod
 
-  use field_mod,                    only : field_type, field_proxy_type 
+  use field_mod,                    only : field_type, field_proxy_type
   use constants_mod,                only : r_def, i_def, l_def
   use mesh_mod,                     only : mesh_type
   use function_space_mod,           only : BASIS, DIFF_BASIS
@@ -138,9 +138,9 @@ subroutine invoke_poly2d_flux( flux, wind, density, coeff, order, stencil_size, 
   type(field_type), intent(in)         :: density
   integer(i_def), intent(in)           :: order
   integer(i_def), intent(in)           :: stencil_size
-  integer(i_def), intent(in)           :: nfaces_h 
+  integer(i_def), intent(in)           :: nfaces_h
   type(field_type), intent(in)         :: coeff(stencil_size, nfaces_h)
-  
+
   class(reference_element_type), pointer :: reference_element => null()
   type( field_proxy_type )  :: flux_proxy, wind_proxy, density_proxy
   type( field_proxy_type )  :: coeff_proxy(stencil_size, nfaces_h)
@@ -297,7 +297,7 @@ subroutine invoke_poly2d_flux_coeffs( coeff, mdw3, chi, qr, qrf, order, stencil_
   integer(i_def) :: df
   integer(i_def) :: cell
   integer(i_def) :: nlayers
-  integer(i_def) :: w3_stencil_size, wx_stencil_size  
+  integer(i_def) :: w3_stencil_size, wx_stencil_size
   integer(i_def) :: polynomial, direction, idx
   integer(i_def) :: dim_wx
   integer(i_def) :: stencil_extent, cells_in_stencil
@@ -365,7 +365,7 @@ subroutine invoke_poly2d_flux_coeffs( coeff, mdw3, chi, qr, qrf, order, stencil_
   ! Since chi is described as a field vector of length 3 in the kernel metadata
   ! then we loop over all 3 proxies
   do idx = 1,3
-    if ( chi_proxy(idx)%is_dirty(depth=stencil_extent+1) ) &    
+    if ( chi_proxy(idx)%is_dirty(depth=stencil_extent+1) ) &
       call chi_proxy(idx)%halo_exchange(depth=stencil_extent+1)
   end do
   if ( mdw3_proxy%is_dirty(depth=stencil_extent+1) )  &
@@ -430,7 +430,7 @@ subroutine invoke_poly1d_flux( flux, wind, density, coeff, order, stencil_extent
   integer(i_def), intent(in)           :: stencil_extent
   integer(i_def), intent(in)           :: nfaces_h
   type(field_type), intent(in)         :: coeff(order+1,nfaces_h)
-  
+
   class(reference_element_type), pointer :: reference_element => null()
   type( field_proxy_type )  :: flux_proxy, wind_proxy, density_proxy
   type( field_proxy_type )  :: coeff_proxy(order+1,nfaces_h)
@@ -582,7 +582,7 @@ subroutine invoke_poly1d_flux_coeffs( coeff, mdw3, chi, qr, qrf, order, stencil_
   integer(i_def) :: df
   integer(i_def) :: cell
   integer(i_def) :: nlayers
-  integer(i_def) :: w3_stencil_size, wx_stencil_size  
+  integer(i_def) :: w3_stencil_size, wx_stencil_size
   integer(i_def) :: polynomial, direction, idx
   integer(i_def) :: dim_wx
   integer(i_def) :: nqp_h, nqp_v, nqp_f, nface
@@ -646,11 +646,11 @@ subroutine invoke_poly1d_flux_coeffs( coeff, mdw3, chi, qr, qrf, order, stencil_
   ! Since chi is described as a field vector of length 3 in the kernel metadata
   ! then we loop over all 3 proxies
   do idx = 1,3
-    if ( chi_proxy(idx)%is_dirty(depth=stencil_extent+1) ) &    
+    if ( chi_proxy(idx)%is_dirty(depth=stencil_extent+1) ) &
       call chi_proxy(idx)%halo_exchange(depth=stencil_extent+1)
   end do
-  if ( mdw3_proxy%is_dirty(depth=stencil_extent+1) ) &    
-    call mdw3_proxy%halo_exchange(depth=stencil_extent+1) 
+  if ( mdw3_proxy%is_dirty(depth=stencil_extent+1) ) &
+    call mdw3_proxy%halo_exchange(depth=stencil_extent+1)
 
   mesh => coeff(1,1)%get_mesh()
   do cell = 1,mesh%get_last_halo_cell(1)
@@ -706,7 +706,7 @@ subroutine invoke_poly1d_vert_flux( flux, wind, density, coeff, order, nfaces_v 
   integer(i_def), intent(in)           :: order
   integer(i_def), intent(in)           :: nfaces_v
   type(field_type), intent(in)         :: coeff(order+1,nfaces_v)
-  
+
   class(reference_element_type), pointer :: reference_element => null()
   type( field_proxy_type )  :: flux_proxy, wind_proxy, density_proxy
   type( field_proxy_type )  :: coeff_proxy(order+1,nfaces_v)
@@ -906,11 +906,11 @@ subroutine invoke_poly1d_vert_flux_coeffs( coeff, mdw3, chi, qr, qrf, order, nfa
   ! Since chi is described as a field vector of length 3 in the kernel metadata
   ! then we loop over all 3 proxies
   do idx = 1,3
-    if ( chi_proxy(idx)%is_dirty(depth=1) ) &    
+    if ( chi_proxy(idx)%is_dirty(depth=1) ) &
       call chi_proxy(idx)%halo_exchange(depth=1)
   end do
-  if ( mdw3_proxy%is_dirty(depth=1) ) &    
-    call mdw3_proxy%halo_exchange(depth=1) 
+  if ( mdw3_proxy%is_dirty(depth=1) ) &
+    call mdw3_proxy%halo_exchange(depth=1)
 
   mesh => coeff(1,1)%get_mesh()
   do cell = 1,mesh%get_last_halo_cell(1)
@@ -948,9 +948,9 @@ subroutine invoke_poly1d_vert_flux_coeffs( coeff, mdw3, chi, qr, qrf, order, nfa
 end subroutine invoke_poly1d_vert_flux_coeffs
 
 !-------------------------------------------------------------------------------
-! Psy layer call to apply the horizontal advection coefficients for advective 
+! Psy layer call to apply the horizontal advection coefficients for advective
 ! form advection. This can not currently be generated by PSyclone because
-! 1) Uses a runtime specified 2D array of fields (coeff): Ticket #1104 & #1105 
+! 1) Uses a runtime specified 2D array of fields (coeff): Ticket #1104 & #1105
 !-------------------------------------------------------------------------------
 subroutine invoke_poly1d_adv_recon( reconstruction, wind, tracer, coeff, order, stencil_extent, nfaces_h )
 
@@ -967,7 +967,7 @@ subroutine invoke_poly1d_adv_recon( reconstruction, wind, tracer, coeff, order, 
   integer(i_def), intent(in)           :: stencil_extent
   integer(i_def), intent(in)           :: nfaces_h
   type(field_type), intent(in)         :: coeff(order+1,nfaces_h)
-  
+
   class(reference_element_type), pointer :: reference_element => null()
   type( field_proxy_type )  :: recon_proxy, wind_proxy, tracer_proxy
   type( field_proxy_type )  :: coeff_proxy(order+1,nfaces_h)
@@ -1091,7 +1091,7 @@ subroutine invoke_poly1d_adv_recon( reconstruction, wind, tracer, coeff, order, 
 end subroutine invoke_poly1d_adv_recon
 
 !-------------------------------------------------------------------------------
-! Psy layer call to compute the horizontal advection coefficients for advective 
+! Psy layer call to compute the horizontal advection coefficients for advective
 ! form advection. This can not currently be generated by PSyclone because
 ! 1) Uses a runtime specified 2D array of fields (coeff): Ticket #1104 & #1105
 ! 2) Needs two quadrature rules, one for volume integrals (supported by
@@ -1127,7 +1127,7 @@ subroutine invoke_poly1d_advective_coeffs( coeff, mdwt, chi, qr, qre, order, ste
   integer(i_def) :: df
   integer(i_def) :: cell
   integer(i_def) :: nlayers
-  integer(i_def) :: wt_stencil_size, wx_stencil_size  
+  integer(i_def) :: wt_stencil_size, wx_stencil_size
   integer(i_def) :: polynomial, direction, idx
   integer(i_def) :: dim_wx
   integer(i_def) :: nqp_h, nqp_v, nqp_e, nedge
@@ -1189,11 +1189,11 @@ subroutine invoke_poly1d_advective_coeffs( coeff, mdwt, chi, qr, qre, order, ste
   ! Since chi is described as a field vector of length 3 in the kernel metadata
   ! then we loop over all 3 proxies
   do idx = 1,3
-    if ( chi_proxy(idx)%is_dirty(depth=stencil_extent+1) ) &    
+    if ( chi_proxy(idx)%is_dirty(depth=stencil_extent+1) ) &
       call chi_proxy(idx)%halo_exchange(depth=stencil_extent+1)
   end do
-  if ( mdwt_proxy%is_dirty(depth=stencil_extent+1) ) &    
-    call mdwt_proxy%halo_exchange(depth=stencil_extent+1) 
+  if ( mdwt_proxy%is_dirty(depth=stencil_extent+1) ) &
+    call mdwt_proxy%halo_exchange(depth=stencil_extent+1)
 
   mesh => coeff(1,1)%get_mesh()
   do cell = 1,mesh%get_last_halo_cell(1)
@@ -1232,7 +1232,7 @@ subroutine invoke_poly1d_advective_coeffs( coeff, mdwt, chi, qr, qre, order, ste
 end subroutine invoke_poly1d_advective_coeffs
 
 !-------------------------------------------------------------------------------
-! Psy layer call to apply the horizontal advection coefficients for advective 
+! Psy layer call to apply the horizontal advection coefficients for advective
 ! form advection. This can not currently be generated by PSyclone because
 ! 1) Uses a runtime specified 2D array of fields (coeff): Ticket #1104 & #1105
 ! 2) Uses a REGION stencil that requires the local size to be passed to the
@@ -1253,7 +1253,7 @@ subroutine invoke_poly2d_adv_recon( reconstruction, wind, tracer, coeff, order, 
   integer(i_def), intent(in)           :: stencil_size
   integer(i_def), intent(in)           :: nfaces_h
   type(field_type), intent(in)         :: coeff(stencil_size,nfaces_h)
-  
+
   class(reference_element_type), pointer :: reference_element => null()
   type( field_proxy_type )  :: recon_proxy, wind_proxy, tracer_proxy
   type( field_proxy_type )  :: coeff_proxy(stencil_size,nfaces_h)
@@ -1379,7 +1379,7 @@ subroutine invoke_poly2d_adv_recon( reconstruction, wind, tracer, coeff, order, 
 end subroutine invoke_poly2d_adv_recon
 
 !-------------------------------------------------------------------------------
-! Psy layer call to compute the horizontal advection coefficients for advective 
+! Psy layer call to compute the horizontal advection coefficients for advective
 ! form advection. This can not currently be generated by PSyclone because
 ! 1) Uses a runtime specified 2D array of fields (coeff): Ticket #1104 & #1105
 ! 2) Uses a REGION stencil that requires the local size to be passed to the
@@ -1419,7 +1419,7 @@ subroutine invoke_poly2d_advective_coeffs( coeff, mdwt, chi, qr, qre, order, ste
   integer(i_def) :: df
   integer(i_def) :: cell
   integer(i_def) :: nlayers
-  integer(i_def) :: wt_stencil_size, wx_stencil_size  
+  integer(i_def) :: wt_stencil_size, wx_stencil_size
   integer(i_def) :: polynomial, direction, idx
   integer(i_def) :: dim_wx
   integer(i_def) :: stencil_extent, cells_in_stencil
@@ -1486,7 +1486,7 @@ subroutine invoke_poly2d_advective_coeffs( coeff, mdwt, chi, qr, qre, order, ste
   ! Since chi is described as a field vector of length 3 in the kernel metadata
   ! then we loop over all 3 proxies
   do idx = 1,3
-    if ( chi_proxy(idx)%is_dirty(depth=stencil_extent+1) ) &    
+    if ( chi_proxy(idx)%is_dirty(depth=stencil_extent+1) ) &
       call chi_proxy(idx)%halo_exchange(depth=stencil_extent+1)
   end do
   if ( mdwt_proxy%is_dirty(depth=stencil_extent+1) )  &
@@ -1531,7 +1531,7 @@ subroutine invoke_poly2d_advective_coeffs( coeff, mdwt, chi, qr, qre, order, ste
 end subroutine invoke_poly2d_advective_coeffs
 
 !-------------------------------------------------------------------------------
-! Psy layer call to apply the vertical advection coefficients for advective 
+! Psy layer call to apply the vertical advection coefficients for advective
 ! form advection. This can not currently be generated by PSyclone because
 ! 1) Uses a runtime specified 2D array of fields (coeff): Ticket #1104 & #1105
 !-------------------------------------------------------------------------------
@@ -1597,11 +1597,11 @@ subroutine invoke_poly1d_vert_adv_coeffs( coeff, mdwt, chi, order, nfaces_v )
   ! Since chi is described as a field vector of length 3 in the kernel metadata
   ! then we loop over all 3 proxies
   do idx = 1,3
-    if ( chi_proxy(idx)%is_dirty(depth=1) ) &    
+    if ( chi_proxy(idx)%is_dirty(depth=1) ) &
       call chi_proxy(idx)%halo_exchange(depth=1)
   end do
-  if ( mdwt_proxy%is_dirty(depth=1) ) &    
-    call mdwt_proxy%halo_exchange(depth=1) 
+  if ( mdwt_proxy%is_dirty(depth=1) ) &
+    call mdwt_proxy%halo_exchange(depth=1)
 
   mesh => coeff(1,1)%get_mesh()
   do cell = 1,mesh%get_last_edge_cell()
@@ -1636,7 +1636,7 @@ subroutine invoke_poly1d_vert_adv_coeffs( coeff, mdwt, chi, order, nfaces_v )
 end subroutine invoke_poly1d_vert_adv_coeffs
 
 !-------------------------------------------------------------------------------
-! Psy layer call to compute the vertical advection coefficients for advective 
+! Psy layer call to compute the vertical advection coefficients for advective
 ! form advection. This can not currently be generated by PSyclone because
 ! 1) Uses a runtime specified 2D array of fields (coeff): Ticket #1104 & #1105
 ! 2) Needs two quadrature rules, one for volume integrals (supported by
@@ -1655,7 +1655,7 @@ subroutine invoke_poly1d_vert_adv( advective, wind, tracer, coeff, order, nfaces
   integer(i_def),   intent(in)         :: order
   integer(i_def),   intent(in)         :: nfaces_v
   type(field_type), intent(in)         :: coeff(order+2,nfaces_v)
-  
+
   type( field_proxy_type )  :: adv_proxy, wind_proxy, tracer_proxy
   type( field_proxy_type )  :: coeff_proxy(order+2,nfaces_v)
 

@@ -36,7 +36,7 @@ contains
 
 
   subroutine cld_alg_step(exner_in_w3, exner_in_wth, theta_in_wth,   &
-                         mr, cloud_fields, twod_fields, theta_inc) 
+                         mr, cloud_fields, twod_fields, theta_inc)
 
     use cld_kernel_mod, only: cld_kernel_type
 

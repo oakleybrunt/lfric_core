@@ -37,7 +37,7 @@ module global_mesh_collection_mod_test
     procedure :: tearDown
     procedure :: test_cubesphere
     procedure :: test_biperiodic
-    procedure :: test_initial_global_mesh_map_collection 
+    procedure :: test_initial_global_mesh_map_collection
     procedure :: test_multigrid
 
   end type global_mesh_collection_test_type

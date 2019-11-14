@@ -26,10 +26,10 @@ public :: illuminate_code
 type, extends(kernel_type) :: illuminate_kernel_type
   private
   type(arg_type) :: meta_args(10) = (/ &
-    arg_type(GH_FIELD,   GH_WRITE, ANY_SPACE_1), & ! cos_zenith_angle      
-    arg_type(GH_FIELD,   GH_WRITE, ANY_SPACE_1), & ! lit_fraction          
-    arg_type(GH_FIELD,   GH_INC,   ANY_SPACE_1), & ! cos_zenith_angle_rts  
-    arg_type(GH_FIELD,   GH_INC,   ANY_SPACE_1), & ! lit_fraction_rts      
+    arg_type(GH_FIELD,   GH_WRITE, ANY_SPACE_1), & ! cos_zenith_angle
+    arg_type(GH_FIELD,   GH_WRITE, ANY_SPACE_1), & ! lit_fraction
+    arg_type(GH_FIELD,   GH_INC,   ANY_SPACE_1), & ! cos_zenith_angle_rts
+    arg_type(GH_FIELD,   GH_INC,   ANY_SPACE_1), & ! lit_fraction_rts
     arg_type(GH_FIELD,   GH_INC,   ANY_SPACE_1), & ! stellar_irradiance_rts
     arg_type(GH_FIELD,   GH_INC,   ANY_SPACE_1), & ! sin_stellar_declination_rts
     arg_type(GH_FIELD,   GH_INC,   ANY_SPACE_1), & ! stellar_eqn_of_time_rts

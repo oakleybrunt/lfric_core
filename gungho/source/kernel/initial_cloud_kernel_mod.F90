@@ -27,7 +27,7 @@ module initial_cloud_kernel_mod
 
     implicit none
 
-    !> Kernel metadata for Psyclone 
+    !> Kernel metadata for Psyclone
     type, public, extends(kernel_type) :: initial_cloud_kernel_type
         private
         type(arg_type) :: meta_args(7) = (/              &
@@ -48,7 +48,7 @@ module initial_cloud_kernel_mod
     public initial_cloud_code
 contains
 
-    !> @brief Implements the cloud field initialisation kernel 
+    !> @brief Implements the cloud field initialisation kernel
     !! @param[in]     nlayers       The number of layers
     !! @param[in,out] cf_area       Area cloud fraction
     !! @param[in,out] cf_ice        Ice cloud fraction

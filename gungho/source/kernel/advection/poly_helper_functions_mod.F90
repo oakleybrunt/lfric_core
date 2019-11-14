@@ -6,7 +6,7 @@
 !
 !-------------------------------------------------------------------------------
 
-!> @brief Contains a number of helper functions for use in the poly1d & poly2d 
+!> @brief Contains a number of helper functions for use in the poly1d & poly2d
 !>        reconstruction kernels used by the MoL advection scheme
 module poly_helper_functions_mod
 
@@ -79,7 +79,7 @@ subroutine buildadvcoeff(int_monomial, ns, nmonomial)
 
   ! Matrix giving polynomial coefficients in terms of cell integrals
   q = matmul(minv,r)
-  
+
   ! Save the part we need
   lt = q(1:nmonomial,1:ns)
   l = transpose(lt)
@@ -93,8 +93,8 @@ end subroutine buildadvcoeff
 
   !>@brief Compute the distance between two points x0 & x1
   !>       in terms of a local coordinate
-  !>@param[in] x0 First point (x,y,z) 
-  !>@param[in] x1 Second point (x,y,z) 
+  !>@param[in] x0 First point (x,y,z)
+  !>@param[in] x1 Second point (x,y,z)
   !>@param[in] xn Normal vector used to define local coordinate direction
   !>@param[in] spherical Switch for spherical or cartesian computation
   !>@return s Distance between x0 and x1
@@ -103,7 +103,7 @@ end subroutine buildadvcoeff
     use domain_size_config_mod, only: planar_domain_max_x, &
                                       planar_domain_min_x, &
                                       planar_domain_max_y, &
-                                      planar_domain_min_y 
+                                      planar_domain_min_y
     implicit none
 
     real(kind=r_def), dimension(3), intent(in) :: x0, x1, xn
@@ -122,17 +122,17 @@ end subroutine buildadvcoeff
       xn1 = cross_product(y0,y1)
       mag = sqrt(xn1(1)**2 + xn1(2)**2 + xn1(3)**2)
       ! Catch error if x0 == x1 and so xn1 == 0 > mag = 0
-      if ( mag > EPS ) xn1 = xn1/mag     
+      if ( mag > EPS ) xn1 = xn1/mag
       ! Angle relative to local x-axis
       sinth = dot_product(y0,cross_product(xn,xn1))
       costh = dot_product(xn,xn1)
       ! Finally obtain local coordinate
       s(1) = asin(mag)*costh
-      s(2) = asin(mag)*sinth       
+      s(2) = asin(mag)*sinth
     else
       ! Checks if x0 and x1 are across a periodic mesh wrap point
       ! this uses a simple (non-robust) check.
-      ! if  the distance is bigger than half the domain size then it has 
+      ! if  the distance is bigger than half the domain size then it has
       ! probably wrapped around so we modify the distance measure
       dx = x1 - x0
       domain_x = (planar_domain_max_x - planar_domain_min_x)
@@ -151,8 +151,8 @@ end subroutine buildadvcoeff
 
   !>@brief Compute the distance between two points x0 & x1
   !>       in terms of a local coordinate
-  !>@param[in] x0 First point (x,y,z) 
-  !>@param[in] x1 Second point (x,y,z) 
+  !>@param[in] x0 First point (x,y,z)
+  !>@param[in] x1 Second point (x,y,z)
   !>@param[in] xn Normal vector used to define local coordinate direction
   !>@param[in] spherical Switch for spherical or cartesian computation
   !>@return s Distance between x0 and x1
@@ -161,7 +161,7 @@ end subroutine buildadvcoeff
     use domain_size_config_mod, only: planar_domain_max_x, &
                                       planar_domain_min_x, &
                                       planar_domain_max_y, &
-                                      planar_domain_min_y 
+                                      planar_domain_min_y
     implicit none
 
     real(kind=r_def), dimension(3), intent(in) :: x0, x1, xn
@@ -180,7 +180,7 @@ end subroutine buildadvcoeff
       xn1 = cross_product(y0,y1)
       mag = sqrt(xn1(1)**2 + xn1(2)**2 + xn1(3)**2)
       ! Catch error if x0 == x1 and so xn1 == 0 > mag = 0
-      if ( mag > EPS ) xn1 = xn1/mag     
+      if ( mag > EPS ) xn1 = xn1/mag
       ! Angle relative to local x-axis
       costh = dot_product(xn,xn1)
       ! Finally obtain local coordinate
@@ -188,7 +188,7 @@ end subroutine buildadvcoeff
     else
       ! Checks if x0 and x1 are across a periodic mesh wrap point
       ! this uses a simple (non-robust) check.
-      ! if  the distance is bigger than half the domain size then it has 
+      ! if  the distance is bigger than half the domain size then it has
       ! probably wrapped around so we modify the distance measure
       dx = x1 - x0
       domain_x = (planar_domain_max_x - planar_domain_min_x)

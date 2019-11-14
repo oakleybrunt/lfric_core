@@ -50,7 +50,7 @@ contains
     !! @param[in] ndf_wtheta The number of degrees of freedom per cell for wtheta
     !! @param[in] udf_wtheta The number of total degrees of freedom for wtheta
     !! @param[in] map_wtheta Integer array holding the dofmap for the cell at the base of the column
-    
+
     subroutine moist_dyn_factors_code(nlayers, moist_dyn_gas, moist_dyn_tot, moist_dyn_fac,  &
                                       mr_v, mr_cl, mr_r, mr_ci, mr_s, mr_g,                  &
                                       ndf_wtheta, undf_wtheta, map_wtheta )
@@ -59,7 +59,7 @@ contains
 
         !Arguments
         integer(kind=i_def), intent(in) :: nlayers, ndf_wtheta, undf_wtheta
-        
+
         real(kind=r_def), dimension(undf_wtheta),   intent(inout) :: moist_dyn_gas,       &
                                                                      moist_dyn_tot,       &
                                                                      moist_dyn_fac
@@ -93,7 +93,7 @@ contains
                                                             mr_g_at_dof
             moist_dyn_fac(map_wtheta(df) + k) = 1.0_r_def
           end do
-          
+
         end do
 
     end subroutine moist_dyn_factors_code

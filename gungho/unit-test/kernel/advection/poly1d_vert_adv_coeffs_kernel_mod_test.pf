@@ -4,7 +4,7 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> Test the computation of the vertical adv coefficients 
+!> Test the computation of the vertical adv coefficients
 module poly1d_vert_adv_coeffs_kernel_mod_test
 
   use constants_mod, only : i_def, r_def
@@ -27,12 +27,12 @@ module poly1d_vert_adv_coeffs_kernel_mod_test
 
 contains
 
-  subroutine setUp( this ) 
+  subroutine setUp( this )
     use feign_config_mod,     only : feign_base_mesh_config, &
                                      feign_planet_config
     use base_mesh_config_mod, only : geometry_planar, &
                                      partitioner_planar
-    implicit none 
+    implicit none
 
     class(poly1d_vert_adv_coeffs_test_type), intent(inout) :: this
 
@@ -45,14 +45,14 @@ contains
                                  geometry=geometry_planar,                    &
                                  partitioner=partitioner_planar,              &
                                  fplane=.false., f_lat_deg=0.0_r_def )
- 
+
   end subroutine setUp
 
   @Test( npes=[1] )
   subroutine test_all( this )
 
     use poly1d_vert_adv_coeffs_kernel_mod, only: poly1d_vert_adv_coeffs_code
-    implicit none 
+    implicit none
 
     class(poly1d_vert_adv_coeffs_test_type), intent(inout) :: this
 
@@ -93,7 +93,7 @@ contains
     x(:) = 0.0_r_def
     y(:) = 0.0_r_def
     z(:) = 0.0_r_def
-    do k = 0,nlayers-1      
+    do k = 0,nlayers-1
       x(map_wx(2)+k) = dx
       x(map_wx(4)+k) = dx
       y(map_wx(3)+k) = dy
@@ -113,7 +113,7 @@ contains
       basis_wx(1,4+df,2) = 0.25_r_def
     end do
 
- 
+
     call poly1d_vert_adv_coeffs_code(nlayers,                   &
                                      coeff,                     &
                                      mdwt,                      &
@@ -139,7 +139,7 @@ contains
   end subroutine test_all
 
   subroutine tearDown( this )
-    implicit none 
+    implicit none
 
     class(poly1d_vert_adv_coeffs_test_type), intent(inout) :: this
     ! Finalise YAXT

@@ -14,7 +14,7 @@ module map_fd_to_prognostics_alg_mod
   ! Derived Types
   use field_mod,                       only: field_type
   use field_collection_mod,            only: field_collection_type
-    
+
   use quadrature_xyoz_mod,             only: quadrature_xyoz_type
   use quadrature_rule_gaussian_mod,    only: quadrature_rule_gaussian_type
   use runtime_constants_mod,           only: get_coordinates, &
@@ -49,7 +49,7 @@ contains
 
     implicit none
 
-    ! FE Prognostic fields 
+    ! FE Prognostic fields
     type( field_collection_type), intent( inout ) :: prognostic_fields
     type( field_collection_type), intent( inout ) :: diagnostic_fields
     type( field_type ),           intent( inout ) :: mr(:)
@@ -74,8 +74,8 @@ contains
     type( field_type ), pointer :: zh_twod                => null()
     type( field_type ), pointer :: z0msea_twod            => null()
 
-    ! FD  fields 
-    type( field_type ), pointer :: ew_wind_in_w3          => null()   
+    ! FD  fields
+    type( field_type ), pointer :: ew_wind_in_w3          => null()
     type( field_type ), pointer :: ns_wind_in_w3          => null()
     type( field_type ), pointer :: dry_rho_in_w3          => null()
     type( field_type ), pointer :: upward_wind_in_wtheta  => null()
@@ -87,7 +87,7 @@ contains
 
 
     !FD (source) fields
-    ew_wind_in_w3         => fd_fields%get_field('ew_wind_in_w3')   
+    ew_wind_in_w3         => fd_fields%get_field('ew_wind_in_w3')
     ns_wind_in_w3         => fd_fields%get_field('ns_wind_in_w3')
     dry_rho_in_w3         => fd_fields%get_field('dry_rho_in_w3')
     upward_wind_in_wtheta => fd_fields%get_field('upward_wind_in_wtheta')
@@ -132,13 +132,13 @@ contains
                  setval_c(mr(imr_g), 0.0_r_def),      &
                  setval_c(exner, 0.0_r_def),          &
                  setval_c(zh_twod, 1000.0_r_def),     &
-                 setval_c(z0msea_twod, 1.5e-4_r_def), & 
+                 setval_c(z0msea_twod, 1.5e-4_r_def), &
                  setval_c(upward_wind_in_wtheta, 0.0_r_def))
 
     call set_wind( u, ew_wind_in_w3, ns_wind_in_w3, upward_wind_in_wtheta )
 
     ! Cloud variables are currently set to zero when
-    ! reading in a start file, but as above, this should be reviewed 
+    ! reading in a start file, but as above, this should be reviewed
     ! with updates to um2lfric and/or checkpoint-restart use
     call invoke( initial_cloud_kernel_type( cf_area, cf_ice, cf_liq, &
                                             cf_bulk, rhcrit_in_wth,  &
@@ -146,7 +146,7 @@ contains
 
     ! Update factors for moist dynamics
     call moist_dyn_factors_alg( moist_dyn, mr )
-        
+
     ! Initialize hydrostatically balanced exner field
     call hydrostatic_balance( exner, rho, theta, moist_dyn )
 
@@ -165,10 +165,10 @@ contains
     use mass_matrix_solver_alg_mod,  only: mass_matrix_solver_alg
     use runtime_constants_mod,       only: get_coordinates
     implicit none
-    
+
     type( field_type ), intent( inout ) :: u
     type( field_type ), intent( in ) :: u_lat, u_lon, u_up
-    
+
     type( quadrature_xyoz_type )          :: qr
     type( quadrature_rule_gaussian_type ) :: quadrature_rule
     type( field_type )                    :: r_u
@@ -185,7 +185,7 @@ contains
 
   end subroutine set_wind
 
-  !> @param[in,out] exner Exner pressure 
+  !> @param[in,out] exner Exner pressure
   !> @param[in] theta     Theta
   !> @param[in] rho       Dry density
   !> @param[in] moist_dyn Moisture arrays for dynamics
@@ -193,17 +193,17 @@ contains
 
     use hydrostatic_eos_exner_kernel_mod,  only : hydrostatic_eos_exner_kernel_type
     use moist_dyn_mod,                     only : num_moist_factors
-    
+
     implicit none
 
     type( field_type ), intent( inout ) :: exner
     type( field_type ), intent( in )    :: theta, rho
     type( field_type ), intent( in )    :: moist_dyn(num_moist_factors)
-    
+
     type( field_type ), pointer         :: height_w3 => null()
 
     height_w3 => get_height(W3)
-      
+
     ! Initialize working up from theta distro and hydrostatic balance
     call invoke( hydrostatic_eos_exner_kernel_type( exner, rho, theta, &
                                                     moist_dyn, height_w3 ) )

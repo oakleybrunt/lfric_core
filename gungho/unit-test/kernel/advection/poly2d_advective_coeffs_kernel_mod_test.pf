@@ -4,7 +4,7 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> Test the computation of 2d advective coeffs 
+!> Test the computation of 2d advective coeffs
 module poly2d_advective_coeffs_kernel_mod_test
 
   use constants_mod, only : i_def, r_def
@@ -55,7 +55,7 @@ contains
   subroutine test_all( this )
 
     use poly2d_advective_coeffs_kernel_mod, only: poly2d_advective_coeffs_code
-    implicit none 
+    implicit none
 
     class(poly2d_advective_coeffs_test_type), intent(inout) :: this
 
@@ -68,7 +68,7 @@ contains
     integer(i_def), parameter :: stencil_size = 9
     integer(i_def), parameter :: order = 2
     integer(i_def), parameter :: nqp = 3
-    integer(i_def), parameter :: nqp_h = nqp**2    
+    integer(i_def), parameter :: nqp_h = nqp**2
     integer(i_def), parameter :: nqp_v = 2
     integer(i_def), parameter :: nqp_e = 1
     integer(i_def), parameter :: undf_wt = (nlayers+1)*stencil_size
@@ -116,9 +116,9 @@ contains
     stencil_dx = (/ 0.0_r_def, -dx, 0.0_r_def, dx, 0.0_r_def, -dx, dx, dx, -dx /)
     stencil_dy = (/ 0.0_r_def, 0.0_r_def, -dy, 0.0_r_def, dy, -dy, -dy, dy, dy /)
 
-    do k = 0,nlayers-1 
+    do k = 0,nlayers-1
       x(smap_wx(1,1)+k) = 0.0_r_def
-      x(smap_wx(2,1)+k) = dx 
+      x(smap_wx(2,1)+k) = dx
       x(smap_wx(3,1)+k) = 0.0_r_def
       x(smap_wx(4,1)+k) = dx
       y(smap_wx(1,1)+k) = 0.0_r_def
@@ -141,7 +141,7 @@ contains
           z(smap_wx(df,i)+k) = z(smap_wx(df,1)+k)
          end do
       end do
-     
+
     end do
 
     mdwt(:) = dv
@@ -152,12 +152,12 @@ contains
         ij = i+(j-1)*nqp
         basis_wx(1,ij,1) = (1.0_r_def - xq(i))*(1.0_r_def - xq(j))
         basis_wx(2,ij,1) =              xq(i) *(1.0_r_def - xq(j))
-        basis_wx(3,ij,1) = (1.0_r_def - xq(i))*             xq(j) 
-        basis_wx(4,ij,1) =              xq(i) *             xq(j) 
+        basis_wx(3,ij,1) = (1.0_r_def - xq(i))*             xq(j)
+        basis_wx(4,ij,1) =              xq(i) *             xq(j)
         basis_wx(5,ij,2) = (1.0_r_def - xq(i))*(1.0_r_def - xq(j))
         basis_wx(6,ij,2) =              xq(i) *(1.0_r_def - xq(j))
-        basis_wx(7,ij,2) = (1.0_r_def - xq(i))*             xq(j) 
-        basis_wx(8,ij,2) =              xq(i) *             xq(j) 
+        basis_wx(7,ij,2) = (1.0_r_def - xq(i))*             xq(j)
+        basis_wx(8,ij,2) =              xq(i) *             xq(j)
       end do
     end do
 
@@ -201,7 +201,7 @@ contains
 
     answer = (/ 0.95_r_def, 0.15_r_def, -5.833333333333340E-002_r_def, &
                -1.666666666666665E-002_r_def, -5.833333333333340E-002_r_def, 9.166666666666659E-002_r_def, &
-               -7.5E-002_r_def, -7.5E-002_r_def, 9.166666666666659E-002_r_def /)   
+               -7.5E-002_r_def, -7.5E-002_r_def, 9.166666666666659E-002_r_def /)
     @assertEqual(answer, coeff(:,1,1), tol)
 
     ! Check summation over y direction equals known quadratic in x intepolation

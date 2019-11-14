@@ -68,7 +68,7 @@ contains
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 Number unique of degrees of freedom  for w2
 !! @param[in] map_w2 Dofmap for the cell at the base of the column for w2
-!! @param[in] w2_basis Basis functions evaluated at quadrature points 
+!! @param[in] w2_basis Basis functions evaluated at quadrature points
 !! @param[inout] r_u Right hand side of the momentum equation
 !! @param[in] wind Advecting wind field
 !! @param[in] xi Vorticity in W2
@@ -90,7 +90,7 @@ subroutine w2_vorticity_advection_code(nlayers,                                 
                                   ndf_chi, undf_chi, map_chi, chi_diff_basis,        &
                                   nqp_h, nqp_v, wqp_h, wqp_v                         &
                                   )
-                           
+
   use coordinate_jacobian_mod,  only: coordinate_jacobian
   implicit none
 
@@ -101,7 +101,7 @@ subroutine w2_vorticity_advection_code(nlayers,                                 
   integer, dimension(ndf_chi), intent(in) :: map_chi
   integer, dimension(ndf_w2), intent(in) :: map_w2
 
-  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v),  intent(in) :: w2_basis 
+  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v),  intent(in) :: w2_basis
   real(kind=r_def), dimension(3,ndf_chi,nqp_h,nqp_v), intent(in) :: chi_diff_basis
 
   real(kind=r_def), dimension(undf_w2), intent(inout) :: r_u
@@ -113,9 +113,9 @@ subroutine w2_vorticity_advection_code(nlayers,                                 
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
 
   ! Internal variables
-  integer               :: df, k, loc 
+  integer               :: df, k, loc
   integer               :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_chi)         :: chi_1_e, chi_2_e, chi_3_e
   real(kind=r_def), dimension(nqp_h,nqp_v)     :: dj
   real(kind=r_def), dimension(3,3,nqp_h,nqp_v) :: jac
@@ -124,7 +124,7 @@ subroutine w2_vorticity_advection_code(nlayers,                                 
 
   real(kind=r_def), dimension(3) :: xi_at_quad, u_at_quad, jac_v, &
                                     vorticity, j_xi, j_u
-  
+
   do k = 0, nlayers-1
   ! Extract element arrays of chi
     do df = 1, ndf_chi
@@ -140,7 +140,7 @@ subroutine w2_vorticity_advection_code(nlayers,                                 
       u_e(df)  = wind( map_w2(df) + k )
       xi_e(df) = xi( map_w2(df) + k )
       ru_e(df) = 0.0_r_def
-    end do    
+    end do
     do qp2 = 1, nqp_v
       do qp1 = 1, nqp_h
         u_at_quad(:) = 0.0_r_def
@@ -166,9 +166,9 @@ subroutine w2_vorticity_advection_code(nlayers,                                 
     end do
     do df = 1, ndf_w2
       r_u( map_w2(df) + k ) =  r_u( map_w2(df) + k ) + ru_e(df)
-    end do 
+    end do
   end do
-  
+
 end subroutine w2_vorticity_advection_code
 
 end module w2_vorticity_advection_kernel_mod

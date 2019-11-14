@@ -71,7 +71,7 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> @brief Initialises the system for running the advection algorithm.
   !>
-  !> @details Initialises system required for FV transport. 
+  !> @details Initialises system required for FV transport.
   !>          FV aspects currently only support lowest order elements.
   !>
   !> @param[in] mesh_id Identity of the mesh to create all fields on
@@ -114,11 +114,11 @@ contains
         ! Compute stencil extents
         advective_stencil_extent = int(real(fv_advective_order+1)/2.0,i_def)
         !======================================================================!
-        ! Compute stencil for nonuniform polynomial fit   
+        ! Compute stencil for nonuniform polynomial fit
         ! Initialise PSy layer arrays (this will not be needed when
         ! multi-dimensional field arrays are supported)
         ! This needs some temporary fields for computing undf in the PSy layer
-        wt_fs => function_space_collection%get_fs( mesh_id, element_order, Wtheta )                
+        wt_fs => function_space_collection%get_fs( mesh_id, element_order, Wtheta )
         call wt_field%initialise( vector_space = wt_fs )
 
         ! Get topology information from the reference element
@@ -126,12 +126,12 @@ contains
         reference_element => mesh%get_reference_element()
         ! Number of horizontal neighbours
         nfaces_h = reference_element%get_number_horizontal_faces()
-        ! Number of vertical neighbours is (and always will be) 2 
+        ! Number of vertical neighbours is (and always will be) 2
         nfaces_v = reference_element%get_number_vertical_faces()
         if ( oned_reconstruction ) then
           advective_stencil_size = fv_advective_order + 1
         else
-          advective2d_stencil_size = 1    
+          advective2d_stencil_size = 1
           do polynomial = 1, fv_advective_order
             if ( mod(polynomial, 2) == 0 ) then
               advective2d_stencil_size = advective2d_stencil_size + nfaces_h
@@ -140,7 +140,7 @@ contains
             end if
           end do
           advective_stencil_size = advective2d_stencil_size
-        end if  
+        end if
         allocate( adv_coeffs(advective_stencil_size, nfaces_h) )
         do direction = 1, nfaces_h
           do polynomial = 1,advective_stencil_size
@@ -159,7 +159,7 @@ contains
           face_quad_order = fv_advective_order+1
         end if
 
-        ! Compute advective coefficients       
+        ! Compute advective coefficients
         call log_event( "Gungho: computing horizontal advective coeffs", LOG_LEVEL_INFO )
         ! Quadrature rule which has enough points to exactly integrate
         ! fv_advective_order polynomials and is odd order horizontaly and has
@@ -194,7 +194,7 @@ contains
             call vert_adv_coeffs(polynomial, direction)%initialise( vector_space = wt_fs )
           end do
         end do
-        call invoke_poly1d_vert_adv_coeffs( vert_adv_coeffs, md_wt, chi, & 
+        call invoke_poly1d_vert_adv_coeffs( vert_adv_coeffs, md_wt, chi, &
                                             fv_advective_order, nfaces_v )
         if ( consistent_metric ) then
           call advective_av_chi3%initialise(vector_space = w1_fs )
@@ -217,7 +217,7 @@ contains
   end subroutine advective_update_alg_init
 
   !=============================================================================
-  !> @details Finalises allocatable arrays and calls finalising routines for 
+  !> @details Finalises allocatable arrays and calls finalising routines for
   !>          kernels that this algorithm initialised.
   subroutine advective_update_alg_final()
 
@@ -234,13 +234,13 @@ contains
   end subroutine advective_update_alg_final
 
   !=============================================================================
-  !> @brief Compute advective update wind.grad(adv_field) using desired spatial 
+  !> @brief Compute advective update wind.grad(adv_field) using desired spatial
   !>        reconstruction. Options for this are either FE or FV reconstructions.
   !>        A monotonicity filter is also applied if enforce_monotonicity=.true.
   !> @param[in,out] rhs Advective increment
   !> @param[in]    adv_field Field to advect
   !> @param[in]    wind Advecting wind field
-  !> @param[in]    dt timestep  
+  !> @param[in]    dt timestep
   subroutine advective_update_alg(rhs, adv_field, wind, dt)
 
     use consistent_wind_kernel_mod,  only: consistent_wind_kernel_type
@@ -262,7 +262,7 @@ contains
     type(mesh_type),               pointer :: mesh => null()
     integer(i_def)                         :: mono_stencil
     type(field_type)                       :: consistent_wind, u_grad_f
-    
+
     mt_lumped_inv => get_inverse_lumped_mass_matrix(wt_id)
     call u_grad_f%initialise( adv_field%get_function_space() )
 
@@ -279,7 +279,7 @@ contains
         call invoke_poly1d_adv_recon( advective_av, wind, adv_field, adv_coeffs, &
                                       fv_advective_order, advective_stencil_extent, nfaces_h )
         ! Horizontal advection of metric terms
-        if ( consistent_metric ) & 
+        if ( consistent_metric ) &
           call invoke_poly1d_adv_recon( advective_av_chi3, wind, chi3_at_wt, adv_coeffs, &
                                         fv_advective_order, advective_stencil_extent, nfaces_h )
       else
@@ -288,7 +288,7 @@ contains
                                       fv_advective_order, advective2d_stencil_size,    &
                                       nfaces_h )
         ! Horizontal advection of metric terms
-        if ( consistent_metric ) & 
+        if ( consistent_metric ) &
           call invoke_poly2d_adv_recon( advective_av_chi3, wind, chi3_at_wt, adv_coeffs, &
                                         fv_advective_order, advective2d_stencil_size,    &
                                         nfaces_h )
@@ -333,7 +333,7 @@ contains
     end if
 
     call invoke( X_times_Y(rhs, u_grad_f, mt_lumped_inv) )
-    
+
     nullify( chi, mt_lumped_inv, reference_element, mesh )
 
   end subroutine advective_update_alg

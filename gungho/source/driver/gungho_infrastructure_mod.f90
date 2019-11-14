@@ -29,8 +29,8 @@ module gungho_infrastructure_mod
   use yaxt,                           only : xt_initialize, xt_finalize
   use xios,                           only : xios_initialize, xios_finalize
   use mod_wait,                       only : init_wait
-  
-  
+
+
   implicit none
 
   private
@@ -107,10 +107,10 @@ contains
     call log_event( log_scratch_space, LOG_LEVEL_ALWAYS )
 
     call set_derived_config( .true. )
-  
+
   end subroutine initialise_infrastructure
-  
-  
+
+
   !> @brief Finalises infrastructure used by the model
   subroutine finalise_infrastructure()
 

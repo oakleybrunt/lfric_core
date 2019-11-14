@@ -79,26 +79,26 @@ subroutine vorticity_rhs_code(nlayers,                                          
                          rhs, u, chi_1, chi_2, chi_3,                           &
                          ndf_xi, undf_xi, map_xi, diff_basis_xi,                &
                          ndf_u, undf_u, map_u, basis_u,                         &
-                         ndf_chi, undf_chi, map_chi, diff_basis_chi,            &                           
+                         ndf_chi, undf_chi, map_chi, diff_basis_chi,            &
                          nqp_h, nqp_v, wqp_h, wqp_v                             &
                          )
-                           
+
   use coordinate_jacobian_mod,  only: coordinate_jacobian
 
   implicit none
 
   !Arguments
   integer, intent(in) :: nlayers
-  integer, intent(in) :: ndf_chi, ndf_u, ndf_xi, undf_chi, undf_u, undf_xi  
+  integer, intent(in) :: ndf_chi, ndf_u, ndf_xi, undf_chi, undf_u, undf_xi
   integer, intent(in) :: nqp_h, nqp_v
   integer, dimension(ndf_xi),  intent(in) :: map_xi
   integer, dimension(ndf_u),   intent(in) :: map_u
   integer, dimension(ndf_chi), intent(in) :: map_chi
-  real(kind=r_def), dimension(3,ndf_u,  nqp_h,nqp_v), intent(in) :: basis_u  
+  real(kind=r_def), dimension(3,ndf_u,  nqp_h,nqp_v), intent(in) :: basis_u
   real(kind=r_def), dimension(3,ndf_xi, nqp_h,nqp_v), intent(in) :: diff_basis_xi
   real(kind=r_def), dimension(3,ndf_chi,nqp_h,nqp_v), intent(in) :: diff_basis_chi
   real(kind=r_def), dimension(undf_xi),               intent(inout) :: rhs
-  real(kind=r_def), dimension(undf_u),                intent(in)    :: u 
+  real(kind=r_def), dimension(undf_u),                intent(in)    :: u
   real(kind=r_def), dimension(undf_chi),              intent(in)    :: chi_1, chi_2, chi_3
 
   real(kind=r_def), dimension(nqp_h), intent(in) :: wqp_h
@@ -107,11 +107,11 @@ subroutine vorticity_rhs_code(nlayers,                                          
   !Internal variables
   integer               :: df, k, loc
   integer               :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_chi) :: chi_1_e, chi_2_e, chi_3_e
   real(kind=r_def), dimension(nqp_h,nqp_v)        :: dj
   real(kind=r_def), dimension(3,3,nqp_h,nqp_v)    :: jac
-  real(kind=r_def), dimension(ndf_u)  :: u_cell(ndf_u) 
+  real(kind=r_def), dimension(ndf_u)  :: u_cell(ndf_u)
   real(kind=r_def), dimension(ndf_xi) :: rhs_cell(ndf_xi)
   real(kind=r_def) :: u_at_quad(3), &
                       dc(3)
@@ -125,10 +125,10 @@ subroutine vorticity_rhs_code(nlayers,                                          
       chi_3_e(df) = chi_3( loc )
     end do
     call coordinate_jacobian(ndf_chi, nqp_h, nqp_v, chi_1_e, chi_2_e, chi_3_e,  &
-                             diff_basis_chi, jac, dj)    
+                             diff_basis_chi, jac, dj)
     do df = 1, ndf_u
       u_cell(df) = u( map_u(df) + k )
-    end do    
+    end do
   ! compute the RHS integrated over one cell
     rhs_cell(:) = 0.0_r_def
     do qp2 = 1, nqp_v
@@ -136,7 +136,7 @@ subroutine vorticity_rhs_code(nlayers,                                          
         u_at_quad(:) = 0.0_r_def
         do df = 1, ndf_u
           u_at_quad(:) = u_at_quad(:) + u_cell(df)*basis_u(:,df,qp1,qp2)
-        end do        
+        end do
         u_at_quad(:) = wqp_h(qp1)*wqp_v(qp2)*matmul(jac(:,:,qp1,qp2),u_at_quad(:))/dj(qp1,qp2)
         do df = 1, ndf_xi
           dc = matmul(jac(:,:,qp1,qp2), diff_basis_xi(:,df,qp1,qp2))
@@ -146,8 +146,8 @@ subroutine vorticity_rhs_code(nlayers,                                          
     end do
     do df = 1, ndf_xi
       rhs( map_xi(df) + k ) =  rhs( map_xi(df) + k ) + rhs_cell(df)
-    end do 
-  end do 
+    end do
+  end do
 end subroutine vorticity_rhs_code
 
 end module vorticity_rhs_kernel_mod

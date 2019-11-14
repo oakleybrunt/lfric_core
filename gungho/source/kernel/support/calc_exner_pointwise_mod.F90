@@ -41,8 +41,8 @@ end function calc_exner_pointwise
 
 !> @brief Function to compute the exner pressure from the linear equation of state
 !> @details Compute the exner pressure from the equation of state:
-!>           exner = kappa / ( 1- kappa ) * exner_s * ( rho/rho_s + theta/theta_s ) 
-!>@deprecated The Usefulness of the linear model is to be revaluated at 
+!>           exner = kappa / ( 1- kappa ) * exner_s * ( rho/rho_s + theta/theta_s )
+!>@deprecated The Usefulness of the linear model is to be revaluated at
 !>            the end of the Gung-Ho project and removied if possible
 !! @param[in] rho     Density perturbation
 !! @param[in] theta   Potential temperature perturbation

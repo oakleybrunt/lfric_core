@@ -18,13 +18,13 @@ module initial_cloud_alg_mod
 
 contains
 
-  !> @brief Prepares the cloud fields 
-  !> @details An algorithm for initialising cloud fields (liquid, ice and bulk cloud 
+  !> @brief Prepares the cloud fields
+  !> @details An algorithm for initialising cloud fields (liquid, ice and bulk cloud
   !>          fraction)an d critical relative humidity  for all solvers.
   !>          The cloud fields need to be initialised so that they have a value
-  !>          when passed on to the physics at the first time step, in case no 
+  !>          when passed on to the physics at the first time step, in case no
   !>          restart file is used. Also, rh_crit is set to the namelist value here.
-  !> @param[in,out] cloud_fields Cloud related fields 
+  !> @param[in,out] cloud_fields Cloud related fields
   subroutine initial_cloud_alg(cloud_fields)
 
     use initial_cloud_kernel_mod,        only: initial_cloud_kernel_type

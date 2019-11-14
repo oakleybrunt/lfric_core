@@ -47,7 +47,7 @@ module compute_grad_operator_kernel_mod
 
 contains
 
-!> @brief Computes the grad operator 
+!> @brief Computes the grad operator
 !! @param[in] cell Cell number
 !! @param[in] nlayers Number of layers.
 !! @param[in] ncell_3d ncell*ndf
@@ -129,7 +129,7 @@ subroutine compute_grad_operator_code(cell, nlayers, ncell_3d,          &
         jac_inv(:,:,qp1,qp2) = transpose(jac_inv(:,:,qp1,qp2))
       end do
     end do
-     
+
     do df0 = 1, ndf_w0
       do df1 = 1, ndf_w1
         grad(df1,df0,ik) = 0.0_r_def
@@ -143,7 +143,7 @@ subroutine compute_grad_operator_code(cell, nlayers, ncell_3d,          &
         end do
       end do
     end do
-  end do 
+  end do
 end subroutine compute_grad_operator_code
 
 end module compute_grad_operator_kernel_mod

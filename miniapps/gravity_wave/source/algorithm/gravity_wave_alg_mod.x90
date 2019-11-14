@@ -4,7 +4,7 @@
 ! should have received as part of this distribution.
 !-----------------------------------------------------------------------------
 
-!>@brief A two time-level iterative time-discretisation of the linear 
+!>@brief A two time-level iterative time-discretisation of the linear
 !>       gravity wave equations
 module gravity_wave_alg_mod
 
@@ -17,11 +17,11 @@ module gravity_wave_alg_mod
 
   ! Configuration options
   use finite_element_config_mod,      only: element_order
-  use timestepping_config_mod,        only: dt, alpha 
+  use timestepping_config_mod,        only: dt, alpha
   use runtime_constants_mod,          only: get_div, &
                                             get_mass_matrix, &
                                             w3inv_id
-  use initial_temperature_config_mod, only: bvf_square  
+  use initial_temperature_config_mod, only: bvf_square
   use gravity_wave_constants_config_mod,only: cs_square
 
   ! Derived Types
@@ -53,14 +53,14 @@ module gravity_wave_alg_mod
 
   use field_indices_mod,              only: igw_u, igw_p, igw_b
 
-  use io_config_mod,                  only: subroutine_timers 
+  use io_config_mod,                  only: subroutine_timers
   use timer_mod,                      only: timer
 
   implicit none
 
   private
 
-  ! 'State' items private to the algorithm that need to be 
+  ! 'State' items private to the algorithm that need to be
   !  created once but used every step
   type( field_vector_type ) :: state, state_n, rhs_n, state_inc
   type( field_type )        :: rhs_p
@@ -70,7 +70,7 @@ module gravity_wave_alg_mod
   type( gw_mixed_operator_type)                       :: gw_mixed_operator
   class( abstract_preconditioner_type),   allocatable :: gw_mixed_preconditioner
   class( abstract_iterative_solver_type), allocatable :: gw_mixed_solver
-  
+
   !> Absolute solver tolerance (mixed solver)
   real(kind=r_def), parameter :: gw_mixed_solver_a_tol = 1.E-12
 
@@ -79,7 +79,7 @@ module gravity_wave_alg_mod
   type( gw_pressure_operator_type )                    :: gw_pressure_operator
   class( abstract_preconditioner_type ),   allocatable :: gw_pressure_preconditioner
   class( abstract_iterative_solver_type ), allocatable :: gw_pressure_solver
-  
+
   !> Absolute solver tolerance (pressure solver)
   real(kind=r_def), parameter :: gw_pressure_solver_a_tol = 1.E-12
 
@@ -133,9 +133,9 @@ contains
     implicit none
 
     ! Mesh
-    integer(i_def), intent(in) :: mesh_id 
+    integer(i_def), intent(in) :: mesh_id
 
-    ! Prognostic fields    
+    ! Prognostic fields
     type( field_type ), intent( in ) :: wind, pressure, buoyancy
 
     type(function_space_type), pointer  :: u_fs => null()
@@ -155,17 +155,17 @@ contains
     state_inc = field_vector_type(bundle_size)
 
     !=== Initialise internal state field objects =============================!
-    u_fs => wind%get_function_space() 
+    u_fs => wind%get_function_space()
     p_fs => pressure%get_function_space()
     b_fs => buoyancy%get_function_space()
-    
+
     call state%import_field(wind,     igw_u)
     call state%import_field(pressure, igw_p)
     call state%import_field(buoyancy, igw_b)
 
     state_n = state
     rhs_n = state
-    state_inc = state    
+    state_inc = state
 
     call rhs_p%initialise( vector_space = p_fs )
 
@@ -178,7 +178,7 @@ contains
     call mesh%get_dz(dz)
     call compute_q_operator_init(dz, nlayers)
     call invoke( compute_q_operator_type(Q, qr) )
-    
+
     ! *** Allocate polymorphic solver- and preconditioner objects ***
 
     ! Allocate pressure solver of correct type
@@ -243,10 +243,10 @@ contains
 
     ! Construct pressure preconditioner
     select type(gw_pressure_preconditioner)
-    type is ( null_preconditioner_type )        
+    type is ( null_preconditioner_type )
        ! Null preconditioner
        gw_pressure_preconditioner = null_preconditioner_type()
-    type is ( gw_pressure_preconditioner_type )        
+    type is ( gw_pressure_preconditioner_type )
        ! Vertical preconditioner
        gw_pressure_preconditioner = gw_pressure_preconditioner_type()
     class default
@@ -256,21 +256,21 @@ contains
 
     ! Construct pressure solver
     select type(gw_pressure_solver)
-    type is ( conjugate_gradient_type )        
+    type is ( conjugate_gradient_type )
        ! BiCGStab solver
        gw_pressure_solver = conjugate_gradient_type( gw_pressure_operator,           &
                                                      gw_pressure_preconditioner,     &
                                                      si_pressure_tolerance,          &
                                                      gw_pressure_solver_a_tol,       &
                                                      si_pressure_maximum_iterations)
-    type is ( bicgstab_type )        
+    type is ( bicgstab_type )
        ! BiCGStab solver
        gw_pressure_solver = bicgstab_type( gw_pressure_operator,           &
                                            gw_pressure_preconditioner,     &
                                            si_pressure_tolerance,          &
                                            gw_pressure_solver_a_tol,       &
                                            si_pressure_maximum_iterations)
-    type is ( gmres_type )        
+    type is ( gmres_type )
        ! GMRES solver
        gw_pressure_solver = gmres_type( gw_pressure_operator,           &
                                         gw_pressure_preconditioner,     &
@@ -279,7 +279,7 @@ contains
                                         gw_pressure_solver_a_tol,       &
                                         si_pressure_maximum_iterations)
 
-    type is ( fgmres_type )        
+    type is ( fgmres_type )
        ! FGMRES solver
        gw_pressure_solver = fgmres_type( gw_pressure_operator,           &
                                          gw_pressure_preconditioner,     &
@@ -288,7 +288,7 @@ contains
                                          gw_pressure_solver_a_tol,       &
                                          si_pressure_maximum_iterations)
 
-    type is ( gcr_type )        
+    type is ( gcr_type )
        ! GCR solver
        gw_pressure_solver = gcr_type( gw_pressure_operator,           &
                                       gw_pressure_preconditioner,     &
@@ -297,7 +297,7 @@ contains
                                       gw_pressure_solver_a_tol,       &
                                       si_pressure_maximum_iterations)
 
-    type is ( precondition_only_type )        
+    type is ( precondition_only_type )
        ! Precondition only solver
        gw_pressure_solver = precondition_only_type( gw_pressure_operator,       &
                                                     gw_pressure_preconditioner, &
@@ -310,7 +310,7 @@ contains
 
     ! Set up mixed operator
     gw_mixed_operator = gw_mixed_operator_type(state)
-    
+
     ! Set up mixed preconditioner
     select type(gw_mixed_preconditioner)
     type is ( gw_mixed_schur_preconditioner_type )
@@ -329,41 +329,41 @@ contains
        call log_event("Can not initialise mixed preconditioner", &
                       LOG_LEVEL_ERROR)
     end select
-    select type(gw_mixed_solver) 
-    type is ( conjugate_gradient_type )        
+    select type(gw_mixed_solver)
+    type is ( conjugate_gradient_type )
        gw_mixed_solver = conjugate_gradient_type( gw_mixed_operator,       &
                                                   gw_mixed_preconditioner, &
                                                   si_tolerance,            &
                                                   gw_mixed_solver_a_tol,   &
                                                   si_maximum_iterations)
-    type is ( bicgstab_type )        
+    type is ( bicgstab_type )
        gw_mixed_solver = bicgstab_type( gw_mixed_operator,       &
                                         gw_mixed_preconditioner, &
                                         si_tolerance,            &
                                         gw_mixed_solver_a_tol,   &
                                         si_maximum_iterations)
-    type is ( gmres_type )        
+    type is ( gmres_type )
        gw_mixed_solver = gmres_type( gw_mixed_operator,       &
                                      gw_mixed_preconditioner, &
                                      mixed_gcrk,              &
                                      si_tolerance,            &
                                      gw_mixed_solver_a_tol,   &
                                      si_maximum_iterations)
-    type is ( fgmres_type )        
+    type is ( fgmres_type )
        gw_mixed_solver = fgmres_type( gw_mixed_operator,       &
                                       gw_mixed_preconditioner, &
                                       mixed_gcrk,              &
                                       si_tolerance,            &
                                       gw_mixed_solver_a_tol,   &
                                       si_maximum_iterations)
-    type is ( gcr_type )        
+    type is ( gcr_type )
        gw_mixed_solver = gcr_type( gw_mixed_operator,       &
                                    gw_mixed_preconditioner, &
                                    mixed_gcrk,              &
                                    si_tolerance,            &
                                    gw_mixed_solver_a_tol,   &
                                    si_maximum_iterations)
-    type is ( precondition_only_type )        
+    type is ( precondition_only_type )
        gw_mixed_solver = precondition_only_type( gw_mixed_operator,       &
                                                  gw_mixed_preconditioner, &
                                                  si_tolerance,            &
@@ -417,11 +417,11 @@ contains
 
     implicit none
 
-    ! Prognostic fields    
+    ! Prognostic fields
     type( field_type ), intent( inout ) :: wind, pressure, buoyancy
 
-    type(operator_type), pointer :: div    => null() 
-    type(operator_type), pointer :: m3_inv => null() 
+    type(operator_type), pointer :: div    => null()
+    type(operator_type), pointer :: m3_inv => null()
 
     ! Auxiliary constants to group invokes
     real(kind=r_def)             :: const1, const2

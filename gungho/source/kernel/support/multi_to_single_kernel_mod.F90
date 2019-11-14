@@ -20,7 +20,7 @@ module multi_to_single_kernel_mod
 
   private
 
-  !> Kernel metadata for PSyclone 
+  !> Kernel metadata for PSyclone
   type, public, extends(kernel_type) :: multi_to_single_kernel_type
       private
       type(arg_type) :: meta_args(3) = (/               &
@@ -51,7 +51,7 @@ contains
                                   single_field,                     &
                                   multi_field,                      &
                                   update_dim,                       &
-                                  ndf_2d, undf_2d, map_2d,          &    
+                                  ndf_2d, undf_2d, map_2d,          &
                                   ndf_multi, undf_multi, map_multi)
 
     implicit none

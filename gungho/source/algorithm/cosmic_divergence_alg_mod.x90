@@ -50,7 +50,7 @@ contains
                                     direction  )
 
     implicit none
- 
+
     type(field_type),    intent(inout)    :: divergence
     type(field_type),    intent(in)       :: mass_flux
     type(field_type),    intent(in)       :: detj_at_w2

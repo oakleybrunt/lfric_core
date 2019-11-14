@@ -54,12 +54,12 @@ contains
 !! @param[in] ndf_w3 Number of degrees of freedom per cell for w3
 !! @param[in] undf_w3 Number of (local) unique degrees of freedom
 !! @param[in] map_w3 Dofmap for the cell at the base of the column for w3
-!! @param[in] w3_basis Basis functions evaluated at quadrature points 
+!! @param[in] w3_basis Basis functions evaluated at quadrature points
 !! @param[inout] r_rho Right hand side of the continuity equation
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 Number of (local) unique degrees of freedom
 !! @param[in] map_w2 Dofmap for the cell at the base of the column for w2
-!! @param[in] w2_diff_basis Differential basis functions evaluated at quadrature points 
+!! @param[in] w2_diff_basis Differential basis functions evaluated at quadrature points
 !! @param[in] u Velocity
 !! @param[in] nqp_h Number of quadrature points in the horizontal
 !! @param[in] nqp_v Number of quadrature points in the vertical
@@ -90,9 +90,9 @@ subroutine rrho_code(nlayers,                                                 &
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
 
   !Internal variables
-  integer               :: df, k 
+  integer               :: df, k
   integer               :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_w2) :: u_e
   real(kind=r_def), dimension(ndf_w3) :: rrho_e
   real(kind=r_def) :: div_u_at_quad
@@ -119,9 +119,9 @@ subroutine rrho_code(nlayers,                                                 &
     end do
     do df = 1, ndf_w3
       r_rho( map_w3(df) + k ) =  rrho_e(df)
-    end do 
+    end do
   end do
-  
+
 end subroutine rrho_code
 
 end module rrho_kernel_mod

@@ -84,7 +84,7 @@ contains
         call log_event( log_scratch_space, LOG_LEVEL_INFO )
 
         call multigrid_function_space_chain%add( function_space )
- 
+
       end do
     end if
 

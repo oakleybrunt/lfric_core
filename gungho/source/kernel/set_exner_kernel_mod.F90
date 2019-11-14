@@ -55,7 +55,7 @@ contains
 !! @param[in] ndf_w3 Number of degrees of freedom per cell
 !! @param[in] undf_w3 Total number of degrees of freedom
 !! @param[in] map_w3 Dofmap for the cell at the base of the column
-!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points
 !! @param[inout] exner Pressure field
 !! @param[inout] time Time evaluated as a real value
 !! @param[in] ndf_chi Number of degrees of freedom per cell for chi
@@ -72,11 +72,11 @@ contains
 !! @param[in] wqp_v Weights of vertical quadrature points
 subroutine set_exner_code(nlayers,                    &
                           exner,                      &
-                          chi_1, chi_2, chi_3,        & 
+                          chi_1, chi_2, chi_3,        &
                           time,                       &
                           ndf_w3, undf_w3, map_w3,    &
                           w3_basis,                   &
-                          ndf_chi, undf_chi, map_chi, & 
+                          ndf_chi, undf_chi, map_chi, &
                           chi_basis, chi_diff_basis,  &
                           nqp_h, nqp_v, wqp_h, wqp_v)
 
@@ -89,7 +89,7 @@ subroutine set_exner_code(nlayers,                    &
   implicit none
 
   ! Arguments
-  integer(kind=i_def),                     intent(in) :: nlayers 
+  integer(kind=i_def),                     intent(in) :: nlayers
   integer(kind=i_def),                     intent(in) :: ndf_w3, ndf_chi, &
                                                          undf_w3, undf_chi
   integer(kind=i_def),                     intent(in) :: nqp_h, nqp_v

@@ -123,7 +123,7 @@ contains
 !! @param[in]  column_coords real array: (3,nverts,nlayers)
 !! @param[in]  chi_hat_node  real array: (3,ndf)
 !! @param[in]  chi_hat_vert  real array: (nverts,3)
-  subroutine assign_coordinate(nlayers,ndf,nverts,undf,map,dz, & 
+  subroutine assign_coordinate(nlayers,ndf,nverts,undf,map,dz, &
              chi_1,chi_2,chi_3,column_coords,chi_hat_node,chi_hat_vert, &
              domain_x, domain_y)
 
@@ -184,14 +184,14 @@ contains
              y = y + interp_weight*vertex_local_coords(2,vert)
              z = z + interp_weight*vertex_local_coords(3,vert)
           end do
-          ! For spherical domains we need to project x,y,z back onto 
+          ! For spherical domains we need to project x,y,z back onto
           ! spherical shells
           if ( geometry == geometry_spherical ) then
              radius_correction = scaled_radius + &
                                  sum(dz(1:k)) + chi_hat_node(3,df)*dz(k+1)
              radius_correction = radius_correction/sqrt(x*x + y*y + z*z)
           end if
-          dfk = map(df)+k 
+          dfk = map(df)+k
           chi_1(dfk) = x*radius_correction
           chi_2(dfk) = y*radius_correction
           chi_3(dfk) = z*radius_correction

@@ -59,13 +59,13 @@ contains
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 Number unique of degrees of freedom  for w2
 !! @param[in] map_w2 Dofmap for the cell at the base of the column for w2
-!! @param[in] w2_basis Basis functions evaluated at quadrature points 
+!! @param[in] w2_basis Basis functions evaluated at quadrature points
 !! @param[in] w2_diff_basis Differntial of the basis functions evaluated at  quadrature points
-!! @param[inout] r_u Right hand side of the momentum equation 
+!! @param[inout] r_u Right hand side of the momentum equation
 !! @param[in] ndf_w3 Number of degrees of freedom per cell for w3
 !! @param[in] undf_w3 Number unique of degrees of freedom  for w3
 !! @param[in] map_w3 Dofmap for the cell at the base of the column for w3
-!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] exner Exner pressure
 !! @param[in] ndf_wtheta Number of degrees of freedom per cell for wtheta
 !! @param[in] undf_wtheta Number unique of degrees of freedom  for wtheta
@@ -85,7 +85,7 @@ subroutine exner_gradient_code(nlayers,                                         
                                wtheta_basis, wtheta_diff_basis,                  &
                                nqp_h, nqp_v, wqp_h, wqp_v                        &
                                )
-  
+
   implicit none
   ! Arguments
   integer(kind=i_def), intent(in) :: nlayers,nqp_h, nqp_v
@@ -110,9 +110,9 @@ subroutine exner_gradient_code(nlayers,                                         
   real(kind=r_def), dimension(nqp_v), intent(in) ::  wqp_v
 
   !Internal variables
-  integer(kind=i_def) :: df, k 
+  integer(kind=i_def) :: df, k
   integer(kind=i_def) :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_w3)          :: exner_e
   real(kind=r_def), dimension(ndf_w2)          :: ru_e
   real(kind=r_def), dimension(ndf_wtheta)      :: theta_e
@@ -120,23 +120,23 @@ subroutine exner_gradient_code(nlayers,                                         
   real(kind=r_def) :: grad_theta_at_quad(3), v(3)
   real(kind=r_def) :: exner_at_quad, theta_at_quad, &
                       grad_term, dv
-  
+
   do k = 0, nlayers-1
     do df = 1, ndf_w3
       exner_e(df) = exner( map_w3(df) + k )
-    end do    
+    end do
     do df = 1, ndf_wtheta
       theta_e(df) = theta( map_wtheta(df) + k )
-    end do   
+    end do
     do df = 1, ndf_w2
       ru_e(df) = 0.0_r_def
-    end do 
-  ! compute the RHS integrated over one cell    
+    end do
+  ! compute the RHS integrated over one cell
     do qp2 = 1, nqp_v
       do qp1 = 1, nqp_h
-        exner_at_quad = 0.0_r_def 
+        exner_at_quad = 0.0_r_def
         do df = 1, ndf_w3
-          exner_at_quad  = exner_at_quad + exner_e(df)*w3_basis(1,df,qp1,qp2) 
+          exner_at_quad  = exner_at_quad + exner_e(df)*w3_basis(1,df,qp1,qp2)
         end do
         theta_at_quad = 0.0_r_def
         grad_theta_at_quad(:) = 0.0_r_def
@@ -152,7 +152,7 @@ subroutine exner_gradient_code(nlayers,                                         
           dv = w2_diff_basis(1,df,qp1,qp2)
 
 !exner gradient term
-          grad_term = cp*exner_at_quad * (                           & 
+          grad_term = cp*exner_at_quad * (                           &
                       theta_at_quad * dv                             &
                     + dot_product( grad_theta_at_quad(:),v)          &
                                          )
@@ -164,9 +164,9 @@ subroutine exner_gradient_code(nlayers,                                         
     end do
     do df = 1, ndf_w2
       r_u( map_w2(df) + k ) =  r_u( map_w2(df) + k ) + ru_e(df)
-    end do 
+    end do
   end do
-  
+
 end subroutine exner_gradient_code
 
 end module exner_gradient_kernel_mod

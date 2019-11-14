@@ -146,8 +146,7 @@ contains
     ! Test you can get the same function space by it's id
     test_fs => function_space_collection%get_fs_by_id(fs_0)
     @assertAssociated(test_fs, this%temp_w0_fs)
-    
-    
+
   end subroutine test_all
 
 

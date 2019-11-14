@@ -75,7 +75,7 @@ contains
 !! @param[in] undf_f Number of degrees of freedom for the field to be projected
 !! @param[in] map_f Dofmap for the cell at the base of the column
 !! @param[in] f_basis Basis functions evaluated at gaussian quadrature points
-!! @param[in] field Field to be projected 
+!! @param[in] field Field to be projected
 !! @param[in] w2_field W2_field needed to get function space components
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for the w2 field
 !! @param[in] undf_w2 Total number of degrees of freedom for the w2 field
@@ -118,8 +118,8 @@ subroutine gp_vector_rhs_code(nlayers, &
   integer, dimension(ndf_w2),  intent(in) :: map_w2
 
 
-  real(kind=r_def), intent(in), dimension(1,ndf,    nqp_h,nqp_v) :: basis 
-  real(kind=r_def), intent(in), dimension(3,ndf_f,  nqp_h,nqp_v) :: f_basis 
+  real(kind=r_def), intent(in), dimension(1,ndf,    nqp_h,nqp_v) :: basis
+  real(kind=r_def), intent(in), dimension(3,ndf_f,  nqp_h,nqp_v) :: f_basis
   real(kind=r_def), intent(in), dimension(3,ndf_chi,nqp_h,nqp_v) :: chi_diff_basis
   real(kind=r_def), intent(in), dimension(1,ndf_chi,nqp_h,nqp_v) :: chi_basis
 
@@ -142,7 +142,7 @@ subroutine gp_vector_rhs_code(nlayers, &
   logical                                      :: hdiv
 
   ! Check if this is hdiv (W2) field or a hcurl (W1) field
-  if ( ndf_f == ndf_w2 ) then 
+  if ( ndf_f == ndf_w2 ) then
     hdiv = .true.
   else
     hdiv = .false.

@@ -12,7 +12,7 @@
 program solver_miniapp
 
   use constants_mod,                    only : i_def
-  use convert_to_upper_mod,             only : convert_to_upper               
+  use convert_to_upper_mod,             only : convert_to_upper
   use cli_mod,                          only : get_initial_filename
   use create_mesh_mod,                  only : init_mesh
   use create_fem_mod,                   only : init_fem

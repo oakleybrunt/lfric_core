@@ -74,7 +74,7 @@ contains
 
     call feign_finite_element_config(                       &
          cellshape = cellshape_quadrilateral,               &
-         element_order = 0, coordinate_order = 0,           & 
+         element_order = 0, coordinate_order = 0,           &
          rehabilitate = .true.,                             &
          vorticity_in_w1 =.false. )
 
@@ -118,7 +118,7 @@ contains
 
     x = (/ 0.0_r_def, 0.0_r_def, 1000.0_r_def /)
 
-    ! Test the reference profile (exner, rho, theta) computation for 
+    ! Test the reference profile (exner, rho, theta) computation for
     ! the gravity wave test at the point x
     call reference_profile(exner, rho, theta, x, test_gravity_wave)
 

@@ -105,7 +105,7 @@ contains
     map_w3(1) = 1
 
     ! Since we have 5 layers there are 26 unique degrees of freedom for W2.
-    ! The unique dofs which relate to the vertical components of W2 are 
+    ! The unique dofs which relate to the vertical components of W2 are
     ! 21,22,23,24,25 and 26.
     ! Hence in dep_pts variable below the vertical departure points are
     ! 0.0,0.5,0.5,0.5,0.5,0.0, taking into account 0.0 departure points for the

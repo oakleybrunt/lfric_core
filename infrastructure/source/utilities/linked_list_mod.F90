@@ -24,13 +24,13 @@ module linked_list_mod
 
   type, public                           :: linked_list_type
     private
-    integer(i_def) :: length ! The number of items in the list 
+    integer(i_def) :: length ! The number of items in the list
 
-    ! The first entry in the linked list                        
+    ! The first entry in the linked list
     type(linked_list_item_type), pointer :: head => null()
-    ! The last entry in the linked list 
-    type(linked_list_item_type), pointer :: tail => null()  
-    ! The entry currently pointed to  
+    ! The last entry in the linked list
+    type(linked_list_item_type), pointer :: tail => null()
+    ! The entry currently pointed to
     type(linked_list_item_type), pointer :: current => null()
 
   contains
@@ -74,7 +74,7 @@ type(linked_list_type) function linked_list_constructor()
 
 end function linked_list_constructor
 
-!> Gets the current length of the list 
+!> Gets the current length of the list
 !> @return list length
 function get_length(self) result(length)
 

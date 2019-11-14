@@ -151,7 +151,7 @@ contains
     cf_bulk => cloud_fields%get_field('bulk_fraction')
     cca => cloud_fields%get_field('cca')
     ccw => cloud_fields%get_field('ccw')
-    
+
     ! Unpack the physics increments
     dt_conv => physics_incs%get_field('dt_conv')
     dmv_conv => physics_incs%get_field('dmv_conv')

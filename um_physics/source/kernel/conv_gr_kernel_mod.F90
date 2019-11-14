@@ -361,7 +361,7 @@ contains
                           detrain_up, detrain_down, dd_dt, dd_dq,              &
                           deep_dt, deep_dq, deep_massflux, deep_tops,          &
                           shallow_dt, shallow_dq, shallow_massflux,            &
-                          mid_dt, mid_dq, mid_massflux 
+                          mid_dt, mid_dq, mid_massflux
 
     real(kind=r_def), dimension(undf_w3), intent(inout) :: du_conv, dv_conv
 
@@ -395,7 +395,7 @@ contains
     ! local switches and scalars
     integer(i_um) :: n_cumulus, n_deep, n_shallow, n_congestus, n_mid,       &
                      ntra_lev, segments, n_conv_levels,                      &
-                     call_number, ntra_fld, seg_num 
+                     call_number, ntra_fld, seg_num
 
     logical :: l_tracer, l_calc_dxek, l_q_interact, l_scm_convss_dg
 
@@ -488,7 +488,7 @@ contains
 
     !-----------------------------------------------------------------------
     ! For the initial implementation we pass each individual column
-    ! of data to an array sized (1,1,k) to match the UMs (i,j,k) data 
+    ! of data to an array sized (1,1,k) to match the UMs (i,j,k) data
     ! layout.
     ! assuming map_wth(1) points to level 0
     ! and map_w3(1) points to level 1
@@ -558,14 +558,14 @@ contains
     qsat_lcl(1,1) = qsat_at_lcl(map_2d(1))
 
     !========================================================================
-    ! Call to 6A Gregory-Rowntree convection scheme 
+    ! Call to 6A Gregory-Rowntree convection scheme
     !========================================================================
 
     ! Current assumptions about setup based on GA7
 
     l_tracer = .false.   ! not allowing tracers as none so far
     l_calc_dxek  = ( i_cld_vn == i_cld_pc2 )
-    l_q_interact = l_calc_dxek 
+    l_q_interact = l_calc_dxek
     l_congestus = .false. ! never used in GA7
     entrain_coef = -99.0  ! unused default value
 
@@ -600,14 +600,14 @@ contains
       cf_liquid_conv(1,1,k) = cf_liq(map_wth(1) + k)
       cf_frozen_conv(1,1,k) = cf_ice(map_wth(1) + k)
       bulk_cf_conv(1,1,k)   = cf_bulk(map_wth(1) + k)
-      if (l_mcr_qrain) then 
+      if (l_mcr_qrain) then
         qrain_conv(1,1,k) = m_r(map_wth(1) + k)
       end if
-      if (l_mcr_qgraup) then 
+      if (l_mcr_qgraup) then
         qgraup_conv(1,1,k) = m_g(map_wth(1) + k)
       end if
 
-      ! Note need to pass down qcf2 
+      ! Note need to pass down qcf2
       qcf2_conv(1,1,k)= 0.0_r_um
     end do
 
@@ -655,7 +655,7 @@ contains
 
     l_scm_convss_dg = .false.  ! not allowing sub-timestep SCM diags
 
-    n_congestus = 0  
+    n_congestus = 0
     n_deep = 0
     n_shallow = 0
 
@@ -688,7 +688,7 @@ contains
       it_cca0_dp(1,1,:n_cca_lev) = 0.0_r_um
       it_cca0_sh(1,1,:n_cca_lev) = 0.0_r_um
       it_cca0_md(1,1,:n_cca_lev) = 0.0_r_um
-      
+
       it_ccw(1,1,:)  = 0.0_r_um
       it_ccw0(1,1,:) = 0.0_r_um
       it_conv_rain_3d(1,1,:) = 0.0_r_um
@@ -776,7 +776,7 @@ contains
         , it_area_dd, scm_convss_dg, l_scm_convss_dg                        &
         )
 
-      ! Mid-level convection only possible on subsequent sub-steps if 
+      ! Mid-level convection only possible on subsequent sub-steps if
       ! occurs on first step or column is diagnosed as cumulus
       l_mid(1,1) = it_mid_level(1,1) .or. cumulus(1,1)
 
@@ -851,7 +851,7 @@ contains
         end if
       end if
 
-      ! update input fields *_conv for next substep 
+      ! update input fields *_conv for next substep
       do k = 1, n_conv_levels
         theta_conv(1,1,k) = theta_conv(1,1,k)                         &
                             + dthbydt(1,1,k) * timestep_conv
@@ -876,7 +876,7 @@ contains
         dmcf_conv(map_wth(1) + k) =  dmcf_conv(map_wth(1) + k)            &
                                      + dqcfbydt(1,1,k) * timestep_conv
 
-        ! Update diagnostics   
+        ! Update diagnostics
         massflux_up(map_wth(1) + k) = massflux_up(map_wth(1) + k) +          &
                                        it_up_flux(1,1,k)*one_over_conv_calls
         massflux_down(map_wth(1) + k) = massflux_down(map_wth(1) + k)+       &

@@ -60,7 +60,7 @@ module eos_operators_kernel_mod
   public eos_operators_code
 
 contains
-  
+
 !> @brief Computes the equation of state operators
 !! @param[in] cell Cell number
 !! @param[in] nlayers Number of layers.
@@ -103,7 +103,7 @@ subroutine eos_operators_code(cell, nlayers,                      &
                               ndf_w3, undf_w3, map_w3, basis_w3,  &
                               ndf_wt, undf_wt, map_wt, basis_wt,  &
                               ndf_chi, undf_chi,                  &
-                              map_chi, diff_basis_chi,            & 
+                              map_chi, diff_basis_chi,            &
                               nqp_h, nqp_v, wqp_h, wqp_v)
 
   implicit none
@@ -157,7 +157,7 @@ subroutine eos_operators_code(cell, nlayers,                      &
     m3rho(:,:,ik)   = 0.0_r_def
     p3theta(:,:,ik) = 0.0_r_def
     do qp2 = 1, nqp_v
-      do qp1 = 1, nqp_h 
+      do qp1 = 1, nqp_h
         call pointwise_coordinate_jacobian(ndf_chi, chi1_e, chi2_e, chi3_e,  &
                                            diff_basis_chi(:,:,qp1,qp2), &
                                            jac, dj)
@@ -175,7 +175,7 @@ subroutine eos_operators_code(cell, nlayers,                      &
         end do
         integrand3 = wqp_h(qp1)*wqp_v(qp2)/theta_quad*dj
         do df2 = 1, ndf_w3
-          do df1 = 1, ndf_w3 
+          do df1 = 1, ndf_w3
             m3exner(df1,df2,ik) = m3exner(df1,df2,ik)              &
                               + integrand1*basis_w3(1,df1,qp1,qp2) &
                                           *basis_w3(1,df2,qp1,qp2)
@@ -185,7 +185,7 @@ subroutine eos_operators_code(cell, nlayers,                      &
           end do
         end do
         do df2 = 1, ndf_wt
-          do df1 = 1, ndf_w3 
+          do df1 = 1, ndf_w3
             p3theta(df1,df2,ik) = p3theta(df1,df2,ik)                &
                                 + integrand3*basis_w3(1,df1,qp1,qp2) &
                                             *basis_wt(1,df2,qp1,qp2)
@@ -193,7 +193,7 @@ subroutine eos_operators_code(cell, nlayers,                      &
         end do
 
       end do
-    end do  
+    end do
   end do
 
 end subroutine eos_operators_code

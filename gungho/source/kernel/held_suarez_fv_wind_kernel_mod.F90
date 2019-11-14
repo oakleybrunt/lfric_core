@@ -10,7 +10,7 @@
 !> way, for winds we will still use the weak form.
 !>
 !> Kernel adds a Held-Suarez forcing based on Wedi and Smolarkiewicz 2009:
-!> Wedi, N. P. and Smolarkiewicz, P. K. (2009), A framework for testing global 
+!> Wedi, N. P. and Smolarkiewicz, P. K. (2009), A framework for testing global
 !> non-hydrostatic models. Q.J.R. Meteorol. Soc., 135: 469-484.
 !> doi: 10.1002/qj.377
 !>
@@ -69,15 +69,15 @@ contains
 !! @param[in] chi_3 The physical z coordinate in chi
 !! @param[in] ndf_w2 The number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 The number of unique degrees of freedom for w2
-!! @param[in] map_w2 Integer array holding the dofmap for the cell at the 
+!! @param[in] map_w2 Integer array holding the dofmap for the cell at the
 !>            base of the column for w2
 !! @param[in] ndf_wth The number of degrees of freedom per cell for wth
 !! @param[in] undf_wth The number of unique degrees of freedom for wth
-!! @param[in] map_wth Integer array holding the dofmap for the cell at the 
+!! @param[in] map_wth Integer array holding the dofmap for the cell at the
 !>            base of the column for wth
 !! @param[in] ndf_chi The number of degrees of freedom per cell for chi
 !! @param[in] undf_chi The number of unique degrees of freedom for chi
-!! @param[in] map_chi Integer array holding the dofmap for the cell at the 
+!! @param[in] map_chi Integer array holding the dofmap for the cell at the
 !>            base of the column for chi
 subroutine held_suarez_fv_wind_code(nlayers,                           &
                                du, u, w2_rmultiplicity, exner_in_wth,  &
@@ -86,7 +86,7 @@ subroutine held_suarez_fv_wind_code(nlayers,                           &
                                ndf_wth, undf_wth, map_wth,             &
                                ndf_chi, undf_chi, map_chi              &
                                )
-  
+
   use coordinate_jacobian_mod,  only: coordinate_jacobian
 
   implicit none
@@ -94,7 +94,7 @@ subroutine held_suarez_fv_wind_code(nlayers,                           &
   !Arguments
   integer, intent(in) :: nlayers
 
-  integer, intent(in) :: ndf_wth, undf_wth  
+  integer, intent(in) :: ndf_wth, undf_wth
   integer, intent(in) :: ndf_w2, undf_w2
   integer, intent(in) :: ndf_chi, undf_chi
 
@@ -111,7 +111,7 @@ subroutine held_suarez_fv_wind_code(nlayers,                           &
 
   real(kind=r_def)            :: exner
   real(kind=r_def)            :: lat, lon
-  
+
   real(kind=r_def) :: exner0 ! lowest level exner value
   real(kind=r_def) :: sigma  ! exner/exner0
 
@@ -136,16 +136,16 @@ subroutine held_suarez_fv_wind_code(nlayers,                           &
   call xyz2ll(x, y, z, lon, lat)
 
   exner0 = exner_in_wth(map_wth(1))
-  
+
   do k = 0, nlayers-1
 
     exner = exner_in_wth(map_wth(1) + k)
-    
+
     sigma = (exner/exner0)**(1.0_r_def/kappa)
 
     do df=1,4
       du(map_w2(df) + k) = du(map_w2(df) + k) + &
-         held_suarez_damping(sigma)*u(map_w2(df) + k)*dt*w2_rmultiplicity(map_w2(df) + k) 
+         held_suarez_damping(sigma)*u(map_w2(df) + k)*dt*w2_rmultiplicity(map_w2(df) + k)
     end do
 
     du(map_w2(5) + k) = 0.0_r_def

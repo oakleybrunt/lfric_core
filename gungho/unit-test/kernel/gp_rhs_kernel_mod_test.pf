@@ -155,7 +155,7 @@ contains
 ! Answer for hardwired jacobian
 !    answer = ( 6000.0_r_def * 1000.0_r_def * 2000.0_r_def )*0.125_r_def*f_data(1)
 
-    answer = ( 1.0_r_def * 1.0_r_def * 1.0_r_def )*0.125_r_def*f_data(1) 
+    answer = ( 1.0_r_def * 1.0_r_def * 1.0_r_def )*0.125_r_def*f_data(1)
     tol    = 1.0e-2_r_def
     do df = 1, ndf_w0
       @assertEqual(answer, rhs(df), tol)

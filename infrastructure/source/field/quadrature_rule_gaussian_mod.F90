@@ -8,7 +8,7 @@
 
 !> @brief Contains the routines used for (Gaussian) quadrature rule.
 
-!> @details This module contains the (Gaussian) quadrature rule accessed via 
+!> @details This module contains the (Gaussian) quadrature rule accessed via
 !> a functor from the quadrature_type.
 
 module quadrature_rule_gaussian_mod
@@ -36,7 +36,7 @@ function quadrature_rule(self, nqp_1d)
   class(quadrature_rule_gaussian_type) :: self
   integer(kind=i_def), intent(in)      :: nqp_1d
   real(kind=r_def)                     :: quadrature_rule(nqp_1d,2)
- 
+
   integer                     :: i, j, m
   real(kind=r_def)            :: p1, p2, p3, pp, z, z1
   real(kind=r_def), parameter :: DOMAIN_CHANGE_FACTOR = 0.5_r_def
@@ -62,7 +62,7 @@ function quadrature_rule(self, nqp_1d)
       p2 = 0.0_r_def
 
       !Loop up the recurrence relation to get the Legendre polynomial evaluated
-      !at z                 
+      !at z
       do j = 1, nqp_1d
         p3 = p2
         p2 = p1
@@ -74,13 +74,13 @@ function quadrature_rule(self, nqp_1d)
       ! one lower order.
       pp = nqp_1d * (z * p1 - p2)/(z*z - 1.0_r_def)
       z1 = z
-      z = z1 - p1/pp             ! Newton's Method  
+      z = z1 - p1/pp             ! Newton's Method
     end do
 
-    quadrature_rule(i,1) =  - z                                  ! Roots will be bewteen -1.0 & 1.0 
-    quadrature_rule(nqp_1d+1-i,1) =  + z                         ! and symmetric about the origin  
-    quadrature_rule(i,2) = 2.0_r_def/((1.0_r_def - z*z) * pp*pp) ! Compute the wgpht and its       
-    quadrature_rule(nqp_1d+1-i,2) = quadrature_rule(i,2)         ! symmetric counterpart         
+    quadrature_rule(i,1) =  - z                                  ! Roots will be bewteen -1.0 & 1.0
+    quadrature_rule(nqp_1d+1-i,1) =  + z                         ! and symmetric about the origin
+    quadrature_rule(i,2) = 2.0_r_def/((1.0_r_def - z*z) * pp*pp) ! Compute the wgpht and its
+    quadrature_rule(nqp_1d+1-i,2) = quadrature_rule(i,2)         ! symmetric counterpart
 
   end do ! i loop
 

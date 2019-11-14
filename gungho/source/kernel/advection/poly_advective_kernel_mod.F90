@@ -10,8 +10,8 @@
 !>        upwind reconstruction
 !> @details Compute the advective update (u.grad) for a tracer field using a high order
 !>          polynomial fit to the integrated tracer values. The stencil used for the
-!>          polynomial is centred on the upwind cell. 
-!>          This method is only valid for lowest order elements 
+!>          polynomial is centred on the upwind cell.
+!>          This method is only valid for lowest order elements
 module poly_advective_kernel_mod
 
 use argument_mod,      only : arg_type, func_type, mesh_data_type,  &
@@ -49,7 +49,7 @@ contains
 
 !> @brief Computes the horizontal advective update for a tracer
 !! @param[in]  nlayers Number of layers
-!! @param[out] advective Advective update field to compute 
+!! @param[out] advective Advective update field to compute
 !! @param[in]  wind Wind field
 !! @param[in]  tracer Pointwise tracer field to advect stored on edge centres
 !! @param[in]  ndf_wt Number of degrees of freedom per cell
@@ -79,7 +79,7 @@ subroutine poly_advective_code( nlayers,              &
                                 undf_w1,              &
                                 map_w1                &
                               )
-                                    
+
   implicit none
 
   ! Arguments
@@ -98,7 +98,7 @@ subroutine poly_advective_code( nlayers,              &
   integer(kind=i_def) :: k
   real(kind=r_def)    :: u, v, dtdx, dtdy
 
-  ! Horizontal advective update computation  
+  ! Horizontal advective update computation
   ! Bottom point
   u =  0.25_r_def*( wind(map_w2(1)) + wind(map_w2(3)) )
   v = -0.25_r_def*( wind(map_w2(2)) + wind(map_w2(4)) )
@@ -122,7 +122,7 @@ subroutine poly_advective_code( nlayers,              &
   dtdx = tracer(map_w1(11) + k) - tracer(map_w1(9) + k)
   dtdy = tracer(map_w1(12) + k) - tracer(map_w1(10) + k)
   advective(map_wt(2)+k) = u*dtdx + v*dtdy
-  
+
 end subroutine poly_advective_code
 
 end module poly_advective_kernel_mod

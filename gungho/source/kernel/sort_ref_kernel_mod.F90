@@ -45,13 +45,13 @@ contains
 !! @param[inout] theta_ref Real array, theta reference state
 !! @param[in] ndf_wth The number of degrees of freedom per cell for wth
 !! @param[in] undf_wth The number of unique degrees of freedom for wth
-!! @param[in] map_wth Integer array holding the dofmap for the cell at the 
+!! @param[in] map_wth Integer array holding the dofmap for the cell at the
 !>            base of the column for wth
 subroutine sort_ref_code(nlayers,                   &
                          theta_ref,                 &
                          ndf_wth, undf_wth, map_wth &
                          )
-  
+
   use log_mod,                       only: log_event,         &
                                            log_scratch_space, &
                                            LOG_LEVEL_INFO
@@ -60,7 +60,7 @@ subroutine sort_ref_code(nlayers,                   &
   ! Arguments
   integer(kind=i_def), intent(in) :: nlayers
 
-  integer(kind=i_def), intent(in) :: ndf_wth, undf_wth  
+  integer(kind=i_def), intent(in) :: ndf_wth, undf_wth
 
   real(kind=r_def), dimension(undf_wth), intent(inout) :: theta_ref
   integer(kind=i_def), dimension(ndf_wth), intent(in)  :: map_wth
@@ -74,7 +74,7 @@ subroutine sort_ref_code(nlayers,                   &
 
     theta_k=theta_ref(map_wth(1) + k)
     kcnt=k
-    
+
     do while (theta_ref(map_wth(1) + kcnt -1) > theta_k)
       theta_ref(map_wth(1) + kcnt) = theta_ref(map_wth(1) + kcnt -1)
       kcnt = kcnt - 1

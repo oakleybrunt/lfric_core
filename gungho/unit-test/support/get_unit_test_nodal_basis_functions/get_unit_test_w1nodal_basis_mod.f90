@@ -5,7 +5,7 @@
 !-----------------------------------------------------------------------------
 
 module get_unit_test_w1nodal_basis_mod
-! A module containing a collection of helper routines that provide canned 
+! A module containing a collection of helper routines that provide canned
 ! basis functions (and differential basis functions) evaluated on w1 nodal
 ! points for use when writing unit tests of kernels.
 !
@@ -24,14 +24,14 @@ module get_unit_test_w1nodal_basis_mod
 
   public :: get_w1_w1nodal_basis, &
             get_w0_w1nodal_diff_basis
-            
+
   contains
-  
+
 !---------------------------------------------------------------------
 
-  subroutine get_w1_w1nodal_basis(basis_w1) 
+  subroutine get_w1_w1nodal_basis(basis_w1)
     ! Return the basis function for a field on a w1 function space
-    ! evaluated on w1 nodal points 
+    ! evaluated on w1 nodal points
     implicit none
     real(r_def), allocatable, intent(out) :: basis_w1(:,:,:)
 
@@ -128,9 +128,9 @@ module get_unit_test_w1nodal_basis_mod
 
 !---------------------------------------------------------------------
 
-  subroutine get_w0_w1nodal_diff_basis(diff_basis_w0) 
-    ! Return the diff basis function for a field on a w0 function space 
-    ! evaluated on w1 nodal points 
+  subroutine get_w0_w1nodal_diff_basis(diff_basis_w0)
+    ! Return the diff basis function for a field on a w0 function space
+    ! evaluated on w1 nodal points
     implicit none
     real(r_def), allocatable, intent(out) :: diff_basis_w0(:,:,:)
 

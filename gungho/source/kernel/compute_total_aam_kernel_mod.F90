@@ -60,17 +60,17 @@ contains
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 Number unique of degrees of freedom  for w2
 !! @param[in] map_w2 Dofmap for the cell at the base of the column for w2
-!! @param[in] w2_basis Basis functions evaluated at quadrature points 
+!! @param[in] w2_basis Basis functions evaluated at quadrature points
 !! @param[in] u Velocity array
 !! @param[in] ndf_w3 Number of degrees of freedom per cell for w3
 !! @param[in] undf_w3 Number unique of degrees of freedom  for w3
 !! @param[in] map_w3 Dofmap for the cell at the base of the column for w3
-!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] rho density
 !! @param[in] ndf_chi Number of degrees of freedom per cell for chi
 !! @param[in] undf_chi Number unique of degrees of freedom  for chi
 !! @param[in] map_chi Dofmap for the cell at the base of the column for chi
-!! @param[in] chi_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] chi_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] chi_diff_basis Differntial of the basis functions evaluated at gaussian quadrature point
 !! @param[in] chi_1 Physical x coordinate in chi
 !! @param[in] chi_2 Physical y coordinate in chi
@@ -161,9 +161,9 @@ subroutine compute_total_aam_code(                                              
         scaled_omega_vec(2) = 2.0_r_def*scaled_omega*cos(r_vec(2))
         scaled_omega_vec(3) = 2.0_r_def*scaled_omega*sin(r_vec(2))
 
-        rho_at_quad = 0.0_r_def 
+        rho_at_quad = 0.0_r_def
         do df = 1, ndf_w3
-          rho_at_quad  = rho_at_quad + rho_e(df)*w3_basis(1,df,qp1,qp2) 
+          rho_at_quad  = rho_at_quad + rho_e(df)*w3_basis(1,df,qp1,qp2)
         end do
 
         u_at_quad(:) = 0.0_r_def
@@ -171,7 +171,7 @@ subroutine compute_total_aam_code(                                              
           u_at_quad(:) = u_at_quad(:) &
                        + u_e(df)*w2_basis(:,df,qp1,qp2)
         end do
-   
+
         j_u = matmul(jac(:,:,qp1,qp2),u_at_quad)
         u_vec(:) = cart2sphere_vector(x_vec,j_u) &
                  + cross_product(scaled_omega_vec,r_vec)*dj(qp1,qp2)

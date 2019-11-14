@@ -46,7 +46,7 @@ module io_mod
                                            LOG_LEVEL_DEBUG,   &
                                            LOG_LEVEL_TRACE
   use mesh_mod,                      only: mesh_type
-  use mesh_collection_mod,           only: mesh_collection 
+  use mesh_collection_mod,           only: mesh_collection
   use mpi,                           only: mpi_success
   use mpi_mod,                       only: get_comm_size, get_comm_rank, all_gather
   use project_output_mod,            only: project_output
@@ -128,7 +128,7 @@ subroutine xios_domain_init(xios_ctx, mpi_comm, dtime, &
   type(field_type),   intent(in)       :: chi(:)
 
 
-  ! Local variables 
+  ! Local variables
   type(xios_duration)                  :: xios_timestep
   type(xios_duration)                  :: o_freq, cp_freq, dump_freq
   type(xios_duration)                  :: av_freq
@@ -175,8 +175,8 @@ subroutine xios_domain_init(xios_ctx, mpi_comm, dtime, &
 
       call xios_checkpoint_domain_init(domain_function_spaces(fs_index), &
                                            trim(domain_name), mesh_id, chi, .true.)
-    else 
-    
+    else
+
       call xios_checkpoint_domain_init(domain_function_spaces(fs_index), &
                                        trim(domain_name), mesh_id, chi, .false.)
     end if
@@ -201,7 +201,7 @@ subroutine xios_domain_init(xios_ctx, mpi_comm, dtime, &
   ! Set diagnostic output (configured in timesteps) frequency in seconds
   if (xios_is_valid_file("lfric_averages")) then
     av_freq%second = timestep_end*dtime
-    
+
     call xios_get_handle("lfric_averages",ofile_hdl)
     call xios_set_attr(ofile_hdl, output_freq=av_freq)
   end if
@@ -231,7 +231,7 @@ subroutine xios_domain_init(xios_ctx, mpi_comm, dtime, &
   end if
 
   if( init_option == init_option_fd_start_dump .or. &
-      ancil_option == ancil_option_aquaplanet ) then    
+      ancil_option == ancil_option_aquaplanet ) then
 
     ! Enable the fd field group
 
@@ -322,7 +322,7 @@ subroutine xios_diagnostic_domain_init(mesh_id, chi)
   integer(i_def),   intent(in) :: mesh_id
   type(field_type), intent(in) :: chi(:)
 
-  ! Local variables 
+  ! Local variables
 
   integer(i_def) :: i
 
@@ -403,7 +403,7 @@ subroutine xios_diagnostic_domain_init(mesh_id, chi)
   allocate(local_undf(1))
   allocate(all_undfs(get_comm_size()))
 
-  
+
   all_undfs = 0
 
   ! Set up the 'node' domain.
@@ -424,7 +424,7 @@ subroutine xios_diagnostic_domain_init(mesh_id, chi)
   ! Get pointer to local mesh for the coordinate field
   local_mesh => coord_output(1)%get_mesh()
 
-  ! Get mesh information 
+  ! Get mesh information
   num_face_local = local_mesh%get_last_edge_cell()
   nodes_per_face = local_mesh%get_nverts_per_cell_2d()
   nodes_per_edge = local_mesh%get_nverts_per_edge()
@@ -477,12 +477,12 @@ subroutine xios_diagnostic_domain_init(mesh_id, chi)
   allocate(bnd_nodes_lat(1,size(nodes_lat)))
 
   allocate(bnd_faces_lon(nodes_per_face,num_face_local))
-  allocate(bnd_faces_lat(nodes_per_face,num_face_local))  
+  allocate(bnd_faces_lat(nodes_per_face,num_face_local))
 
   allocate(bnd_edges_lon(nodes_per_edge,size_w2h))
-  allocate(bnd_edges_lat(nodes_per_edge,size_w2h))  
+  allocate(bnd_edges_lat(nodes_per_edge,size_w2h))
 
-  ! Calculate the node coords arrays and also the face-node boundary arrays 
+  ! Calculate the node coords arrays and also the face-node boundary arrays
   call calc_xios_domain_coords(local_mesh, coord_output, chi,  &
                                nfull_levels, num_face_local,   &
                                nodes_lon_full, nodes_lat_full, &
@@ -546,7 +546,7 @@ subroutine xios_diagnostic_domain_init(mesh_id, chi)
 
   allocate(local_undf(1))
   allocate(all_undfs(get_comm_size()))
-  
+
   all_undfs = 0
 
   ! Set up the face domains
@@ -566,7 +566,7 @@ subroutine xios_diagnostic_domain_init(mesh_id, chi)
 
   ! If spherical geometry convert the coordinate field to (longitude, latitude, radius)
   if ( geometry == geometry_spherical ) then
-     call invoke_pointwise_convert_xyz2llr(coord_output) 
+     call invoke_pointwise_convert_xyz2llr(coord_output)
   end if
 
 
@@ -626,13 +626,13 @@ subroutine xios_diagnostic_domain_init(mesh_id, chi)
   call xios_set_domain_attr("face_half_levels", bounds_lon_1d=bnd_faces_lon, &
                             bounds_lat_1d=bnd_faces_lat)
 
-  ! Set up the domain index (this will be used for face half level and 
-  ! face full level domain setup 
+  ! Set up the domain index (this will be used for face half level and
+  ! face full level domain setup
 
   ! Allocate domain_index for faces
   allocate(domain_index(num_face_local))
 
-  ! Populate domain_index for this rank 
+  ! Populate domain_index for this rank
   call proxy_coord_output(1)%vspace%get_global_dof_id_2d(domain_index)
 
   ! Pass local portion of domain_index
@@ -666,7 +666,7 @@ subroutine xios_diagnostic_domain_init(mesh_id, chi)
 
   ! If spherical geometry convert the coordinate field to (longitude, latitude, radius)
   if ( geometry == geometry_spherical ) then
-     call invoke_pointwise_convert_xyz2llr(coord_output) 
+     call invoke_pointwise_convert_xyz2llr(coord_output)
   end if
 
   ! Get proxies for coordinates so we can access them
@@ -705,7 +705,7 @@ subroutine xios_diagnostic_domain_init(mesh_id, chi)
 
   allocate(local_undf(1))
   allocate(all_undfs(get_comm_size()))
-  
+
   all_undfs = 0
 
   ! Set up the edge domain
@@ -725,7 +725,7 @@ subroutine xios_diagnostic_domain_init(mesh_id, chi)
 
   ! If spherical geometry convert the coordinate field to (longitude, latitude, radius)
   if ( geometry == geometry_spherical ) then
-     call invoke_pointwise_convert_xyz2llr(coord_output) 
+     call invoke_pointwise_convert_xyz2llr(coord_output)
   end if
 
 
@@ -902,7 +902,7 @@ subroutine xios_checkpoint_domain_init(fs_id, domain_name, mesh_id, chi, use_ind
 
   ! If spherical geometry convert the coordinate field to (longitude, latitude, radius)
   if ( geometry == geometry_spherical ) then
-    call invoke_pointwise_convert_xyz2llr(coord_output) 
+    call invoke_pointwise_convert_xyz2llr(coord_output)
   end if
 
 
@@ -968,13 +968,13 @@ subroutine xios_checkpoint_domain_init(fs_id, domain_name, mesh_id, chi, use_ind
     ! Allocate domain_index - it is of size ndof_glob
     allocate(domain_index(output_field_fs%get_ndof_glob()))
 
-    ! Populate domain_index for this rank 
+    ! Populate domain_index for this rank
     call output_field_fs%get_global_dof_id(domain_index)
 
     ! Pass local portion of domain_index (up to undf)
     call xios_set_domain_attr(domain_name, i_index=int(domain_index(1:local_undf(1))))
 
-  end if 
+  end if
 
 
   if ( allocated(checkpoint_lon) )     deallocate(checkpoint_lon)
@@ -994,17 +994,17 @@ end subroutine xios_checkpoint_domain_init
 !> @brief   Compute the node domain coords for this partition
 !> @details Samples the chi field at nodal points, calculates cartesian coordinates.
 !>          For spherical geometry, converts to lat-lon in degrees for specified layer
-!>@param[in] local_mesh the id of the partitioned mesh 
+!>@param[in] local_mesh the id of the partitioned mesh
 !>@param[in] nodal_coords input field
 !>@param[in] chi input coordinate field
 !>@param[in] nlayers the number of layers data is output on
 !>@param[in] ncells the number of cells on the partition
 !>@param[out] lon_coords array of longitude coordinates for the nodes
 !>@param[out] lat_coords array of latitude coordinates for the nodes
-!>@param[inout] face_bnds_lon_coords array of longitude coords making up the faces 
-!>@param[inout] face_bnds_lat_coords array of latitude coords making up the faces 
-!>@param[inout] edge_bnds_lon_coords array of coords making up the edges 
-!>@param[inout] edge_bnds_lat_coords array of coords making up the edges 
+!>@param[inout] face_bnds_lon_coords array of longitude coords making up the faces
+!>@param[inout] face_bnds_lat_coords array of latitude coords making up the faces
+!>@param[inout] edge_bnds_lon_coords array of coords making up the edges
+!>@param[inout] edge_bnds_lat_coords array of coords making up the edges
 
 subroutine calc_xios_domain_coords(local_mesh, nodal_coords, chi, &
                                    nlayers, ncells,               &
@@ -1028,7 +1028,7 @@ subroutine calc_xios_domain_coords(local_mesh, nodal_coords, chi, &
   real(kind=dp_xios), intent(inout)    :: edge_bnds_lat_coords(:,:)
 
   type(field_proxy_type) :: x_p(3), chi_p(3)
-   
+
   integer(i_def)            :: cell, edge_count
   integer(i_def)            :: ndf_chi, ndf_x
   integer(i_def)            :: dim_chi
@@ -1122,7 +1122,7 @@ subroutine calc_xios_domain_coords(local_mesh, nodal_coords, chi, &
     ! For this cell compute the edge-bounds coordinates from the face-bounds coordinates
 
     do df_x = 1,(ndf_x/2)
-      
+
       ! Retrieve the lat / lon coords of the points bounding the edge
       if (df_x == ndf_x/2) then
         edge1 = df_x
@@ -1132,7 +1132,7 @@ subroutine calc_xios_domain_coords(local_mesh, nodal_coords, chi, &
         edge2 = df_x + 1
       endif
 
-      ! Is the edge owned by this cell? 
+      ! Is the edge owned by this cell?
       if (local_mesh%get_edge_cell_owner(df_x, cell) == cell) then
 
         edge_count = edge_count + 1
@@ -1143,7 +1143,7 @@ subroutine calc_xios_domain_coords(local_mesh, nodal_coords, chi, &
         edge_bnds_lat_coords(2,edge_count) = face_bnds_lat_coords(edge2,cell)
 
 
-      end if ! Edge is owned by this cell 
+      end if ! Edge is owned by this cell
 
     end do ! loop over edges
 
@@ -1200,7 +1200,7 @@ end function ts_fname
 !>@param[in] fspace_dimension dimension of the field's function space
 !>@param[in] output_unit file unit to write to
 !>@param[in] fname file name to write to
-!------------------------------------------------------------------------------- 
+!-------------------------------------------------------------------------------
 subroutine nodal_write_field(nodal_coordinates, level, nodal_output, &
                              fspace_dimension, output_unit, fname)
 
@@ -1221,8 +1221,8 @@ subroutine nodal_write_field(nodal_coordinates, level, nodal_output, &
 
   undf = n_p(1)%vspace%get_last_dof_owned()
 
-  open(OUTPUT_UNIT, file = trim(fname), status = "replace")   
-  write(OUTPUT_UNIT,'(A)') 'x = [' 
+  open(OUTPUT_UNIT, file = trim(fname), status = "replace")
+  write(OUTPUT_UNIT,'(A)') 'x = ['
   if ( fspace_dimension  == 1 ) then
     do df = 1,undf
       write(OUTPUT_UNIT,'(5e25.15e3)') x_p(1)%data(df), x_p(2)%data(df), &
@@ -1246,7 +1246,7 @@ end subroutine nodal_write_field
 !> @details Legacy method for reading checkpoints
 !           Note this routine accepts a field name but
 !           doesn't use it - this is to keep the interface
-!           the same for all methods 
+!           the same for all methods
 !>@param[in] field_name Name of the field to read
 !>@param[in] file_name Name of the file to read from
 !>@param[in,out] field_proxy the proxy of the field to read data into
@@ -1278,7 +1278,7 @@ end subroutine checkpoint_read_netcdf
 !> @details Legacy method for writing checkpoints
 !           Note this routine accepts a field name but
 !           doesn't use it - this is to keep the interface
-!           the same for all methods 
+!           the same for all methods
 !>@param[in] field_name Name of the field to write
 !>@param[in] file_name Name of the file to write to
 !>@param[in,out] field_proxy the proxy of the field to write
@@ -1434,7 +1434,7 @@ subroutine read_checkpoint(state, timestep)
 
 end subroutine read_checkpoint
 
-! The dump read and write subroutines are wrappers that call 
+! The dump read and write subroutines are wrappers that call
 ! XIOS read and write I/O subroutines
 
 !> @brief   Write a field to a dump via XIOS
@@ -1536,7 +1536,7 @@ end subroutine read_state
 !> @brief   Output a field in UGRID format on the node domain via XIOS
 !>@param[in] xios_field_name XIOS identifier for the field
 !>@param[in] field_proxy a field proxy containing the data to output
-!------------------------------------------------------------------------------- 
+!-------------------------------------------------------------------------------
 subroutine xios_write_field_node(xios_field_name, field_proxy)
 
   implicit none
@@ -1565,9 +1565,9 @@ subroutine xios_write_field_node(xios_field_name, field_proxy)
 
   ! We need to reshape the raw field data to get the correct data layout for UGRID
   ! At the moment field array data is 1D with levels ordered sequentially
-  ! This is only true for current scalar fields on lowest order fs and may change 
+  ! This is only true for current scalar fields on lowest order fs and may change
 
-  ! First get the data on the same level ordered in chunks  
+  ! First get the data on the same level ordered in chunks
   do i=0, axis_size-1
     send_field(i*(domain_size)+1:(i*(domain_size)) + domain_size) = &
                field_proxy%data(i+1:undf:axis_size)
@@ -1618,7 +1618,7 @@ end subroutine xios_write_field_single_face
 !> @brief   Output a field in UGRID format on the face domain via XIOS
 !>@param[in] xios_field_name XIOS identifier for the field
 !>@param[in] field_proxy a field proxy containing the data to output
-!------------------------------------------------------------------------------- 
+!-------------------------------------------------------------------------------
 subroutine xios_write_field_face(xios_field_name, field_proxy)
 
   implicit none
@@ -1653,9 +1653,9 @@ subroutine xios_write_field_face(xios_field_name, field_proxy)
 
   ! We need to reshape the raw field data to get the correct data layout for UGRID
   ! At the moment field array data is 1D with levels ordered sequentially
-  ! This is only true for current scalar fields on lowest order fs and may change 
+  ! This is only true for current scalar fields on lowest order fs and may change
 
-  ! First get the data on the same level ordered in chunks  
+  ! First get the data on the same level ordered in chunks
   do i=0, axis_size-1
     send_field(i*(domain_size)+1:(i*(domain_size)) + domain_size) = &
                field_proxy%data(i+1:undf:axis_size)
@@ -1713,7 +1713,7 @@ subroutine xios_read_field_face(xios_field_name, field_proxy)
   do i=0, axis_size-1
 
     field_proxy%data(i+1:undf:axis_size) = &
-                                   recv_field(i*(domain_size)+1:(i*(domain_size)) + domain_size)   
+                                   recv_field(i*(domain_size)+1:(i*(domain_size)) + domain_size)
   end do
 
   deallocate(recv_field)
@@ -1762,7 +1762,7 @@ end subroutine xios_read_field_single_face
 !> @brief   Output a field in UGRID format on the edge domain via XIOS
 !>@param[in] xios_field_name XIOS identifier for the field
 !>@param[in] field_proxy a field proxy containing the data to output
-!------------------------------------------------------------------------------- 
+!-------------------------------------------------------------------------------
 subroutine xios_write_field_edge(xios_field_name, field_proxy)
 
   implicit none
@@ -1777,7 +1777,7 @@ subroutine xios_write_field_edge(xios_field_name, field_proxy)
 
   undf = field_proxy%vspace%get_last_dof_owned()
   fs_id = field_proxy%vspace%which()
-  
+
   ! Get the expected horizontal and vertical axis size
 
   call xios_get_domain_attr('edge_half_levels', ni=domain_size)
@@ -1790,9 +1790,9 @@ subroutine xios_write_field_edge(xios_field_name, field_proxy)
 
   ! We need to reshape the raw field data to get the correct data layout for UGRID
   ! At the moment field array data is 1D with levels ordered sequentially
-  ! This is only true for current scalar fields on lowest order fs and may change 
+  ! This is only true for current scalar fields on lowest order fs and may change
 
-  ! First get the data on the same level ordered in chunks  
+  ! First get the data on the same level ordered in chunks
   do i=0, axis_size-1
     send_field(i*(domain_size)+1:(i*(domain_size)) + domain_size) = &
                field_proxy%data(i+1:undf:axis_size)
@@ -1804,7 +1804,7 @@ subroutine xios_write_field_edge(xios_field_name, field_proxy)
                        reshape (send_field, (/domain_size, axis_size/) ))
 
   deallocate(send_field)
-  
+
 end subroutine xios_write_field_edge
 
 end module io_mod

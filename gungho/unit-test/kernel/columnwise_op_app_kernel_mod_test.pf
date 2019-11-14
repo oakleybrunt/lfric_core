@@ -209,7 +209,7 @@ contains
     do i = 1, columnwise_mm_p%nrow
        @assertEqual(lhs_direct(i), lhs_p%data(i), tol)
     end do
-    
+
     deallocate(densematrix)
     deallocate(lhs_direct)
 

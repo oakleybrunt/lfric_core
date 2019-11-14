@@ -68,8 +68,8 @@ contains
 !! @param[in] ndf_w2 Number of degrees of freedom per cell for w2
 !! @param[in] undf_w2 Number unique of degrees of freedom  for w2
 !! @param[in] map_w2 Dofmap for the cell at the base of the column for w2
-!! @param[in] w2_basis Basis functions evaluated at quadrature points 
-!! @param[inout] r_u Right hand side of the momentum equation 
+!! @param[in] w2_basis Basis functions evaluated at quadrature points
+!! @param[inout] r_u Right hand side of the momentum equation
 !! @param[in] ndf_w0 Number of degrees of freedom per cell for w0
 !! @param[in] undf_w0 Number unique of degrees of freedom  for w0
 !! @param[in] map_w0 Dofmap for the cell at the base of the column for w0
@@ -95,8 +95,8 @@ subroutine geopotential_gradient_code(nlayers,                                 &
   integer, dimension(ndf_w0), intent(in) :: map_w0
   integer, dimension(ndf_w2), intent(in) :: map_w2
 
-  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis 
-  real(kind=r_def), dimension(3,ndf_w0,nqp_h,nqp_v), intent(in) :: w0_diff_basis   
+  real(kind=r_def), dimension(3,ndf_w2,nqp_h,nqp_v), intent(in) :: w2_basis
+  real(kind=r_def), dimension(3,ndf_w0,nqp_h,nqp_v), intent(in) :: w0_diff_basis
 
   real(kind=r_def), dimension(undf_w2), intent(inout) :: r_u
   real(kind=r_def), dimension(undf_w0), intent(in)    :: phi
@@ -105,45 +105,45 @@ subroutine geopotential_gradient_code(nlayers,                                 &
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
 
   !Internal variables
-  integer               :: df, k 
+  integer               :: df, k
   integer               :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_w2)          :: ru_e
   real(kind=r_def), dimension(ndf_w0)          :: phi_e
 
   real(kind=r_def) :: grad_phi_at_quad(3)
   real(kind=r_def) :: geo_term
-  
+
   do k = 0, nlayers-1
     do df = 1, ndf_w0
       phi_e(df)   = phi(map_w0(df) + k)
-    end do   
+    end do
     do df = 1, ndf_w2
       ru_e(df) = 0.0_r_def
-    end do    
-  ! compute the RHS integrated over one cell    
+    end do
+  ! compute the RHS integrated over one cell
     do qp2 = 1, nqp_v
       do qp1 = 1, nqp_h
         grad_phi_at_quad(:) = 0.0_r_def
         do df = 1, ndf_w0
           grad_phi_at_quad(:)   = grad_phi_at_quad(:) &
-                                + phi_e(df)*w0_diff_basis(:,df,qp1,qp2) 
+                                + phi_e(df)*w0_diff_basis(:,df,qp1,qp2)
         end do
 
         do df = 1, ndf_w2
 ! geopotential term
           geo_term = dot_product( grad_phi_at_quad(:), w2_basis(:,df,qp1,qp2))
 
-          ru_e(df) = ru_e(df) -  wqp_h(qp1)*wqp_v(qp2)*geo_term 
+          ru_e(df) = ru_e(df) -  wqp_h(qp1)*wqp_v(qp2)*geo_term
 
         end do
       end do
     end do
     do df = 1, ndf_w2
       r_u( map_w2(df) + k ) =  r_u( map_w2(df) + k ) + ru_e(df)
-    end do 
+    end do
   end do
-  
+
 end subroutine geopotential_gradient_code
 
 end module geopotential_gradient_kernel_mod

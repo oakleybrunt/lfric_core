@@ -41,14 +41,14 @@ module deep_baroclinic_wave_mod
        pertlat    = 2.0_r_def*pi/9.0_r_def,& ! Perturbation latitude
        pertz      = 15000.0_r_def   ,      & ! Perturbation height cap
        dxepsilon  = 1.0e-5_r_def             ! Small value for numerical derivatives
-        
+
 
 contains
 
   subroutine deep_baroclinic_wave(lon, lat, z, &
                                   exner, theta, rho, &
                                   u, v, w)
- 
+
     implicit none
 
 !-----------------------------------------------------------------------
@@ -148,7 +148,7 @@ contains
     end if
 
     omegarcoslat = scaled_omega * rcoslat
-    
+
     u = - omegarcoslat + sqrt(omegarcoslat**2 + rcoslat * bigU)
     v = 0.0_r_def
     w = 0.0_r_def

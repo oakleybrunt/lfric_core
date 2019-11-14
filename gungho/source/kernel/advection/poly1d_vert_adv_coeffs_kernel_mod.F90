@@ -6,7 +6,7 @@
 !
 !-------------------------------------------------------------------------------
 !> @brief Compute the coefficients for reconstructing a
-!>        a  1D vertical upwind polynomial representation of a tracer field on the 
+!>        a  1D vertical upwind polynomial representation of a tracer field on the
 !>        faces of a cell
 !> @details Compute the coefficients of the flux of a tracer density field using a high order
 !>          1D polynomial fit to the integrated tracer values over a given stencil.
@@ -14,9 +14,9 @@
 !>          A symmetric polynomial is used containing all monomials up to the
 !>          desired order, i.e. order = 2: 1 + x + x^2
 !>          This is exactly fitted over all cells in the stencil
-!>          The methodology is inspired by that of Thuburn et.al GMD 2014 for 
+!>          The methodology is inspired by that of Thuburn et.al GMD 2014 for
 !>          2D reconstructions
-!>          This method is only valid for lowest order elements 
+!>          This method is only valid for lowest order elements
 module poly1d_vert_adv_coeffs_kernel_mod
 
 use argument_mod,      only : arg_type, func_type, mesh_data_type,  &
@@ -74,9 +74,9 @@ contains
 !>@param[in] map_wt Dofmap of the tracer field
 !>@param[in] ndf_wx Number of degrees of freedom per cell for the coordinate space
 !>@param[in] undf_wx Total number of degrees of freedom for the coordinate space
-!>@param[in] map_wx Dofmap of the coordinate space 
+!>@param[in] map_wx Dofmap of the coordinate space
 !>@param[in] basis_wx Basis function of the coordinate space evaluated on
-!!                    Wtheta nodal points 
+!!                    Wtheta nodal points
 !>@param[in] global_order Desired polynomial order for advective computations
 !>@param[in] nfaces_v Number of vertical faces (used by PSyclone to size coeff
 !!                    array)
@@ -99,7 +99,7 @@ subroutine poly1d_vert_adv_coeffs_code(nlayers,                   &
   use base_mesh_config_mod, only: geometry, &
                                   geometry_spherical
   implicit none
-   
+
   ! Arguments
   integer(kind=i_def), intent(in) :: global_order, nfaces_v
   integer(kind=i_def), intent(in) :: nlayers
@@ -134,9 +134,9 @@ subroutine poly1d_vert_adv_coeffs_code(nlayers,                   &
     planar    = 1.0_r_def
   end if
 
-  ! Compute the offset map for all even orders up to order 
+  ! Compute the offset map for all even orders up to order
   ! The + 3 comes from the minimum number of cells needed
-  ! (central cell and the neighbours either side) 
+  ! (central cell and the neighbours either side)
   allocate( smap(global_order+3,0:global_order/2) )
   smap(:,:) = 0
   do m = 0,global_order,2
@@ -150,7 +150,7 @@ subroutine poly1d_vert_adv_coeffs_code(nlayers,                   &
   ! Loop over layers (ignoring first and last points)
   layer_loop: do k = 1, nlayers-1
 
-    ! Compute local order, this is at most global_order but reduces near the 
+    ! Compute local order, this is at most global_order but reduces near the
     ! top and bottom boundary
     order = min(global_order, min(2*(k-1), 2*(nlayers-1-k)))
 
@@ -159,7 +159,7 @@ subroutine poly1d_vert_adv_coeffs_code(nlayers,                   &
     allocate( int_monomial(nmonomial, nmonomial),  &
               inv_int_monomial(nmonomial, nmonomial), &
               beta(nmonomial), delta(nmonomial), monomial(nmonomial) )
- 
+
     ! Position vector of bottom of this cell
     x0 = 0.0_r_def
     do df = 1, ndf_wx
@@ -188,7 +188,7 @@ subroutine poly1d_vert_adv_coeffs_code(nlayers,                   &
       ! Loop over all cells in the stencil
       stencil_loop: do stencil = 1, order+2
         area(stencil) = mdwt(map_wt( 1 ) + k + smap(stencil+face,order/2) )
-        ! If k + smap(stencil,order/2) == nlayers we need to make sure we use 
+        ! If k + smap(stencil,order/2) == nlayers we need to make sure we use
         ! coordinate evaluated in cell k = nlayers-1 but with zp=1
         if ( k + smap(stencil+face,order/2) == nlayers ) then
           kx = nlayers-1
@@ -197,15 +197,15 @@ subroutine poly1d_vert_adv_coeffs_code(nlayers,                   &
           kx = k + smap(stencil+face,order/2)
           qp = 1
         end if
-        ! Evaluate coordinate at theta point of this cell 
+        ! Evaluate coordinate at theta point of this cell
         xq = 0.0_r_def
         do df = 1, ndf_wx
           ijk = map_wx( df ) + kx
           xq(:) = xq(:) + (/ chi1(ijk), chi2(ijk), chi3(ijk) /)*basis_wx(1,df,qp)
         end do
         zq = sqrt(xq(1)**2 + xq(2)**2 + xq(3)**2)*spherical + xq(3)*planar
- 
-        ! Second: Compute the local coordinate of each quadrature point from the 
+
+        ! Second: Compute the local coordinate of each quadrature point from the
         !         physical coordinate
         xx = (zq - z0)/dz
 
@@ -222,7 +222,7 @@ subroutine poly1d_vert_adv_coeffs_code(nlayers,                   &
       call matrix_invert(int_monomial,inv_int_monomial,nmonomial)
 
       ! Initialise polynomial coeffficients to zero
-      coeff(:,face+1,map_wt(1)+k) = 0.0_r_def    
+      coeff(:,face+1,map_wt(1)+k) = 0.0_r_def
 
       ! Evaluate derivative of polynomial at this theta point
       xx = 0.0_r_def

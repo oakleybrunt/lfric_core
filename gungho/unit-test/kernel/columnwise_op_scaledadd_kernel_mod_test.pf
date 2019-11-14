@@ -243,7 +243,7 @@ contains
           matrixentry &
              = columnwise_op_mass_DT_D_p%columnwise_matrix(j-j_minus+1,i,cell)
           @assertEqual( densematrix_mass_DT_D(i,j), matrixentry, tol )
-          
+
        end do
     end do
 

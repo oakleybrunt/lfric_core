@@ -35,11 +35,11 @@ contains
     dd(2,:) = (/ 3.0_r_def, -1.0_r_def /)
     dd(3,:) = (/ 0.4_r_def,  1.3_r_def /)
     dd(4,:) = (/ 0.0_r_def,  0.0_r_def /)
-    
+
     bc(:,:) = 1_i_def
     bc(1,1) = 0_i_def
     bc(4,2) = 0_i_def
- 
+
     call enforce_operator_bc_code(1, &
                                   1, &
                                   d, &

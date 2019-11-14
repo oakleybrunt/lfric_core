@@ -29,8 +29,8 @@ module gravity_wave_infrastructure_mod
                                    get_comm_size, get_comm_rank
   use xios,                 only : xios_finalize, xios_initialize
   use yaxt,                 only : xt_initialize, xt_finalize
-  
-  
+
+
   implicit none
 
   private
@@ -106,10 +106,10 @@ contains
     call log_event( log_scratch_space, LOG_LEVEL_ALWAYS )
 
     call set_derived_config( .false. )
-  
+
   end subroutine initialise_infrastructure
-  
-  
+
+
   !> @brief Finalises infrastructure used by the model
   subroutine finalise_infrastructure()
 

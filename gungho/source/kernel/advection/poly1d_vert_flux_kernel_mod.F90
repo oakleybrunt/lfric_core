@@ -10,10 +10,10 @@
 !>        upwind reconstruction
 !> @details Compute the flux for a tracer density field using a high order
 !>          polynomial fit to the integrated tracer values. The stencil used for the
-!>          polynomial is centred on the upwind cell. 
-!>          Near the boundaries the order of reconstruction may be reduced 
+!>          polynomial is centred on the upwind cell.
+!>          Near the boundaries the order of reconstruction may be reduced
 !>          if there are not enough points to compute desired order
-!>          This method is only valid for lowest order elements 
+!>          This method is only valid for lowest order elements
 module poly1d_vert_flux_kernel_mod
 
 use argument_mod,      only : arg_type, func_type, mesh_data_type,  &
@@ -62,7 +62,7 @@ contains
 
 !> @brief Computes the vertical fluxes for a tracer density
 !! @param[in]  nlayers Number of layers
-!! @param[out] flux Mass flux field to compute 
+!! @param[out] flux Mass flux field to compute
 !! @param[in]  wind Wind field
 !! @param[in]  density Tracer density
 !! @param[in]  coeff Array of polynomial coefficients for interpolation
@@ -93,7 +93,7 @@ subroutine poly1d_vert_flux_code( nlayers,              &
                                   global_order,         &
                                   nfaces_v,             &
                                   out_face_normal )
-                                    
+
   implicit none
 
   ! Arguments
@@ -104,7 +104,7 @@ subroutine poly1d_vert_flux_code( nlayers,              &
   integer(kind=i_def), intent(in)                    :: undf_w2
   integer(kind=i_def), dimension(ndf_w2), intent(in) :: map_w2
   integer(kind=i_def), dimension(ndf_w3), intent(in) :: map_w3
-  integer(kind=i_def), intent(in)                    :: global_order, nfaces_v 
+  integer(kind=i_def), intent(in)                    :: global_order, nfaces_v
 
   real(kind=r_def), dimension(undf_w2), intent(out)  :: flux
   real(kind=r_def), dimension(undf_w2), intent(in)   :: wind
@@ -125,7 +125,7 @@ subroutine poly1d_vert_flux_code( nlayers,              &
 
   integer(kind=i_def), allocatable, dimension(:,:) :: smap
 
-  ! Compute the offset map for all even orders up to order  
+  ! Compute the offset map for all even orders up to order
   allocate( smap(global_order+1,0:global_order/2) )
   smap(:,:) = 0
   do m = 0,global_order,2
@@ -134,17 +134,17 @@ subroutine poly1d_vert_flux_code( nlayers,              &
     end do
   end do
 
-  do df = 5,6    
+  do df = 5,6
     v_dot_n(df-4) =  dot_product(basis_w2(:,df,df),out_face_normal(:,df))
   end do
-  
+
   ij = map_w3(1)
 
-  ! Vertical flux computation    
+  ! Vertical flux computation
   do k = 0, nlayers - 1
     order = min(global_order, min(2*k, 2*(nlayers-1 - k)))
     do df = 5,6
-      id = df - 4 
+      id = df - 4
       ! Check if this is the upwind cell
       direction = wind(map_w2(df) + k )*v_dot_n(id)
       if ( direction >= 0.0_r_def ) then
@@ -166,7 +166,7 @@ subroutine poly1d_vert_flux_code( nlayers,              &
   flux(map_w2(6)+nlayers-1) = wind(map_w2(6)+nlayers-1)*density(map_w3(1)+nlayers-1)
 
   deallocate( smap )
-  
+
 end subroutine poly1d_vert_flux_code
 
 end module poly1d_vert_flux_kernel_mod

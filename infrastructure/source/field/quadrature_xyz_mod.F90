@@ -10,9 +10,9 @@
 
 !> @details This module contains the quadrature_xyz_type.
 
-!> This type contains points and weights stored in 3D (x-y-z). A proxy  
-!> is used to access the data. A type bound procedure 'compute_function' 
-!> is also available. This method uses the call_function defined in 
+!> This type contains points and weights stored in 3D (x-y-z). A proxy
+!> is used to access the data. A type bound procedure 'compute_function'
+!> is also available. This method uses the call_function defined in
 !> function_space_type. The function is evaluated for the xyz arrangement
 !>
 !> There are two constructors:
@@ -73,7 +73,7 @@ end type quadrature_xyz_type
 
 !> Psy layer representation of a quadrature_xyz type
 !>
-!> This is an accessor class that allows access to quadrature_xyz_type 
+!> This is an accessor class that allows access to quadrature_xyz_type
 !> data and information with each element accessed via a public pointer.
 !>
 type, public :: quadrature_xyz_proxy_type
@@ -259,8 +259,8 @@ end function get_quadrature_proxy
 !> @brief Evaluates the a given function for on a set of 3d points.
 !> @param[in] self, The calling quadrature_type
 !> @param[in] function_to_call integer, Enumerator defining the function to call
-!> @param[in] function_space function_space_type, Function space containing the 
-!> function to evaluate 
+!> @param[in] function_space function_space_type, Function space containing the
+!> function to evaluate
 !> @param[in] fspace_dim integer, Size of the function to be evaluated
 !> @param[in] ndf integer, Number of dofs
 !> @param[out] basis real, 3 dimensional array holding the evaluated function
@@ -299,7 +299,7 @@ subroutine quadrature_final(self)
 
   if (allocated(self%points_xyz))  deallocate(self%points_xyz)
   if (allocated(self%weights_xyz)) deallocate(self%weights_xyz)
-  
+
 end subroutine quadrature_final
 
 !-------------------------------------------------------------------------------
@@ -314,7 +314,7 @@ subroutine quadrature_destructor(self)
   type(quadrature_xyz_type) :: self
 
   call self%quadrature_final()
-  
+
 end subroutine quadrature_destructor
 !-------------------------------------------------------------------------------
 

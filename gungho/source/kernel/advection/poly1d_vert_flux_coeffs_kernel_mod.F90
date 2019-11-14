@@ -6,7 +6,7 @@
 !
 !-------------------------------------------------------------------------------
 !> @brief Compute the coefficients for reconstructing a
-!>        a  1D vertical upwind polynomial representation of a tracer field on the 
+!>        a  1D vertical upwind polynomial representation of a tracer field on the
 !>        faces of a cell
 !> @details Compute the coefficients of the flux of a tracer density field using a high order
 !>          1D polynomial fit to the integrated tracer values over a given stencil.
@@ -14,9 +14,9 @@
 !>          A symmetric polynomial is used containing all monomials up to the
 !>          desired order, i.e. order = 2: 1 + x + x^2
 !>          This is exactly fitted over all cells in the stencil
-!>          The methodology is inspired by that of Thuburn et.al GMD 2014 for 
+!>          The methodology is inspired by that of Thuburn et.al GMD 2014 for
 !>          2D reconstructions
-!>          This method is only valid for lowest order elements 
+!>          This method is only valid for lowest order elements
 module poly1d_vert_flux_coeffs_kernel_mod
 
 use argument_mod,      only : arg_type, func_type, mesh_data_type,  &
@@ -77,7 +77,7 @@ contains
 !>@param[in] undf_wx Total number of degrees of freedom for the coordinate space
 !>@param[in] map_wx Dofmap of the coordinate space stencil
 !>@param[in] basis_wx Basis function of the coordinate space evaluated on
-!!                    quadrature points 
+!!                    quadrature points
 !>@param[in] face_basis_wx Basis function of the coordinate space evaluated on
 !!                         quadrature points on the vertical faces
 !>@param[in] global_order Desired polynomial order for flux computations
@@ -112,7 +112,7 @@ subroutine poly1d_vert_flux_coeffs_code(nlayers,                    &
   use base_mesh_config_mod, only: geometry, &
                                   geometry_spherical
   implicit none
-   
+
   ! Arguments
   integer(kind=i_def), intent(in) :: global_order, nfaces_v
   integer(kind=i_def), intent(in) :: nlayers
@@ -143,7 +143,7 @@ subroutine poly1d_vert_flux_coeffs_code(nlayers,                    &
   real(kind=r_def),              dimension(3)              :: x0, xq
   real(kind=r_def), allocatable, dimension(:,:)            :: int_monomial, inv_int_monomial
   real(kind=r_def), allocatable, dimension(:)              :: beta, delta, monomial
-  real(kind=r_def),              dimension(global_order+1) :: area  
+  real(kind=r_def),              dimension(global_order+1) :: area
 
   if ( geometry == geometry_spherical ) then
     spherical = 1.0_r_def
@@ -153,7 +153,7 @@ subroutine poly1d_vert_flux_coeffs_code(nlayers,                    &
     planar    = 1.0_r_def
   end if
 
-  ! Compute the offset map for all even orders up to order  
+  ! Compute the offset map for all even orders up to order
   allocate( smap(global_order+1,0:global_order/2) )
   smap(:,:) = 0
   do m = 0,global_order,2
@@ -170,12 +170,12 @@ subroutine poly1d_vert_flux_coeffs_code(nlayers,                    &
   ! (this is only true if the number of quadrature points is odd)
   qv0 = (nqp_v+1)/2
   qh0 = (nqp_h+1)/2
- 
+
   ! Step 1: Build integrals of monomials over all cells in advection stencils
 
   ! Loop over all layers
-  layer_loop: do k = 0, nlayers-1   
-    ! Compute local order, this is at most global_order but reduces near the 
+  layer_loop: do k = 0, nlayers-1
+    ! Compute local order, this is at most global_order but reduces near the
     ! top and bottom boundary
     order = min(global_order, min(2*k, 2*(nlayers-1 - k)))
 
@@ -201,7 +201,7 @@ subroutine poly1d_vert_flux_coeffs_code(nlayers,                    &
       ! Loop over all cells in the stencil
       stencil_loop: do stencil = 1, order+1
         area(stencil) = mdw3(map_w3( 1 ) + k + smap(stencil,order/2) )
-        ! Integrate monomials over this cell 
+        ! Integrate monomials over this cell
         quadrature_loop: do qp = 1, nqp_v
           ! First: Compute physical coordinate of each quadrature point
           xq = 0.0_r_def
@@ -210,10 +210,10 @@ subroutine poly1d_vert_flux_coeffs_code(nlayers,                    &
             xq(:) = xq(:) + (/ chi1(ijk), chi2(ijk), chi3(ijk) /)*basis_wx(1,df,qh0,qp)
           end do
           zq = sqrt(xq(1)**2 + xq(2)**2 + xq(3)**2)*spherical + xq(3)*planar
- 
-          ! Second: Compute the local coordinate of each quadrature point from the 
+
+          ! Second: Compute the local coordinate of each quadrature point from the
           !         physical coordinate
-          xx = zq - z0 
+          xx = zq - z0
 
           ! Third: Compute each needed monomial in terms of the local coordinate
           !        on each quadrature point
@@ -230,7 +230,7 @@ subroutine poly1d_vert_flux_coeffs_code(nlayers,                    &
       call matrix_invert(int_monomial,inv_int_monomial,nmonomial)
 
       ! Initialise polynomial coeffficients to zero
-      coeff(:,face,map_w3(1)+k) = 0.0_r_def    
+      coeff(:,face,map_w3(1)+k) = 0.0_r_def
       ! Loop over quadrature points on this face
       face_quadrature_loop: do qp = 1,nqp_f
 
@@ -246,7 +246,7 @@ subroutine poly1d_vert_flux_coeffs_code(nlayers,                    &
         xx = zq - z0
 
         ! Evaluate polynomial fit
-        ! Loop over monomials    
+        ! Loop over monomials
         do stencil = 1, order+1
           monomial(stencil) = xx**(stencil-1)
         end do

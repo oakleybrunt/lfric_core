@@ -52,7 +52,7 @@ module weighted_proj_3theta_kernel_mod
   public weighted_proj_3theta_code
 
 contains
-  
+
 !> @brief Compute the weighted projection operator from Wtheta to W3
 !! @param[in] cell Cell number
 !! @param[in] nlayers Number of layers.
@@ -79,12 +79,12 @@ contains
 subroutine weighted_proj_3theta_code(cell, nlayers, ncell_3d,             &
                                      projection,                          &
                                      theta,                               &
-                                     chi1, chi2, chi3,                    & 
+                                     chi1, chi2, chi3,                    &
                                      ndf_w3, basis_w3,                    &
                                      ndf_wtheta, undf_wtheta, map_wtheta, &
                                      basis_wtheta,                        &
                                      ndf_chi, undf_chi,                   &
-                                     map_chi, diff_basis_chi,             & 
+                                     map_chi, diff_basis_chi,             &
                                      nqp_h, nqp_v, wqp_h, wqp_v)
 
   implicit none
@@ -120,9 +120,9 @@ subroutine weighted_proj_3theta_code(cell, nlayers, ncell_3d,             &
   real(kind=r_def), dimension(3,3,nqp_h,nqp_v) :: jac
 
   do k = 0, nlayers - 1
-     
+
     do df = 1, ndf_chi
-      loc = map_chi(df) + k 
+      loc = map_chi(df) + k
       chi1_e(df) = chi1(loc)
       chi2_e(df) = chi2(loc)
       chi3_e(df) = chi3(loc)
@@ -133,23 +133,23 @@ subroutine weighted_proj_3theta_code(cell, nlayers, ncell_3d,             &
     ik = k + 1 + (cell-1)*nlayers
     projection(:,:,ik) = 0.0_r_def
     do qp2 = 1, nqp_v
-      do qp1 = 1, nqp_h 
+      do qp1 = 1, nqp_h
         theta_quad = 0.0_r_def
         do df = 1,ndf_wtheta
           theta_quad = theta_quad + theta(map_wtheta(df)+k) &
                                    *basis_wtheta(1,df,qp1,qp2)
         end do
-        integrand = wqp_h(qp1)*wqp_v(qp2)/theta_quad*dj(qp1,qp2) 
+        integrand = wqp_h(qp1)*wqp_v(qp2)/theta_quad*dj(qp1,qp2)
 
         do df2 = 1, ndf_wtheta
           do df1 = 1, ndf_w3
-            projection(df1,df2,ik) = projection(df1,df2,ik)               & 
+            projection(df1,df2,ik) = projection(df1,df2,ik)               &
                                    + integrand*basis_w3(1,df1,qp1,qp2)    &
                                               *basis_wtheta(1,df2,qp1,qp2)
           end do
         end do
       end do
-    end do    
+    end do
   end do
 
 end subroutine weighted_proj_3theta_code

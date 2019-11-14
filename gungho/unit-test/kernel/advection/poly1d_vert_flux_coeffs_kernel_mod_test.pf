@@ -4,7 +4,7 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> Test the computation of the vertical flux coefficients 
+!> Test the computation of the vertical flux coefficients
 module poly1d_vert_flux_coeffs_kernel_mod_test
 
   use constants_mod, only: i_def, r_def
@@ -33,7 +33,7 @@ contains
                                     feign_planet_config
     use base_mesh_config_mod, only: geometry_planar, &
                                     partitioner_planar
-    implicit none 
+    implicit none
 
     class(poly1d_vert_flux_coeffs_test_type), intent(inout) :: this
 
@@ -54,7 +54,7 @@ contains
   subroutine test_all( this )
 
     use poly1d_vert_flux_coeffs_kernel_mod, only: poly1d_vert_flux_coeffs_code
-    implicit none 
+    implicit none
 
     class(poly1d_vert_flux_coeffs_test_type), intent(inout) :: this
 
@@ -95,7 +95,7 @@ contains
 
     xq(:) = 0.5_r_def + 0.5_r_def*(/ -sqrt(3.0_r_def/5.0_r_def), 0.0_r_def, sqrt(3.0_r_def/5.0_r_def) /)
     wqp_v(:) = (/5.0_r_def, 8.0_r_def, 5.0_r_def/)/18.0_r_def
- 
+
     map_w3(1) = 1
 
     do df = 1,ndf_wx
@@ -107,7 +107,7 @@ contains
     x(:) = 0.0_r_def
     y(:) = 0.0_r_def
     z(:) = 0.0_r_def
-    do k = 0,nlayers-1      
+    do k = 0,nlayers-1
       x(map_wx(2)+k) = dx
       x(map_wx(4)+k) = dx
       y(map_wx(3)+k) = dy
@@ -164,7 +164,7 @@ contains
   end subroutine test_all
 
   subroutine tearDown( this )
-    implicit none 
+    implicit none
 
     class(poly1d_vert_flux_coeffs_test_type), intent(inout) :: this
     ! Finalise YAXT

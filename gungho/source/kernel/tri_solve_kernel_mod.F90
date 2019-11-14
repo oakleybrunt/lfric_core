@@ -44,7 +44,7 @@ module tri_solve_kernel_mod
 
 contains
 
-!> @brief Tridiagonal solver using Thomas algorithm 
+!> @brief Tridiagonal solver using Thomas algorithm
 !> @param[in]  nlayers Number of levels to solve over
 !> @param[out] y LHS field to solve for
 !> @param[in]  x RHS field
@@ -55,7 +55,7 @@ contains
 !> @param[in]  undf Size of all field arrays
 !> @param[in]  map Array containing the address of the first dof in the column
 subroutine tri_solve_code(nlayers, &
-                          y, x, & 
+                          y, x, &
                           tri_0, tri_plus, tri_minus, &
                           ndf, undf, map)
 
@@ -87,13 +87,13 @@ subroutine tri_solve_code(nlayers, &
     tri_plus_new(k+1) = tri_plus(ij+k)*denom
     x_new(k+1)        = (x(ij+k) - tri_minus(ij+k)*x_new(k))*denom
   end do
-  
+
   k = nlayers-1
   y(ij+k) = x_new(k+1)
   do k = nlayers-2,0,-1
     y(ij+k) = x_new(k+1) - tri_plus_new(k+1)*y(ij+k+1)
   end do
-  
+
 end subroutine tri_solve_code
 
 end module tri_solve_kernel_mod

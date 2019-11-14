@@ -56,10 +56,10 @@ contains
 !! @param[in] undf_chi Total number of degrees of freedom
 !! @param[in] map_chi Dofmap for the coordinate field
 subroutine sample_initial_u_code(nlayers,                   &
-                                 wind,                      & 
+                                 wind,                      &
                                  chi_1, chi_2, chi_3,       &
                                  ndf, undf, map,            &
-                                 ndf_chi, undf_chi, map_chi & 
+                                 ndf_chi, undf_chi, map_chi &
                                  )
 
   implicit none
@@ -80,8 +80,8 @@ subroutine sample_initial_u_code(nlayers,                   &
 
   do k = 0, nlayers-1
     ! Assumes a linear DG coordinate field and constant horizontal wind: u=U0,v=V0.
-    ! The vertical wind component is computed from the horizontal components.    
-    
+    ! The vertical wind component is computed from the horizontal components.
+
     ! u dofs
     dz = 0.5_r_def*(chi_3(map_chi(5)+k) - chi_3(map_chi(1)+k) + chi_3(map_chi(7)+k) - chi_3(map_chi(3)+k))
     dy = 0.5_r_def*(chi_2(map_chi(3)+k) - chi_2(map_chi(1)+k) + chi_2(map_chi(7)+k) - chi_2(map_chi(5)+k))
@@ -90,7 +90,7 @@ subroutine sample_initial_u_code(nlayers,                   &
     dy = 0.5_r_def*(chi_2(map_chi(4)+k) - chi_2(map_chi(2)+k) + chi_2(map_chi(8)+k) - chi_2(map_chi(6)+k))
     wind(map(3)+k) = U0*dy*dz
     ! v dofs, The basis function has been neglected, but is valued -1 at v dof
-    ! points (since it points in the negative chi_hat(2) direction) 
+    ! points (since it points in the negative chi_hat(2) direction)
     ! therefore a positive value of V0 corresponds to a negative value of
     ! wind(map(2)) & wind(map(4))
     dz = 0.5_r_def*(chi_3(map_chi(5)+k) - chi_3(map_chi(1)+k) + chi_3(map_chi(6)+k) - chi_3(map_chi(2)+k))
@@ -99,13 +99,13 @@ subroutine sample_initial_u_code(nlayers,                   &
     dz = 0.5_r_def*(chi_3(map_chi(7)+k) - chi_3(map_chi(3)+k) + chi_3(map_chi(8)+k) - chi_3(map_chi(4)+k))
     dx = 0.5_r_def*(chi_1(map_chi(4)+k) - chi_1(map_chi(3)+k) + chi_1(map_chi(8)+k) - chi_1(map_chi(7)+k))
     wind(map(4)+k) = -V0*dx*dz
- 
+
     ! The vertical component is left unchanged ,i.e. forced to be zero.
     ! Since the vertical component is the normal flux through vertical faces
     ! this means that the truly vertical velocity (in increasing z direction)
-    ! will be: ~(u*dz/dx + v*dz/dy) 
+    ! will be: ~(u*dz/dx + v*dz/dy)
     wind(map(5)+k) = 0.0_r_def
-    wind(map(6)+k) = 0.0_r_def 
+    wind(map(6)+k) = 0.0_r_def
   end do
 
 end subroutine sample_initial_u_code

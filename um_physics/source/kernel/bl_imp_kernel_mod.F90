@@ -811,7 +811,7 @@ contains
 
     !-----------------------------------------------------------------------
     ! For the initial implementation we pass each individual column
-    ! of data to an array sized (1,1,k) to match the UMs (i,j,k) data 
+    ! of data to an array sized (1,1,k) to match the UMs (i,j,k) data
     ! layout.
     ! assuming map_wth(1) points to level 0
     ! and map_w3(1) points to level 1
@@ -849,7 +849,7 @@ contains
       cloud_fraction_liquid(1,1,k) = cf_liq(map_wth(1) + k)
       cloud_fraction_frozen(1,1,k) = cf_ice(map_wth(1) + k)
       ! 3D RH_crit field
-      rhcpt(1,1,k) = rh_crit_wth(map_wth(1) + k) 
+      rhcpt(1,1,k) = rh_crit_wth(map_wth(1) + k)
     end do
 
     ! surface pressure

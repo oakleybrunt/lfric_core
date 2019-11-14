@@ -421,7 +421,7 @@ contains
     ! We have a column of 5 cells, denoted 0|1|2|3|4
     ! We are are interested in cell "1" (k=1) and have a negative departure distance
     ! of -2.4. Edge=1 refers to the right-hand edge of the cell (or upper edge in
-    ! the vertical case). Since the departure distance is -2.4 then we want to 
+    ! the vertical case). Since the departure distance is -2.4 then we want to
     ! obtain the densities from cells 2, 3 and 4. These are the values returned by
     ! local_index (in that order). Note that we do not need to know the density
     ! of cell 1 since the departure distance is negative and we are calculating the

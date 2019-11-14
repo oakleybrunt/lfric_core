@@ -48,7 +48,7 @@ module gungho_model_mod
                                              scheme_method_of_lines
   implicit none
 
-  private 
+  private
   public initialise_model, finalise_model
 
   contains
@@ -208,7 +208,7 @@ module gungho_model_mod
 
         ! Write prognostic fields to dump
         call write_state(fd_fields)
-      
+
         nullify(tmp_write_ptr, tstar_2d)
 
       end if

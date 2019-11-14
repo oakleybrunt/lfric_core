@@ -78,7 +78,7 @@ contains
     character(len=str_max_filename) :: fname,tname
     integer :: ts_start, ts_end
 
-    ! now for some tests 
+    ! now for some tests
     rs_fname="hswarez_100day"
     ts_start=4
     ts_end=6

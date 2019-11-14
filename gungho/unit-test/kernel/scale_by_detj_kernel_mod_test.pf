@@ -65,13 +65,13 @@ contains
     map_wx(1) = 1
     do df = 2,ndf_wx
       map_wx(df) = map_wx(df-1) + nlayers
-    end do 
+    end do
     ! Set variable vertical resolution
     r(0) = 0.0_r_def
     do k = 1,nlayers
       r(k) = r(k-1) + real(k,r_def)
     end do
-    
+
     ! Compute the coordinate fields
     x = 0.0_r_def
     y = 0.0_r_def
@@ -138,7 +138,7 @@ contains
 
     ! Set some values for the initial field
     do df = 1, undf_ws
-      field(df) = real(df,r_def)  
+      field(df) = real(df,r_def)
     end do
 
     answer(1) = field(1)/vol(0)

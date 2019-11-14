@@ -115,8 +115,8 @@ contains
 
     ! Sets up chi. Create runtime_constants object. This creates various things
     ! needed by the timestepping algorithms such as mass matrix operators, mass
-    ! matrix diagonal fields and the geopotential field. 
-    call create_runtime_constants( mesh_id, chi )    
+    ! matrix diagonal fields and the geopotential field.
+    call create_runtime_constants( mesh_id, chi )
 
     ! Construct cell locator
     call timer('constructor')
@@ -176,7 +176,7 @@ contains
       if (cell_id_0 >= 0) then
         if ( verbose > 1 ) then
           write( msg, &
-            '(A, I8, A, F5.3, A, F5.3, A, F5.3, A, 1PE11.4, A,' & 
+            '(A, I8, A, F5.3, A, F5.3, A, F5.3, A, 1PE11.4, A,' &
             // ' 1PE11.4, A, 1PE11.4, A, 1PE9.2)' ) &
             'cell_locator: Found cell id ', cell_id_0, &
             ' pcoords = ', pcoords(1), ', ', pcoords(2), ', ', pcoords(3), &
@@ -193,7 +193,7 @@ contains
         total_error = total_error + dist_error_square
       else
         if ( verbose > 1 ) then
-          write( msg, '(A, 1PE11.4, A, 1PE11.4, A, 1PE11.4)' ) & 
+          write( msg, '(A, 1PE11.4, A, 1PE11.4, A, 1PE11.4)' ) &
             'cell_locator: ~ Failed to find cell for target point = ', &
             target_point(1), ', ', target_point(2), ', ', target_point(3)
           call log_event( msg, LOG_LEVEL_TRACE )
@@ -214,7 +214,7 @@ contains
     call cell_locator_obj%write_results( output_filename, ier )
     if ( ier /= 0 ) then
       call log_event( &
-        'cell_locator: Error occurred when writing results in file "' & 
+        'cell_locator: Error occurred when writing results in file "' &
         //output_filename//'"', LOG_LEVEL_ERROR )
     endif
 

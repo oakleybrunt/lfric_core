@@ -55,7 +55,7 @@ module init_catalyst_demo_mod
   subroutine init_catalyst_demo( mesh_id, twod_mesh_id, chi, multigrid_function_space_chain, &
                                  wind, pressure, buoyancy )
 
-    implicit none                              
+    implicit none
 
     integer(i_def),                  intent(in)  :: mesh_id
     integer(i_def),                  intent(in)  :: twod_mesh_id

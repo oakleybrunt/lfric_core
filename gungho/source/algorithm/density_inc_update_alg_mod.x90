@@ -26,7 +26,7 @@ contains
                                     increment)
 
     implicit none
- 
+
     type(field_type),    intent(inout)    :: density
     type(field_type),    intent(in)       :: increment
 

@@ -49,7 +49,7 @@ contains
   end subroutine get_m3x3_adjacent_face
 
   subroutine get_out_face_normal(out_face_normal)
-    ! Return the coordinates of a vector pointing outward from a 
+    ! Return the coordinates of a vector pointing outward from a
     ! cell for each face as copied from the reference cube
     implicit none
 
@@ -67,7 +67,7 @@ contains
   end subroutine get_out_face_normal
 
   subroutine get_normals_to_faces(normals_to_face)
-    ! Return the coordinates of normal vector from each face 
+    ! Return the coordinates of normal vector from each face
     ! as copied from the reference cube
     implicit none
 

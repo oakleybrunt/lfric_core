@@ -76,8 +76,8 @@ contains
    type(field_type)                   :: nodal_output(3)
    type(field_type)                   :: nodal_coordinates(3)
    type(field_type)                   :: level
-   integer(i_def)                     :: output_dim 
-   integer(i_def)                     :: fs     
+   integer(i_def)                     :: output_dim
+   integer(i_def)                     :: fs
 
    type(field_proxy_type)             :: n_p(3)
 

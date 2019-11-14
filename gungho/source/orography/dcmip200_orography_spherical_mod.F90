@@ -4,8 +4,8 @@
 ! which you should have received as part of this distribution.
 !-----------------------------------------------------------------------
 !> @brief Calculates DCMIP200 mountain orography profile in spherical coordinates.
-!> 
-!> @details This module contains type definition and routines to calculate   
+!>
+!> @details This module contains type definition and routines to calculate
 !>          analytic orography profile of DCMIP200 case mountain function from spherical
 !>          coordinates: longitude (lambda) and latitude (phi).
 !>          Reference: Ulrich et al. (2012), Section 2.0.
@@ -41,30 +41,30 @@ module dcmip200_orography_spherical_mod
     procedure, public, pass(self) :: analytic_orography => dcmip200_orography_spherical
     procedure                     :: dcmip200_coordinate_spherical
     procedure                     :: write_dcmip200_spherical_type
-    
+
   end type dcmip200_spherical_type
 
   ! Constructor for dcmip200_spherical_type
   interface dcmip200_spherical_type
     module procedure dcmip200_spherical_constructor
-  end interface 
+  end interface
 
 contains
 
   !=============================================================================
   !> @brief Constructor for DCMIP200 mountain function in spherical coordinates.
-  !> @param[in] mountain_height Height of mountain function read from 
+  !> @param[in] mountain_height Height of mountain function read from
   !>                            namelist (m)
   !> @param[in] radius          Half-width of DCMIP mountain function read from
   !>                            namelist (radian)
   !> @param[in] osc_half_width  Oscillation half-width of mountain function
   !>                            read from namelist (radian)
-  !> @param[in] lambda_centre   Longitudinal centre of mountain function read 
+  !> @param[in] lambda_centre   Longitudinal centre of mountain function read
   !>                            from namelist (radian)
   !> @param[in] phi_centre      Latitudinal centre of mountain function read
   !>                            from namelist (radian)
   !> @return    self            An object of type dcmip200_spherical_type
-  !=============================================================================   
+  !=============================================================================
   type(dcmip200_spherical_type) function dcmip200_spherical_constructor(                 &
                                                                         mountain_height, &
                                                                         radius,          &
@@ -77,7 +77,7 @@ contains
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     real(kind=r_def), intent(in) :: mountain_height, &
                                     radius,          &
                                     osc_half_width,  &
@@ -99,18 +99,18 @@ contains
   !> @param[in] self      An object of type dcmip200_spherical_type
   !> @param[in] chi_1     Longitude (lambda) (radian)
   !> @param[in] chi_2     Latitude (phi) (radian)
-  !> @return    chi_surf  Surface height (m)  
-  !=============================================================================  
+  !> @return    chi_surf  Surface height (m)
+  !=============================================================================
   function dcmip200_orography_spherical(self, chi_1, chi_2) result(chi_surf)
 
     use constants_mod,     only : PI
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(dcmip200_spherical_type), intent(in) :: self
     real(kind=r_def),            intent(in) :: chi_1, chi_2
-    real(kind=r_def)                        :: chi_surf   
+    real(kind=r_def)                        :: chi_surf
     ! Internal variables
     real(kind=r_def) :: chisurf_arg(2)
 
@@ -128,23 +128,23 @@ contains
 
     return
   end function dcmip200_orography_spherical
-  
+
   !=============================================================================
   !> @brief Transforms/scales coordinate for spherical DCMIP200 mountain function.
   !> @param[in]  self         An object of type dcmip200_spherical_type
   !> @param[in]  chi_1        Longitude (lambda) (radian)
   !> @param[in]  chi_2        Latitude (phi) (radian)
   !> @param[out] chisurf_arg  DCMIP200 mountain function transformed/scaled
-  !>                          arguments  
+  !>                          arguments
   !=============================================================================
   subroutine dcmip200_coordinate_spherical(self, chi_1, chi_2, chisurf_arg)
-  
+
     use constants_mod,     only : PI
     use planet_config_mod, only : scaled_radius
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(dcmip200_spherical_type),  intent(in)  :: self
     real(kind=r_def),      intent(in)  :: chi_1, chi_2
     real(kind=r_def),      intent(out) :: chisurf_arg(2)
@@ -162,22 +162,22 @@ contains
     chisurf_arg(1) = PI*chi_dcmip200/self%radius
     ! Cosine squared function argument
     chisurf_arg(2) = PI*chi_dcmip200/self%osc_half_width
-       
+
     return
   end subroutine dcmip200_coordinate_spherical
 
   !=============================================================================
   !> @brief Writes out parameters of DCMIP200 mountain function in spherical
-  !>        coordinates. 
+  !>        coordinates.
   !> @param[in] self An object of type dcmip200_spherical_type
-  !=============================================================================   
+  !=============================================================================
   subroutine write_dcmip200_spherical_type(self)
 
     use constants_mod, only : str_short, str_max_filename
 
     implicit none
 
-    ! Arguments 
+    ! Arguments
     class(dcmip200_spherical_type), intent(in) :: self
     ! Temporary write variables
     integer(kind=i_def),             parameter :: funit = 777
@@ -187,7 +187,7 @@ contains
 
     ! Temporary write
     open(funit, file = trim(fname), status = 'replace')
-    write(funit,'(A)') & 
+    write(funit,'(A)') &
           "DCMIP200 mountain parameters in spherical coordinates: "
     write(funit, fmtreal) "mountain_height     = ", self%mountain_height
     write(funit, fmtreal) "radius              = ", self%radius
@@ -198,6 +198,6 @@ contains
 
     return
   end subroutine write_dcmip200_spherical_type
-  
+
 end module dcmip200_orography_spherical_mod
 

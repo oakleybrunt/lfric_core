@@ -10,7 +10,7 @@ module transpose_matrix_vector_mod_test
   use constants_mod, only : r_def
   use pFUnit_Mod
 
-  implicit none 
+  implicit none
 
 contains
 
@@ -35,7 +35,7 @@ contains
     ! lhs vector
     y(:) = 0.0_r_def
     answer = matmul(transpose(d),x)
-    
+
     call transpose_matrix_vector_code(1, &
                                       1, &
                                       y, &

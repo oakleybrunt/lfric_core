@@ -5,7 +5,7 @@
 !-----------------------------------------------------------------------------
 
 !>@brief Mass matrix solver for the gungho dynamical core
-!>@details Constructs a mass matrix solver for a given space, applies the 
+!>@details Constructs a mass matrix solver for a given space, applies the
 !>         solver and then destroys it. Since this solver is applied in multiple
 !>         places to different spaces and with/without boundary conditions the _init,
 !>         _step and _finalise routines are wrapped into one routine. An
@@ -96,10 +96,10 @@ contains
     type(mass_matrix_operator_type)                    :: mass_matrix_operator
     class(abstract_preconditioner_type),   allocatable :: mass_matrix_preconditioner
     class(abstract_iterative_solver_type), allocatable :: mass_matrix_solver
-  
+
     !> Absolute solver tolerance (mixed solver)
     real(kind=r_def), parameter :: solver_a_tol = 1.E-16
- 
+
     integer(kind=i_def)             :: fs
     logical                         :: apply_bc
     integer(kind=i_def)             :: mm_id
@@ -185,10 +185,10 @@ contains
 
       ! Construct preconditioner
       select type(mass_matrix_preconditioner)
-      type is ( null_preconditioner_type )        
+      type is ( null_preconditioner_type )
          ! Null preconditioner
          mass_matrix_preconditioner = null_preconditioner_type()
-      type is ( diagonal_preconditioner_type )        
+      type is ( diagonal_preconditioner_type )
          ! Diagonal preconditioner
          vec_mm_diagonal = field_vector_type(1)
          call vec_mm_diagonal%import_field(mass_matrix_diagonal, 1)
@@ -200,33 +200,33 @@ contains
 
       ! Construct mass matrix solver
       select type(mass_matrix_solver)
-      type is ( conjugate_gradient_type )        
+      type is ( conjugate_gradient_type )
          mass_matrix_solver = conjugate_gradient_type( mass_matrix_operator,       &
                                                        mass_matrix_preconditioner, &
                                                        tolerance,                  &
                                                        solver_a_tol,               &
                                                        maximum_iterations)
-      type is ( bicgstab_type )        
+      type is ( bicgstab_type )
          mass_matrix_solver = bicgstab_type( mass_matrix_operator,       &
                                              mass_matrix_preconditioner, &
                                              tolerance,                  &
                                              solver_a_tol,               &
                                              maximum_iterations)
-      type is ( gmres_type )        
+      type is ( gmres_type )
          mass_matrix_solver = gmres_type( mass_matrix_operator,       &
                                           mass_matrix_preconditioner, &
                                           gcrk,                       &
                                           tolerance,                  &
                                           solver_a_tol,               &
                                           maximum_iterations)
-      type is ( fgmres_type )        
+      type is ( fgmres_type )
          mass_matrix_solver = fgmres_type( mass_matrix_operator,       &
                                            mass_matrix_preconditioner, &
                                            gcrk,                       &
                                            tolerance,                  &
                                            solver_a_tol,               &
                                            maximum_iterations)
-      type is ( gcr_type )        
+      type is ( gcr_type )
          mass_matrix_solver = gcr_type( mass_matrix_operator,       &
                                         mass_matrix_preconditioner, &
                                         gcrk,                       &
@@ -234,12 +234,12 @@ contains
                                         solver_a_tol,               &
                                         maximum_iterations)
 
-      type is ( precondition_only_type )        
+      type is ( precondition_only_type )
          mass_matrix_solver = precondition_only_type( mass_matrix_operator,       &
                                                       mass_matrix_preconditioner, &
                                                       tolerance,                  &
                                                       solver_a_tol)
-      type is ( jacobi_type )        
+      type is ( jacobi_type )
          mass_matrix_solver = jacobi_type( mass_matrix_operator,       &
                                            mass_matrix_preconditioner, &
                                            tolerance,                  &

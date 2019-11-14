@@ -11,7 +11,7 @@ module restrict_kernel_mod_test
   implicit none
   private
   public :: test_all
-  
+
   @TestCase
   type, extends(TestCase), public :: restrict_test_type
      private
@@ -25,7 +25,7 @@ contains
     use restrict_kernel_mod, only : restrict_kernel_code
     implicit none
     class(restrict_test_type), intent(inout) :: this
-    
+
     integer(kind=i_def) :: lp
     ! Scalars
     integer(kind=i_def) :: nlayers
@@ -64,8 +64,8 @@ contains
        map_f(1,lp) = 1 + (lp-1)*nlayers
     end do
     map_c(1) = 1
-    
-  
+
+
     ! set simple values for the fields
     ff(:) = 1.0_r_def
     fc(:) = 0.0_r_def
@@ -85,16 +85,16 @@ contains
 
     @assertEqual( fc(1), 1.0_r_def, tol)
     @assertEqual( fc(2), 1.0_r_def, tol)
-    @assertEqual( fc(3), 1.0_r_def, tol)    
-        
+    @assertEqual( fc(3), 1.0_r_def, tol)
 
-    
+
+
     deallocate( cell_map, &
                 map_f,    &
                 map_c,    &
                 fc,       &
                 ff )
-      
+
   end subroutine test_all
-  
+
 end module restrict_kernel_mod_test

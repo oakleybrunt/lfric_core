@@ -7,7 +7,7 @@
 !> @brief Create the prognostic fields and place them in the depository
 
 !> @details Create the prognostic fields and place them both in the
-!>          depository field collection and put pointers to them in the 
+!>          depository field collection and put pointers to them in the
 !>          prognostic field collection
 
 module create_gravity_wave_prognostics_mod

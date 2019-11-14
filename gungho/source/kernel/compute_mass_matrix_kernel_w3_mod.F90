@@ -124,17 +124,17 @@ subroutine compute_mass_matrix_w3_code(cell, nlayers, ncell_3d,        &
         do qp2 = 1, nqp_v
           do qp1 = 1, nqp_h
             if ( rehabilitate ) then
-              ! With rehabilitation 
+              ! With rehabilitation
               ! W3 mapping is x -> \hat{x}
-              integrand = wqp_h(qp1) * wqp_v(qp2) * & 
+              integrand = wqp_h(qp1) * wqp_v(qp2) * &
                        basis_w3(1,df,qp1,qp2)*basis_w3(1,df2,qp1,qp2)  &
-                       *dj(qp1,qp2) 
+                       *dj(qp1,qp2)
             else
-              ! Without rehabilitation 
+              ! Without rehabilitation
               ! W3 mapping is x -> \hat{x}/det(J)
-              integrand = wqp_h(qp1) * wqp_v(qp2) * & 
+              integrand = wqp_h(qp1) * wqp_v(qp2) * &
                        basis_w3(1,df,qp1,qp2)*basis_w3(1,df2,qp1,qp2)  &
-                       /dj(qp1,qp2)  
+                       /dj(qp1,qp2)
             end if
             mm(df,df2,ik) = mm(df,df2,ik) + integrand
           end do

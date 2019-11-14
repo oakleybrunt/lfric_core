@@ -3,11 +3,11 @@
 ! For further details please refer to the file COPYRIGHT.txt
 ! which you should have received as part of this distribution.
 !-----------------------------------------------------------------------
-!> @brief Sets analytic orography parameters for the model. 
-!> 
-!> @details Contains subroutines for reading analytic orography parameters and 
-!>          constructing analytic orography types. The parameters are stored in 
-!>          relevant namelist files. Each namelist sets up the selected 
+!> @brief Sets analytic orography parameters for the model.
+!>
+!> @details Contains subroutines for reading analytic orography parameters and
+!>          constructing analytic orography types. The parameters are stored in
+!>          relevant namelist files. Each namelist sets up the selected
 !>          orography profile.
 !-------------------------------------------------------------------------------
 module orography_control_mod
@@ -17,7 +17,7 @@ module orography_control_mod
                                      geometry_planar, &
                                      geometry_spherical
   use orography_config_mod,   only : profile,        &
-                                     profile_schar,  & 
+                                     profile_schar,  &
                                      profile_agnesi, &
                                      profile_bell,   &
                                      profile_dcmip200
@@ -25,55 +25,55 @@ module orography_control_mod
                                      log_scratch_space, &
                                      LOG_LEVEL_INFO
   use analytic_orography_mod, only : orography_profile
- 
+
   implicit none
 
-  private 
- 
+  private
+
   public :: set_orography_option
 
 contains
 
   !=============================================================================
-  !> @brief Sets analytic orography options. 
+  !> @brief Sets analytic orography options.
   !>
-  !> @details Reads namelists with the parameters required for setting up  
+  !> @details Reads namelists with the parameters required for setting up
   !>          analytic orography profiles and initialises corresponding types.
   !>          There are currently four profiles to choose from:
-  !>          1) Schar mountain, 
+  !>          1) Schar mountain,
   !>          2) Witch-of-Agnesi mountain,
   !>          3) DCMIP2.0.0.-type mountain,
   !>          4) Bell-shaped mountain.
   !>          The default option in no orography (flat planet surface).
   !=============================================================================
   subroutine set_orography_option()
- 
+
     implicit none
- 
+
     ! ----------- Deallocate abstract orography type if allocated -------------!
     if ( allocated (orography_profile) ) deallocate(orography_profile)
 
     ! ----------- Read orography namelist and set orography type --------------!
     select case( profile )
       ! Witch-of-Agnesi orography
-      case( profile_agnesi )    
+      case( profile_agnesi )
         if ( geometry == geometry_spherical ) then
-          ! Read parameters for Witch-of-Agnesi mountain in spherical 
+          ! Read parameters for Witch-of-Agnesi mountain in spherical
           ! coordinates and initialise the corresponding type
-           call set_orography_agnesi_spherical() 
-        else 
-          ! Read parameters for Witch-of-Agnesi mountain in Cartesian 
+           call set_orography_agnesi_spherical()
+        else
+          ! Read parameters for Witch-of-Agnesi mountain in Cartesian
           ! coordinates and initialise the corresponding type
           call set_orography_agnesi_cartesian()
-        end if 
-      ! Schar orography 
-      case( profile_schar )   
+        end if
+      ! Schar orography
+      case( profile_schar )
         if ( geometry == geometry_spherical ) then
-          ! Read parameters for Schar mountain in spherical coordinates and 
+          ! Read parameters for Schar mountain in spherical coordinates and
           ! initialise the corresponding type
            call set_orography_schar_spherical()
-        else 
-          ! Read parameters for Schar mountain in Cartesian coordinates and 
+        else
+          ! Read parameters for Schar mountain in Cartesian coordinates and
           ! initialise the corresponding type
            call set_orography_schar_cartesian()
         end if
@@ -91,22 +91,22 @@ contains
           ! coordinates and initialise the corresponding type
           call set_orography_bell_cartesian()
         end if
-      ! No orography (default) 
-      case default   
+      ! No orography (default)
+      case default
         write(log_scratch_space,'(A,A)') &
               "set_orography_option: No analytic orography set."
         call log_event(log_scratch_space, LOG_LEVEL_INFO)
     end select
-   
-    return 
+
+    return
   end subroutine set_orography_option
 
   !=============================================================================
-  !> @brief Initialises analytic orography type for Witch-of-Agnesi mountain in 
+  !> @brief Initialises analytic orography type for Witch-of-Agnesi mountain in
   !>        spherical coordinates using corresponding namelist parameters.
   !=============================================================================
   subroutine set_orography_agnesi_spherical()
-   
+
     use agnesi_orography_spherical_mod,        only : agnesi_spherical_type
     use orography_agnesi_spherical_config_mod, only : mountain_height, &
                                                       half_width,      &
@@ -126,15 +126,15 @@ contains
                                               lambda_focus,    &
                                               phi_focus ) )
 
-    write(log_scratch_space,'(A,A)') "set_orography_agnesi_spherical: "// &  
+    write(log_scratch_space,'(A,A)') "set_orography_agnesi_spherical: "// &
           "Set analytic orography type to spherical Witch-of-Agnesi mountain."
     call log_event(log_scratch_space, LOG_LEVEL_INFO)
 
-    return 
+    return
   end subroutine set_orography_agnesi_spherical
 
   !=============================================================================
-  !> @brief Initialises analytic orography type for Witch-of-Agnesi mountain in 
+  !> @brief Initialises analytic orography type for Witch-of-Agnesi mountain in
   !>        Cartesian coordinates using corresponding namelist parameters.
   !=============================================================================
   subroutine set_orography_agnesi_cartesian()
@@ -158,19 +158,19 @@ contains
                                               y_centre,        &
                                               direction ) )
 
-    write(log_scratch_space,'(A,A)') "set_orography_agnesi_cartesian: "// &  
+    write(log_scratch_space,'(A,A)') "set_orography_agnesi_cartesian: "// &
           "Set analytic orography type to Cartesian Witch-of-Agnesi mountain."
     call log_event(log_scratch_space, LOG_LEVEL_INFO)
 
-    return 
+    return
   end subroutine set_orography_agnesi_cartesian
 
   !=============================================================================
-  !> @brief Initialises analytic orography type for Schar mountain in 
+  !> @brief Initialises analytic orography type for Schar mountain in
   !>        spherical coordinates using corresponding namelist parameters.
   !=============================================================================
   subroutine set_orography_schar_spherical()
-   
+
     use schar_orography_spherical_mod,        only : schar_spherical_type
     use orography_schar_spherical_config_mod, only : mountain_height, &
                                                      half_width,      &
@@ -188,15 +188,15 @@ contains
                                              lambda_centre,   &
                                              phi_centre ) )
 
-    write(log_scratch_space,'(A,A)') "set_orography_schar_spherical: "// &  
+    write(log_scratch_space,'(A,A)') "set_orography_schar_spherical: "// &
           "Set analytic orography type to spherical Schar mountain."
     call log_event(log_scratch_space, LOG_LEVEL_INFO)
 
-    return 
+    return
   end subroutine set_orography_schar_spherical
 
   !=============================================================================
-  !> @brief Initialises analytic orography type for Schar mountain in 
+  !> @brief Initialises analytic orography type for Schar mountain in
   !>        Cartesian coordinates using corresponding namelist parameters.
   !=============================================================================
   subroutine set_orography_schar_cartesian()
@@ -222,11 +222,11 @@ contains
                                              y_centre,        &
                                              direction ) )
 
-    write(log_scratch_space,'(A,A)') "set_orography_schar_cartesian: "// &  
+    write(log_scratch_space,'(A,A)') "set_orography_schar_cartesian: "// &
           "Set analytic orography type to Cartesian Schar mountain."
     call log_event(log_scratch_space, LOG_LEVEL_INFO)
 
-    return 
+    return
   end subroutine set_orography_schar_cartesian
 
   !=============================================================================

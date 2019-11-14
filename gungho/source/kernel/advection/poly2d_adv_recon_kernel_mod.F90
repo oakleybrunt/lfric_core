@@ -10,10 +10,10 @@
 !>        upwind reconstruction
 !> @details Compute the reconstruction for a tracer field using a high order
 !>          polynomial fit to the integrated tracer values. The stencil used for the
-!>          polynomial is centred on the upwind cell. 
+!>          polynomial is centred on the upwind cell.
 !>          A 2D region stencil centred around the cell is used to build the polynomial
 !>          representation of the tracer field
-!>          This method is only valid for lowest order elements 
+!>          This method is only valid for lowest order elements
 module poly2d_adv_recon_kernel_mod
 
 use argument_mod,      only : arg_type, func_type, mesh_data_type,  &
@@ -63,7 +63,7 @@ contains
 
 !> @brief Computes the horizontal polynomial interpolation of a tracer
 !! @param[in]  nlayers Number of layers
-!! @param[in,out] reconstruction Reconstructed tracer field to compute 
+!! @param[in,out] reconstruction Reconstructed tracer field to compute
 !! @param[in]  wind Wind field
 !! @param[in]  tracer Pointwise tracer field to reconstruct
 !! @param[in]  coeff Array of polynomial coefficients for interpolation
@@ -102,7 +102,7 @@ subroutine poly2d_adv_recon_code( nlayers,              &
                                   cells_in_stencil,     &
                                   nfaces_h,             &
                                   out_face_normal )
-                                    
+
   implicit none
 
   ! Arguments
@@ -144,7 +144,7 @@ subroutine poly2d_adv_recon_code( nlayers,              &
   ij = stencil_map(1,1)
 
   ! Horizontal tracer reconstruction
-  ! Bottom point  
+  ! Bottom point
   k = 0
   do df = 1,nfaces_h
     ! Check if this is the upwind cell

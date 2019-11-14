@@ -1,7 +1,7 @@
 !-------------------------------------------------------------------------------
-! (c) The copyright relating to this work is owned jointly by the Crown, 
-! Met Office and NERC 2014. 
-! However, it has been created with the help of the GungHo Consortium, 
+! (c) The copyright relating to this work is owned jointly by the Crown,
+! Met Office and NERC 2014.
+! However, it has been created with the help of the GungHo Consortium,
 ! whose members are identified at https://puma.nerc.ac.uk/trac/GungHo/wiki
 !-------------------------------------------------------------------------------
 !> @brief Computes rhs of the equation of state for the nonlinear equations.
@@ -57,10 +57,10 @@ module rhs_eos_kernel_mod
 
 contains
 
-!> @brief Computes lhs of the equation of state for the nonlinear equations 
+!> @brief Computes lhs of the equation of state for the nonlinear equations
 !! @param[in] nlayers Number of layers
 !! @param[inout] rhs_eos rhs array for the equation of state
-!! @param[in] exner pressure 
+!! @param[in] exner pressure
 !! @param[in] rho Density
 !! @param[in] theta Potential temperature
 !! @param[in] moist_dyn_gas Moist dynamics factor in gas law
@@ -70,15 +70,15 @@ contains
 !! @param[in] ndf_w3 Number of degrees of freedom per cell for w3
 !! @param[in] undf_w3 Number of (local) unique degrees of freedom
 !! @param[in] map_w3 Dofmap for the cell at the base of the column for w3
-!! @param[in] w3_basis Basis functions evaluated at quadrature points 
+!! @param[in] w3_basis Basis functions evaluated at quadrature points
 !! @param[in] ndf_wt Number of degrees of freedom per cell for wt
 !! @param[in] undf_wt Number of (local) unique degrees of freedom
 !! @param[in] map_wt Dofmap for the cell at the base of the column for wt
-!! @param[in] wt_basis Basis functions evaluated at quadrature points 
+!! @param[in] wt_basis Basis functions evaluated at quadrature points
 !! @param[in] ndf_chi Number of degrees of freedom per cell for chi
 !! @param[in] undf_chi Number of (local) unique degrees of freedom for chi
 !! @param[in] map_chi Dofmap for the cell at the base of the column for chi
-!! @param[in] chi_diff_basis Differential basis functions evaluated at quadrature points 
+!! @param[in] chi_diff_basis Differential basis functions evaluated at quadrature points
 !! @param[in] nqp_h Number of quadrature points in the horizontal
 !! @param[in] nqp_v Number of quadrature points in the vertical
 !! @param[in] wqp_h Horizontal quadrature weights
@@ -117,9 +117,9 @@ subroutine rhs_eos_code(nlayers,                                         &
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
 
   ! Internal variables
-  integer(kind=i_def) :: df, k 
+  integer(kind=i_def) :: df, k
   integer(kind=i_def) :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_wt)  :: theta_vd_e
   real(kind=r_def), dimension(ndf_chi) :: chi1_e, chi2_e, chi3_e
   real(kind=r_def), dimension(ndf_w3)  :: rho_e, exner_e
@@ -164,14 +164,14 @@ subroutine rhs_eos_code(nlayers,                                         &
             /(rho_quad*theta_vd_quad)
         eos = wqp_h(qp1)*wqp_v(qp2)*dj(qp1,qp2)*eos
 
-        do df = 1, ndf_w3          
+        do df = 1, ndf_w3
           rhs_eos(map_w3(df)+k) = rhs_eos(map_w3(df)+k) &
                                 - w3_basis(1,df,qp1,qp2)*eos
         end do
       end do
     end do
   end do
-  
+
 end subroutine rhs_eos_code
 
 end module rhs_eos_kernel_mod

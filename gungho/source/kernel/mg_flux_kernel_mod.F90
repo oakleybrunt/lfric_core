@@ -62,7 +62,7 @@ contains
 !! @param[in] ndf_q Number of degrees of freedom per cell for the field to be advected
 !! @param[in] undf_q  Number of unique degrees of freedom for the advected field
 !! @param[in] map_q Dofmap for the cell at the base of the column for the field to be advected
-!! @param[in] basis_q Basis functions evaluated at gaussian quadrature points 
+!! @param[in] basis_q Basis functions evaluated at gaussian quadrature points
 !! @param[in] q Advected field
 subroutine mg_flux_code(nlayers,                                           &
                             flux, q ,                                      &
@@ -81,14 +81,14 @@ subroutine mg_flux_code(nlayers,                                           &
 
   !Internal variables
   integer(kind=i_def)               :: df, df_q, k
-  
+
   real(kind=r_def), dimension(ndf_q) :: q_cell
   real(kind=r_def)                   :: q_at_node
 
   do k = 0, nlayers-1
     do df_q = 1, ndf_q
       q_cell(df_q) = q( map_q(df_q) + k )
-    end do    
+    end do
     do df = 1, ndf_f
       q_at_node = 0.0_r_def
       do df_q = 1,ndf_q

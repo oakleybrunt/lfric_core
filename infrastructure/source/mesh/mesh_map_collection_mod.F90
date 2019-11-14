@@ -73,7 +73,7 @@ contains ! Type-bound procedures for mesh_map_collection_type
 
   !> @brief Finalizer routine, should be called automatically by
   !>        code when the object is out of scope
-  final :: mesh_map_collection_destructor 
+  final :: mesh_map_collection_destructor
 
 
 end type mesh_map_collection_type

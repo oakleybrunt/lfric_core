@@ -89,7 +89,7 @@ type, extends(linked_list_data_type), public :: function_space_type
   integer(i_def) :: element_order
 
   ! Function space polynomial order? dynamics is still to provide us
-  ! with a name for this, same as element order except for W0 
+  ! with a name for this, same as element order except for W0
   ! where is it equal to element_order+1
   integer(i_def) :: fs_order
 
@@ -111,7 +111,7 @@ type, extends(linked_list_data_type), public :: function_space_type
   !> of the function_space degrees of freedom
   real(r_def),    allocatable :: nodal_coords(:,:)
 
-  !> A two dimensional, allocatable, integer array which specifies which 
+  !> A two dimensional, allocatable, integer array which specifies which
   !> dofs are on vertex boundarys
   integer(i_def), allocatable :: dof_on_vert_boundary(:,:)
 
@@ -136,7 +136,7 @@ type, extends(linked_list_data_type), public :: function_space_type
   integer(i_halo_index), allocatable :: global_dof_id(:)
 
   !> A one dimensional, allocatable array which holds a unique global index for
-  !> dofs in the 2D horizontal portion of the local domain 
+  !> dofs in the 2D horizontal portion of the local domain
   integer(i_def), allocatable :: global_dof_id_2d(:)
 
   !> The index within the dofmap of the last "owned" dof
@@ -177,12 +177,12 @@ contains
   !> @return Integer, Number of layers
   procedure, public :: get_nlayers
 
-  !> @brief Returns a pointer to the dofmap for the cell 
+  !> @brief Returns a pointer to the dofmap for the cell
   !> @param[in] cell Which cell
   !> @return The pointer which points to a slice of the dofmap
   procedure, public :: get_cell_dofmap
 
-  !> @brief Returns a pointer to the dofmap for all cells 
+  !> @brief Returns a pointer to the dofmap for all cells
   !> @return The pointer which points to the cell-ordered dofmap
   procedure, public :: get_whole_dofmap
 
@@ -195,12 +195,12 @@ contains
   !> @return Integer, the number of dofs per cell
   procedure, public :: get_ndf
   !> @brief Obtains the number of interior dofs
-  !> @return Integer, the number of dofs associated with the interior of 
+  !> @return Integer, the number of dofs associated with the interior of
   !>         each cell
   procedure, public :: get_ndof_interior
 
   !> @brief Obtains the number of face dofs
-  !> @return Integer, the number of dofs associated with the faces of 
+  !> @return Integer, the number of dofs associated with the faces of
   !>         each cell
   procedure, public :: get_ndof_face
   !> Gets the coordinates of the function space
@@ -247,7 +247,7 @@ contains
   !> @param[in] qp_v integer number of quadrature points in the vertical
   !> @param[in] x_qp real two dimensional array holding the x's horizontal
   !> @param[in] z_qp real two dimensional array holding the x's vertical
-  !> @param[out] basis real 3 dimensional array holding the evaluated basis 
+  !> @param[out] basis real 3 dimensional array holding the evaluated basis
   !! functions
   procedure, public :: compute_basis_function
 
@@ -259,11 +259,11 @@ contains
   !> @param[in] qp_v integer number of quadrature points in the vertical
   !> @param[in] x_qp real two dimensional array holding the x's horizontal
   !> @param[in] z_qp real two dimensional array holding the x's vertical
-  !> @param[out] dbasis real 3 dimensional array holding the evaluated basis 
+  !> @param[out] dbasis real 3 dimensional array holding the evaluated basis
   !> functions
   procedure, public :: compute_diff_basis_function
 
-  !> @brief Gets the size of the space 
+  !> @brief Gets the size of the space
   !!(1 is scalar 3 is vector). Returns dim
   !> @return dim The size of the space
   procedure, public :: get_dim_space
@@ -292,7 +292,7 @@ contains
   !> Gets the array that holds the global indices of all dofs
   procedure get_global_dof_id
 
-  !> Gets the array that holds the global indices of all dofs 
+  !> Gets the array that holds the global indices of all dofs
   !> in 2D horizontal domain
   procedure get_global_dof_id_2d
 
@@ -320,13 +320,13 @@ contains
   ! Mesh colouring wrapper methods
   !> @brief Populates args with colouring info from member mesh.
   !>
-  !> @param[out] ncolours  Number of colours used to colour member mesh. 
+  !> @param[out] ncolours  Number of colours used to colour member mesh.
   !> @param[out] ncells_per_colour  Count of cells in each colour.
   !> @param[out] colour_map  Indices of cells in each colour.
   procedure, public  :: get_colours
 
   !> @brief   Returns count of colours used in colouring member mesh.
-  !> @return  Number of colours used to colour this mesh. 
+  !> @return  Number of colours used to colour this mesh.
   procedure, public  :: get_ncolours
 
   procedure, public  :: clear
@@ -341,7 +341,7 @@ end interface
 
 
 !-------------------------------------------------------------------------------
-! Contained functions/subroutines 
+! Contained functions/subroutines
 !-------------------------------------------------------------------------------
 contains
 
@@ -354,7 +354,7 @@ contains
 !>          i.e. the function space is only created on the initial call,
 !>          all other calls just return a pointer to the function space.
 !> @param[in] mesh           The mesh upon which to base this function space
-!> @param[in] element_order  The element order for this function space, 0 being 
+!> @param[in] element_order  The element order for this function space, 0 being
 !>                           the lowest element order for function spaces defined
 !>                           for Gungho.
 !>                           @b Note: This is not necessarily the same as the
@@ -450,7 +450,7 @@ subroutine init_function_space( self )
   if (allocated( self%basis_index  ))    deallocate( self%basis_index )
   if (allocated( self%basis_order  ))    deallocate( self%basis_order )
   if (allocated( self%basis_vector ))    deallocate( self%basis_vector)
-  if (allocated( self%basis_x      ))    deallocate( self%basis_x )   
+  if (allocated( self%basis_x      ))    deallocate( self%basis_x )
   if (allocated( self%nodal_coords ))    deallocate( self%nodal_coords )
   if (allocated( self%dof_on_vert_boundary )) &
                                   deallocate(self%dof_on_vert_boundary )
@@ -876,7 +876,7 @@ end subroutine compute_basis_function
 !-----------------------------------------------------------------------------
 ! Evaluates the differential basis function for a given quadrature
 !-----------------------------------------------------------------------------
-subroutine compute_diff_basis_function(self,                                & 
+subroutine compute_diff_basis_function(self,                                &
                                        dbasis,                              &
                                        ndf,                                 &
                                        qp_h,                                &
@@ -993,7 +993,7 @@ function get_mesh_id(self) result (mesh_id)
   implicit none
   class(function_space_type), intent(in) :: self
   integer(i_def) :: mesh_id
-  
+
   mesh_id = self%mesh%get_id()
 
   return
@@ -1015,7 +1015,7 @@ subroutine get_global_dof_id(self, global_dof_id)
 end subroutine get_global_dof_id
 
 !-----------------------------------------------------------------------------
-! Gets the array that holds the global indices of all dofs in 2D 
+! Gets the array that holds the global indices of all dofs in 2D
 ! Horizontal domain
 !-----------------------------------------------------------------------------
 subroutine get_global_dof_id_2d(self, global_dof_id_2d)
@@ -1135,7 +1135,7 @@ function get_stencil_dofmap(self, stencil_shape, stencil_extent) result(map)
   do
     if ( .not. associated(loop) ) then
       ! At the end of list and we didn't find it
-      ! create stencil dofmap and add it 
+      ! create stencil dofmap and add it
 
       call self%dofmap_list%insert_item(stencil_dofmap_type(stencil_shape,    &
                                                             stencil_extent,   &
@@ -1253,7 +1253,7 @@ end subroutine function_space_destructor
 !> @param[in] mesh_id  ID of mesh object
 !> @param[in] element_order  function space order
 !> @param[in] lfric_fs       lfric id code for given supported function space
-!> @return    id 
+!> @return    id
 function generate_function_space_id(mesh_id,element_order,lfric_fs) result(id)
 
   implicit none

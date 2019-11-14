@@ -69,15 +69,15 @@ contains
 !! @param[in] ndf_w3 Number of degrees of freedom per cell for w3
 !! @param[in] undf_w3 Number unique of degrees of freedom  for w3
 !! @param[in] map_w3 Dofmap for the cell at the base of the column for w3
-!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] w3_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] ndf_wt Number of degrees of freedom per cell for theta space
 !! @param[in] undf_wt Number unique of degrees of freedom  for theta space
 !! @param[in] map_wt Dofmap for the cell at the base of the column for theta space
-!! @param[in] wt_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] wt_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] ndf_chi Number of degrees of freedom per cell for chi space
 !! @param[in] undf_chi Number unique of degrees of freedom  for chi space
 !! @param[in] map_chi Dofmap for the cell at the base of the column for chi space
-!! @param[in] chi_diff_basis Basis functions evaluated at gaussian quadrature points 
+!! @param[in] chi_diff_basis Basis functions evaluated at gaussian quadrature points
 !! @param[in] nqp_h Number of quadrature points in the horizontal
 !! @param[in] nqp_v Number of quadrature points in the vertical
 !! @param[in] wqp_h horizontal quadrature weights
@@ -91,7 +91,7 @@ subroutine project_pressure_code(cell, nlayers,                                &
                                  ndf_chi, undf_chi, map_chi, chi_diff_basis,   &
                                  nqp_h, nqp_v, wqp_h, wqp_v                    &
                                  )
-                           
+
   use calc_exner_pointwise_mod,only: calc_exner_pointwise
   use coordinate_jacobian_mod, only: coordinate_jacobian
 
@@ -104,11 +104,11 @@ subroutine project_pressure_code(cell, nlayers,                                &
   integer, dimension(ndf_wt),  intent(in) :: map_wt
   integer, dimension(ndf_chi), intent(in) :: map_chi
   integer, dimension(ndf_w3),  intent(in) :: map_w3
-  
 
-  real(kind=r_def), dimension(1,ndf_w3, nqp_h,nqp_v), intent(in) :: w3_basis  
-  real(kind=r_def), dimension(1,ndf_wt, nqp_h,nqp_v), intent(in) :: wt_basis 
-  real(kind=r_def), dimension(3,ndf_chi,nqp_h,nqp_v), intent(in) :: chi_diff_basis   
+
+  real(kind=r_def), dimension(1,ndf_w3, nqp_h,nqp_v), intent(in) :: w3_basis
+  real(kind=r_def), dimension(1,ndf_wt, nqp_h,nqp_v), intent(in) :: wt_basis
+  real(kind=r_def), dimension(3,ndf_chi,nqp_h,nqp_v), intent(in) :: chi_diff_basis
 
   real(kind=r_def), dimension(undf_w3),  intent(out) :: exner
   real(kind=r_def), dimension(undf_w3),  intent(in)  :: rho
@@ -122,9 +122,9 @@ subroutine project_pressure_code(cell, nlayers,                                &
   real(kind=r_def), dimension(nqp_v), intent(in)      ::  wqp_v
 
   ! Internal variables
-  integer               :: df, k, ik 
+  integer               :: df, k, ik
   integer               :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_w3)          :: rho_e
   real(kind=r_def), dimension(ndf_w3)          :: r_exner, exner_e
   real(kind=r_def), dimension(ndf_wt)          :: theta_vd_e
@@ -146,16 +146,16 @@ subroutine project_pressure_code(cell, nlayers,                                &
     do df = 1, ndf_w3
       rho_e(df) = rho( map_w3(df) + k )
       r_exner(df) = 0.0_r_def
-    end do    
+    end do
     do df = 1, ndf_wt
       theta_vd_e(df) = theta( map_wt(df) + k ) * moist_dyn_gas( map_wt(df) + k )
-    end do   
+    end do
 
     do qp2 = 1, nqp_v
       do qp1 = 1, nqp_h
-        rho_at_quad = 0.0_r_def 
+        rho_at_quad = 0.0_r_def
         do df = 1, ndf_w3
-          rho_at_quad  = rho_at_quad + rho_e(df)*w3_basis(1,df,qp1,qp2) 
+          rho_at_quad  = rho_at_quad + rho_e(df)*w3_basis(1,df,qp1,qp2)
         end do
         theta_vd_at_quad = 0.0_r_def
         do df = 1, ndf_wt
@@ -173,9 +173,9 @@ subroutine project_pressure_code(cell, nlayers,                                &
     exner_e = matmul(m3_inv(:,:,ik),r_exner)
     do df = 1, ndf_w3
       exner( map_w3(df) + k ) =  exner_e(df)
-    end do 
+    end do
   end do
-  
+
 end subroutine project_pressure_code
 
 end module project_pressure_kernel_mod

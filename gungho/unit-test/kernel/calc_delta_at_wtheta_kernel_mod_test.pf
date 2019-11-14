@@ -52,9 +52,9 @@ contains
     real(kind=r_def),    dimension(undftheta)   :: delta_at_wtheta
 
     integer(kind=r_def) :: i, k
-    
-    
- 
+
+
+
     do i = 1,ndftheta
       maptheta(i) = i
     end do

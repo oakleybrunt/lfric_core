@@ -421,7 +421,7 @@ contains
     call mesh_1%get_cell_coords(23, test_real_array1_2d)
     @assertEqual ( test_real_array2_2d, test_real_array1_2d, 1.0e-2_r_def )
 
-    adjacency => mesh_1%get_adjacent_face()  
+    adjacency => mesh_1%get_adjacent_face()
     @assertEqual ( 3, adjacency(1,5) )
     @assertEqual ( 4, adjacency(2,5) )
     @assertEqual ( 1, adjacency(3,5) )
@@ -659,7 +659,7 @@ contains
     test_partition => mesh_1%get_partition()
 
     do i=1, test_partition%get_num_cells_in_layer()
-      @assertEqual (test_partition%get_gid_from_lid(i), this%partition%get_gid_from_lid(i)) 
+      @assertEqual (test_partition%get_gid_from_lid(i), this%partition%get_gid_from_lid(i))
     end do
 
   end subroutine test_get_partition
@@ -678,7 +678,7 @@ contains
                         this%partition,   &
                         this%extrusion )
 
-    @assertEqual (mesh_1%get_global_mesh_id(),this%global_mesh%get_id()) 
+    @assertEqual (mesh_1%get_global_mesh_id(),this%global_mesh%get_id())
 
   end subroutine test_get_global_mesh_id
 
@@ -716,14 +716,14 @@ contains
     integer(i_def), pointer :: test_1d_array_ptr(:)   => null()
     integer(i_def), pointer :: test_2d_array_ptr(:,:) => null()
 
-    ! Clear out the global mesh collection, as it may have the 
+    ! Clear out the global mesh collection, as it may have the
     ! unit test global mesh which is not what we want.
     call global_mesh_collection%clear()
     global_mesh_collection = global_mesh_collection_type()
     mesh_collection        = mesh_collection_type()
 
     ! Add global meshes to the global mesh collection for later generation
-    ! of local meshes, the order in which they are added should create 
+    ! of local meshes, the order in which they are added should create
     ! a global mesh map between the source and target global meshes.
     source_global_mesh_id = global_mesh_collection %                    &
                                 add_new_global_mesh( MultiGridFiles(1), &

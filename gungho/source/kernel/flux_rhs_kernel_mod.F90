@@ -53,7 +53,7 @@ module flux_rhs_kernel_mod
 
 contains
 
-!> @brief 
+!> @brief
 !! @param[in] nlayers Number of layers
 !! @param[in] ndf_u Number of degrees of freedom per cell for w2
 !! @param[in] undf_u Number of unique degrees of freedom for w2
@@ -64,7 +64,7 @@ contains
 !! @param[in] ndf_f Number of degrees of freedom per cell for the field to be advected
 !! @param[in] undf_f Number of unique degrees of freedom for the advected field
 !! @param[in] map_f Dofmap for the cell at the base of the column for the field to be advected
-!! @param[in] basis_f Basis functions evaluated at gaussian quadrature points 
+!! @param[in] basis_f Basis functions evaluated at gaussian quadrature points
 !! @param[in] f Advected field
 !! @param[in] ndf_chi Number of degrees of freedom per cell for the function space containing chi
 !! @param[in] undf_chi Number of unique degrees of freedom for chi arrays
@@ -80,11 +80,11 @@ contains
 subroutine flux_rhs_code(nlayers, rhs, u, f, chi_1, chi_2, chi_3, &
                          ndf_u, undf_u, map_u, basis_u,              &
                          ndf_f, undf_f, map_f, basis_f,                      &
-                         ndf_chi, undf_chi, map_chi, diff_basis_chi,         &   
+                         ndf_chi, undf_chi, map_chi, diff_basis_chi,         &
                          nqp_h, nqp_v, wqp_h, wqp_v                          &
                          )
 
-                           
+
   use coordinate_jacobian_mod,  only: coordinate_jacobian
 
   implicit none
@@ -94,13 +94,13 @@ subroutine flux_rhs_code(nlayers, rhs, u, f, chi_1, chi_2, chi_3, &
   integer, intent(in) :: ndf_chi, ndf_u, ndf_f, undf_chi, undf_u, undf_f
   integer, intent(in) :: nqp_h, nqp_v
   integer, intent(in) :: map_chi(ndf_chi), map_u(ndf_u), map_f(ndf_f)
-  real(kind=r_def), dimension(3,ndf_u,nqp_h,nqp_v) ,  intent(in)    :: basis_u  
+  real(kind=r_def), dimension(3,ndf_u,nqp_h,nqp_v) ,  intent(in)    :: basis_u
   real(kind=r_def), dimension(1,ndf_f,nqp_h,nqp_v),   intent(in)    :: basis_f
   real(kind=r_def), dimension(3,ndf_chi,nqp_h,nqp_v), intent(in)    :: diff_basis_chi
   real(kind=r_def), dimension(undf_u),                intent(inout) :: rhs
-  real(kind=r_def), dimension(undf_u),                intent(in)    :: u 
+  real(kind=r_def), dimension(undf_u),                intent(in)    :: u
   real(kind=r_def), dimension(undf_f),                intent(in)    :: f
-  real(kind=r_def), dimension(undf_chi),              intent(in)    :: chi_1, chi_2, chi_3 
+  real(kind=r_def), dimension(undf_chi),              intent(in)    :: chi_1, chi_2, chi_3
 
   real(kind=r_def), dimension(nqp_h),                 intent(in)    :: wqp_h
   real(kind=r_def), dimension(nqp_v),                 intent(in)    :: wqp_v
@@ -108,7 +108,7 @@ subroutine flux_rhs_code(nlayers, rhs, u, f, chi_1, chi_2, chi_3, &
   !Internal variables
   integer               :: df, k, loc
   integer               :: qp1, qp2
-  
+
   real(kind=r_def), dimension(ndf_chi)         :: chi_1_e, chi_2_e, chi_3_e
   real(kind=r_def), dimension(nqp_h,nqp_v)     :: dj
   real(kind=r_def), dimension(3,3,nqp_h,nqp_v) :: jac
@@ -129,23 +129,23 @@ subroutine flux_rhs_code(nlayers, rhs, u, f, chi_1, chi_2, chi_3, &
                              diff_basis_chi, jac, dj)
     do df = 1, ndf_f
       f_cell(df) = f( map_f(df) + k )
-    end do    
+    end do
     do df = 1, ndf_u
       u_cell(df) = u( map_u(df) + k )
-    end do    
+    end do
   ! compute the RHS integrated over one cell
     rhs_cell(:) = 0.0_r_def
     do qp2 = 1, nqp_v
       do qp1 = 1, nqp_h
-        f_at_quad = 0.0_r_def 
+        f_at_quad = 0.0_r_def
         do df = 1, ndf_f
-          f_at_quad  = f_at_quad + f_cell(df)*basis_f(1,df,qp1,qp2) 
+          f_at_quad  = f_at_quad + f_cell(df)*basis_f(1,df,qp1,qp2)
         end do
         u_at_quad(:) = 0.0_r_def
         do df = 1, ndf_u
           u_at_quad(:) = u_at_quad(:) + u_cell(df)*basis_u(:,df,qp1,qp2)
         end do
-        
+
         u_at_quad(:) = wqp_h(qp1)*wqp_v(qp2)*matmul(jac(:,:,qp1,qp2),u_at_quad(:)*f_at_quad)/dj(qp1,qp2)
         do df = 1, ndf_u
           jac_v = matmul(jac(:,:,qp1,qp2),basis_u(:,df,qp1,qp2))
@@ -155,9 +155,9 @@ subroutine flux_rhs_code(nlayers, rhs, u, f, chi_1, chi_2, chi_3, &
     end do
     do df = 1, ndf_u
       rhs( map_u(df) + k ) =  rhs( map_u(df) + k ) + rhs_cell(df)
-    end do 
-  end do 
-  
+    end do
+  end do
+
 end subroutine flux_rhs_code
 
 end module flux_rhs_kernel_mod

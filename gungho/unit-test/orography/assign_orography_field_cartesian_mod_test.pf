@@ -156,7 +156,7 @@ contains
                                                       partitioner_biperiodic
     use extrusion_mod,                         only : uniform_extrusion_type
     use mesh_constructor_helper_functions_mod, only : domain_size_type
-    use orography_helper_functions_mod,        only : calc_domain_size_horizontal 
+    use orography_helper_functions_mod,        only : calc_domain_size_horizontal
     use assign_orography_field_mod,            only : assign_orography_cartesian
     use orography_helper_functions_mod,        only : eta2z_linear
 
@@ -168,7 +168,7 @@ contains
     integer(i_def)                            :: mesh_id
     type(global_mesh_type),           pointer :: global_mesh => null()
     type(mesh_type),                  pointer :: mesh => null()
-    type(domain_size_type)                    :: domain_size 
+    type(domain_size_type)                    :: domain_size
     type(partition_type)                      :: partition
     procedure(partitioner_interface), pointer :: partitioner_ptr => null()
     type(uniform_extrusion_type)              :: extrusion

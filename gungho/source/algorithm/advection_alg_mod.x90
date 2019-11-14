@@ -35,7 +35,7 @@ module advection_alg_mod
   use timer_mod,                      only: timer
   use timestepping_config_mod,        only: time_method => method,          &
                                             method_rk,                      &
-                                            method_semi_implicit 
+                                            method_semi_implicit
   use cosmic_threed_alg_mod,          only: cosmic_threed_transport_step
   use calc_dep_pts_alg_mod,           only: calc_dep_pts
   use transport_config_mod,           only: scheme,                         &
@@ -187,19 +187,19 @@ contains
   call u_grad_theta%initialise( state(igh_t)%get_function_space() )
   call advect_field(u_grad_theta, state(igh_t), advecting_wind, &
                     scheme_method_of_lines, wind_n, wind_np1, .false., dt)
-  ! u_grad_theta now contains a pointwise incremente to theta, 
+  ! u_grad_theta now contains a pointwise incremente to theta,
   ! i.e. theta_np1 = theta_n - dt*u_grad_theta
-  ! Depending upon what the temporal discretisation is this needs 
-  ! converting into the a weak form, either by cancelling out the 
+  ! Depending upon what the temporal discretisation is this needs
+  ! converting into the a weak form, either by cancelling out the
   ! lumped mass matrix used to advect it or by multiplying by the
   ! full mass matrix
-  if ( operators == operators_fv ) then   
+  if ( operators == operators_fv ) then
     if ( time_method == method_rk ) then
       ! Solve equation in pointwise form (fully fv equation)
       call invoke( setval_X(advection(igh_t), u_grad_theta) )
     else
       ! Convert equation from pointwise form to weak form (fully fem equation)
-      mm_wt => get_mass_matrix(wt_id) 
+      mm_wt => get_mass_matrix(wt_id)
       call invoke( setval_c(advection(igh_t), 0.0_r_def), &
                    matrix_vector_kernel_type(advection(igh_t), u_grad_theta, mm_wt) )
     end if
@@ -213,7 +213,7 @@ contains
   if ( si_momentum_equation ) then
     ! Advection terms are handled by the semi-implicit scheme the increment is zero
     call invoke( setval_c(advection(igh_u), 0.0_r_def) )
-  else 
+  else
     ! Advect wind field
     call log_event( "Advecting wind...", LOG_LEVEL_INFO)
     call advect_momentum_alg(advection(igh_u), advected_wind, &
@@ -224,13 +224,13 @@ contains
   ! Don't advect Exner pressure
   call invoke( setval_c(advection(igh_p), 0.0_r_def) )
 
-  nullify(mm_wt, mm_w3_inv, div,  mt_lumped_inv) 
+  nullify(mm_wt, mm_w3_inv, div,  mt_lumped_inv)
 
   if ( subroutine_timers ) call timer('advection_alg')
   end subroutine advection_alg
 
   !===========================================================================!
-  !> @details A wrapper algorithm for computing the advection of the moisture 
+  !> @details A wrapper algorithm for computing the advection of the moisture
   !>          prognostic
   !> @param[in,out] mr_inc Increment to mixing ratios
   !> @param[in]     mr Mixing ratios
@@ -305,7 +305,7 @@ contains
                                                element_order, W3 )
 
     ! If not using vector invariant form then compute [ (u.grad)u ]
-    ! Compute u in physical space and advect components in geocentric 
+    ! Compute u in physical space and advect components in geocentric
     ! Cartesian coordinates and then map back to computational form
     qr = quadrature_xyoz_type(nqp_exact, quadrature_rule)
     chi => get_coordinates()
@@ -322,7 +322,7 @@ contains
     call u_scalar(2)%log_minmax(LOG_LEVEL_INFO, 'ydot')
     call u_scalar(3)%log_minmax(LOG_LEVEL_INFO, 'zdot')
 
-    ! Compute reconstruction of each velocity component 
+    ! Compute reconstruction of each velocity component
     ! Cosmic is not yet implemented and so must use method of lines scheme
     do dir = 1,3
       call advect_field(adv_wind_update(dir), u_scalar(dir),            &
@@ -342,7 +342,7 @@ contains
   end subroutine advect_momentum_alg
 
   !===========================================================================!
-  !> @brief Advect a generic field and optionally return the flux used to 
+  !> @brief Advect a generic field and optionally return the flux used to
   !>        advect the field
   !> @param[in,out] advection_inc Update from advecting the field
   !> @param[in]     field Field to advect
@@ -350,7 +350,7 @@ contains
   !> @param[in]     adv_scheme Scheme used to advect this field
   !> @param[in]     wind_n Time level n wind field
   !> @param[in]     wind_np1 Time level n+1 wind field
-  !> @param[in]     advect_density Flag for advecting the density and 
+  !> @param[in]     advect_density Flag for advecting the density and
   !>                              returning the mass flux
   !> @param[in]     timestep delta t to advect field by
   subroutine advect_field(advection_inc, field, advecting_wind, adv_scheme, &
@@ -401,15 +401,15 @@ contains
         call field%copy_field(field_new)
         div       => get_div()
         mm_w3_inv => get_mass_matrix(w3inv_id)
-        allocate( rk_rhs(nstage) )      
+        allocate( rk_rhs(nstage) )
 
         if ( time_method == method_semi_implicit &
              .and. advect_density                &
-             .and. .not. si_momentum_equation ) then 
+             .and. .not. si_momentum_equation ) then
           ! Advect predictor for the density: rho*divergence_factor with
           ! divergence_factor = [1-beta*dt*div(u)]
           ! This helps improve long timestep stability
-          minus_beta_dt = -beta*timestep 
+          minus_beta_dt = -beta*timestep
           call divergence_factor%initialise( field%get_function_space() )
           call invoke( name = "compute_density_predictor",                     &
                        dg_matrix_vector_kernel_type(divergence_factor, wind_n, &
@@ -430,7 +430,7 @@ contains
 
         ! Use Runge-Kutta timestepping to advect field and return either
         ! the advection increment or the flux used to advect the field
-        call invoke( setval_c( advection_inc, 0.0_r_def) )  
+        call invoke( setval_c( advection_inc, 0.0_r_def) )
         do stage = 1,nstage
           call rk_rhs(stage)%initialise( field%get_function_space() )
           ! Build rhs depending upon type of field being advected
@@ -471,10 +471,10 @@ contains
           call invoke( setval_c(rhs, 0.0_r_def) )
           do s = 1, stage
             call invoke( inc_X_minus_bY(rhs, ak_adv(stage,s), rk_rhs(s)) )
-          end do    
-          ! Update field: f = f^n + dt*rhs      
+          end do
+          ! Update field: f = f^n + dt*rhs
           call invoke( setval_X(field_inc, rhs), &
-                       aX_plus_Y( field_new, timestep, field_inc, field ) ) 
+                       aX_plus_Y( field_new, timestep, field_inc, field ) )
 
           ! Add increment from this stage to the advection increment
           if ( .not. advect_density) then
@@ -486,7 +486,7 @@ contains
 
         nullify( div )
         deallocate( rk_rhs )
- 
+
       case(scheme_cosmic_3D)
         ! Use Cosmic scheme to advect field
         select case(function_space)
