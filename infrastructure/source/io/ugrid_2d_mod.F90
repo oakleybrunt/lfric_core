@@ -11,7 +11,7 @@
 
 module ugrid_2d_mod
 
-use constants_mod,  only : i_def, r_def, str_def, str_long
+use constants_mod,  only : i_def, r_def, str_def, str_long, l_def
 use ugrid_file_mod, only : ugrid_file_type
 use global_mesh_map_collection_mod, only: global_mesh_map_collection_type
 
@@ -32,9 +32,11 @@ type, public :: ugrid_2d_type
   private
 
   character(str_def)  :: mesh_name
-  character(str_def)  :: mesh_class          !< Primitive class of mesh,
-                                             !< i.e. sphere, plane
-  character(str_long) :: constructor_inputs  !< Inputs used to generate mesh
+  character(str_def)  :: mesh_class           !< Primitive class of mesh,
+                                              !< i.e. sphere, plane
+  logical(l_def)      :: periodic_x = .false. !< Periodic in E-W direction.
+  logical(l_def)      :: periodic_y = .false. !< Periodic in N-S direction.
+  character(str_long) :: constructor_inputs   !< Inputs used to generate mesh
 
   character(str_def)  :: coord_units_x
   character(str_def)  :: coord_units_y
@@ -323,6 +325,8 @@ subroutine set_by_generator(self, generator_strategy)
   call generator_strategy%get_metadata                &
       ( mesh_name          = self%mesh_name,          &
         mesh_class         = self%mesh_class,         &
+        periodic_x         = self%periodic_x,         &
+        periodic_y         = self%periodic_y,         &
         edge_cells_x       = self%edge_cells_x,       &
         edge_cells_y       = self%edge_cells_y,       &
         constructor_inputs = self%constructor_inputs, &
@@ -418,6 +422,8 @@ subroutine set_from_file_read(self, mesh_name, filename)
   call self%file_handler%read_mesh(                         &
       mesh_name              = self%mesh_name,              &
       mesh_class             = self%mesh_class,             &
+      periodic_x             = self%periodic_x,             &
+      periodic_y             = self%periodic_y,             &
       constructor_inputs     = self%constructor_inputs,     &
       node_coordinates       = self%node_coordinates,       &
       face_coordinates       = self%face_coordinates,       &
@@ -459,6 +465,8 @@ subroutine write_to_file(self, filename)
   call self%file_handler%write_mesh(                         &
        mesh_name              = self%mesh_name,              &
        mesh_class             = self%mesh_class,             &
+       periodic_x             = self%periodic_x,             &
+       periodic_y             = self%periodic_y,             &
        constructor_inputs     = self%constructor_inputs,     &
        num_nodes              = self%num_nodes,              &
        num_edges              = self%num_edges,              &
@@ -505,6 +513,8 @@ subroutine append_to_file(self, filename)
   call self%file_handler%append_mesh(                        &
        mesh_name              = self%mesh_name,              &
        mesh_class             = self%mesh_class,             &
+       periodic_x             = self%periodic_x,             &
+       periodic_y             = self%periodic_y,             &
        constructor_inputs     = self%constructor_inputs,     &
        num_nodes              = self%num_nodes,              &
        num_edges              = self%num_edges,              &
@@ -533,14 +543,17 @@ end subroutine append_to_file
 !> @param[in]            self               The calling ugrid object.
 !> @param[out, optional] mesh_name          Name of the current mesh topology.
 !> @param[out, optional] mesh_class         Primitive class of the mesh topology.
+!> @param[out, optional] periodic_x         Periodic in E-W direction.
+!> @param[out, optioanl] periodic_y         Periodic in N-S direction.
 !> @param[out, optional] edge_cells_x       Number of panel edge cells (x-axis).
 !> @param[out, optional] edge_cells_y       Number of panel edge cells (y-axis).
 !> @param[out, optional] constructor_inputs Input arguments use to create this mesh.
 !> @param[out, optional] maps_mesh_names    Names of target mesh topologies in this file
 !>                                          which this mesh possesses cell-cell maps for.
 !-------------------------------------------------------------------------------
-subroutine get_metadata( self, mesh_name, mesh_class, &
-                         edge_cells_x, edge_cells_y,  &
+subroutine get_metadata( self, mesh_name, mesh_class,         &
+                         periodic_x, periodic_y,              &
+                         edge_cells_x, edge_cells_y,          &
                          constructor_inputs, maps_mesh_names )
 
   implicit none
@@ -548,6 +561,8 @@ subroutine get_metadata( self, mesh_name, mesh_class, &
   class(ugrid_2d_type), intent(in) :: self
   character(str_def),   optional, intent(out) :: mesh_name
   character(str_def),   optional, intent(out) :: mesh_class
+  logical(l_def),       optional, intent(out) :: periodic_x
+  logical(l_def),       optional, intent(out) :: periodic_y
   integer(i_def),       optional, intent(out) :: edge_cells_x
   integer(i_def),       optional, intent(out) :: edge_cells_y
   character(str_long),  optional, intent(out) :: constructor_inputs
@@ -555,6 +570,8 @@ subroutine get_metadata( self, mesh_name, mesh_class, &
 
   if (present(mesh_name))          mesh_name          = self%mesh_name
   if (present(mesh_class))         mesh_class         = self%mesh_class
+  if (present(periodic_x))         periodic_x         = self%periodic_x
+  if (present(periodic_y))         periodic_y         = self%periodic_y
   if (present(constructor_inputs)) constructor_inputs = self%constructor_inputs
   if (present(edge_cells_x))       edge_cells_x       = self%edge_cells_x
   if (present(edge_cells_y))       edge_cells_y       = self%edge_cells_y

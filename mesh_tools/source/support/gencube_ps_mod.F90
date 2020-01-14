@@ -52,6 +52,7 @@ module gencube_ps_mod
 
   ! flag to print out mesh data for debugging purposes
   logical(l_def),     parameter :: DEBUG = .false.
+
 !-------------------------------------------------------------------------------
 
   type, extends(ugrid_generator_type), public :: gencube_ps_type
@@ -1621,6 +1622,8 @@ end subroutine calc_cell_centres
 subroutine get_metadata( self,               &
                          mesh_name,          &
                          mesh_class,         &
+                         periodic_x,         &
+                         periodic_y,         &
                          npanels,            &
                          edge_cells_x,       &
                          edge_cells_y,       &
@@ -1635,6 +1638,8 @@ subroutine get_metadata( self,               &
   class(gencube_ps_type), intent(in)  :: self
   character(str_def), optional, intent(out) :: mesh_name
   character(str_def), optional, intent(out) :: mesh_class
+  logical(l_def), optional, intent(out)     :: periodic_x
+  logical(l_def), optional, intent(out)     :: periodic_y
   character(str_long),optional, intent(out) :: constructor_inputs
 
   integer(i_def),   optional,  intent(out) :: npanels

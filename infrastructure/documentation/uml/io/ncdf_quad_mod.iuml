@@ -8,6 +8,8 @@ class ncdf_quad_mod::ncdf_quad_type {
   -file_name: string
   -mesh_name: string
   -mesh_class: string
+  -periodic_x: logical
+  -periodic_y: logical
   -constructor_inputs: string
   -coord_units_x: string
   -coord_units_y: string

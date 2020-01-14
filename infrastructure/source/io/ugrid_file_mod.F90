@@ -127,6 +127,8 @@ abstract interface
   !> @param[in,out] self                   The ugrid file strategy object.
   !> @param[in]     mesh_name              Name of mesh to read
   !> @param[out]    mesh_class             Primitive class of mesh.
+  !> @param[out]    periodic_x             Periodic in E-W direction.
+  !> @param[out]    periodic_y             Periodic in N-S direction.
   !> @param[out]    constructor_inputs     Inputs to the ugrid_generator used to
   !>                                       create the mesh
   !> @param[out]    node_coordinates       Node coordinates
@@ -141,18 +143,19 @@ abstract interface
   !> @param[out]    target_mesh_names      Mesh(es) that this mesh has maps for
   !-----------------------------------------------------------------------------
 
-  subroutine read_mesh_interface( self, mesh_name, mesh_class, &
-                                  constructor_inputs,          &
-                                  node_coordinates,            &
-                                  face_coordinates,            &
-                                  coord_units_x, coord_units_y,&
-                                  face_node_connectivity,      &
-                                  edge_node_connectivity,      &
-                                  face_edge_connectivity,      &
-                                  face_face_connectivity,      &
+  subroutine read_mesh_interface( self, mesh_name, mesh_class,    &
+                                  periodic_x, periodic_y,         &
+                                  constructor_inputs,             &
+                                  node_coordinates,               &
+                                  face_coordinates,               &
+                                  coord_units_x, coord_units_y,   &
+                                  face_node_connectivity,         &
+                                  edge_node_connectivity,         &
+                                  face_edge_connectivity,         &
+                                  face_face_connectivity,         &
                                   num_targets, target_mesh_names )
 
-    import :: ugrid_file_type, i_def, r_def, str_def, str_long
+    import :: ugrid_file_type, i_def, r_def, str_def, str_long, l_def
 
     implicit none
 
@@ -161,6 +164,8 @@ abstract interface
 
     character(str_def),  intent(in)  :: mesh_name
     character(str_def),  intent(out) :: mesh_class
+    logical(l_def),      intent(out) :: periodic_x
+    logical(l_def),      intent(out) :: periodic_y
     character(str_long), intent(out) :: constructor_inputs
 
     real(r_def),        intent(out) :: node_coordinates(:,:)
@@ -182,6 +187,8 @@ abstract interface
   !> @param[inout]   self                    The ugrid file strategy object.
   !> @param[in]      mesh_name               Name of this mesh instance
   !> @param[in]      mesh_class              Primitive class of mesh
+  !> @param[in]      periodic_x              Periodic in E-W direction.
+  !> @param[in]      periodic_y              Periodic in N-S direction.
   !> @param[in]      constructor_inputs      Inputs used to generate mesh
   !> @param[in]      num_nodes               Number of nodes
   !> @param[in]      num_edges               Number of edges
@@ -200,6 +207,7 @@ abstract interface
   !-----------------------------------------------------------------------------
 
   subroutine write_mesh_interface( self, mesh_name, mesh_class,     &
+                                   periodic_x, periodic_y,          &
                                    constructor_inputs,              &
                                    num_nodes, num_edges, num_faces, &
                                    node_coordinates,                &
@@ -214,7 +222,7 @@ abstract interface
                                    target_mesh_names,               &
                                    target_mesh_maps )
 
-    import :: ugrid_file_type, i_def, r_def, str_def, str_long, &
+    import :: ugrid_file_type, i_def, r_def, str_def, str_long, l_def, &
               global_mesh_map_collection_type
 
     implicit none
@@ -224,6 +232,8 @@ abstract interface
 
     character(str_def),  intent(in) :: mesh_name
     character(str_def),  intent(in) :: mesh_class
+    logical(l_def),      intent(in) :: periodic_x
+    logical(l_def),      intent(in) :: periodic_y
     character(str_long), intent(in) :: constructor_inputs
     integer(i_def),      intent(in) :: num_nodes
     integer(i_def),      intent(in) :: num_edges

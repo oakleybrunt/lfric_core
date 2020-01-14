@@ -12,7 +12,7 @@
 module global_mesh_mod
 
   use constants_mod,                  only: r_def, i_def, str_max_filename, &
-                                            str_def, degrees_to_radians
+                                            str_def, degrees_to_radians, l_def
   use global_mesh_map_mod,            only: global_mesh_map_type
   use global_mesh_map_collection_mod, only: global_mesh_map_collection_type
   use linked_list_data_mod,           only: linked_list_data_type
@@ -27,6 +27,10 @@ module global_mesh_mod
 
   ! Type of mesh that the global mesh describes
     character(str_def) :: mesh_class
+  ! Periodic in E-W direction
+    logical(l_def)     :: periodic_x
+  ! Periodic in N-S direction
+    logical(l_def)     :: periodic_y
   ! Horizontal coords of vertices in full domain
     real(r_def), allocatable :: vert_coords(:,:)
   ! Horizontal coords of cells in full domain
@@ -64,6 +68,7 @@ module global_mesh_mod
 
   contains
     procedure, public :: get_mesh_class
+    procedure, public :: get_mesh_periodicity
     procedure, public :: get_cell_id
     procedure, public :: get_cell_on_vert
     procedure, public :: get_cell_on_edge
@@ -159,7 +164,9 @@ contains
               num_edges_per_face     = num_edges_per_face, &
               num_nodes_per_edge     = num_nodes_per_edge, &
               max_num_faces_per_node = max_num_faces_per_node )
-    call ugrid_2d%get_metadata(mesh_class=self%mesh_class)
+    call ugrid_2d%get_metadata(mesh_class=self%mesh_class, &
+                               periodic_x=self%periodic_x, &
+                               periodic_y=self%periodic_y )
 
 
     global_mesh_id_counter = global_mesh_id_counter + 1
@@ -519,6 +526,32 @@ contains
     mesh_class = self%mesh_class
 
   end function get_mesh_class
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !> @brief  Returns values for the X and Y periodicity.
+  !>
+  !> @details periodic_x and periodic_y as read from the mesh file are
+  !>          returned. This subroutine is currently only used during the
+  !>          partitioning of planar meshes for determining mesh extents.
+  !>          The values are obtained from the header of the mesh files
+  !>          and are set to "false" for cubedsphere meshes (due to mesh
+  !>          IO function requirements) and to a user defined value for
+  !>          planar meshes.
+  !>
+  !> @param[out] periodic_x Mesh periodicity in E-W direction
+  !> @param[out] periodic_y Mesh periodicity in N-S direction
+  !>
+  subroutine get_mesh_periodicity( self, periodic_x, periodic_y )
+    implicit none
+
+    class(global_mesh_type), intent(in) :: self
+    logical(l_def), intent(out) :: periodic_x
+    logical(l_def), intent(out) :: periodic_y
+
+    periodic_x = self%periodic_x
+    periodic_y = self%periodic_y
+
+  end subroutine get_mesh_periodicity
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> @brief  Returns ID of a cell in this mesh.

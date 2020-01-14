@@ -1470,6 +1470,8 @@ end subroutine calc_global_mesh_maps
 !>          from the current mesh configuration.
 !> @param[out]  mesh_name          [optional] Name of mesh instance to generate
 !> @param[out]  mesh_class         [optional] Primitive shape, i.e. sphere, plane
+!> @param[out]  periodic_x         [optional] Periodic in E-W direction.
+!> @param[out]  periodic_y         [optional] Periodic in N-S direction.
 !> @param[out]  npanels            [optional] Number of panels use to describe mesh
 !> @param[out]  edge_cells_x       [optional] Number of panel edge cells (x-axis).
 !> @param[out]  edge_cells_y       [optional] Number of panel edge cells (y-axis).
@@ -1487,6 +1489,8 @@ end subroutine calc_global_mesh_maps
 subroutine get_metadata( self,               &
                          mesh_name,          &
                          mesh_class,         &
+                         periodic_x,         &
+                         periodic_y,         &
                          npanels,            &
                          edge_cells_x,       &
                          edge_cells_y,       &
@@ -1500,6 +1504,8 @@ subroutine get_metadata( self,               &
   class(gen_planar_type),        intent(in)  :: self
   character(str_def),  optional, intent(out) :: mesh_name
   character(str_def),  optional, intent(out) :: mesh_class
+  logical(l_def),      optional, intent(out) :: periodic_x
+  logical(l_def),      optional, intent(out) :: periodic_y
   integer(i_def),      optional, intent(out) :: npanels
   integer(i_def),      optional, intent(out) :: edge_cells_x
   integer(i_def),      optional, intent(out) :: edge_cells_y
@@ -1512,6 +1518,8 @@ subroutine get_metadata( self,               &
 
   if (present(mesh_name))          mesh_name          = self%mesh_name
   if (present(mesh_class))         mesh_class         = self%mesh_class
+  if (present(periodic_x))         periodic_x         = self%periodic_x
+  if (present(periodic_y))         periodic_y         = self%periodic_y
   if (present(npanels))            npanels            = self%npanels
   if (present(edge_cells_x))       edge_cells_x       = self%edge_cells_x
   if (present(edge_cells_y))       edge_cells_y       = self%edge_cells_y

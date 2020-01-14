@@ -34,7 +34,7 @@ module create_mesh_mod
                                         partitioner_interface,          &
                                         partitioner_cubedsphere_serial, &
                                         partitioner_cubedsphere,        &
-                                        partitioner_biperiodic
+                                        partitioner_planar
   use partitioning_config_mod,    only: auto, panel_xproc, panel_yproc
   use subgrid_config_mod,         only: dep_pt_stencil_extent, &
                                         rho_approximation_stencil_extent
@@ -167,8 +167,8 @@ subroutine init_mesh( local_rank, total_ranks, prime_mesh_id, twod_mesh_id, shif
     ranks_per_panel = total_ranks
     domain_desc = ""
 
-    partitioner_ptr => partitioner_biperiodic
-    call log_event( "Using biperiodic plane partitioner ", &
+    partitioner_ptr => partitioner_planar
+    call log_event( "Using planar mesh partitioner ", &
                     LOG_LEVEL_INFO )
   end if
 

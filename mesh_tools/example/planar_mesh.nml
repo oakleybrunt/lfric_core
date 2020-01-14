@@ -6,6 +6,6 @@
   edge_cells_y  = 24, 24, 12, 4, 2
   domain_x      = 1600.0
   domain_y      = 400.0
-  periodic_x    = .false.
+  periodic_x    = .true.
   periodic_y    = .false.
 /

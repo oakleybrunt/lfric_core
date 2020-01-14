@@ -16,7 +16,7 @@
 program summarise_ugrid
 
   use cli_mod,         only : get_initial_filename
-  use constants_mod,   only : i_def, str_def, str_long
+  use constants_mod,   only : i_def, str_def, str_long, l_def
   use iso_fortran_env, only : output_unit
   use ncdf_quad_mod,   only : ncdf_quad_type
   use ugrid_2d_mod,    only : ugrid_2d_type
@@ -40,6 +40,8 @@ program summarise_ugrid
 
   character(str_def)  :: mesh_name
   character(str_def)  :: mesh_class
+  logical(l_def)      :: periodic_x
+  logical(l_def)      :: periodic_y
   character(str_long) :: constructor_inputs
   character(str_def), allocatable :: maps_mesh_names(:)
   character(str_long) :: maps_mesh_names_str
@@ -51,6 +53,8 @@ program summarise_ugrid
   integer(i_def) :: nodes_per_edge, max_faces_per_node
 
   integer(i_def) :: comm, total_ranks, local_rank
+
+  character(str_def) :: lchar_px, lchar_py
 
   ! Start up
   call initialise_comm(comm)
@@ -95,11 +99,15 @@ program summarise_ugrid
       call infile%get_metadata( mesh_name=mesh_name,                   &
                                 mesh_class=mesh_class,                 &
                                 constructor_inputs=constructor_inputs, &
-                                maps_mesh_names=maps_mesh_names )
+                                maps_mesh_names=maps_mesh_names,       &
+                                periodic_x=periodic_x,                 &
+                                periodic_y=periodic_y )
     else
       call infile%get_metadata( mesh_name=mesh_name,                   &
                                 mesh_class=mesh_class,                 &
-                                constructor_inputs=constructor_inputs)
+                                constructor_inputs=constructor_inputs, &
+                                periodic_x=periodic_x,                 &
+                                periodic_y=periodic_y )
     end if
 
     call infile%get_dimensions( nodes, edges, faces, nodes_per_face, &
@@ -116,6 +124,16 @@ program summarise_ugrid
         '  Class: ', trim(mesh_class)
     call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
 
+    fmt_str='(A,T24,L1)'
+    write ( log_scratch_space, fmt_str ) &
+       '  Periodic X: ', periodic_x
+    call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
+
+    write ( log_scratch_space, fmt_str ) &
+       '  Periodic Y: ', periodic_y
+    call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )
+
+    fmt_str='(A,T24,A)'
     write ( log_scratch_space, fmt_str ) &
         '  Constructor inputs: ', trim(constructor_inputs)
     call log_event( trim(log_scratch_space), LOG_LEVEL_INFO )

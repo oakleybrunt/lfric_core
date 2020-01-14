@@ -65,6 +65,8 @@ type, public, extends(ugrid_file_type) :: ncdf_quad_type
   character(nf90_max_name)    :: mesh_name
   character(str_def)          :: mesh_class !< Primitive class of mesh,
                                             !< i.e. sphere, plane
+  logical(l_def)              :: periodic_x !< Periodic in E-W direction
+  logical(l_def)              :: periodic_y !< Periodic in N-S direction
 
   character(str_long) :: constructor_inputs !< Inputs to ugrid_generator for this mesh
 
@@ -465,6 +467,8 @@ subroutine assign_attributes(self)
 
   character(str_long) :: target_mesh_names_str
   character(str_long) :: attname
+  character(str_def)  :: lchar_px
+  character(str_def)  :: lchar_py
 
   character(nf90_max_name) :: var_name
   character(nf90_max_name) :: source_mesh_name
@@ -492,6 +496,22 @@ subroutine assign_attributes(self)
             '" to variable "'//trim(var_name)//'"'
   ierr = nf90_put_att( self%ncid, id, trim(attname), &
                        trim(self%mesh_class))
+  call check_err(ierr, routine, cmess)
+
+  attname = 'periodic_x'
+  write(lchar_px, '(L1)') self%periodic_x
+  cmess   = 'Adding attribute "'//trim(attname)// &
+            '" to variable "'//trim(var_name)//'"'
+  ierr = nf90_put_att( self%ncid, id, trim(attname), &
+                       trim(adjustl(lchar_px)))
+  call check_err(ierr, routine, cmess)
+
+  attname = 'periodic_y'
+  write(lchar_py, '(L1)') self%periodic_y
+  cmess   = 'Adding attribute "'//trim(attname)// &
+            '" to variable "'//trim(var_name)//'"'
+  ierr = nf90_put_att( self%ncid, id, trim(attname), &
+                       trim(adjustl(lchar_py)))
   call check_err(ierr, routine, cmess)
 
   attname = 'constructor_inputs'
@@ -1178,6 +1198,8 @@ end subroutine get_dimensions
 !>  @param[in,out]  self                     The NetCDF file object.
 !>  @param[in]      mesh_name                Name of the mesh topology
 !>  @param[out]     mesh_class               Primitive class of mesh
+!>  @param[out]     periodic_x               Periodic in E-W direction.
+!>  @param[out]     periodic_y               Periodic in N-S direction.
 !>  @param[out]     constructor_inputs       Inputs to the ugrid_generator to
 !>                                           generate mesh
 !>  @param[out]     node_coordinates         Coordinates of each node.
@@ -1192,7 +1214,8 @@ end subroutine get_dimensions
 !>  @param[out]     target_mesh_names        Mesh(es) that this mesh has maps for
 !-------------------------------------------------------------------------------
 
-subroutine read_mesh( self, mesh_name, mesh_class, constructor_inputs, &
+subroutine read_mesh( self, mesh_name, mesh_class,                     &
+                      periodic_x, periodic_y, constructor_inputs,      &
                       node_coordinates, face_coordinates,              &
                       coord_units_x, coord_units_y,                    &
                       face_node_connectivity, edge_node_connectivity,  &
@@ -1205,6 +1228,8 @@ subroutine read_mesh( self, mesh_name, mesh_class, constructor_inputs, &
 
   character(str_def),  intent(in)  :: mesh_name
   character(str_def),  intent(out) :: mesh_class
+  logical(l_def),      intent(out) :: periodic_x
+  logical(l_def),      intent(out) :: periodic_y
   character(str_long), intent(out) :: constructor_inputs
   real(r_def),         intent(out) :: node_coordinates(:,:)
   real(r_def),         intent(out) :: face_coordinates(:,:)
@@ -1232,6 +1257,9 @@ subroutine read_mesh( self, mesh_name, mesh_class, constructor_inputs, &
 
   integer(i_def) :: lower1,upper1,lower2,upper2
 
+  character(str_def) :: lchar_px
+  character(str_def) :: lchar_py
+
   lower1 = lbound(node_coordinates, 1)
   lower2 = lbound(node_coordinates, 2)
   upper1 = ubound(node_coordinates, 1)
@@ -1253,6 +1281,20 @@ subroutine read_mesh( self, mesh_name, mesh_class, constructor_inputs, &
   ierr = nf90_get_att( self%ncid, self%mesh_id, &
                        'mesh_class', mesh_class )
   call check_err(ierr, routine, cmess)
+
+  ! Periodic in E-W direction
+  cmess = 'Getting attribute, "periodic_x"'
+  ierr = nf90_get_att( self%ncid, self%mesh_id, &
+                       'periodic_x', lchar_px )
+  call check_err(ierr, routine, cmess)
+  read(lchar_px, '(L8)') periodic_x
+
+  ! Periodic in N-S direction
+  cmess = 'Getting attribute, "periodic_y"'
+  ierr = nf90_get_att( self%ncid, self%mesh_id, &
+                       'periodic_y', lchar_py )
+  call check_err(ierr, routine, cmess)
+  read(lchar_py, '(L8)') periodic_y
 
   ! Ugrid mesh constructor inputs
   cmess = 'Getting attribute, "constructor_inputs"'
@@ -1368,6 +1410,8 @@ end subroutine read_mesh
 !>  @param[in,out]  self                     The NetCDF file object.
 !>  @param[in]      mesh_name                Name of the mesh topology.
 !>  @param[in]      mesh_class               Primitive class of mesh.
+!>  @param[in]      periodic_x               Periodic in E-W direction.
+!>  @param[in]      periodic_y               Periodic in N-S direction.
 !>  @param[in]      constructor_inputs       Inputs used to create this mesh
 !>                                           from the ugrid_generator
 !>  @param[in]      num_nodes                The number of nodes on the mesh.
@@ -1386,7 +1430,8 @@ end subroutine read_mesh
 !>  @param[in]      target_mesh_maps         Mesh maps from this mesh to target mesh(es)
 !-------------------------------------------------------------------------------
 
-subroutine write_mesh( self, mesh_name, mesh_class, constructor_inputs,   &
+subroutine write_mesh( self, mesh_name, mesh_class,                       &
+                       periodic_x, periodic_y, constructor_inputs,        &
                        num_nodes, num_edges, num_faces,                   &
                        node_coordinates, face_coordinates,                &
                        coord_units_x, coord_units_y,                      &
@@ -1400,6 +1445,8 @@ subroutine write_mesh( self, mesh_name, mesh_class, constructor_inputs,   &
 
   character(str_def),  intent(in) :: mesh_name
   character(str_def),  intent(in) :: mesh_class
+  logical(l_def),      intent(in) :: periodic_x
+  logical(l_def),      intent(in) :: periodic_y
   character(str_long), intent(in) :: constructor_inputs
   integer(i_def),      intent(in) :: num_nodes
   integer(i_def),      intent(in) :: num_edges
@@ -1452,6 +1499,8 @@ subroutine write_mesh( self, mesh_name, mesh_class, constructor_inputs,   &
 
   self%mesh_name     = mesh_name
   self%mesh_class    = mesh_class
+  self%periodic_x    = periodic_x
+  self%periodic_y    = periodic_y
   self%constructor_inputs = constructor_inputs
 
   self%nmesh_nodes   = num_nodes
@@ -1620,8 +1669,11 @@ end function is_mesh_present
 !>  @param[in]      num_targets              Number of mesh maps from mesh
 !>  @param[in]      target_mesh_names        Mesh(es) that this mesh has maps for
 !>  @param[in]      target_mesh_maps         Mesh maps from this mesh to target mesh(es)
+!>  @param[in]      periodic_x               Periodic in E-W direction.
+!>  @param[in]      periodic_y               Periodic in N-S direction.
 !-------------------------------------------------------------------------------
-subroutine append_mesh( self, mesh_name, mesh_class, constructor_inputs,   &
+subroutine append_mesh( self, mesh_name, mesh_class,                       &
+                        periodic_x, periodic_y, constructor_inputs,        &
                         num_nodes, num_edges, num_faces,                   &
                         node_coordinates, face_coordinates,                &
                         coord_units_x, coord_units_y,                      &
@@ -1633,6 +1685,8 @@ subroutine append_mesh( self, mesh_name, mesh_class, constructor_inputs,   &
   ! Arguments
   class(ncdf_quad_type), intent(inout) :: self
   character(str_def),    intent(in)    :: mesh_class
+  logical(l_def),        intent(in)    :: periodic_x
+  logical(l_def),        intent(in)    :: periodic_y
   character(str_def),    intent(in)    :: mesh_name
   character(str_long),   intent(in)    :: constructor_inputs
   integer(i_def),        intent(in)    :: num_nodes
@@ -1674,6 +1728,8 @@ subroutine append_mesh( self, mesh_name, mesh_class, constructor_inputs,   &
   call self%write_mesh(                                &
       mesh_name  = mesh_name,                          &
       mesh_class = mesh_class,                         &
+      periodic_x = periodic_x,                         &
+      periodic_y = periodic_y,                         &
       constructor_inputs = constructor_inputs,         &
       num_nodes  = num_nodes,                          &
       num_edges  = num_edges,                          &

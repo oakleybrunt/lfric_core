@@ -34,7 +34,7 @@ module partition_mod
   private
 
   public :: partitioner_cubedsphere, &
-            partitioner_biperiodic, &
+            partitioner_planar, &
             partitioner_cubedsphere_serial, &
             partitioner_interface
 
@@ -410,7 +410,7 @@ contains
   end subroutine partition_type_assign
 
   !---------------------------------------------------------------------------
-  !> @brief Partitions the mesh on a bi-periodic plane. It returns the global
+  !> @brief Partitions the mesh on a plane. It returns the global
   !>        IDs of the cells in the given partition.
   !>
   !> @param[in] global_mesh  A global mesh object that describes the layout
@@ -434,18 +434,18 @@ contains
   !>                        required to fully describe the cells in the
   !>                        partitioned domain.
   !>
-  subroutine partitioner_biperiodic( global_mesh,       &
-                                     num_panels,        &
-                                     xproc,             &
-                                     yproc,             &
-                                     local_rank,        &
-                                     total_ranks,       &
-                                     max_stencil_depth, &
-                                     partitioned_cells, &
-                                      num_inner,        &
-                                     num_edge,          &
-                                     num_halo,          &
-                                     num_ghost )
+  subroutine partitioner_planar( global_mesh,       &
+                                 num_panels,        &
+                                 xproc,             &
+                                 yproc,             &
+                                 local_rank,        &
+                                 total_ranks,       &
+                                 max_stencil_depth, &
+                                 partitioned_cells, &
+                                 num_inner,         &
+                                 num_edge,          &
+                                 num_halo,          &
+                                 num_ghost )
     implicit none
 
     type(global_mesh_type), pointer, intent(in) :: global_mesh
@@ -478,7 +478,8 @@ contains
                                         num_halo, &
                                         num_ghost )
 
-  end subroutine partitioner_biperiodic
+  end subroutine partitioner_planar
+
 
   !---------------------------------------------------------------------------
   !> @brief Partitions the mesh on cubed_sphere. It returns the global IDs of
@@ -664,7 +665,7 @@ contains
     use linked_list_mod,       only : linked_list_type, &
                                       linked_list_item_type, &
                                       before
-    use reference_element_mod, only : W, E, N
+    use reference_element_mod, only : W, S, E, N
 
     implicit none
 
@@ -723,24 +724,52 @@ contains
     integer :: depth        ! counter over the halo depths
     integer :: orig_num_in_list ! number of cells in list before halos are added
     integer(i_def) :: num_apply
+    logical(l_def) :: periodic_x = .false. ! Periodic in the E-W direction
+    logical(l_def) :: periodic_y = .false. ! Periodic in the N-S direction
+
+    call global_mesh%get_mesh_periodicity(periodic_x, periodic_y)
 
     if(num_panels==1)then
       ! A single panelled mesh might be rectangluar - so find the dimensions
-      ! Find num_cells_x by walking west-wards through the mesh until you're
-      ! back where you started
-      cell=1
+      ! First determine the southwest corner cell depending on periodicity. If
+      ! biperiodic, cell ID 1 can be used as mesh conectivity loops round
+      cell = 1
       call global_mesh%get_cell_next(cell,cell_next)
-      num_cells_x=1
-      do i=1,global_mesh%get_ncells()
-        if(cell_next(W)==cell)exit
+      if (.not. periodic_x) then
+        ! If not periodic in E-W direction then walk West until you reach mesh
+        ! edge defined by cell ID -1 (this is set by the mesh generator)
+        do while (cell_next(W) /= -1)
+          cell = cell_next(W)
+          call global_mesh%get_cell_next(cell,cell_next)
+        end do
+      end if
+
+      if (.not. periodic_y) then
+        ! If not periodic in N-S direction then walk South until you reach mesh
+        ! edge defined by cell ID -1 (this is set by the mesh generator)
+        do while (cell_next(S) /= -1)
+          cell = cell_next(S)
+          call global_mesh%get_cell_next(cell,cell_next)
+        end do
+      end if
+
+      ! Assign cell ID of SW corner of mesh
+      allocate(sw_corner_cells(1))
+      sw_corner_cells(1) = cell
+
+      ! Work out number of cells in x and y directions
+      num_cells_x = 1
+
+      ! Starting in the SW corner of the mesh so must walk East on non-periodic
+      ! meshes to determine number of cells in the x direction
+      do while (cell_next(E) /= cell .and. cell_next(E) /= -1)
         num_cells_x=num_cells_x+1
-        call global_mesh%get_cell_next(cell_next(W),cell_next)
+        call global_mesh%get_cell_next(cell_next(E), cell_next)
       end do
+
       ! Infer num_cells_y from the total domin size and num_cells_x
       num_cells_y=global_mesh%get_ncells()/num_cells_x
-      ! make cell number 1 the South West corner cell of the single panel
-      allocate(sw_corner_cells(1))
-      sw_corner_cells(1)=1
+
     else
       ! For multi-panel meshes, the panels must be square
       num_cells_x = nint(sqrt( real(global_mesh%get_ncells(), kind=r_def)/ &

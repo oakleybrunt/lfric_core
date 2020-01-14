@@ -1,5 +1,7 @@
 "dynamics":
   Class:               sphere
+  Periodic X:          F
+  Periodic Y:          F
   Constructor inputs:  edge_cells=4;smooth_passes=0;target_mesh_names=['physics'];target_edge_cells=[12]
   Nodes:               98
   Edges:               192
@@ -11,6 +13,8 @@
   Maps to:             "physics"
 "physics":
   Class:               sphere
+  Periodic X:          F
+  Periodic Y:          F
   Constructor inputs:  edge_cells=12;smooth_passes=0;target_mesh_names=['dynamics'];target_edge_cells=[4]
   Nodes:               866
   Edges:               1728
