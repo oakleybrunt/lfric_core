@@ -42,12 +42,12 @@ class GenerateTreeIndices(TreeVisitor):
   def __init__( self, renderer ):
     self._renderer = renderer
     self._directoryList = {}
-    self._indexFound = None
+    self._indexFound = -999
 
   def visit( self, directory, subdirs, files ):
     treeLevel = directory.count( os.sep )
     if treeLevel < self._indexFound:
-      self._indexFound = None
+      self._indexFound = -999
 
     if 'index.html' in files:
       self._indexFound = treeLevel
