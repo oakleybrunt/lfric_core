@@ -43,6 +43,7 @@ module field_collection_mod
     procedure, public :: add_field
     procedure, public :: add_reference_to_field
     procedure, public :: remove_field
+    procedure, public :: field_exists
     procedure, public :: get_field
     procedure, public :: get_iterator
     procedure, public :: get_length
@@ -154,48 +155,63 @@ subroutine add_field(self, field)
       end if
   end select
 
+  ! Check if field exists in collection, if not then add field
+  if ( self%field_exists( trim(field%get_name()) ) ) then
+    write(log_scratch_space, '(4A)') &
+    'Field [', trim(field%get_name()), &
+    '] already exists in field collection: ', trim(self%name)
+    call log_event( log_scratch_space, LOG_LEVEL_ERROR)
+  else
+    call self%field_list%insert_item( field )
+  end if
+
+end subroutine add_field
+
+!> Check if a field is present the collection
+!> @param [in] field_name The name of the field to be checked
+!> @return exists Flag stating if field is present or not
+function field_exists(self, field_name) result(exists)
+
+  implicit none
+
+  class(field_collection_type), intent(in) :: self
+
+  character(*), intent(in) :: field_name
+  logical(l_def)           :: exists
+
+  ! Pointer to linked list - used for looping through the list
+  type(linked_list_item_type), pointer :: loop => null()
 
   ! start at the head of the mesh collection linked list
   loop => self%field_list%get_head()
 
   do
-    ! If list is empty or we've got to the end of list and we didn't find the
-    ! field, then we can add it and go home
+    ! If list is empty or we're at the end of list and we didn't find the
+    ! field, set 'exists' to be false
     if ( .not. associated(loop) ) then
-      call self%field_list%insert_item( field )
+      exists=.false.
       exit
     end if
+    ! otherwise search list for the name of field we want
 
-    ! otherwise if we already have the field, then exit with error
+    ! 'cast' to the field_type
     select type(listfield => loop%payload)
       type is (field_type)
-        select type(infield => field)
-          type is (field_type)
-            if ( trim(infield%get_name()) == &
-                                   trim(listfield%get_name()) ) then
-              write(log_scratch_space, '(4A)') &
-                 'Field [', trim(infield%get_name()), &
-                 '] already exists in field collection: ', trim(self%name)
-              call log_event( log_scratch_space, LOG_LEVEL_ERROR)
-            end if
-        end select
+      if ( trim(field_name) == trim(listfield%get_name()) ) then
+          exists=.true.
+          exit
+      end if
       type is (field_pointer_type)
-        select type(infield => field)
-          type is (field_pointer_type)
-            if ( trim(infield%field_ptr%get_name()) == &
-                                   trim(listfield%field_ptr%get_name()) ) then
-              write(log_scratch_space, '(4A)') &
-                 'Field [', trim(infield%field_ptr%get_name()), &
-                 '] already exists in field collection: ', trim(self%name)
-              call log_event( log_scratch_space, LOG_LEVEL_ERROR)
-            end if
-        end select
+      if ( trim(field_name) == trim(listfield%field_ptr%get_name()) ) then
+          exists=.true.
+          exit
+      end if
     end select
 
     loop => loop%next
   end do
 
-end subroutine add_field
+end function field_exists
 
 !> Adds a pointer to a field to the collection. The pointer will point to a
 !> field held elsewhere. If that field is destroyed - the pointer will become

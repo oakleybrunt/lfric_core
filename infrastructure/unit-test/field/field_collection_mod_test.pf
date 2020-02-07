@@ -8,7 +8,7 @@
 !>
 module field_collection_mod_test
 
-    use constants_mod,                 only : i_def, r_def
+    use constants_mod,                 only : i_def, r_def, l_def
     use function_space_mod,            only : function_space_type
     use function_space_collection_mod, only : function_space_collection_type, &
                                               function_space_collection
@@ -115,6 +115,7 @@ contains
     type(field_collection_type) :: test_field_collection2
     real(r_def), parameter :: tol = 1.0e-6_r_def
     integer(i_def) :: length
+    logical(l_def) :: exists
 
     ! Create a field object with the name 'test_field1'
     ! and put 99.0 in the first dof
@@ -125,6 +126,10 @@ contains
     ! Create a field_collection and put test_field1 in it
     test_field_collection1 = field_collection_type()
     call test_field_collection1%add_field(test_field1)
+
+    ! Check that test_field1 exists in field_collection
+    exists = test_field_collection1%field_exists('test_field1')
+    @assertTrue(exists)
 
     ! Extract the field called 'test_field' into test_field2
     returned_field1 => test_field_collection1%get_field('test_field1')
@@ -150,6 +155,10 @@ contains
     call test_field_collection1%remove_field("test_field1")
     length=test_field_collection1%get_length()
     @assertEqual(0, length)
+
+    ! Check that test_field1 no longer exists in field_collection
+    exists = test_field_collection1%field_exists('test_field1')
+    @assertFalse(exists)
 
     ! Check we can add the field back into the collection
     call test_field_collection1%add_field(test_field1)
