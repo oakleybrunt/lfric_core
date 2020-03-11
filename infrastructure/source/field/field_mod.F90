@@ -503,7 +503,6 @@ contains
   end subroutine get_write_behaviour
 
   !> Setter for read behaviour
-  !> @param[in,out]  self  field_type
   !> @param [in] read_behaviour - pointer to procedure implementing read method
   subroutine set_read_behaviour(self, read_behaviour)
     implicit none
@@ -513,9 +512,8 @@ contains
   end subroutine set_read_behaviour
 
   !> Getter to get pointer to read behaviour
-  !> @param[in]  self  field_type
-  !> @param [in] read_behaviour -
-  !>             pointer to procedure implementing read method
+  !> @param[in,out] read_behaviour -
+  !>                pointer to procedure implementing read method
   !> @return pointer to procedure for read behaviour
   subroutine get_read_behaviour(self, read_behaviour)
 
