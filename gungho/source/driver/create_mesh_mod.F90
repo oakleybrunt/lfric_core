@@ -303,10 +303,12 @@ subroutine init_mesh( local_rank, total_ranks, prime_mesh_id, twod_mesh_id, shif
                                                partition,               &
                                                extrusion_2d )
 
-  if (present(shifted_mesh_id)) then
-    allocate(shifted_extrusion, source=create_shifted_extrusion(extrusion) )
+  deallocate(extrusion)
 
-    call log_event( "Creating shifted mesh", LOG_LEVEL_INFO )
+  if (present(shifted_mesh_id)) then
+    allocate(shifted_extrusion, source=create_shifted_extrusion() )
+
+    call log_event( "Creating shifting mesh", LOG_LEVEL_INFO )
 
     shifted_mesh_id = mesh_collection%add_new_mesh( global_mesh_ptr,  &
                                                     partition,        &
@@ -314,8 +316,6 @@ subroutine init_mesh( local_rank, total_ranks, prime_mesh_id, twod_mesh_id, shif
 
     deallocate(shifted_extrusion)
   end if
-
-  deallocate(extrusion)
 
   return
 end subroutine init_mesh

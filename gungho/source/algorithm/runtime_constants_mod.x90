@@ -102,8 +102,11 @@ module runtime_constants_mod
   type(operator_type), allocatable, dimension(:), target :: mm_dl
   type(field_type), target                               :: geopotential
   type(field_type), target                               :: temp_w2_field
+  type(field_type), target                               :: temp_w2_field_shifted
   type(field_type), target                               :: cell_orientation
+  type(field_type), target                               :: cell_orientation_shifted
   type(field_type), target                               :: detj_at_w2
+  type(field_type), target                               :: detj_at_w2_shifted
   type(field_type), target                               :: dA_at_w2
   type(field_type), target                               :: delta_at_wtheta
   type(field_type), target                               :: max_diff_wtheta
@@ -124,29 +127,8 @@ module runtime_constants_mod
   type(field_type), allocatable, dimension(:), target    :: w2_normalisation
   type(operator_type), target                            :: coriolis
   type(field_type), allocatable, dimension(:,:), target  :: chi_mg
-
   ! 2D fields
-  type(field_type), target                               :: latitude_W3, longitude_W3
-
-  ! Shifted mesh features
-  type(field_type), target                               :: mm3_shifted_diag
-  type(operator_type), target                            :: mm_w0_shifted
-  type(operator_type), target                            :: mm_w1_shifted
-  type(operator_type), target                            :: mm_w2_shifted
-  type(operator_type), target                            :: mm_w2b_shifted
-  type(operator_type), target                            :: mm_w3_shifted
-  type(operator_type), target                            :: mm_w3_inv_shifted
-  type(operator_type), target                            :: mm_wtheta_shifted
-  type(field_type), target                               :: temp_w2_field_shifted
-  type(field_type), target                               :: cell_orientation_shifted
-  type(field_type), target                               :: detj_at_w2_shifted
-  type(field_type), target                               :: dA_at_w2_shifted
-  type(operator_type), target                            :: div_shifted
-  type(operator_type), target                            :: grad_shifted
-  type(operator_type), target                            :: curl_shifted
-  type(operator_type), target                            :: broken_div_shifted
-  type(field_type), target, dimension(:), allocatable    :: global_chi_shifted
-  integer(i_def), target                                 :: global_shifted_mesh_id
+  type(field_type), target              :: latitude_W3, longitude_W3
 
   ! Enumerated types
   integer(i_def), parameter, public :: w0_id          = 0_i_def
@@ -161,9 +143,7 @@ module runtime_constants_mod
   integer(i_def), parameter, public :: w2v_id         = 9_i_def
   integer(i_def), parameter, public :: w2h_id         = 10_i_def
   integer(i_def), parameter, public :: w2b_id         = 11_i_def
-  integer(i_def), parameter, public :: w2_shift_id    = 93_i_def
-  integer(i_def), parameter, public :: w3_shift_id    = 57_i_def
-  integer(i_def), parameter, public :: w3inv_shift_id = 119_i_def
+
 
   ! Public functions to create and access the module contents
 
@@ -172,7 +152,9 @@ module runtime_constants_mod
   public :: get_coordinates
   public :: get_geopotential
   public :: get_cell_orientation
+  public :: get_cell_orientation_shifted
   public :: get_detj_at_w2
+  public :: get_detj_at_w2_shifted
   public :: get_dA_at_w2
   public :: get_max_diff
   public :: get_delta_at_wtheta
@@ -192,12 +174,7 @@ module runtime_constants_mod
   public :: get_coriolis
   public :: get_latitude
   public :: get_longitude
-  public :: get_coordinates_shifted
-  public :: get_cell_orientation_shifted
-  public :: get_detj_at_w2_shifted
-  public :: get_dA_at_w2_shifted
-  public :: get_div_shifted
-  public :: get_shifted_mesh_id
+
 
 
   ! overload the interfaces for MG versions
@@ -250,14 +227,6 @@ contains
     type(function_space_type), pointer :: w3_k0_2d_fs => null() ! lowest order w3 fs
     type(field_type)                   :: ones
     type(field_type)                   :: dx_at_w2
-
-    ! Create shifted function space pointers
-    type(function_space_type), pointer :: w0_shift_fs      => null()
-    type(function_space_type), pointer :: w1_shift_fs      => null()
-    type(function_space_type), pointer :: w2_shift_fs      => null()
-    type(function_space_type), pointer :: w2b_shift_fs     => null()
-    type(function_space_type), pointer :: w3_shift_fs      => null()
-    type(function_space_type), pointer :: wtheta_shift_fs  => null()
 
     ! Temporary fields
     type(field_type) :: nodal_multiplicity_w1
@@ -487,6 +456,12 @@ contains
 
     call nodal_multiplicity_w1%initialise( vector_space = w1_fs )
     call nodal_multiplicity_w2%initialise( vector_space = w2_fs )
+    if ( present(shifted_mesh_id) ) then
+      call nodal_multiplicity_w2_shifted%initialise( vector_space = &
+                            function_space_collection%get_fs( shifted_mesh_id, element_order, W2 ) )
+      call invoke( name = "create_shifted_multiplicity",             &
+                   multiplicity_kernel_type(nodal_multiplicity_w2_shifted) )
+    end if
 
     call nodal_multiplicity_w2h%initialise( vector_space = w2h_fs )
     call nodal_multiplicity_w0%initialise( vector_space = w0_fs )
@@ -553,6 +528,18 @@ contains
                 calc_detj_at_w2_kernel_type(detj_at_w2,chi),  &
                 inc_X_divideby_Y(detj_at_w2, nodal_multiplicity_w2) )
 
+
+    !================ Create detj values at vertically shifted W2 dofs ========!
+
+    if ( present(shifted_mesh_id) ) then
+      call detj_at_w2_shifted%initialise( vector_space = &
+                            function_space_collection%get_fs( shifted_mesh_id, &
+                                                          element_order, W2 ) )
+      call invoke(setval_c(detj_at_w2_shifted,0.0_r_def),               &
+                  calc_detj_at_w2_kernel_type(detj_at_w2_shifted,shifted_chi),  &
+                  inc_X_divideby_Y(detj_at_w2_shifted, nodal_multiplicity_w2_shifted) )
+    end if
+
     !================ Create dA values at W2 dof locations ==================!
 
     call dA_at_w2%initialise( vector_space = w2_fs )
@@ -580,78 +567,7 @@ contains
                    inc_a_times_X( const, max_diff_wtheta )     &
                  )
 
-    end if
-
-    !================ Now create all shifted mesh properties =================!
-
-    if ( present(shifted_mesh_id) ) then
-      ! Make shifted mesh id globally available
-      global_shifted_mesh_id = shifted_mesh_id
-
-      allocate(global_chi_shifted(3))
-      do i = 1, 3
-        call shifted_chi(i)%copy_field(global_chi_shifted(i))
-      end do
-
-      !========== Create shifted function spaces required for setup ==========!
-
-      w0_shift_fs     => function_space_collection%get_fs( shifted_mesh_id, element_order, W0 )
-      w1_shift_fs     => function_space_collection%get_fs( shifted_mesh_id, element_order, W1 )
-      w2_shift_fs     => function_space_collection%get_fs( shifted_mesh_id, element_order, W2 )
-      w2b_shift_fs    => function_space_collection%get_fs( shifted_mesh_id, element_order, W2broken )
-      w3_shift_fs     => function_space_collection%get_fs( shifted_mesh_id, element_order, W3 )
-      wtheta_shift_fs => function_space_collection%get_fs( shifted_mesh_id, element_order, Wtheta )
-
-      !===================== Create shifted mass matrices =====================!
-
-      mm_w2_shifted      = operator_type( w2_shift_fs, w2_shift_fs )
-      mm_wtheta_shifted  = operator_type( wtheta_shift_fs, wtheta_shift_fs )
-      mm_w3_shifted      = operator_type( w3_shift_fs, w3_shift_fs )
-      mm_w3_inv_shifted  = operator_type( w3_shift_fs, w3_shift_fs )
-      div_shifted        = operator_type( w3_shift_fs, w2_shift_fs )
-      mm_w0_shifted      = operator_type( w0_shift_fs, w0_shift_fs )
-      mm_w1_shifted      = operator_type( w1_shift_fs, w1_shift_fs )
-      mm_w2b_shifted     = operator_type( w2b_shift_fs, w2b_shift_fs )
-      grad_shifted       = operator_type( w1_shift_fs, w0_shift_fs )
-      curl_shifted       = operator_type( w2_shift_fs, w1_shift_fs )
-      broken_div_shifted = operator_type( w3_shift_fs, w2b_shift_fs )
-
-      call invoke( name = "Create shifted mass matrix operators",                        &
-                   compute_derahm_matrices_kernel_type(mm_w0_shifted, mm_w1_shifted,     &
-                                                       mm_w2_shifted, mm_w2b_shifted,    &
-                                                       mm_w3_shifted, mm_wtheta_shifted, &
-                                                       grad_shifted, curl_shifted,       &
-                                                       div_shifted, broken_div_shifted,  &
-                                                       shifted_chi, qr) )
-      call invoke( invert_local_operator_kernel_type(mm_w3_inv_shifted, mm_w3_shifted) )
-
-      call mm3_shifted_diag%initialise( vector_space = w3_shift_fs )
-      call invoke( name = "Create shifted mass matrix diagonal fields",      &
-                   setval_c(mm3_shifted_diag, 0.0_r_def),                    &
-       ! Compute mass matrices
-                   mm_diagonal_kernel_type(mm3_shifted_diag, mm_w3_shifted) )
-
-      !======== Create multiplicity for horizontally continuous fields ========!
-
-      call nodal_multiplicity_w2_shifted%initialise( vector_space = w2_shift_fs )
-      call invoke( name = "create_shifted_multiplicity",             &
-                   multiplicity_kernel_type(nodal_multiplicity_w2_shifted) )
-
-      !================ Create detj values at W2 dof locations ================!
-
-      call detj_at_w2_shifted%initialise( vector_space = w2_shift_fs )
-      call invoke(setval_c(detj_at_w2_shifted,0.0_r_def),               &
-                  calc_detj_at_w2_kernel_type(detj_at_w2_shifted, shifted_chi),  &
-                  inc_X_divideby_Y(detj_at_w2_shifted, nodal_multiplicity_w2_shifted) )
-
-      nullify( w0_shift_fs )
-      nullify( w1_shift_fs )
-      nullify( w2_shift_fs )
-      nullify( w2b_shift_fs )
-      nullify( w3_shift_fs )
-      nullify( wtheta_shift_fs )
-
-    end if  ! End shifted mesh properties setup
+   end if
 
 
    if(l_multigrid) then
@@ -726,7 +642,7 @@ contains
 
   end subroutine create_runtime_constants
 
-  !> @brief Returns a pointer to the coordinate array on the finest level
+  !> @brief Function to return a pointer to the coordinate array on the finest level
   !> @return The coordinate field array
   function get_coordinates_fine() result(coords_ptr)
     implicit none
@@ -735,7 +651,7 @@ contains
 
   end function get_coordinates_fine
 
-  !> @brief Returns a pointer to the coordinate array on the specified level
+  !> @brief Function to return a pointer to the coordinate array on the specified level
   !> @param level integer multigrid level
   !> @return The coordinate field array
   function get_coordinates_mg(level) result(coords_ptr)
@@ -745,7 +661,7 @@ contains
 
     coords_ptr => chi_mg(:,level)
   end function get_coordinates_mg
-  !> @brief Returns a pointer to the latitude map
+  !> @brief Function to return a pointer to the latitude map
   !> @return The latitude field array
   function get_latitude() result(lat_ptr)
     implicit none
@@ -753,7 +669,7 @@ contains
     lat_ptr => latitude_w3
   end function get_latitude
 
-  !> @brief Returns a pointer to the longitude map
+  !> @brief Function to return a pointer to the longitude map
   !> @return The longitude field array
   function get_longitude() result(long_ptr)
     implicit none
@@ -761,7 +677,7 @@ contains
     long_ptr => longitude_w3
   end function get_longitude
 
-  !> @brief Returns a pointer to a height field
+  !> @brief Function to return a pointer to a height field
   !> @param[in] space the space of the desired height field
   !> @return A height field
   function get_height(space) result(height)
@@ -781,7 +697,7 @@ contains
 
   end function get_height
 
-  !> @brief Returns a pointer to the geopotential field
+  !> @brief Function to return a pointer to the geopotential field
   !> @return The geopotential field
   function get_geopotential() result(phi)
     implicit none
@@ -790,7 +706,7 @@ contains
 
   end function get_geopotential
 
-  !> @brief Returns a pointer to the cell_orientation field
+  !> @brief Function to return a pointer to the cell_orientation field
   !> @return The cell_orientation field
   function get_cell_orientation() result(orientation)
     implicit none
@@ -806,7 +722,7 @@ contains
 
   end function get_cell_orientation
 
-  !> @brief Returns a pointer to the cell_orientation_shifted field
+  !> @brief Function to return a pointer to the cell_orientation_shifted field
   !> @return The cell_orientation_shifted field
   function get_cell_orientation_shifted() result(orientation_shifted)
     implicit none
@@ -823,7 +739,7 @@ contains
   end function get_cell_orientation_shifted
 
 
-  !> @brief Returns the detj values at W2 dof locations
+  !> @brief Function to return the detj values at W2 dof locations
   !> @return The detj field
   function get_detj_at_w2() result(detj)
     implicit none
@@ -833,7 +749,7 @@ contains
   end function get_detj_at_w2
 
 
-  !> @brief Returns the detj values at W2 dof locations on vertically
+  !> @brief Function to return the detj values at W2 dof locations on vertically
   !>        shifted mesh
   !> @return The detj field for vertically shifted mesh
   function get_detj_at_w2_shifted() result(detj)
@@ -844,7 +760,7 @@ contains
   end function get_detj_at_w2_shifted
 
 
-  !> @brief Returns the dA values at W2 dof locations
+  !> @brief Function to return the dA values at W2 dof locations
   !> @return The dA field
   function get_dA_at_w2() result(dA)
     implicit none
@@ -853,7 +769,7 @@ contains
 
   end function get_dA_at_w2
 
-  !> @brief Returns the delta_at_wtheta values at Wtheta dof locations
+  !> @brief Function to return the delta_at_wtheta values at Wtheta dof locations
   !> @return The delta_at_wtheta field
   function get_delta_at_wtheta() result(delta)
     implicit none
@@ -862,7 +778,7 @@ contains
 
   end function get_delta_at_wtheta
 
-  !> @brief Returns the max Smagorinsky diffusion allowed in this run at wtheta
+  !> @brief Function to return the max Smagorinsky diffusion allowed in this run at wtheta
   !> @return The max_diff_wtheta field
   function get_max_diff() result(max_diff_smag)
     implicit none
@@ -871,7 +787,7 @@ contains
 
   end function get_max_diff
 
-  !> @brief Returns a pointer to a mass matrix
+  !> @brief Function to return a pointer to a mass matrix
   !! If the operator is evaluated on several multigrid layers, then the finest is returned
   !> @param[in] i the index of the desired mass matrix field
   !> @return The mass matrix operator
@@ -903,13 +819,6 @@ contains
         mm => mm_wtheta(1)
       case (dl_id)
         mm => mm_dl(1)
-      case (w3inv_shift_id)
-        mm => mm_w3_inv_shifted
-      case (w3_shift_id)
-        mm => mm_w3_shifted
-      case (w2_shift_id)
-        mm => mm_w2_shifted
-
       case default
         mm => null()
         call log_event( "Mass matrix operator does not exist", LOG_LEVEL_ERROR)
@@ -918,7 +827,7 @@ contains
 
   end function get_mass_matrix_fine
 
-  !> @brief Returns a pointer to a mass matrix
+  !> @brief Function to return a pointer to a mass matrix
   !! Only for operator evaluated on several multigrid layers
   !> @param[in] i the index of the desired mass matrix field
   !> @param[in] level integer multigrid level
@@ -946,7 +855,7 @@ contains
 
   end function get_mass_matrix_mg
 
-  !> @brief Returns a pointer to a mass matrix diagonal
+  !> @brief Function to return a pointer to a mass matrix diagonal
   !> @param[in] i Index of the desired mass matrix diagonal field
   !> @return The mass matrix diagonal field
   function get_mass_matrix_diagonal(i) result(mmd)
@@ -969,8 +878,6 @@ contains
         mmd => mm3_diag
       case (theta_space_id)
         mmd => mmtheta_diag
-      case (w3_shift_id)
-        mmd => mm3_shifted_diag
       case default
         mmd => null()
         call log_event( "Mass matrix diagonal does not exist", LOG_LEVEL_ERROR)
@@ -979,7 +886,7 @@ contains
 
   end function get_mass_matrix_diagonal
 
-  !> @brief Returns a pointer to the grad operator
+  !> @brief Function to return a pointer to the grad operator
   !> @return The grad operator
   function get_grad() result(grad_op)
     implicit none
@@ -988,7 +895,7 @@ contains
 
   end function get_grad
 
-  !> @brief Returns a pointer to the curl operator
+  !> @brief Function to return a pointer to the curl operator
   !> @return The curl operator
   function get_curl() result(curl_op)
     implicit none
@@ -997,7 +904,7 @@ contains
 
   end function get_curl
 
-  !> @brief Returns a pointer to the div operator, on the finest multigrid_level
+  !> @brief Function to return a pointer to the div operator, on the finest multigrid_level
   !> @return The grad operator
   function get_div_fine() result(div_op)
     implicit none
@@ -1006,7 +913,7 @@ contains
 
   end function get_div_fine
 
-  !> @brief Returns a pointer to the div operator
+  !> @brief Function to return a pointer to the div operator
   !! on the specified multigrid_level
   !> @param[in] level integer multigrid level
   !> @return The grad operator
@@ -1017,7 +924,7 @@ contains
     div_op => div(level)
   end function get_div_mg
 
-  !> @brief Returns a pointer to the broken div operator
+  !> @brief Function to return a pointer to the broken div operator
   !> @return The broken div operator
   function get_broken_div() result(broken_div_op)
     implicit none
@@ -1026,7 +933,7 @@ contains
 
   end function get_broken_div
 
-  !> @brief Returns a pointer to the vertical div operator
+  !> @brief Function to return a pointer to the vertical div operator
   !> @return The div operator
   function get_div_v() result(div_v_op)
     implicit none
@@ -1035,7 +942,7 @@ contains
 
   end function get_div_v
 
-  !> @brief Returns a pointer to the horizontal div operator
+  !> @brief Function to return a pointer to the horizontal div operator
   !> @return The div operator
   function get_div_h() result(div_h_op)
     implicit none
@@ -1044,7 +951,7 @@ contains
 
   end function get_div_h
 
-  !> @brief Returns a pointer to the quadrature object
+  !> @brief Function to return a pointer to the quadrature object
   !> @return The quadrature object
   function get_qr() result(qr_obj)
     implicit none
@@ -1053,7 +960,7 @@ contains
 
   end function get_qr
 
-  !> @brief Returns a pointer to a inverse lumped mass matrix
+  !> @brief Function to return a pointer to a inverse lumped mass matrix
   !! on the finest multigrid level
   !> @param[in] i Index of the desired lumped mass matrix inverse field
   !> @return The lumped inverse mass matrix
@@ -1079,7 +986,7 @@ contains
 
   end function get_inverse_lumped_mass_matrix_fine
 
-  !> @brief Returns a pointer to a inverse lumped mass matrix
+  !> @brief Function to return a pointer to a inverse lumped mass matrix
   !! on the specified multigrid level
   !> @param[in] i Index of the desired lumped mass matrix inverse field
   !> @param[in] level Integer the multigrid level
@@ -1103,7 +1010,7 @@ contains
 
   end function get_inverse_lumped_mass_matrix_mg
 
-  !> @brief Returns a pointer to the reciprocal of the multiplicity field
+  !> @brief Function to return a pointer to the reciprocal of the multiplicity field
   !> @return The nodal multiplicity field
   !> @param[in] space enumeration of the function space
   function get_rmultiplicity(space) result(rmultiplicity)
@@ -1128,7 +1035,7 @@ contains
 
   end function get_rmultiplicity
 
-  !> @brief Returns a pointer to the normalisation of prognostic fields
+  !> @brief Function to return a pointer to the normalisation of prognostic fields
   !! on the finest multigrid level
   !> @return The normalisation field
   !> @param[in] space enumeration of the function space
@@ -1152,7 +1059,7 @@ contains
 
   end function get_normalisation_fine
 
-  !> @brief Returns a pointer to the normalisation of prognostic fields
+  !> @brief Function to return a pointer to the normalisation of prognostic fields
   !! on the specified multigrid level
   !> @return The normalisation field
   !> @param[in] space enumeration of the function space
@@ -1179,7 +1086,7 @@ contains
   end function get_normalisation_mg
 
 
-  !> @brief Returns the Coriolis operator
+  !> @brief Function to return the Coriolis operator
   !> @return The Coriolis operator
   function get_coriolis() result(coriolis_op)
     implicit none
@@ -1191,42 +1098,6 @@ contains
                       LOG_LEVEL_ERROR)
     end if
   end function get_coriolis
-
-  !> @brief Returns a pointer to the coordinate array on the shifted mesh
-  !> @return The coordinate field array
-  function get_coordinates_shifted() result(coords_ptr)
-    implicit none
-    type(field_type), pointer :: coords_ptr(:)
-
-    coords_ptr => global_chi_shifted(:)
-  end function get_coordinates_shifted
-
-  !> @brief Returns the dA values at shifted W2 dof locations
-  !> @return The shifted dA field
-  function get_dA_at_w2_shifted() result(dA)
-    implicit none
-    type(field_type), pointer :: dA
-    dA => dA_at_w2_shifted
-
-  end function get_dA_at_w2_shifted
-
-  !> @brief Returns a pointer to the shifted div operator
-  !> @return The shifted div operator
-  function get_div_shifted() result(shifted_div_op)
-    implicit none
-    type(operator_type), pointer :: shifted_div_op
-    shifted_div_op => div_shifted
-
-  end function get_div_shifted
-
-  !> @brief Returns a pointer to the shifted mesh id
-  !> @return The shifted mesh id
-  function get_shifted_mesh_id() result(our_mesh_id)
-    implicit none
-    integer(i_def), pointer :: our_mesh_id
-
-    our_mesh_id => global_shifted_mesh_id
-  end function get_shifted_mesh_id
 
   !> @brief Explicitly reclaim memory from module scope variables
   !
@@ -1289,20 +1160,6 @@ contains
     if(allocated(w2_normalisation)) then
        deallocate(w2_normalisation)
     end if
-    if (allocated(global_chi_shifted)) then
-      deallocate(global_chi_shifted)
-    end if
-    call div_shifted%operator_final()
-    call mm_w0_shifted%operator_final()
-    call mm_w1_shifted%operator_final()
-    call mm_w2_shifted%operator_final()
-    call mm_w2b_shifted%operator_final()
-    call mm_w3_shifted%operator_final()
-    call mm_wtheta_shifted%operator_final()
-    call grad_shifted%operator_final()
-    call curl_shifted%operator_final()
-    call mm3_shifted_diag%field_final()
-
 
   end subroutine final_runtime_constants
 

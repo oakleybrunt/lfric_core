@@ -79,26 +79,22 @@ contains
   @test
   subroutine test_shifted_uniform( this )
 
-    use extrusion_mod, only : uniform_extrusion_type, &
-                              shifted_extrusion_type
+    use extrusion_mod, only : shifted_uniform_extrusion_type
 
     implicit none
 
     class(extrusion_test_type), intent(inout) :: this
 
-    integer(i_def), parameter :: layers = 5
-    real(r_def),    parameter :: expected(0:layers+1) &
+    integer(i_def), parameter :: layers = 6
+    real(r_def),    parameter :: expected(0:layers) &
                                  = [0.0_r_def, 0.1_r_def, 0.3_r_def, &
                                     0.5_r_def, 0.7_r_def, 0.9_r_def, 1.0_r_def]
     real(r_def),    parameter :: tolerance = 0.001_r_def
 
-    type(shifted_extrusion_type) :: unit_under_test
-    type(uniform_extrusion_type) :: base_extrusion
-    real(r_def)                  :: eta(0:layers+1)
+    type(shifted_uniform_extrusion_type) :: unit_under_test
+    real(r_def)                  :: eta(0:layers)
 
-    ! Make a base uniform extrusion
-    base_extrusion  = uniform_extrusion_type( 1.0_r_def, 2.0_r_def, layers )
-    unit_under_test = shifted_extrusion_type( base_extrusion )
+    unit_under_test = shifted_uniform_extrusion_type( 1.0_r_def, 2.0_r_def, layers )
 
     ! Now test the extrusion
     call unit_under_test%extrude( eta )
@@ -138,25 +134,22 @@ contains
   @test
   subroutine test_shifted_quadratic( this )
 
-    use extrusion_mod, only : quadratic_extrusion_type, &
-                              shifted_extrusion_type
+    use extrusion_mod, only : shifted_quadratic_extrusion_type
 
     implicit none
 
     class(extrusion_test_type), intent(inout) :: this
 
-    integer(i_def), parameter :: layers = 5
-    real(r_def),    parameter :: expected(0:layers+1) &
-                                 = [0.0_r_def,  0.02_r_def, 0.10_r_def, &
-                                    0.26_r_def, 0.50_r_def, 0.82_r_def, 1.0_r_def]
+    integer(i_def), parameter :: layers = 6
+    real(r_def),    parameter :: expected(0:layers) &
+                                 = [0.0_r_def,  0.01_r_def, 0.09_r_def, &
+                                    0.25_r_def, 0.49_r_def, 0.81_r_def, 1.0_r_def]
     real(r_def),    parameter :: tolerance = 0.001_r_def
 
-    type(quadratic_extrusion_type) :: base_extrusion
-    type(shifted_extrusion_type)   :: unit_under_test
-    real(r_def)                    :: eta(0:layers+1)
+    type(shifted_quadratic_extrusion_type) :: unit_under_test
+    real(r_def)                  :: eta(0:layers)
 
-    base_extrusion = quadratic_extrusion_type( 1.0_r_def, 2.0_r_def, layers )
-    unit_under_test = shifted_extrusion_type( base_extrusion )
+    unit_under_test = shifted_quadratic_extrusion_type( 1.0_r_def, 2.0_r_def, layers )
 
     call unit_under_test%extrude( eta )
     @assertEqual( expected, eta, tolerance )
@@ -194,25 +187,22 @@ contains
   @test
   subroutine test_shifted_geometric( this )
 
-    use extrusion_mod, only : geometric_extrusion_type, &
-                              shifted_extrusion_type
+    use extrusion_mod, only : shifted_geometric_extrusion_type
 
     implicit none
 
     class(extrusion_test_type), intent(inout) :: this
 
-    integer(i_def), parameter :: layers = 5
-    real(r_def),    parameter :: expected(0:layers+1) &
-                                 = [0.0_r_def, 0.094_r_def,  0.285_r_def,      &
-                                    0.482_r_def, 0.685_r_def,  0.894_r_def,  1.0_r_def]
+    integer(i_def), parameter :: layers = 6
+    real(r_def),    parameter :: expected(0:layers) &
+                                 = [0.0_r_def, 0.09348135642_r_def,  0.28464036_r_def,      &
+                                    0.4815341_r_def, 0.6843347_r_def,  0.8932193_r_def,  1.0_r_def]
     real(r_def),    parameter :: tolerance = 0.001_r_def
 
-    type(geometric_extrusion_type) :: base_extrusion
-    type(shifted_extrusion_type)   :: unit_under_test
-    real(r_def)                    :: eta(0:layers+1)
+    type(shifted_geometric_extrusion_type) :: unit_under_test
+    real(r_def)                  :: eta(0:layers)
 
-    base_extrusion = geometric_extrusion_type( 1.0_r_def, 2.0_r_def, layers )
-    unit_under_test = shifted_extrusion_type( base_extrusion )
+    unit_under_test = shifted_geometric_extrusion_type( 1.0_r_def, 2.0_r_def, layers )
 
     call unit_under_test%extrude( eta )
     @assertEqual( expected, eta, tolerance )
@@ -249,25 +239,22 @@ contains
   @test
   subroutine test_shifted_dcmip( this )
 
-    use extrusion_mod, only : dcmip_extrusion_type, &
-                              shifted_extrusion_type
+    use extrusion_mod, only : shifted_dcmip_extrusion_type
 
     implicit none
 
     class(extrusion_test_type), intent(inout) :: this
 
-    integer(i_def), parameter :: layers = 5
-    real(r_def),    parameter :: expected(0:layers+1) &
-                                 = [0.0_r_def, 0.044_r_def,  0.1845_r_def,   &
-                                    0.3955_r_def, 0.631_r_def, 0.876_r_def, 1.0_r_def]
+    integer(i_def), parameter :: layers = 6
+    real(r_def),    parameter :: expected(0:layers) &
+                                 = [0.0_r_def, 0.0241268431_r_def,  0.177656_r_def,   &
+                                    0.3931498_r_def, 0.6298788_r_def, 0.8754309_r_def, 1.0_r_def]
     real(r_def),    parameter :: tolerance = 0.001_r_def
 
-    type(dcmip_extrusion_type)   :: base_extrusion
-    type(shifted_extrusion_type) :: unit_under_test
-    real(r_def)                  :: eta(0:layers+1)
+    type(shifted_dcmip_extrusion_type) :: unit_under_test
+    real(r_def)                  :: eta(0:layers)
 
-    base_extrusion = dcmip_extrusion_type( 1.0_r_def, 2.0_r_def, layers )
-    unit_under_test = shifted_extrusion_type( base_extrusion )
+    unit_under_test = shifted_dcmip_extrusion_type( 1.0_r_def, 2.0_r_def, layers )
 
     call unit_under_test%extrude( eta )
     @assertEqual( expected, eta, tolerance )
