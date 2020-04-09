@@ -106,20 +106,26 @@ module gungho_model_mod
 
 
   !> @brief Initialises the infrastructure and sets up constants used by the model
-  !> @param [inout] comm The MPI communicator for use within the model
+  !> @param [in,out] communicator The MPI communicator for use within the model
   !>                     (not XIOS' communicator)
   !> @param [in]    filename The name of the configuration namelist file
   !> @param [in]    program_name An identifier given to the model begin run
-  !> @param [inout] mesh_id The identifier given to the current 3d mesh
-  !> @param [inout] twod_mesh_id The identifier given to the current 2d mesh
-  !> @param [inout] chi A size 3 array of fields holding the coordinates of the mesh
-  subroutine initialise_infrastructure(communicator, &
-                                       filename,     &
-                                       program_name, &
-                                       clock,        &
-                                       mesh_id,      &
-                                       twod_mesh_id, &
-                                       chi)
+  !> @param[out]     clock Model time
+  !> @param [in,out] mesh_id The identifier given to the current 3d mesh
+  !> @param [in,out] twod_mesh_id The identifier given to the current 2d mesh
+  !> @param [in,out] chi A size 3 array of fields holding the coordinates of the mesh
+  !> @param [in,out] shifted_mesh_id The identifier given to the vertically shifted 3d mesh
+  !> @param [in,out] shifted_chi A size 3 array of fields holding the coordinates of the shifted mesh
+
+  subroutine initialise_infrastructure(communicator,    &
+                                       filename,        &
+                                       program_name,    &
+                                       clock,           &
+                                       mesh_id,         &
+                                       twod_mesh_id,    &
+                                       chi,             &
+                                       shifted_mesh_id, &
+                                       shifted_chi )
 
     use logging_config_mod, only: run_log_level,          &
                                   key_from_run_log_level, &
@@ -135,8 +141,8 @@ module gungho_model_mod
     character(*),       intent(in)    :: filename
     character(*),       intent(in)    :: program_name
     class(clock_type), intent(out), allocatable :: clock
-    integer(i_def),    intent(inout)            :: mesh_id, twod_mesh_id
-    type(field_type),  intent(inout)            :: chi(3)
+    integer(i_def),    intent(inout)            :: mesh_id, twod_mesh_id, shifted_mesh_id
+    type(field_type),  intent(inout)            :: chi(3), shifted_chi(3)
 
     character(len=*), parameter :: xios_ctx  = "gungho_atm"
 
@@ -215,10 +221,10 @@ module gungho_model_mod
               source = global_mesh_collection_type() )
 
     ! Create the mesh
-    call init_mesh(local_rank, total_ranks, mesh_id, twod_mesh_id)
+    call init_mesh(local_rank, total_ranks, mesh_id, twod_mesh_id, shifted_mesh_id)
 
     ! Create FEM specifics (function spaces and chi field)
-    call init_fem(mesh_id, chi)
+    call init_fem(mesh_id, chi, shifted_mesh_id, shifted_chi)
 
     ! Full global meshes no longer required, so reclaim
     ! the memory from global_mesh_collection
@@ -263,7 +269,8 @@ module gungho_model_mod
     ! Create runtime_constants object. This in turn creates various things
     ! needed by the timestepping algorithms such as mass matrix operators, mass
     ! matrix diagonal fields and the geopotential field
-    call create_runtime_constants(mesh_id, twod_mesh_id, chi)
+    call create_runtime_constants(mesh_id, twod_mesh_id, chi, &
+                                  shifted_mesh_id, shifted_chi)
 
 #ifdef UM_PHYSICS
     ! Set derived planet constants and presets
@@ -289,9 +296,9 @@ module gungho_model_mod
 
   !---------------------------------------------------------------------------
   !> @brief Initialises the gungho application
+  !> @param[in] clock Model time
   !> @param[in] mesh_id The identifier of the primary mesh
   !> @param[inout] model_data The working data set for the model run
-  !> @param[in] timestep_start number of timestep at which this run started
   subroutine initialise_model( clock,   &
                                mesh_id, &
                                model_data )
