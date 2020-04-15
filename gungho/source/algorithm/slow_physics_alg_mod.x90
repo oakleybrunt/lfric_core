@@ -289,7 +289,7 @@ contains
       call dcff_pc2_mphys%initialise( vector_space = theta%get_function_space() )
       call dbcf_pc2_mphys%initialise( vector_space = theta%get_function_space() )
 
-      call mphys_alg_step( mr_n, theta, exner, height_w3, height_wth,     &
+      call mphys_alg_step( mr_n, theta, rho, height_w3, height_wth,       &
                            derived_fields, microphysics_fields,           &
                            cloud_fields, aerosol_fields,                  &
                            dmr_mphys, dtheta_mphys,                       &
@@ -392,6 +392,7 @@ contains
                                     derived_fields,         &
                                     orography_fields,       &
                                     theta,                  &
+                                    mr_n,                   &
                                     height_w3,              &
                                     height_wth)
       orographic_drag_done=.true.

@@ -9,6 +9,7 @@
 module orographic_drag_alg_mod
   use field_mod, only: field_type
   use field_collection_mod, only: field_collection_type
+  use mr_indices_mod,       only: nummr, imr_v, imr_cl, imr_ci
   use psykal_lite_phys_mod, only: invoke_orographic_drag_kernel
 
   ! XIOS output
@@ -31,11 +32,12 @@ contains
   !> @param[in]     derived fields         Group of derived fields
   !> @param[in]     orography_fields       Fields for orographic drag scheme
   !> @param[in]     theta                  Potential temperature in wtheta
+  !> @param[in]     mr_n                   Mixing ratios at time level n
   !> @param[in]     height_w3              Height on w3
   !> @param[in]     height_wth             Height on wtheta
   subroutine orographic_drag_alg_step(                              &
                     du_tot_orographic_drag, dtheta_orographic_drag, &
-                    derived_fields, orography_fields, theta,        &
+                    derived_fields, orography_fields, theta, mr_n,  &
                     height_w3, height_wth)
 
     ! orographic kernels
@@ -47,7 +49,7 @@ contains
     type( field_type ), intent( inout ) :: dtheta_orographic_drag
     type( field_collection_type ), intent(in) :: derived_fields
     type( field_collection_type ), intent(in) :: orography_fields
-    type( field_type ), intent(in) :: theta
+    type( field_type ), intent(in) :: theta, mr_n(nummr)
     type( field_type ), intent(in) :: height_w3
     type( field_type ), intent(in) :: height_wth
 
@@ -121,8 +123,10 @@ contains
     call invoke_orographic_drag_kernel(                         &
                 du_blk, dv_blk, du_orog_gwd, dv_orog_gwd,       &
                 dtemp_blk, dtemp_orog_gwd, u1_in_w3, u2_in_w3,  &
-                wetrho_in_w3, theta, sd_orog, grad_xx_orog,     &
-                grad_xy_orog, grad_yy_orog,height_w3, height_wth)
+                wetrho_in_w3, theta, exner_in_wth, sd_orog,     &
+                grad_xx_orog, grad_xy_orog, grad_yy_orog,       &
+                mr_n(imr_v), mr_n(imr_cl), mr_n(imr_ci),        &
+                height_w3, height_wth)
 
     ! Sum increments
     call invoke(X_plus_Y (du_orographic_drag, du_blk, du_orog_gwd),          &

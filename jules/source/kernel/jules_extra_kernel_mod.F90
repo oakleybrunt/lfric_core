@@ -246,7 +246,7 @@ contains
     use jules_surface_types_mod, only: npft, ntype
     use jules_snow_mod, only: nsmax
     use nlsizes_namelist_mod, only: row_length, rows, land_pts => land_field, &
-                                    sm_levels, ntiles, model_levels
+                                    sm_levels, ntiles
     use UM_ParCore, only: nproc
 
     ! Spatially varying fields used from modules
@@ -349,10 +349,7 @@ contains
 
     ! Integer indices (module intent=in)
     integer(i_um) :: a_step, g_p_field, g_r_field, global_row_length,         &
-         global_rows, global_river_row_length, global_river_rows, halo_i,     &
-         halo_j, n_rows, offx, offy, n_procx, n_procy
-
-    integer(i_um), dimension(0:nproc-1) :: g_rows, g_row_length
+         global_rows, global_river_row_length, global_river_rows
 
     integer(i_um), dimension(land_pts) :: land_index, lice_index, soil_index
 
@@ -361,7 +358,7 @@ contains
     integer(i_um), dimension(land_pts,nsurft) :: surft_index
 
     ! Logical (module intent=in)
-    logical :: smlt, stf_sub_surf_roff, at_extremity(4)
+    logical :: smlt, stf_sub_surf_roff
 
     logical, dimension(row_length,rows) :: land_sea_mask
 
@@ -665,12 +662,11 @@ contains
     lice_pts, lice_index, soil_pts, soil_index, stf_sub_surf_roff,fexp_soilt, &
     gamtot_soilt, ti_mean_soilt, ti_sig_soilt, cs_ch4_soilt, flash_rate_ancil,&
     pop_den_ancil, a_fsat_soilt, c_fsat_soilt, a_fwet_soilt, c_fwet_soilt,    &
-    ntype, fqw_surft, halo_i, halo_j, model_levels, delta_lambda, delta_phi,  &
+    ntype, fqw_surft, delta_lambda, delta_phi,                                &
     cos_theta_latitude, aocpl_row_length, aocpl_p_rows, xpa, xua, xva, ypa,   &
     yua, yva, g_p_field, g_r_field, nproc, global_row_length, global_rows,    &
     global_river_row_length, global_river_rows, flandg, trivdir, trivseq,     &
-    r_area, slope, flowobs1, r_inext, r_jnext, r_land, n_rows, offx, offy,    &
-    n_procx, n_procy, g_rows, g_row_length, at_extremity, frac_agr_gb,        &
+    r_area, slope, flowobs1, r_inext, r_jnext, r_land, frac_agr_gb,           &
     soil_clay_ij, resp_s_soilt, npp_gb, z0m_soil_gb,                          &
 
     !IN OUT

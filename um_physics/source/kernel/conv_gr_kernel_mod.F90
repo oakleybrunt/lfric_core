@@ -477,7 +477,7 @@ contains
 
     real(r_um), dimension(row_length,rows) :: zlcl, t1_sd, q1_sd, w_max,     &
          deep_flag, past_precip, past_conv_ht, ql_ad, ind_cape_reduced,      &
-         it_wstar_dn
+         it_wstar_dn, g_ccp, h_ccp, ccp_strength
 
     integer(i_um), dimension(row_length,rows) :: conv_type
 
@@ -786,6 +786,7 @@ contains
         , ind_cape_reduced,  cape_ts_used, it_ind_deep, it_ind_shall        &
         , it_w2p, it_dt_dd, it_dq_dd, it_du_dd, it_dv_dd, it_area_ud        &
         , it_area_dd, scm_convss_dg, l_scm_convss_dg                        &
+        , g_ccp, h_ccp, ccp_strength                                        &
         )
 
       ! Mid-level convection only possible on subsequent sub-steps if

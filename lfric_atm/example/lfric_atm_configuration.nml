@@ -196,6 +196,7 @@ mountain_height_scaling=2.5,
 orographic_blocking_heating=.true.,
 orographic_gwd_heating=.true.,
 vertical_smoothing=.true.,
+include_moisture='dry'
 /
 &radiation
 cloud_horizontal_rsd=0.75,

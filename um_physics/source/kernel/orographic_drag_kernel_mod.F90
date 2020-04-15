@@ -13,6 +13,7 @@ module orographic_drag_kernel_mod
                                         GH_WRITE, CELLS,            &
                                         ANY_DISCONTINUOUS_SPACE_1
 
+  use planet_constants_mod,       only: p_zero, kappa
   use constants_mod,              only: r_def, r_um, i_def, i_um, pi
   use fs_continuity_mod,          only: W3, Wtheta
   use kernel_mod,                 only: kernel_type
@@ -36,7 +37,7 @@ module orographic_drag_kernel_mod
   !>
   type, public, extends(kernel_type) :: orographic_drag_kernel_type
     private
-    type(arg_type) :: meta_args(16) = (/                           &
+    type(arg_type) :: meta_args(20) = (/                           &
         arg_type(GH_FIELD,   GH_WRITE, W3),                        & ! du_blk, u wind increment blocking
         arg_type(GH_FIELD,   GH_WRITE, W3),                        & ! dv_blk, v wind increment blocking
         arg_type(GH_FIELD,   GH_WRITE, W3),                        & ! du_orog_gwd, u wind increment gwd
@@ -47,10 +48,14 @@ module orographic_drag_kernel_mod
         arg_type(GH_FIELD,   GH_READ,  W3),                        & ! u2_in_w3, meridional wind
         arg_type(GH_FIELD,   GH_READ,  W3),                        & ! wetrho_in_w3, wet density in w3
         arg_type(GH_FIELD,   GH_READ,  Wtheta),                    & ! theta, theta in wtheta
+        arg_type(GH_FIELD,   GH_READ,  Wtheta),                    & ! exner_in_wth
         arg_type(GH_FIELD,   GH_READ,  ANY_DISCONTINUOUS_SPACE_1), & ! sd_orog
         arg_type(GH_FIELD,   GH_READ,  ANY_DISCONTINUOUS_SPACE_1), & ! grad_xx_orog
         arg_type(GH_FIELD,   GH_READ,  ANY_DISCONTINUOUS_SPACE_1), & ! grad_xy_orog
         arg_type(GH_FIELD,   GH_READ,  ANY_DISCONTINUOUS_SPACE_1), & ! grad_yy_orog
+        arg_type(GH_FIELD,   GH_READ,  Wtheta),                    & ! mr_v
+        arg_type(GH_FIELD,   GH_READ,  Wtheta),                    & ! mr_cl
+        arg_type(GH_FIELD,   GH_READ,  Wtheta),                    & ! mr_ci
         arg_type(GH_FIELD,   GH_READ,  W3),                        & ! height_w3
         arg_type(GH_FIELD,   GH_READ,  Wtheta)                     & ! height_wtheta
         /)
@@ -81,10 +86,14 @@ contains
   !! @param[in]  u2_in_w3       Meridional wind
   !! @param[in]  wetrho_in_w3   Moist density
   !! @param[in]  theta_in_wth   Potential temperature
+  !! @param[in]  exner_in_wth   Exner pressure
   !! @param[in]  sd_orog        Standard deviation of sub-grid orog
   !! @param[in]  grad_xx_orog   (dh/dx)**2
   !! @param[in]  grad_xy_orog   (dh/dx)*(dh/dy)
   !! @param[in]  grad_yy_orog   (dh/dy)**2
+  !! @param[in]  mr_v           water vapour mixing ratio
+  !! @param[in]  mr_cl          cloud liquid mixing ratio
+  !! @param[in]  mr_ci          cloud ice mixing ratio
   !! @param[in]  height_w3      height at rho levels
   !! @param[in]  height_wth     height at theta levels
   !! @param[in]  ndf_w3         Number of degrees of freedom per cell for wth
@@ -100,8 +109,10 @@ contains
   subroutine orographic_drag_kernel_code(                                  &
                         nlayers, du_blk, dv_blk, du_orog_gwd, dv_orog_gwd, &
                         dtemp_blk, dtemp_orog_gwd, u1_in_w3, u2_in_w3,     &
-                        wetrho_in_w3, theta_in_wth, sd_orog, grad_xx_orog, &
-                        grad_xy_orog, grad_yy_orog, height_w3, height_wth, &
+                        wetrho_in_w3, theta_in_wth, exner_in_wth, sd_orog, &
+                        grad_xx_orog, grad_xy_orog, grad_yy_orog,          &
+                        mr_v, mr_cl, mr_ci,                                &
+                        height_w3, height_wth,                             &
                         ndf_w3, undf_w3, map_w3, ndf_wth, undf_wth,        &
                         map_wth, ndf_2d, undf_2d, map_2d)
 
@@ -130,7 +141,8 @@ contains
     real(r_def), intent(out), dimension(undf_wth) :: dtemp_blk, dtemp_orog_gwd
     real(r_def), intent(in), dimension(undf_w3)   :: u1_in_w3, u2_in_w3, &
                                                      wetrho_in_w3
-    real(r_def), intent(in), dimension(undf_wth)  :: theta_in_wth
+    real(r_def), intent(in), dimension(undf_wth)  :: theta_in_wth, exner_in_wth
+    real(r_def), intent(in), dimension(undf_wth)  :: mr_v, mr_cl, mr_ci
     real(r_def), intent(in), dimension(undf_2d)   :: sd_orog,      &
                                                      grad_xx_orog, &
                                                      grad_xy_orog, &
@@ -145,6 +157,11 @@ contains
     real(r_um), dimension(seg_len, nlayers) :: &
                     u_on_p, v_on_p,            & ! u and v at p points
                     theta,                     & ! potential temperature
+                    temp,                      & ! temperature
+                    press,                     & ! pressure
+                    q,                         & ! water vapour mixing ratio
+                    qcl,                       & ! cloud liquid mixing ratio
+                    qcf,                       & ! cloud ice mixing ratio
                     dtemp_dt_blk,              & ! Temperature tendency from blocking
                     dtemp_dt_orog_gwd,         & ! Temperature tendency from gwd
                     wetrho,                    & ! wetrho
@@ -161,7 +178,15 @@ contains
     logical, parameter :: nonhydro=.false., dynbeta=.false.
 
     ! Output from gw_setup
-    real(r_um), dimension(seg_len, nlayers) :: nsq ! Brunt-Vaisala frequency
+    real(r_um), dimension(seg_len, nlayers) :: &
+                    nsq,       & ! moist Brunt-Vaisala frequency
+                    nsq_dry,   & ! dry Brunt-Vaisala frequency
+                    nsq_unsat, & ! unsaturated moist Brunt-Vaisala frequency
+                    nsq_sat,   & ! unsaturated moist Brunt-Vaisala frequency
+                    dzcond       ! Ascent to Lifting Condensation Level
+
+    logical, dimension(seg_len, nlayers) :: l_lapse ! logical array
+
     real(r_um), dimension(seg_len) :: & ! Low-level averaged ...
                 ulow, vlow,           & ! ... Zonal and meridional wind
                 rholow,               & ! ... Density
@@ -186,11 +211,11 @@ contains
 
     integer(i_um) :: k
 
-    integer(i_um), dimension(seg_len) :: ktop
+    integer(i_um), dimension(seg_len) :: ktop, kbot
 
     ! Flags for diagnostics (not used in LFRic)
     logical, parameter ::                                                     &
-               u_s_d_on = .false.,  v_s_d_on= .false., nsq_s_d_on = .false.,  &
+               u_s_d_on = .false.,  v_s_d_on= .false., nsq_s_d_on= .false.,   &
                du_dt_diag_on = .false., dv_dt_diag_on = .false.,              &
                stress_u_on = .false., stress_v_on = .false.,                  &
                fr_d_on = .false., bld_d_on= .false., tausx_d_on = .false.,    &
@@ -233,10 +258,26 @@ contains
       wetrho(1,k) = real(wetrho_in_w3(map_w3(1) + k-1), r_um)
 
       theta(1,k)  = real(theta_in_wth(map_wth(1) + k), r_um)
+      temp(1,k)  = real(exner_in_wth(map_wth(1) + k)*theta_in_wth(map_wth(1) + k), r_um)
+
+      ! Pressure on layer boundaries (note, top layer is set to zero below)
+      press(1,k) = real(p_zero*(exner_in_wth(map_wth(1) + k)) &
+                                      **(1.0_r_um/kappa), r_um)
+
+      ! water vapour mixing ratio
+      q(1,k) = mr_v(map_wth(1) + k)
+      ! cloud liquid mixing ratio
+      qcl(1,k) = mr_cl(map_wth(1) + k)
+      ! cloud ice mixing ratio
+      qcf(1,k) = mr_ci(map_wth(1) + k)
+
+      l_lapse(1,k) = .false.
 
       z_rho_levels(1,k)   = real(height_w3(map_w3(1) + k-1) - height_wth(map_wth(1) + 0), r_um)
       z_theta_levels(1,k) = real(height_wth(map_wth(1) + k) - height_wth(map_wth(1) + 0), r_um)
     end do   ! k
+
+    press(1,nlayers) = 0.0_r_um
 
     sd(1)      = real(sd_orog(map_2d(1)), r_um)
     grad_xx(1) = real(grad_xx_orog(map_2d(1)), r_um)
@@ -257,8 +298,12 @@ contains
     call gw_setup(nlayers, seg_len,                                  &
                   ! Inputs
                   u_on_p, v_on_p,  wetrho, theta,                    &
-                  ! Outputs
-                  nsq, ulow, vlow, rholow, nlow, psilow, psi1, modu, &
+                  ! Inputs to calculate moist buoyancy frequency
+                  temp, q, qcl, qcf, press,                          &
+                  ! Outputs from moist buoyancy frequency calculation
+                  nsq, nsq_dry, nsq_unsat, nsq_sat,                  &
+                  dzcond, l_lapse, kbot,                             &
+                  ulow, vlow, rholow, nlow, psilow, psi1, modu,      &
                   ! Time-independent input
                   z_rho_levels, z_theta_levels, sd,                  &
                   grad_xx, grad_xy, grad_yy,                         &
@@ -267,8 +312,7 @@ contains
                   drag, nsigma,                                      &
                   ! diagnostics
                   u_s_d, u_s_d_on, seg_len,                          &
-                  v_s_d, v_s_d_on, seg_len,                          &
-                  nsq_s_d, nsq_s_d_on, seg_len)
+                  v_s_d, v_s_d_on, seg_len)
 
     ! Call routine to compute orographic blocking depth and drag
     call gw_block(nlayers,seg_len,timestep,u_on_p,v_on_p,wetrho, &
@@ -293,7 +337,8 @@ contains
 
     ! Call routine to compute orographic gravity wave drag
     call gw_wave(nlayers,seg_len,u_on_p,v_on_p,wetrho,               &
-                 nsq,ulow,vlow,rholow,psi1,psilow,nlow,modu,ktop,    &
+                 nsq_dry, nsq_unsat, nsq_sat, dzcond, l_lapse, kbot, &
+                 ulow,vlow,rholow,psi1,psilow,nlow,modu,ktop,        &
                  z_rho_levels,z_theta_levels,delta_lambda,delta_phi, &
                  latitude,mt_high,sd,slope,zb,banis,canis,           &
                  du_dt_orog_gwd,dv_dt_orog_gwd,dtemp_dt_orog_gwd,    &
@@ -307,7 +352,8 @@ contains
                  stress_u, seg_len, stress_u_on,                     &
                  stress_v, seg_len, stress_v_on,                     &
                  tausx_d, tausx_d_on, seg_len,                       &
-                 tausy_d, tausy_d_on, seg_len)
+                 tausy_d, tausy_d_on, seg_len,                       &
+                 nsq_s_d, nsq_s_d_on, seg_len)
 
     ! Map variables back
     do k = 1, nlayers

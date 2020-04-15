@@ -39,9 +39,9 @@ type, public, extends(kernel_type) :: mphys_kernel_type
        arg_type(GH_FIELD,   GH_READ,    W3),                           & ! u2_in_w3,
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       & ! w_phys
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       & ! theta_in_wth
-       arg_type(GH_FIELD,   GH_READ,    W3),                           & ! exner_in_w3
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       & ! exner_in_wth
        arg_type(GH_FIELD,   GH_READ,    W3),                           & ! wetrho_in_w3
+       arg_type(GH_FIELD,   GH_READ,    W3),                           & ! dry_rho_in_w3
        arg_type(GH_FIELD,   GH_READ,    W3),                           & ! height_w3
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       & ! height_wth
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       & ! cloud_drop_no_conc
@@ -79,9 +79,9 @@ contains
 !> @param[in]  u2_in_w3            'Meridional' wind in density space
 !> @param[in]  w_phys              'Vertical' wind in theta space
 !> @param[in]  theta_in_wth        Potential temperature field
-!> @param[in]  exner_in_w3         Exner pressure field in density space
 !> @param[in]  exner_in_wth        Exner pressure in potential temperature space
 !> @param[in]  wetrho_in_w3        Wet density in density space
+!> @param[in]  dry_rho_in_w3       Dry density in density space
 !> @param[in]  height_w3           Height of density space levels above surface
 !> @param[in]  height_wth          Height of potential temperature space levels
 !>                                  above surface
@@ -120,8 +120,9 @@ subroutine mphys_code( nlayers,                     &
                        mr_wth,   mg_wth,            &
                        cf_wth,   cfl_wth,  cff_wth, &
                        u1_in_w3, u2_in_w3, w_phys,  &
-                       theta_in_wth, exner_in_w3,   &
+                       theta_in_wth,                &
                        exner_in_wth, wetrho_in_w3,  &
+                       dry_rho_in_w3,               &
                        height_w3, height_wth,       &
                        cloud_drop_no_conc,          &
                        dmv_wth,  dml_wth,  dmi_wth, &
@@ -148,7 +149,7 @@ subroutine mphys_code( nlayers,                     &
     use cloud_inputs_mod,           only: i_cld_vn, rhcrit
     use pc2_constants_mod,          only: i_cld_off, i_cld_pc2
 
-    use electric_inputs_mod,        only: l_use_electric
+    use electric_inputs_mod,        only: electric_method, em_gwp, em_mccaul
     use electric_main_mod,          only: electric_main
 
     use atm_fields_bounds_mod,      only: tdims
@@ -182,9 +183,9 @@ subroutine mphys_code( nlayers,                     &
     real(kind=r_def), intent(in),  dimension(undf_w3)  :: u2_in_w3
     real(kind=r_def), intent(in),  dimension(undf_wth) :: w_phys
     real(kind=r_def), intent(in),  dimension(undf_wth) :: theta_in_wth
-    real(kind=r_def), intent(in),  dimension(undf_w3)  :: exner_in_w3
     real(kind=r_def), intent(in),  dimension(undf_wth) :: exner_in_wth
     real(kind=r_def), intent(in),  dimension(undf_w3)  :: wetrho_in_w3
+    real(kind=r_def), intent(in),  dimension(undf_w3)  :: dry_rho_in_w3
     real(kind=r_def), intent(in),  dimension(undf_w3)  :: height_w3
     real(kind=r_def), intent(in),  dimension(undf_wth) :: height_wth
     real(kind=r_def), intent(in),  dimension(undf_wth) :: cloud_drop_no_conc
@@ -210,15 +211,14 @@ subroutine mphys_code( nlayers,                     &
          u_on_p, v_on_p, w, q_work, qcl_work, qcf_work, deltaz, cfl_work,      &
          cff_work, cf_work, rhodz_dry, rhodz_moist, t_n, t_work,               &
          p_theta_levels, ls_rain3d, ls_snow3d, ls_graup3d, rainfrac3d,         &
-         n_drop_pot, n_drop_3d, so4_aitken_work, so4_accu_work, so4_diss_work, &
+         n_drop_pot, n_drop_3d, so4_accu_work, so4_diss_work,                  &
          aged_bmass_work, cloud_bmass_work, aged_ocff_work, cloud_ocff_work,   &
          nitr_acc_work, nitr_diss_work, aerosol_work, biogenic, rho_r2,        &
-         ukca_cdnc_array
+         dry_rho, ukca_cdnc_array
 
     real(r_um), dimension(row_length,rows,model_levels, 1) :: arcl
 
-    real(r_um), dimension(row_length,rows,0:model_levels) :: flash_pot,        &
-                p_rho_minus_one
+    real(r_um), dimension(row_length,rows,0:model_levels) :: flash_pot
 
     real(r_um), dimension(row_length,rows) :: ls_rain, ls_snow, ls_graup,      &
                                               snow_depth, land_frac, hmteff, zb
@@ -242,14 +242,12 @@ subroutine mphys_code( nlayers,                     &
 
     real(r_um), dimension(land_field) :: ls_rainfrac
 
-    integer(i_um) :: lspice_dim1, lspice_dim2, lspice_dim3, error_code,        &
+    integer(i_um) :: lspice_dim1, lspice_dim2, lspice_dim3,                    &
                      salt_dim1, salt_dim2, salt_dim3, cdnc_dim1, cdnc_dim2,    &
-                     cdnc_dim3, rhc_row_length, rhc_rows, n_arcl_species,      &
+                     cdnc_dim3, rhc_row_length, rhc_rows,                      &
                      n_arcl_compnts, land_points
 
     logical :: l_cosp_lsp
-
-    logical, dimension(4) :: at_extremity
 
     type (t_easyaerosol_cdnc) :: easyaerosol_cdnc
 
@@ -279,22 +277,14 @@ subroutine mphys_code( nlayers,                     &
     salt_dim2   = 1_i_um
     salt_dim3   = 1_i_um
 
-    error_code  = 0_i_um
-
     rhc_row_length = 1_i_um
     rhc_rows       = 1_i_um
-    n_arcl_species = 1_i_um
     n_arcl_compnts = 1_i_um
 
     land_points = land_field
 
-    do i = 1, 4
-      at_extremity(i) = .false.
-    end do
-
     deltaz(:,:,:)           = 0.0_r_um
     biogenic(:,:,:)         = 0.0_r_um
-    so4_aitken_work(:,:,:)  = 0.0_r_um
     so4_accu_work(:,:,:)    = 0.0_r_um
     so4_diss_work(:,:,:)    = 0.0_r_um
     aged_bmass_work(:,:,:)  = 0.0_r_um
@@ -340,6 +330,7 @@ subroutine mphys_code( nlayers,                     &
 
           rho_r2(i,j,k) = wetrho_in_w3(map_w3(1) + k-1) *                      &
                           ( r_rho_levels(i,j,k)**2 )
+          dry_rho(i,j,k) = dry_rho_in_w3(map_w3(1) + k-1)
 
           u_on_p(i,j,k) = u1_in_w3(map_w3(1) + k-1)
           v_on_p(i,j,k) = u2_in_w3(map_w3(1) + k-1)
@@ -365,16 +356,6 @@ subroutine mphys_code( nlayers,                     &
       do i = 1, row_length
         ! surface height
         r_theta_levels(i,j,0) = height_wth(map_wth(1) + 0) + planet_radius
-        ! Surface pressure
-        p_rho_minus_one(i,j,0) = p_zero *                                    &
-                             (exner_in_wth(map_wth(1) + 0))**(1.0_r_um/kappa)
-        do k = 1, model_levels-1
-          ! Pressure on rho levels, without level 1
-          p_rho_minus_one(i,j,k) = p_zero*(exner_in_w3(map_w3(1) + k))       &
-                                          **(1.0_r_um/kappa)
-        end do
-        p_rho_minus_one(i,j,model_levels) = 0.0_r_um
-        ! As per atmos_physics 1 code
       end do ! i
     end do   ! j
 
@@ -470,12 +451,12 @@ subroutine mphys_code( nlayers,                     &
 
     ! CALL to ls_ppn
     CALL ls_ppn(                                                               &
-                p_rho_minus_one, p_theta_levels,                               &
+                p_theta_levels,                                                &
                 land_sea_mask, deltaz,                                         &
                 cf_work, cfl_work, cff_work,                                   &
                 rhcpt,                                                         &
                 lspice_dim1,lspice_dim2,lspice_dim3,                           &
-                rho_r2, q_work, qcf_work, qcl_work, t_work,                    &
+                rho_r2, dry_rho, q_work, qcf_work, qcl_work, t_work,           &
                 qcf2_work, qrain_work, qgraup_work,                            &
                 u_on_p, v_on_p,                                                &
                 sea_salt_film, sea_salt_jet,                                   &
@@ -485,11 +466,11 @@ subroutine mphys_code( nlayers,                     &
                 easyaerosol_cdnc,                                              &
                 biogenic,                                                      &
                 snow_depth, land_frac,                                         &
-                so4_aitken_work, so4_accu_work,                                &
+                so4_accu_work,                                                 &
                 so4_diss_work, aged_bmass_work, cloud_bmass_work,              &
                 aged_ocff_work, cloud_ocff_work, nitr_acc_work,                &
                 nitr_diss_work, aerosol_work,                                  &
-                n_arcl_species, n_arcl_compnts, i_arcl_compnts, arcl,          &
+                n_arcl_compnts, i_arcl_compnts, arcl,                          &
                 ls_rain, ls_snow, ls_graup,                                    &
                 ls_rain3d, ls_snow3d, ls_graup3d, rainfrac3d,                  &
                 n_drop_pot, n_drop_3d,                                         &
@@ -497,8 +478,7 @@ subroutine mphys_code( nlayers,                     &
                 rhodz_dry, rhodz_moist,                                        &
                 ls_rainfrac, land_points, land_index,                          &
                 l_cosp_lsp,                                                    &
-                hmteff, zb,                                                    &
-                error_code )
+                hmteff, zb )
 
     ! CALL to mphys_turb_gen_mixed_phase would be here if l_subgrid_qcl_mp
     !      is True. This requires the PC2 scheme, so isn't added for now.
@@ -506,15 +486,16 @@ subroutine mphys_code( nlayers,                     &
     ! CALL if required to  pc2_turbulence_ctl
 
 
-  ! CALL to electric_main if l_use_electric
+  ! CALL to electric_main if electric method is em_gwp or em_mccaul
 
 ! Lightning scheme
 ! Should not change prognostic variables, but is worth including here
 ! in order to prove that it actually works.
-if (l_use_electric .AND. l_mcr_qgraup) THEN
+if (l_mcr_qgraup .and. ( electric_method == em_gwp .or. &
+     electric_method == em_mccaul ) )  then
 
   call electric_main( qcf_work, qcf2_work, qgraup_work, rhodz_dry,            &
-                      rhodz_moist, t_n, w, at_extremity, stashwork21,         &
+                      rhodz_moist, t_n, w, stashwork21,                       &
                       flash_pot(:, :, 1 : tdims%k_end ) )
 end if
 

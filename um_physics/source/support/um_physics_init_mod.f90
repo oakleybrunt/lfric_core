@@ -47,6 +47,8 @@ module um_physics_init_mod
                                         microphysics_um,   &
                                         spectral_gwd,      &
                                         spectral_gwd_um,   &
+                                        orographic_drag,   &
+                                        orographic_drag_um,&
                                         surface,           &
                                         surface_jules
 
@@ -55,6 +57,10 @@ module um_physics_init_mod
                                  wavelstar_in => wavelstar,                   &
                                  add_cgw_in => add_cgw,                       &
                                  cgw_scale_factor_in => cgw_scale_factor
+
+  use orographic_drag_config_mod, only:  include_moisture,       &
+                                         include_moisture_moist, &
+                                         include_moisture_dry
 
   ! Other LFRic modules used
   use constants_mod,        only : r_um, rmdi
@@ -122,17 +128,20 @@ contains
          plume_water_load, rad_cloud_decay_opt, cape_bottom, cape_top,     &
          cape_min, i_convection_vn_6a, i_cv_llcs, midtrig_opt,             &
          llcs_cloud_precip, llcs_opt_all_rain, llcs_rhcrit, llcs_timescale,&
-         check_run_convection, llcs_opt_crit_condens, llcs_detrain_coef
+         check_run_convection, l_fcape, cape_ts_min, cape_ts_max,          &
+         cpress_term, pr_melt_frz_opt, llcs_opt_crit_condens,              &
+         llcs_detrain_coef
     use cv_param_mod, only: mtrig_ntmlplus2
     use cv_stash_flg_mod, only: set_convection_output_flags
     use cv_set_dependent_switches_mod, only: cv_set_dependent_switches
     use dust_parameters_mod, only: i_dust, i_dust_off,                     &
          dust_parameters_load
+    use electric_inputs_mod, only: electric_method, no_lightning
     use fsd_parameters_mod, only: fsd_eff_lam, fsd_eff_phi
     use glomap_clim_option_mod, only: i_glomap_clim_setup,                 &
          i_gc_sussocbc_5mode, l_glomap_clim_aie2
     use g_wave_input_mod, only: ussp_launch_factor, wavelstar, l_add_cgw,  &
-         cgw_scale_factor
+         cgw_scale_factor, i_moist
     use mphys_bypass_mod, only: mphys_mod_top
     use mphys_inputs_mod, only: ai, ar, bi, c_r_correl, ci_input, cic_input, &
         di_input, dic_input, i_mcr_iter, l_diff_icevt,                       &
@@ -273,6 +282,8 @@ contains
         bl_cnv_mix          = 1
         cape_min            = 0.5_r_um
         cape_timescale      = 3600
+        cape_ts_max         = 14400.0_r_um
+        cape_ts_min         = 0.0_r_um
         cca2d_dp_opt        = 1
         cca2d_md_opt        = 1
         cca2d_sh_opt        = 2
@@ -286,6 +297,7 @@ contains
         cldbase_opt_md      = 7
         cnv_cold_pools      = 0
         cnv_wat_load_opt    = 0
+        cpress_term         = 0.7_r_um
         dd_opt              = 1
         deep_cmt_opt        = 5
         eff_dcff            = 1.0_r_um
@@ -303,6 +315,7 @@ contains
         l_ccrad             = .true.
         l_cmt_heating       = .true.
         l_cv_conserve_check = .true.
+        l_fcape             = .false.
         l_mom               = .true.
         l_safe_conv         = .true.
         mdet_opt_dp         = 1
@@ -310,6 +323,7 @@ contains
         mid_cnv_pmin        = 10000.00_r_um
         midtrig_opt         = mtrig_ntmlplus2
         n_conv_calls        = number_of_convection_substeps
+        pr_melt_frz_opt     = 0
         qstice              = 3.5000e-3_r_um
         r_det               = 0.8000_r_um
         rad_cloud_decay_opt = 0
@@ -440,6 +454,9 @@ contains
         call log_event( log_scratch_space, LOG_LEVEL_ERROR )
       end if
 
+      ! Electric namelist options
+      electric_method = no_lightning
+
       ai             = 2.5700e-2_r_um
       ar             = 1.00_r_um
       bi             = 2.00_r_um
@@ -490,6 +507,15 @@ contains
       ussp_launch_factor = real(ussp_launch_factor_in, r_um)
       wavelstar = real(wavelstar_in, r_um)
 
+    end if
+
+    if ( orographic_drag == orographic_drag_um ) then
+      select case (include_moisture)
+        case(include_moisture_dry)
+          i_moist = 0
+        case(include_moisture_moist)
+          i_moist = 1
+      end select
     end if
 
     ! ----------------------------------------------------------------

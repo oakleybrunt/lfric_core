@@ -229,7 +229,8 @@ contains
     ! as some arrays are conditional upon the switches, but it also
     ! needs calling before the below parameters are set, because
     ! their arrays are allocated in here.
-    call allocate_jules_arrays(land_field,ntiles,sm_levels,nice,nice_use)
+
+    call allocate_jules_arrays()
 
     ! ----------------------------------------------------------------
     ! Jules non-vegetated tile settings - contained in module nvegparm

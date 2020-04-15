@@ -152,11 +152,11 @@ contains
 
     integer(i_um) :: k
 
-    integer(i_um), parameter :: n_proc = 1, n_procy = 1, proc_row_group = 1
+    integer(i_um), parameter :: n_proc = 1
 
     ! These are flags for diagnostics that are not used in LFRic
     logical, parameter ::                                              &
-               at_extremity(4) = .false., gwspec_eflux_on = .false.,   &
+               gwspec_eflux_on = .false.,                              &
                gwspec_eflux_p_on = .false., gwspec_sflux_on = .false., &
                gwspec_wflux_on = .false., gwspec_wflux_p_on = .false., &
                gwspec_nflux_on = .false., gwspec_ewacc_on = .false.,   &
@@ -217,8 +217,8 @@ contains
 
     ! call USSP code from UM
     call gw_ussp(nlayers, rows,row_length,                                   &
-                 global_row_length,n_proc, n_procy, proc_row_group,          &
-                 at_extremity, r_rho_levels, r_theta_levels, p_theta_levels, &
+                 global_row_length,n_proc,                                   &
+                 r_rho_levels, r_theta_levels, p_theta_levels,               &
                  sin_theta_latitude, theta, wetrho_rsq, u_on_p, v_on_p,      &
                  totalppn, timestep, du_on_p, dv_on_p, dtemp_on_t,           &
                  ussp_heating, gwspec_eflux,gwspec_sflux,gwspec_wflux,       &

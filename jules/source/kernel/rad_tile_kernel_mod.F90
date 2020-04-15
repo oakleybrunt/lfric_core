@@ -218,7 +218,7 @@ subroutine rad_tile_code(nlayers,                          &
   ! Inputs to surf_couple_radiation
   real(r_um), dimension(row_length, rows) :: &
     tstar_sea, ws_10m_sea, chloro, ice_fract, cos_zen_rts, flandg, &
-    snow_depth, soot
+    soot
   real(r_um), dimension(row_length, rows, nice_use) :: &
     ice_fract_cat, ice_thick_cat, tstar_sice_cat, snow_sice_cat
   real(r_um), dimension(row_length, rows, nice) :: &
@@ -396,8 +396,6 @@ subroutine rad_tile_code(nlayers,                          &
   ! Snow soot content
   soot = real(snow_soot(map_2d(1)), r_um)
 
-  ! snow_depth is not used
-
   CALL surf_couple_radiation(                                   &
   ! Fluxes INTENT(IN)
     tstar_sea,                                                  &
@@ -413,14 +411,14 @@ subroutine rad_tile_code(nlayers,                          &
     pond_frac_cat, pond_depth_cat,                              &
   ! (ancil_info mod)
     ntiles, land_field, land_index, type_pts, type_index,       &
-    row_length, rows, ice_fract, ice_fract_cat, frac_tile,      &
+    row_length, rows, ice_fract, frac_tile,                     &
   ! (p_s_parms mod)
     cos_zen_rts, albobs_sw, albobs_vis, albobs_nir,             &
     z0_tile, albsoil,                                           &
   ! (coastal mod)
     flandg, tstar_sice_cat,                                     &
   ! (prognostics mod)
-    snow_depth, snow_sice_cat, ice_thick_cat,                   &
+    snow_sice_cat, ice_thick_cat,                               &
     lai, canht, rgrain,                                         &
     snow_tile, soot, tstar_tile, sd_orog_land,                  &
   ! UM-only args: INTENT(OUT)

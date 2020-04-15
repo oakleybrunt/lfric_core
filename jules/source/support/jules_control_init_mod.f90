@@ -45,13 +45,20 @@ contains
   subroutine jules_control_init()
 
     ! UM/Jules modules containing things that need setting
-    use atm_step_local, only: land_pts_trif, npft_trif, co2_dim_len, co2_dim_row
+    use ancil_info, only: jules_dim_cs1 => dim_cs1, land_pts, nsurft, &
+      jules_land_pts_trif => land_pts_trif, jules_npft_trif => npft_trif
+    use atm_fields_bounds_mod, only: tdims
+    use atm_step_local, only: land_pts_trif, npft_trif, co2_dim_len, co2_dim_row, &
+        dim_cs1
     use dyn_coriolis_mod, only: f3_at_u
+    use jules_soil_mod, only: jules_sm_levels => sm_levels
     use jules_surface_types_mod, only: nnpft, npft, nnvg, ntype, brd_leaf, &
          ndl_leaf, c3_grass, c4_grass, shrub, urban, lake, soil, ice
+    use jules_vegetation_mod, only: l_triffid
     use lsm_switch_mod, only: init_lsm_um
     use nlsizes_namelist_mod, only: land_field, ntiles, sm_levels
     use rad_input_mod, only: co2_mmr
+    use theta_field_sizes, only: t_i_length, t_j_length
 
     implicit none
 
@@ -65,7 +72,11 @@ contains
     first_sea_ice_tile = n_land_tile + n_sea_tile + 1
 
     ! ----------------------------------------------------------------
-    ! Model dimensions - contained in UM module nlsizes_namelist_mod
+    ! Model dimensions - in each case, the first variable is
+    !  contained in UM module nlsizes_namelist_mod. It must then be
+    !  copied across into variables which live in JULES modules so that 
+    !  allocate_jules_arrays can access via modules. Ultimately the
+    !  UM variables should be removed and only the JULES ones will exist.
     ! ----------------------------------------------------------------
     ! The number of land points in a kernel. This is genuinely variable
     ! and will be set to 0 or 1 respectively in each kernel calling Jules.
@@ -73,19 +84,42 @@ contains
     ! for persistent use contain enough memory for the potential that any
     ! point is a land point.
     land_field   = 1
-    ! Land tiles and soil levels - set from LFRic parameters but may migrate
+    land_pts     = land_field
+    ! Number of land tiles - set from LFRic parameters but will migrate
     ! to namelist or read from ancillary file in due course.
     ntiles       = n_land_tile
-    sm_levels    = 4
+    nsurft       = ntiles
+    ! Number of soil levels - set to a constant as this rarely changes
+    ! but may migrate to namelist or read from ancillary in due course.
+    sm_levels       = 4
+    jules_sm_levels = sm_levels
+
+    ! Compute lengths in i and j direction. This is the earliest place that they
+    ! are needed. They will be kept in the module from here onward.
+    t_i_length = tdims%i_end - tdims%i_start + 1
+    t_j_length = tdims%j_end - tdims%j_start + 1
 
     ! ----------------------------------------------------------------
     ! More model dimensions, this time from atm_step_local
     ! ----------------------------------------------------------------
-    ! Dimensions for triffid - this is not yet implemented, but set to 1
-    ! so arrays passed have a sensible dimensions assigned. Will be read
-    ! from namelist or ancillary when triffid is implemented.
-    land_pts_trif = 1
-    npft_trif     = 1
+    ! Dimensions for triffid - this is not yet implemented, but we set
+    ! the variables correctly based on the use or not of triffid here
+    ! so that hopefully it works when it is implemented.
+    if (l_triffid) then
+      land_pts_trif = land_field
+      npft_trif     = npft
+      dim_cs1       = 4  
+    else
+      land_pts_trif = 1
+      npft_trif     = 1
+      dim_cs1       = 1
+    end if
+
+    ! Now pass into JULES module variables
+    jules_land_pts_trif = land_pts_trif
+    jules_npft_trif = npft_trif
+    jules_dim_cs1 = dim_cs1
+
     ! Dimensions of co2 array - set to 1 to match kernel size, but may change
     ! if multiple cells are passed to kernels.
     co2_dim_len = 1

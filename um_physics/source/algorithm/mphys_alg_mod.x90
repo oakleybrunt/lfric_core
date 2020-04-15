@@ -30,7 +30,7 @@ contains
   !>         See UMDP26 for full scheme details
   !>@param[in]     mr_n           Start of timestep mixing ratios
   !>@param[in]     theta          Potential temperature (theta) in wth space
-  !>@param[in]     exner_in_w3    Exner Pressure in the w3 space
+  !>@param[in]     dry_rho_in_w3  Dry density in the w3 space
   !>@param[in]     height_w3      Height from surface on density levels
   !>@param[in]     height_wth     Height from surface on theta levels
   !>@param[in]     derived_fields Group of derived fields
@@ -42,8 +42,9 @@ contains
   !>@param[in,out] dcfl           Increment to liquid cloud fraction
   !>@param[in,out] dcff           Increment to ice cloud fraction
   !>@param[in,out] dbcf           Increment to bulk cloud fraction
-  subroutine mphys_alg_step( mr_n, theta, exner_in_w3, height_w3, height_wth,  &
-                             derived_fields, microphysics_fields, cloud_fields,&
+  subroutine mphys_alg_step( mr_n, theta, dry_rho_in_w3,                       & 
+                             height_w3, height_wth, derived_fields,            &
+                             microphysics_fields, cloud_fields,                &
                              aerosol_fields, dmr_mphys, theta_inc,             &
                              dcfl, dcff, dbcf )
 
@@ -58,7 +59,7 @@ contains
 
     implicit none
 
-    type( field_type ), intent( in )    :: mr_n ( nummr ), theta, exner_in_w3
+    type( field_type ), intent( in )    :: mr_n ( nummr ), theta, dry_rho_in_w3
     type( field_type ), intent( in )    :: height_w3, height_wth
 
     type( field_collection_type ), intent(in)    :: derived_fields
@@ -115,8 +116,9 @@ contains
                                      mr_n(imr_r), mr_n(imr_g),                 &
                                      cf_in, cfl_in, cff_in,                    &
                                      u1_in_w3, u2_in_w3, w_physics,            &
-                                     theta, exner_in_w3, exner_in_wth,         &
-                                     wetrho_in_w3, height_w3, height_wth,      &
+                                     theta, exner_in_wth,                      &
+                                     wetrho_in_w3, dry_rho_in_w3,              &
+				     height_w3, height_wth,                    &
                                      cloud_drop_no_conc,                       &
                                      dmr_mphys(imr_v),  dmr_mphys(imr_cl),     &
                                      dmr_mphys(imr_ci), dmr_mphys(imr_r),      &

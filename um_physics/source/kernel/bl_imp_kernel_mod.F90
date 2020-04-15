@@ -588,7 +588,7 @@ contains
          aerosol, dust_div1, dust_div2, dust_div3, dust_div4, dust_div5,     &
          dust_div6, so2, dms, so4_aitken, so4_accu, so4_diss, nh3, soot_new, &
          soot_aged, soot_cld, bmass_new, bmass_aged, bmass_cld, ocff_new,    &
-         ocff_aged, ocff_cld, nitr_acc, nitr_diss, ozone_tracer
+         ocff_aged, ocff_cld, nitr_acc, nitr_diss, ozone_tracer, qrain
 
     real(r_um), dimension(row_length,rows,0:nlayers,tr_vars) :: free_tracers
 
@@ -1034,7 +1034,8 @@ contains
     ! IN data fields.
           , p_theta_levels, p_rho_minus_one, rho_wet_rsq, rho_wet_tq    &
           , u, v, w                                                     &
-          , land_sea_mask, q, qcl, qcf, p_star, theta, exner_theta_levels&
+          , land_sea_mask, q, qcl, qcf, p_star, theta, qrain            &
+          , exner_theta_levels                                          &
     ! IN ancillary fields and fields needed to be kept from tstep to tstep
           , sil_orog_land_gb, ho2r2_orog_gb                             &
           , ice_fract, di_ncat_sicat, ice_fract_ncat, k_sice_sicat      &
@@ -1259,7 +1260,8 @@ contains
     ! IN data fields.
           , p_theta_levels, p_rho_minus_one, rho_wet_rsq, rho_wet_tq    &
           , u, v, w                                                     &
-          , land_sea_mask, q, qcl, qcf, p_star, theta, exner_theta_levels&
+          , land_sea_mask, q, qcl, qcf, p_star, theta, qrain            &
+          , exner_theta_levels                                          &
     ! IN ancillary fields and fields needed to be kept from tstep to tstep
           , sil_orog_land_gb, ho2r2_orog_gb                             &
           , ice_fract, di_ncat_sicat, ice_fract_ncat, k_sice_sicat      &
