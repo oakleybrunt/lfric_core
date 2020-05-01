@@ -135,8 +135,6 @@ contains
             call write_scalar_diagnostic( trim(name), field_ptr, &
                                           clock,                 &
                                           mesh_id, nodal_output_on_w3 )
-          type is (integer_field_type)
-            ! todo: integer field i/o
         end select
       end do
       field_ptr => null()
@@ -158,8 +156,6 @@ contains
                                             clock,                 &
                                             mesh_id, nodal_output_on_w3 )
             end if
-          type is (integer_field_type)
-            ! todo: integer field i/o
         end select
       end do
       field_ptr => null()

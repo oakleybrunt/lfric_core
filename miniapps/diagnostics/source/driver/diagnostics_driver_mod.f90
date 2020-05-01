@@ -246,8 +246,6 @@ contains
                         name = trim(adjustl(tmp_field%get_name()))
                         call log_event("write_" // name, LOG_LEVEL_INFO)
                         call tmp_field%write_field('diagnostics_' // name)
-                    type is (integer_field_type)
-                        ! todo: integer field i/o
                     end select
                 end do
             end if
@@ -288,8 +286,6 @@ contains
                 name = trim(adjustl(tmp_field%get_name()))
                 call checksum_alg('diagnostics', tmp_field, &
                     'diagnostics_' // name)
-            type is (integer_field_type)
-                ! todo: integer field i/o
             end select
         end do
         !-------------------------------------------------------------------------

@@ -11,7 +11,8 @@
 module init_io_dev_mod
 
   use constants_mod,                  only : i_def
-  use field_mod,                      only : field_type, write_interface
+  use field_mod,                      only : field_type
+  use field_parent_mod,               only : write_interface
   use finite_element_config_mod,      only : element_order
   use function_space_collection_mod,  only : function_space_collection
   use fs_continuity_mod,              only : W3, Wtheta, W2

@@ -10,8 +10,8 @@
 module create_fd_prognostics_mod
 
   use constants_mod,                  only : i_def
-  use field_mod,                      only : field_type,     &
-                                             read_interface, &
+  use field_mod,                      only : field_type
+  use field_parent_mod,               only : read_interface, &
                                              write_interface
   use read_methods_mod,               only : dump_read_xios
   use write_methods_mod,              only : dump_write_xios

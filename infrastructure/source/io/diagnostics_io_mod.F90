@@ -26,7 +26,8 @@ module diagnostics_io_mod
                                            write_field_edge
   use mesh_mod,                      only: mesh_type
   use mesh_collection_mod,           only: mesh_collection
-  use field_mod,                     only: field_type, write_interface
+  use field_mod,                     only: field_type
+  use field_parent_mod,              only: write_interface
   use fs_continuity_mod,             only: W3
   use log_mod,                       only: log_event,         &
                                            log_set_level,     &

@@ -13,8 +13,8 @@ module init_catalyst_demo_mod
   use assign_coordinate_field_mod,    only : assign_coordinate_field
   use constants_mod,                  only : i_def
   use field_mod,                      only : field_type, &
-                                             write_diag_interface, &
-                                             checkpoint_write_interface, &
+                                             write_diag_interface
+  use field_parent_mod,               only : checkpoint_write_interface, &
                                              checkpoint_read_interface
   use finite_element_config_mod,      only : element_order
 

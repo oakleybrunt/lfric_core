@@ -34,7 +34,8 @@ module diagnostics_calc_mod
                                            write_vector_diagnostic
   use mesh_mod,                      only: mesh_type
   use mesh_collection_mod,           only: mesh_collection
-  use field_mod,                     only: field_type, write_interface
+  use field_mod,                     only: field_type
+  use field_parent_mod,              only: write_interface
   use fs_continuity_mod,             only: W3
   use moist_dyn_mod,                 only: num_moist_factors
   use log_mod,                       only: log_event,         &

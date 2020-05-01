@@ -27,7 +27,7 @@ module constants_mod
             real_type, integer_type, logical_type,                       &
             EPS,                                                         &
             str_def, str_long, str_max_filename, str_short,              &
-            LARGE_REAL_NEGATIVE, LARGE_REAL_POSITIVE,                    &
+            LARGE_REAL_NEGATIVE, LARGE_REAL_POSITIVE, xios_max_int,      &
             PI, degrees_to_radians, radians_to_degrees,                  &
             cache_block, PRECISION_REAL
 
@@ -117,6 +117,8 @@ module constants_mod
   !<                            positive number of kind r_def that is not an infinity.
   real(kind=r_def), parameter :: LARGE_REAL_NEGATIVE = -LARGE_REAL_POSITIVE !< The largest
   !<                            negative number of kind r_def that is not an infinity.
+  integer(kind=i_def), parameter :: xios_max_int = huge(0_i_short) !< The largest
+  !<                            integer that can be output by XIOS
   integer, parameter :: cache_block = 256 !< Size of a cache block, for padding
   !<                           arrays to ensure access to different cache lines
 

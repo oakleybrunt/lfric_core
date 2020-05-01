@@ -9,8 +9,8 @@ module create_physics_prognostics_mod
 
   use clock_mod,                      only : clock_type
   use constants_mod,                  only : i_def, l_def
-  use field_mod,                      only : field_type,                       &
-                                             write_interface,                  &
+  use field_mod,                      only : field_type
+  use field_parent_mod,               only : write_interface,                  &
                                              checkpoint_write_interface,       &
                                              checkpoint_read_interface
   use finite_element_config_mod,      only : element_order

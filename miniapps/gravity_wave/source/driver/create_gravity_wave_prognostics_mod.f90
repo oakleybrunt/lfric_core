@@ -13,8 +13,8 @@
 module create_gravity_wave_prognostics_mod
 
   use constants_mod,                  only : i_def
-  use field_mod,                      only : field_type, &
-                                             write_interface, &
+  use field_mod,                      only : field_type
+  use field_parent_mod,               only : write_interface, &
                                              checkpoint_write_interface, &
                                              checkpoint_read_interface
   use field_collection_mod,           only : field_collection_type

@@ -12,8 +12,8 @@
 module init_transport_mod
 
   use constants_mod,                  only: i_def
-  use field_mod,                      only: field_type,               &
-                                            write_interface
+  use field_mod,                      only: field_type
+  use field_parent_mod,               only: write_interface
   use finite_element_config_mod,      only: element_order
   use fs_continuity_mod,              only: W2, W3
   use runtime_constants_mod,          only: create_runtime_constants

@@ -541,7 +541,7 @@ contains
     use finite_element_config_mod,      only: element_order, &
                                               vorticity_in_w1
     use function_space_collection_mod,  only: function_space_collection
-    use field_mod,                      only: write_interface
+    use field_parent_mod,               only: write_interface
     use write_methods_mod,              only: write_field_face
     implicit none
 

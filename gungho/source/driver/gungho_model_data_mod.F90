@@ -15,8 +15,8 @@ module gungho_model_data_mod
   use clock_mod,                        only : clock_type
   use mr_indices_mod,                   only : nummr
   use moist_dyn_mod,                    only : num_moist_factors
-  use field_mod,                        only : field_type, &
-                                               write_interface
+  use field_mod,                        only : field_type
+  use field_parent_mod,                 only : write_interface
   use field_collection_mod,             only : field_collection_type
   use constants_mod,                    only : i_def, l_def
   use log_mod,                          only : log_event,      &

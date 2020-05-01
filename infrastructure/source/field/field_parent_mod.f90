@@ -115,6 +115,45 @@ module field_parent_mod
     procedure, public :: is_ndata_first
   end type field_parent_proxy_type
 
+!______end of type declarations_______________________________________________
+
+  ! Define the IO interfaces
+
+  abstract interface
+
+    subroutine write_interface(field_name, field_proxy)
+      import r_def, field_parent_proxy_type
+      character(len=*),                intent(in) :: field_name
+      class(field_parent_proxy_type ), intent(in) :: field_proxy
+    end subroutine write_interface
+
+    subroutine read_interface(field_name, field_proxy)
+      import r_def, field_parent_proxy_type
+      character(len=*),                intent(in)    :: field_name
+      class(field_parent_proxy_type ), intent(inout) :: field_proxy
+    end subroutine read_interface
+
+    subroutine checkpoint_write_interface(field_name, file_name, field_proxy)
+      import r_def, field_parent_proxy_type
+      character(len=*),                intent(in) :: field_name
+      character(len=*),                intent(in) :: file_name
+      class(field_parent_proxy_type ), intent(in) :: field_proxy
+    end subroutine checkpoint_write_interface
+
+    subroutine checkpoint_read_interface(field_name, file_name, field_proxy)
+      import r_def, field_parent_proxy_type
+      character(len=*),                intent(in)    :: field_name
+      character(len=*),                intent(in)    :: file_name
+      class(field_parent_proxy_type ), intent(inout) :: field_proxy
+    end subroutine checkpoint_read_interface
+
+  end interface
+
+ public :: write_interface
+ public :: read_interface
+ public :: checkpoint_write_interface
+ public :: checkpoint_read_interface
+
 contains
 
   !> Initialise a <code>field_parent_type</code> object.

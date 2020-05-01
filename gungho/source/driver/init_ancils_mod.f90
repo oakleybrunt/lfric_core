@@ -12,8 +12,8 @@ module init_ancils_mod
                                              LOG_LEVEL_INFO
   use init_tstar_analytic_alg_mod,    only : init_tstar_analytic_alg
   use update_tstar_alg_mod,           only : update_tstar_alg
-  use field_mod,                      only : field_type,     &
-                                             read_interface, &
+  use field_mod,                      only : field_type
+  use field_parent_mod,               only : read_interface, &
                                              write_interface
   use io_config_mod,                  only : use_xios_io
   use read_methods_mod,               only : read_field_face, &

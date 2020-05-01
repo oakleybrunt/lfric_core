@@ -9,8 +9,8 @@
 module init_altitude_mod
 
   use constants_mod,                  only : i_def
-  use field_mod,                      only : field_type,  &
-                                             read_interface,  &
+  use field_mod,                      only : field_type
+  use field_parent_mod,               only : read_interface,  &
                                              write_interface
   use function_space_collection_mod,  only : function_space_collection
   use fs_continuity_mod,              only : W3

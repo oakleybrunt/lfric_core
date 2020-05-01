@@ -28,7 +28,8 @@ contains
     use log_mod,                   only: log_event, log_scratch_space, &
                                          LOG_LEVEL_INFO, LOG_LEVEL_ERROR
     use constants_mod,             only: r_def, str_max_filename, i_def
-    use field_mod,                 only: field_type, write_interface
+    use field_mod,                 only: field_type
+    use field_parent_mod,          only: write_interface
     use operator_mod,              only: operator_type
     use finite_element_config_mod, only: element_order
     use function_space_collection_mod,  only: function_space_collection

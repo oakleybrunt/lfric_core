@@ -19,8 +19,8 @@ module gungho_model_mod
   use convert_to_upper_mod,       only : convert_to_upper
   use count_mod,                  only : count_type, halo_calls
   use derived_config_mod,         only : set_derived_config
-  use field_mod,                  only : field_type, &
-                                         write_interface
+  use field_mod,                  only : field_type
+  use field_parent_mod,           only : write_interface
   use field_collection_mod,       only : field_collection_type, &
                                          field_collection_iterator_type
   use formulation_config_mod,     only : transport_only, &

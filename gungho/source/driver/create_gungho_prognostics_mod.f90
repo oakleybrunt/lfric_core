@@ -15,8 +15,8 @@
 module create_gungho_prognostics_mod
 
   use constants_mod,                  only : i_def
-  use field_mod,                      only : field_type, &
-                                             write_interface, &
+  use field_mod,                      only : field_type
+  use field_parent_mod,               only : write_interface, &
                                              checkpoint_write_interface, &
                                              checkpoint_read_interface
   use field_collection_mod,           only : field_collection_type
@@ -74,9 +74,9 @@ contains
 
     integer(i_def)                            :: imr
 
-    procedure(write_interface), pointer :: tmp_write_ptr => null()
+    procedure(write_interface),            pointer :: tmp_write_ptr => null()
     procedure(checkpoint_write_interface), pointer :: tmp_checkpoint_write_ptr => null()
-    procedure(checkpoint_read_interface), pointer  :: tmp_checkpoint_read_ptr => null()
+    procedure(checkpoint_read_interface),  pointer :: tmp_checkpoint_read_ptr => null()
 
     ! Temp fields to create prognostics
     type( field_type )                         :: u, rho, theta, exner

@@ -12,10 +12,12 @@ module read_methods_mod
   use field_mod,                     only: field_type, field_proxy_type
   use field_collection_mod,          only: field_collection_type, &
                                            field_collection_iterator_type
-  use field_parent_mod,              only: field_parent_type
+  use field_parent_mod,              only: field_parent_type, &
+                                           field_parent_proxy_type
   use files_config_mod,              only: checkpoint_stem_name
   use fs_continuity_mod,             only: W3
-  use integer_field_mod,             only: integer_field_type
+  use integer_field_mod,             only: integer_field_type, &
+                                           integer_field_proxy_type
   use io_mod,                        only: ts_fname
   use log_mod,                       only: log_event,         &
                                            log_scratch_space, &
@@ -48,16 +50,23 @@ subroutine checkpoint_read_netcdf(field_name, file_name, field_proxy)
 
   implicit none
 
-  character(len=*),       intent(in)    :: field_name
-  character(len=*),       intent(in)    :: file_name
-  type(field_proxy_type), intent(inout) :: field_proxy
+  character(len=*),              intent(in)    :: field_name
+  character(len=*),              intent(in)    :: file_name
+  class(field_parent_proxy_type), intent(inout) :: field_proxy
 
   type(field_io_ncdf_type), allocatable :: ncdf_file
 
   allocate(ncdf_file)
 
   call ncdf_file%file_open( file_name )
-  call ncdf_file%read_field_data ( field_proxy%data(:) )
+
+  select type(field_proxy)
+
+    type is (field_proxy_type)
+    call ncdf_file%read_field_data( field_proxy%data(:) )
+
+  end select
+
   call ncdf_file%file_close()
 
   deallocate(ncdf_file)
@@ -75,16 +84,21 @@ subroutine checkpoint_read_xios(xios_field_name, file_name, field_proxy)
 
   implicit none
 
-  character(len=*),       intent(in)    :: xios_field_name
-  character(len=*),       intent(in)    :: file_name
-  type(field_proxy_type), intent(inout) :: field_proxy
+  character(len=*),               intent(in)    :: xios_field_name
+  character(len=*),               intent(in)    :: file_name
+  class(field_parent_proxy_type), intent(inout) :: field_proxy
 
   integer(i_def) :: undf
 
   ! We only read in up to undf for the partition
   undf = field_proxy%vspace%get_last_dof_owned()
 
-  call xios_recv_field(xios_field_name, field_proxy%data(1:undf))
+  select type(field_proxy)
+
+    type is (field_proxy_type)
+    call xios_recv_field(xios_field_name, field_proxy%data(1:undf))
+
+  end select
 
 end subroutine checkpoint_read_xios
 
@@ -95,8 +109,8 @@ subroutine read_field_face(xios_field_name, field_proxy)
 
   implicit none
 
-  character(len=*),       intent(in)    :: xios_field_name
-  type(field_proxy_type), intent(inout) :: field_proxy
+  character(len=*),               intent(in)    :: xios_field_name
+  class(field_parent_proxy_type), intent(inout) :: field_proxy
 
   integer(i_def) :: i, undf
   integer(i_def) :: fs_id
@@ -123,12 +137,23 @@ subroutine read_field_face(xios_field_name, field_proxy)
   ! as long as we set up the horizontal domain using the global index
   call xios_recv_field(xios_field_name, recv_field)
 
-  ! We need to reshape the incoming data to get the correct data layout for the LFRic
-  ! field - It is the reverse of what we did for writing
-  do i = 0, axis_size-1
-    field_proxy%data(i+1:undf:axis_size) = &
-                     recv_field(i*(domain_size)+1:(i*(domain_size)) + domain_size)
-  end do
+  ! Different field kinds are selected to access data, which is arranged to get the
+  ! correct data layout for the LFRic field - the reverse of what is done for writing
+  select type(field_proxy)
+
+    type is (field_proxy_type)
+    do i = 0, axis_size-1
+      field_proxy%data(i+1:undf:axis_size) = &
+                       recv_field(i*(domain_size)+1:(i*(domain_size)) + domain_size)
+    end do
+
+    type is (integer_field_proxy_type)
+    do i = 0, axis_size-1
+      field_proxy%data(i+1:undf:axis_size) = &
+                       int( recv_field(i*(domain_size)+1:(i*(domain_size)) + domain_size), i_def)
+    end do
+
+  end select
 
   deallocate(recv_field)
 
@@ -141,8 +166,8 @@ subroutine read_field_single_face(xios_field_name, field_proxy)
 
   implicit none
 
-  character(len=*),       intent(in)    :: xios_field_name
-  type(field_proxy_type), intent(inout) :: field_proxy
+  character(len=*),               intent(in)    :: xios_field_name
+  class(field_parent_proxy_type), intent(inout) :: field_proxy
 
   integer(i_def) :: i, undf
   integer(i_def) :: domain_size
@@ -158,11 +183,19 @@ subroutine read_field_single_face(xios_field_name, field_proxy)
   ! Size the array to be what is expected
   allocate(recv_field(domain_size))
 
-  ! Read the data into a temporary array - this should be in the correct order
-  ! as long as we set up the horizontal domain using the global index
+  ! Different field kinds are selected to access data, which should be in the
+  ! correct order as long as we set up the horizontal domain using the global index
   call xios_recv_field(xios_field_name, recv_field)
 
-  field_proxy%data(1:undf) = recv_field(1:domain_size)
+  select type(field_proxy)
+
+    type is (field_proxy_type)
+    field_proxy%data(1:undf) = recv_field(1:domain_size)
+
+    type is (integer_field_proxy_type)
+    field_proxy%data(1:undf) = int( recv_field(1:domain_size), i_def )
+
+  end select
 
   deallocate(recv_field)
 
@@ -198,7 +231,15 @@ subroutine read_state(state)
                           ' not set up', LOG_LEVEL_INFO )
         end if
       type is (integer_field_type)
-        ! todo: integer field i/o
+        if ( fld%can_read() ) then
+          call log_event( &
+            'Reading '//trim(adjustl(fld%get_name())), &
+            LOG_LEVEL_INFO)
+          call fld%read_field(trim(adjustl(fld%get_name())))
+        else
+          call log_event( 'Read method for  '// trim(adjustl(fld%get_name())) // &
+                          ' not set up', LOG_LEVEL_INFO )
+        end if
     end select
   end do
 
@@ -239,7 +280,16 @@ subroutine read_checkpoint(state, timestep)
                           ' not set up', LOG_LEVEL_INFO )
         end if
       type is (integer_field_type)
-        ! todo: integer field i/o
+        if ( fld%can_checkpoint() ) then
+          call log_event( 'Reading checkpoint file to restart '// &
+                           trim(adjustl(fld%get_name())), LOG_LEVEL_INFO)
+          call fld%read_checkpoint( "restart_"//trim(adjustl(fld%get_name())), &
+                                    trim(ts_fname(checkpoint_stem_name, "",    &
+                                    trim(adjustl(fld%get_name())),timestep,"")) )
+        else
+          call log_event( 'Checkpointing for  '// trim(adjustl(fld%get_name())) // &
+                          ' not set up', LOG_LEVEL_INFO )
+        end if
     end select
   end do
 
@@ -254,10 +304,15 @@ subroutine dump_read_xios(xios_field_name, field_proxy)
 
   implicit none
 
-  character(len=*),       intent(in)    :: xios_field_name
-  type(field_proxy_type), intent(inout) :: field_proxy
+  character(len=*),               intent(in)    :: xios_field_name
+  class(field_parent_proxy_type), intent(inout) :: field_proxy
 
-  call read_field_face("read_"//xios_field_name, field_proxy)
+  select type(field_proxy)
+
+    type is (field_proxy_type)
+    call read_field_face("read_"//xios_field_name, field_proxy)
+
+  end select
 
 end subroutine dump_read_xios
 
