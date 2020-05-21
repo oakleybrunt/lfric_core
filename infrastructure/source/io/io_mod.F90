@@ -106,10 +106,10 @@ subroutine initialise_xios( xios_ctx, mpi_comm, clock, mesh_id, twod_mesh_id, &
   !!!!!!!!!!!!!!!!!!!! Setup calendar and finalise context !!!!!!!!!!!!!!!!!!!!
 
   ! Set the current date by adding the run length so far to the run start date
-  ! obtained from the iodef file
+  ! obtained from the iodef file.
   call xios_get_start_date(xios_start_date)
   xios_since_timestep_zero%second = &
-                        clock%seconds_from_steps(clock%get_first_step() - 1)
+                           clock%seconds_from_steps(clock%get_first_step() - 1)
   xios_start_date = xios_start_date + xios_since_timestep_zero
   call xios_set_start_date(xios_start_date)
 

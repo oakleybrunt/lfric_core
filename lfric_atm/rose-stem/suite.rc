@@ -8,15 +8,10 @@
 {# SETUP SOME JINJA2 VARIABLES #}
 {%- set plot_config = {} %}
 {%- set compiler_setup = {} %}
-{%- set appsToRun = [] %}
 {%- set appConfigsCompilerRuns = {} %}
 {%- set appPrecisionRuns = {} %}
 {%- set appPrecisionBuilds = {} %}
-{%- set rdef_build_precisions = [] %}
 {%- set rose_suite_gui_headers = [] %}
-{%- set resolution_choices = {} %}
-{%- set support_meshes = {} %}
-{%- set scheduledTasksDict = {} %}
 {%- set mesh_names = [] %}
 
 {%- set science_label = TARGET_SCIENCE_COMPILER + '_'
@@ -55,36 +50,7 @@
 {%- endif %}
 
 
-{# crunInfo is dictionary containing variables needed to dynamically    #}
-{# construct the graph for cruns:                                       #}
-{#                                                                      #}
-{#     maxcrun              Specifies the maximum number of cycles      #}
-{#     scheduledTasksDict   Python Dictionary of environment variables  #}
-{#                          To be passed from the mission to the task - #}
-{#                          this is then used in setting the directives #}
-
-{%- set crunInfo = {'maxcrun':1} %}  {# 'maxcrun' is used as the number of cycles based on the requested jobs #}
 {%- set MAXRUNAHEAD = (MAXRUNAHEAD|default(3)) %} {# The maximum allowable runahead limit #}
-
-{%- set dummy = setTaskEnv(scheduledTasksDict) -%} {# sets the environment configurations for each job #}
-{%- set dummy = setCrunInfo(crunInfo, scheduledTasksDict) -%} {# sets the crunInfo #}
-{%- set dummy = setResolutions(resolution_choices, support_meshes) %} {# sets the requested resolutions #}
-{%- set dummy = setPrecisions(rdef_build_precisions) %}  {# sets the requested precisions #}
-
-{# Based on the resolutions and configurations, work out which meshes we need to generate #}
-{%- for config, resolutions in resolution_choices.items() %}
-{%-   for resolution in resolutions %}
-{%-     set mesh_name = resolution if resolution is string else (resolution[0] if resolution|length>0 else '') %}
-{%-     do mesh_names.append(mesh_name) if mesh_name not in mesh_names%}
-{%-   endfor %}
-{%- endfor %}
-
-{%- for config, extra_meshes in support_meshes.items() %}
-{%-   for mesh_name in extra_meshes %}
-{%-     do mesh_names.append(mesh_name) if mesh_name not in mesh_names%}
-{%-   endfor %}
-{%- endfor %}
-
 
 [cylc]
     UTC mode = True
@@ -96,9 +62,7 @@
 {%- endif %}
         timeout = PT3H
 
-[visualization]
-    number of cycle points = {{ crunInfo['maxcrun'] if crunInfo['maxcrun'] < MAXRUNAHEAD else MAXRUNAHEAD }}
-
+{%- set scheduledTasks = schedule() | deduplicate_schedule() %}
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
@@ -110,8 +74,27 @@
             limit   = {{ SUITE_THROTTLE }}
             members = root
     [[dependencies]]
-{%- set scheduledTasks = schedule() | deduplicate_schedule() %}
 {{scheduledTasks}}
+
+[visualization]
+    number of cycle points = {{ crunInfo['maxcrun'] if crunInfo['maxcrun'] < MAXRUNAHEAD else MAXRUNAHEAD }}
+
+{# Once the schedule has been generated we have harvested a lot of           #
+ # information which we can then use to build up further data structures.    #}
+{# Based on the resolutions and configurations, work out which meshes we need to generate #}
+{%- for config, resolutions in resolution_choices.items() %}
+{%-   for resolution in resolutions %}
+{%-     set mesh_name = resolution if resolution is string else (resolution[0] if resolution|length>0 else '') %}
+{%-     do mesh_names.append(mesh_name) if mesh_name not in mesh_names%}
+{%-   endfor %}
+{%- endfor %}
+
+{%- for config, extra_meshes in mesh_choices.items() %}
+{%-   for mesh_name in extra_meshes %}
+{%-     do mesh_names.append(mesh_name) if mesh_name not in mesh_names%}
+{%-   endfor %}
+{%- endfor %}
+
 
 [runtime]
     [[root]]
@@ -654,13 +637,13 @@
 {%-   for configuration in application_configurations[appName] %}
 
 {%-     set appLabel = appName + '_' + configuration %}
-{%-     set config_opt =  '--opt-conf-key=' + configuration %}
+
+{%-     set config_opt =  '--opt-conf-key=' + config_map[configuration] %}
 
 {%-     if appLabel in appConfigsCompilerRuns.keys() %}
 {%-       for compiler in appConfigsCompilerRuns[appLabel] %}
 {%-         for build in build_profiles %}
 {%-           for precision in rdef_build_precisions %}
-
 {%-             set label  = (compiler|lower + '_' + precision + '-bit_' + build|lower) %}
 {%-             set family = (label|upper) %}
 {%-             set configuration_label = (appLabel|lower + '_' + label) %}
@@ -673,10 +656,11 @@
 
 {%-             for resolution in resolution_options %} {# science resolutions #}
 {%-               set res_value, dt_values, res_label, dt_labels, res_opt = resolution | get_resolution_labels() %}
+
 {%-               for i in range(0,dt_values|length) %}
 
 {%-                 set configuration_res = res_value ~ dt_labels[i] %}
-{%-                 set configuration_label_res = appLabel|lower ~ res_label ~ dt_labels[i] ~ '_' ~ label %}
+{%-                 set configuration_label_res = appLabel|lower + res_label + dt_labels[i] + '_' + label %}
 
 {%-                 if 'run_' + configuration_label_res in scheduledTasks %}
 {%-                   set command_key = TARGET_RUN_METHOD %}
@@ -740,7 +724,7 @@
                                      TARGET_RUN_SETUP,
                                      TARGET_REVEAL_SETUP )}}
                        ulimit -s unlimited
-{%-                   for config, extra_meshes in support_meshes.items() %}
+{%-                   for config, extra_meshes in mesh_choices.items() %}
 {%-                     for mesh_name in extra_meshes %}
 {%-                       if mesh_name != '' %}
                        if [ ! -e $CYLC_TASK_WORK_DIR/mesh_{{mesh_name}}.nc ] ; then
@@ -812,7 +796,6 @@
         [[[environment]]]
 {%-                   if configuration_label in scheduledTasksDict.keys() %}
 {%-                     set configTaskDict = scheduledTasksDict[configuration_label] %}
-
             {{ configTaskDict | dict_to_assign('            ') }}
 
 {#                      If the directives are configured by the suite, then we will #}
@@ -889,8 +872,8 @@
 
 {%-                 endif %} {# 'run_' + configuration_label_res #}
 
-{# #############################################################################}
-{# CHECK THE APP OUTPUT #}
+{#- ######################################################################## #}
+{#- CHECK THE APP OUTPUT AGAINST A KGO FILE                                  #}
 {%-                 if 'check_' + configuration_label_res in scheduledTasks %}
     [[check_{{configuration_label_res}}]]
         inherit = {{appLabel|upper}}_{{label|upper}}, TARGET
@@ -918,7 +901,29 @@
 {%-                   endfor %}
 {%-                 endif %}
 
-{#- ##########################################################################}
+{#- ######################################################################## #}
+{#- CHECK THE APP OUTPUT AGAINST A RESTART RUN                               #}
+{%-                 if 'compare_' ~ configuration_label_res ~ '_with_restart'
+                       in scheduledTasks %}
+    [[compare_{{configuration_label_res}}_with_restart]]
+        inherit = {{appLabel|upper}}_WITH_RESTART_{{label|upper}}, TARGET
+
+        script = rose task-run --app-key=compare_application_restart
+
+        [[[environment]]]
+            APP_NAME   = {{appName}}
+            TARGET_OPT = {{TARGET_OPT}}
+            CONFIG     = {{configuration}}
+            RES        = {{res_value}}{{dt_labels[i]}}
+            RES_LABEL  = {{res_label}}{{dt_labels[i]}}
+
+        [[[directives]]]
+{%-                   for DIRECTIVE in TARGET_TECHNICAL_BATCHER_DIRECTIVES %}
+            {{DIRECTIVE}}
+{%-                   endfor %}
+{%-                 endif %}
+
+{#- ######################################################################## #}
 {#- PLOT THE APP OUTPUT                                                      #}
 {%-                 if 'plot_' + configuration_label_res in scheduledTasks %}
 {%-                   set plot_label = appLabel %}

@@ -292,8 +292,8 @@ z0hm_ratio_pft=1.65,1.65,0.1,0.1,0.1,
 /
 &time
 calendar='timestep',
-timestep_end=1,
-timestep_start=1,
+timestep_end='1',
+timestep_start='1',
 /
 &timestepping
 alpha=0.55,
