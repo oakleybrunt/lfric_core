@@ -1,0 +1,41 @@
+This directory contains two configuration files that enable you to
+build and run lfric_atm from the command line. These files are
+colloquially called the "canned" configurations.
+
+To use them, check out a working copy of a branch. Then:
+
+$ cd r12345_workingCopy/lfric_atm 
+$ make build ;# Builds lfric_atm and copies it to bin directory
+<snip lots of output>
+$ cd example
+$ ../bin/lfric_atm configuration.nml ;# Runs lfric_atm with the configuration file as input
+
+configuration.nml
+----------------- 
+
+This file configures a "single column" run of lfric_atm. In reality,
+the mesh is a 4x4 biperiodic mesh, though each column will be
+identical. The configuration was originally copied from the Rose Stem
+"run_lfric_atm_scm_bl" configuration, but note that the Rose Stem
+version may diverge from this configuration as the two are not
+actively kept in line.
+
+This configuration is tested to ensure it runs successfully, as part
+of the developer test within the canned-test application. Therefore it
+is always expected to successfully run to completion.
+
+aquaplanet_configuration.nml
+----------------------------
+
+This file configures global run of lfric_atm. The configuration was
+originally copied from the Rose Stem "lfric_atm_aquaplanet_short"
+configuration configuration. Note that Rose Stem version may diverge
+from this configuration as the two are not actively kept in line.
+
+This configuration is NOT tested routinely as part of the developer
+test, and therefore there is a high risk that it will become
+broken. If you find that it no longer works, please report it to the
+LFRic team.
+
+If you wish to run a global configuration and this one does not work,
+you can create a working based on one of the Rose Stem configurations.

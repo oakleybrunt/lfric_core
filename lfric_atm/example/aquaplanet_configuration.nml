@@ -21,6 +21,9 @@ sbl_opt='sharp_sea_mes_land',
 sg_orog_mixing='none',
 zhloc_depth_fac=0.4,
 /
+&boundaries
+limited_area=.false.,
+/
 &checks
 limit_cfl=.false.,
 /
@@ -58,6 +61,8 @@ dl_str=0.01,
 domain_top=39254.833575999997,
 method='um_L38_29t_9s_40km',
 number_of_layers=38,
+stretching_height=17507.0,
+stretching_method='smooth',
 /
 &files
 ancil_directory='',
@@ -118,6 +123,7 @@ z2=0.0,
 /
 &initial_temperature
 bvf_square=0.0001,
+pert_width_scaling=1.0,
 theta_surf=300.0,
 /
 &initial_wind
@@ -134,6 +140,7 @@ wind_time_period=0.0,
 checkpoint_read=.false.,
 checkpoint_write=.false.,
 diagnostic_frequency=1,
+nodal_output_on_w3=.false.,
 subroutine_counters=.false.,
 subroutine_timers=.true.,
 use_xios_io=.true.,
@@ -157,7 +164,8 @@ reference_reset_freq=4,
 si_maximum_iterations=10,
 si_method='gcr',
 si_preconditioner='pressure',
-si_tolerance=1.0e-6,
+si_tolerance=1.0e-3,
+split_w=.true.,
 /
 &mixing
 smagorinsky=.false.,
@@ -263,7 +271,7 @@ alb_sice_melt=0.72,
 alb_snocov_max=2.5e-1,2.5e-1,6.0e-1,6.0e-1,4.0e-1,
 alb_snocov_nvg=0.4,0.8,0.8,0.8,
 alb_snofree_nvg=0.18,0.12,-1.0,0.75,
-albedo_obs=.true.,
+albedo_obs=.false.,
 basal_melting='none',
 blue_sky_alb=.true.,
 can_cap_nvg=0.5,0.0,0.0,0.0,
