@@ -13,97 +13,94 @@
 
 module function_space_pointer_mod
 
-use constants_mod,        only: i_def
-use linked_list_data_mod, only: linked_list_data_type
-use function_space_mod,   only: function_space_type
+  use constants_mod,        only : i_def
+  use linked_list_data_mod, only : linked_list_data_type
+  use function_space_mod,   only : function_space_type
 
+  implicit none
 
-implicit none
+  private
 
-private
+  !===============================================================================
+  type, extends(linked_list_data_type), public :: function_space_pointer_type
 
-!===============================================================================
-type, extends(linked_list_data_type), public :: function_space_pointer_type
+    private
+    type(function_space_type), pointer :: function_space_target => null()
 
-private
-type(function_space_type), pointer :: function_space_target => null()
+    !> An unused allocatable integer that prevents an intenal compiler error
+    !> with the Gnu Fortran compiler
+    !>
+    ! Adding an allocatable forces the compiler to accept that the object
+    ! has a finaliser. It gets confused without it. This is a workaround for
+    ! GCC bug id 61767 - when this bug is fixed, the integer can be removed.
+    integer(i_def), allocatable :: dummy_for_gnu
 
-!> An unused allocatable integer that prevents an intenal compiler error
-!> with the Gnu Fortran compiler
-!>
-! Adding an allocatable forces the compiler to accept that the object
-! has a finaliser. It gets confused without it. This is a workaround for
-! GCC bug id 61767 - when this bug is fixed, the integer can be removed.
-integer(i_def), allocatable :: dummy_for_gnu
+  contains
+    !> @brief Returns a pointer to the function space that this object contains.
+    !> @return function_space_target Pointer to the function space object.
+    procedure, public :: get_target
 
-contains
-  !> @brief Returns a pointer to the function space that this object contains.
-  !> @return function_space_target Pointer to the function space object.
-  procedure, public :: get_target
+    procedure, public :: clear
 
-  procedure, public :: clear
+    final :: function_space_pointer_destructor
 
-  final :: function_space_pointer_destructor
+  end type function_space_pointer_type
 
-end type function_space_pointer_type
-
-interface function_space_pointer_type
-  module procedure function_space_pointer_constructor
-end interface
+  interface function_space_pointer_type
+    module procedure function_space_pointer_constructor
+  end interface
 
 
 contains ! Module procedures
 
-!===============================================================================
-!> Creates a linked list item which refers to a function space.
-!> @return instance function_space_pointer_type
-!>
-function function_space_pointer_constructor(function_space) result(instance)
+  !===============================================================================
+  !> Creates a linked list item which refers to a function space.
+  !> @return instance function_space_pointer_type
+  !>
+  function function_space_pointer_constructor(function_space) result(instance)
 
-  implicit none
+    implicit none
 
-  type(function_space_pointer_type) :: instance
-  type(function_space_type), intent(in), pointer :: function_space
+    type(function_space_pointer_type) :: instance
+    type(function_space_type), intent(in), pointer :: function_space
 
-  call instance%set_id( function_space%get_id() )
-  instance%function_space_target => function_space
+    call instance%set_id(function_space%get_id())
+    instance%function_space_target => function_space
 
-  return
-end function function_space_pointer_constructor
+  end function function_space_pointer_constructor
 
 
-function get_target(self) result(function_space_target)
+  function get_target(self) result(function_space_target)
 
-  implicit none
+    implicit none
 
-  class(function_space_pointer_type), intent(in), target :: self
-  type(function_space_type), pointer :: function_space_target
+    class(function_space_pointer_type), intent(in), target :: self
+    type(function_space_type), pointer :: function_space_target
 
-  function_space_target => self%function_space_target
+    function_space_target => self%function_space_target
 
-  return
-end function get_target
+  end function get_target
 
-subroutine clear( self )
+  subroutine clear(self)
 
-  implicit none
+    implicit none
 
-  class(function_space_pointer_type), intent(inout) :: self
+    class(function_space_pointer_type), intent(inout) :: self
 
-  nullify(self%function_space_target)
-  if (allocated(self%dummy_for_gnu)) deallocate(self%dummy_for_gnu)
+    nullify(self%function_space_target)
+    if (allocated(self%dummy_for_gnu)) deallocate(self%dummy_for_gnu)
 
-end subroutine clear
+  end subroutine clear
 
-subroutine function_space_pointer_destructor( self )
+  subroutine function_space_pointer_destructor(self)
 
-  implicit none
+    implicit none
 
-  type(function_space_pointer_type), intent(inout) :: self
+    type(function_space_pointer_type), intent(inout) :: self
 
-  call self%clear()
+    call self%clear()
 
-end subroutine function_space_pointer_destructor
+  end subroutine function_space_pointer_destructor
 
-!===============================================================================
+  !===============================================================================
 end module function_space_pointer_mod

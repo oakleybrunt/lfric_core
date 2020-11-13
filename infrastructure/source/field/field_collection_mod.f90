@@ -800,7 +800,7 @@ subroutine copy_collection(self, source)
 
   self%name = source%get_name()
 
-  if (source%get_length() .gt. 0) then
+  if (source%get_length() > 0) then
     iterator = source%get_iterator()
     do while (iterator%has_next())
       ! Note: There is currently no attempt to optimise insertion speed here.
