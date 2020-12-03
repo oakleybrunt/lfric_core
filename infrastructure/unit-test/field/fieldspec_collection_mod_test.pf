@@ -64,10 +64,12 @@ contains
 
     f_collection = fieldspec_collection_type()
 
-    call f_collection%generate_and_add_fieldspec( "foo", 1_i_def, W3, 0_i_def, &
+    call f_collection%generate_and_add_fieldspec( "foo", "field_group_id", &
+                                       1_i_def, W3, 0_i_def, &
                                        0_i_def, 0_i_def, WRITE_FIELD_FACE )
-    call f_collection%generate_and_add_fieldspec("bar", 1_i_def, W3, 0_i_def, &
-                                        0_i_def, 0_i_def, WRITE_FIELD_FACE)
+    call f_collection%generate_and_add_fieldspec("bar", "field_group_id", &
+                                       1_i_def, W3, 0_i_def, &
+                                       0_i_def, 0_i_def, WRITE_FIELD_FACE)
 
     returned_fieldspec => f_collection%get_fieldspec("absent")
     @assertNotAssociated(returned_fieldspec)

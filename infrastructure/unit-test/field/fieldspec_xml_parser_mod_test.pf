@@ -74,8 +74,6 @@ contains
 
     f_collection => fieldspec_collection_type()
 
-
-!    call f_collection%populate('data/test_iodef1.xml')
     call populate_fieldspec_collection('data/test_iodef1.xml')
     ! check the collection wasn't populated with fewer/more objects than there should be
     @assertEqual(no_of_fields, f_collection%get_length())
@@ -87,7 +85,6 @@ contains
     end do
 
     ! now append objects made from test_iodef2.xml
-!    call f_collection%populate('data/test_iodef2.xml')
     call populate_fieldspec_collection('data/test_iodef2.xml')
     @assertEqual(no_of_fields * 2, f_collection%get_length())
 
@@ -96,8 +93,6 @@ contains
       current_fieldspec = f_collection%get_fieldspec( test_IDs(field_index) )
     end do
 
-
-!    call f_collection%populate('data/test_iodef3.xml')
     call populate_fieldspec_collection('data/test_iodef3.xml')
     @assertEqual(no_of_fields * 3, f_collection%get_length())
 
@@ -126,6 +121,9 @@ contains
     integer                                              :: field_index
     character(len = 11), dimension(no_of_fields)         :: test_IDs = &
             [character(len = 11) :: "theta", "rho", "u1", "net_lw_rad", "net_sw_rad", "alpha"]
+    character(len = 17), dimension(no_of_fields)         :: test_groups = &
+            [character(len = 17) :: "diagnostic_fields", "diagnostic_fields", "diagnostic_fields", &
+                                    "test_fields", "test_fields", "test_fields"]
 
 !    properties of fields in test_iodef1.xml to check if they are loaded into the collection
 !    properties for a given fieldspec object will be in the same index across these arrays
@@ -134,20 +132,20 @@ contains
     integer, dimension(no_of_fields) :: test_function_spaces = [W0, W1, W3, Wtheta, Wtheta, W2]
     integer, dimension(no_of_fields) :: test_orders = [0_i_def, 1_i_def, 3_i_def, 2_i_def, 4_i_def, 1_i_def]
     integer, dimension(no_of_fields) :: test_field_kinds = [0_i_def, 1_i_def, 2_i_def, 3_i_def, 4_i_def, 5_i_def]
-    integer, dimension(no_of_fields) :: test_field_types = [real_type, integer_type, integer_type, real_type, real_type, real_type] ! todo ????
+    integer, dimension(no_of_fields) :: test_field_types = [real_type, integer_type, integer_type, real_type, real_type, real_type]
     integer, dimension(no_of_fields) :: test_io_drivers = [WRITE_FIELD_FACE, WRITE_FIELD_FACE, &
                                                            WRITE_FIELD_FACE, WRITE_FIELD_FACE, &
                                                            WRITE_FIELD_FACE, WRITE_FIELD_FACE]
 
     f_collection => fieldspec_collection_type()
 
-!    call f_collection%populate('data/test_iodef1.xml')
     call populate_fieldspec_collection('data/test_iodef1.xml')
 
     do field_index = 1, no_of_fields
       current_fieldspec = f_collection%get_fieldspec( test_IDs(field_index) )
 
       @assertEqual(test_IDs(field_index), current_fieldspec%get_unique_id())
+      @assertEqual(test_groups(field_index), current_fieldspec%get_field_group_id())
       @assertEqual(test_mesh_ids(field_index), current_fieldspec%get_mesh_id())
       @assertEqual(test_function_spaces(field_index), current_fieldspec%get_function_space())
       @assertEqual(test_orders(field_index), current_fieldspec%get_order())

@@ -28,6 +28,7 @@ module fieldspec_factory_mod
     !> Unique id used by the diagnostic system to identify the field
     character(str_def) :: unique_id
     !> Other information used to create a field
+    character(str_def) :: field_group_id
     integer(i_def)     :: mesh_id
     integer(i_def)     :: function_space
     integer(i_def)     :: order
@@ -44,6 +45,9 @@ module fieldspec_factory_mod
 
     !> setter to return the unique_id
     procedure, public :: set_unique_id
+
+    !> setter to return the field_group_id
+    procedure, public :: set_field_group_id
 
     !> setter to return the mesh_id
     procedure, public :: set_mesh_id
@@ -96,6 +100,7 @@ contains
     class(fieldspec_factory_type), intent(inout) :: self
 
     self%unique_id      = ""
+    self%field_group_id = ""
     self%mesh_id        = 0_i_def
     self%function_space = 0_i_def
     self%order          = 0_i_def
@@ -117,6 +122,7 @@ contains
     type(fieldspec_type)                            :: new_fieldspec
 
     new_fieldspec = fieldspec_type( self%unique_id, &
+                                    self%field_group_id, &
                                     self%mesh_id, &
                                     self%function_space, &
                                     self%order, &
@@ -139,6 +145,20 @@ contains
 
     return
   end subroutine set_unique_id
+
+  !> Setter for the field_group_id
+  !> @param[in] field_group_id
+  subroutine set_field_group_id( self, field_group_id )
+
+    implicit none
+
+    class(fieldspec_factory_type),    intent(inout)    :: self
+    character(len=*),               intent(in)       :: field_group_id
+
+    self%field_group_id = field_group_id
+
+    return
+  end subroutine set_field_group_id
 
   !> Setter for the mesh_id
   !> @param[in] mesh_id

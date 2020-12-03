@@ -112,6 +112,7 @@ contains
   !===========================================================================
   !> @brief Creates a new fieldspec object and adds to the collection
   !> @param[in] unique_id The unique id of the field
+  !> @param[in] field_group_id The id of the field's group
   !> @param[in] mesh_id The mesh id of the field
   !> @param[in] function_space The function space to create the field with
   !> @param[in] order The element element order of the function space
@@ -119,13 +120,15 @@ contains
   !> @param[in] field_type The data type of the field
   !> @param[in] io_driver The io driver used for the field
   !>
-  subroutine generate_and_add_fieldspec( self, unique_id, mesh_id, function_space, &
-                            order, field_kind, field_type, io_driver )
+  subroutine generate_and_add_fieldspec( self, unique_id, field_group_id, &
+                                        mesh_id, function_space, order, &
+                                        field_kind, field_type, io_driver )
 
     implicit none
 
     class(fieldspec_collection_type), intent(inout) :: self
     character(*),                     intent(in)    :: unique_id
+    character(*),                     intent(in)    :: field_group_id
     integer(i_def),                   intent(in)    :: mesh_id
     integer(i_def),                   intent(in)    :: function_space
     integer(i_def),                   intent(in)    :: order
@@ -137,6 +140,7 @@ contains
 
     ! Create new fieldspec object
     new_fieldspec = fieldspec_type( unique_id,       &
+                                    field_group_id,  &
                                     mesh_id,         &
                                     function_space,  &
                                     order,           &

@@ -25,6 +25,7 @@ module fieldspec_mod
     !> Unique id used by the diagnostic system to identify the field
     character(str_def) :: unique_id
     !> Other information used to create a field
+    character(str_def) :: field_group_id
     integer(i_def)     :: mesh_id
     integer(i_def)     :: function_space
     integer(i_def)     :: order
@@ -36,6 +37,9 @@ module fieldspec_mod
 
     !> Getter to return the unique_id
     procedure, public :: get_unique_id
+
+    !> Getter to return the field_group_id
+    procedure, public :: get_field_group_id
 
     !> Getter to return the mesh_id
     procedure, public :: get_mesh_id
@@ -75,10 +79,10 @@ contains
   !> @param [in] field_type The type of the field
   !> @return self the fieldspec object
   !>
-  function fieldspec_constructor( unique_id, mesh_id,     &
-                                  function_space, order,          &
-                                  field_kind, field_type, &
-                                  io_driver ) &
+  function fieldspec_constructor( unique_id, field_group_id, &
+                                  mesh_id, function_space, &
+                                  order, field_kind, &
+                                  field_type, io_driver ) &
                                  result(self)
 
     use log_mod,         only : log_event, &
@@ -86,6 +90,7 @@ contains
     implicit none
 
     character(*),               intent(in)    :: unique_id
+    character(*),               intent(in)    :: field_group_id
     integer(i_def),             intent(in)    :: mesh_id
     integer(i_def),             intent(in)    :: function_space
     integer(i_def),             intent(in)    :: order
@@ -96,6 +101,7 @@ contains
     type(fieldspec_type), target :: self
 
     self%unique_id      = trim(unique_id)
+    self%field_group_id = trim(field_group_id)
     self%mesh_id        = mesh_id
     self%function_space = function_space
     self%order          = order
@@ -120,6 +126,20 @@ contains
     unique_id = trim(self%unique_id)
 
   end function get_unique_id
+
+  !> Getter for field_group_id
+  !> @param[in]  self  fieldspec_type
+  !> @return field_group_id
+  function get_field_group_id(self) result(field_group_id)
+
+    implicit none
+
+    class(fieldspec_type), intent(in) :: self
+    character(str_def) :: field_group_id
+
+    field_group_id = trim(self%field_group_id)
+
+  end function get_field_group_id
 
   !> Getter for mesh_id
   !> @param[in]  self  fieldspec_type

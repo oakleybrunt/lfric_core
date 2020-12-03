@@ -60,6 +60,7 @@ contains
         type(fieldspec_type) :: test_fieldspec1
 
         test_fieldspec1 = fieldspec_type( "foo", & ! unique_id
+                                          "field_group_id", &
                                           11, & ! mesh_id
                                           W3, & ! function_space
                                           2, & ! order
@@ -69,6 +70,7 @@ contains
                                         )
 
         @assertEqual("foo",test_fieldspec1%get_unique_id())
+        @assertEqual("field_group_id",test_fieldspec1%get_field_group_id())
         @assertEqual(11,test_fieldspec1%get_mesh_id())
         @assertEqual(2,test_fieldspec1%get_function_space())
         @assertEqual(W3,test_fieldspec1%get_order())

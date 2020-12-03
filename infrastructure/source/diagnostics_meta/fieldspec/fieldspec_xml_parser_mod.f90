@@ -63,6 +63,7 @@ module fieldspec_xml_parser_mod
   ! Stores the name of the current XML "field" element's
   ! "variable" while it is processed by the XML event handlers
   character(str_def) :: xml_field_variable = ""
+  character(str_def) :: field_group_id = ""
 
 contains
 
@@ -173,9 +174,12 @@ contains
     if (in_field_def) then
 
       ! Set parser to ignore current group of fields if they are not enabled
-      if (name == "field_group" .and. getValue(attributes, "enabled") == ".FALSE.") then
-        ignore_element = .true.
-        return
+      if (name == "field_group") then
+        field_group_id = getValue(attributes, "id")
+        if (getValue(attributes, "enabled") == ".FALSE.") then
+          ignore_element = .true.
+          return
+        end if
       end if
 
       ! Store field's ID to be put in fieldspec object in endElement_handler
@@ -186,6 +190,7 @@ contains
           call fieldspec_factory%initialise()
           fieldspec_factory_initialised = .true.
           call fieldspec_factory%set_unique_id( getValue(attributes, "id") )
+          call fieldspec_factory%set_field_group_id( field_group_id )
 
         end if
 
