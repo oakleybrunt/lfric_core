@@ -59,6 +59,7 @@ module advection_alg_mod
                                             scheme_method_of_lines
   use formulation_config_mod,         only: moisture_conservation,          &
                                             si_momentum_equation,           &
+                                            transport_only,                 &
                                             vector_invariant
 
   use advective_update_alg_mod,       only: advective_update_alg_init,      &
@@ -74,6 +75,8 @@ module advection_alg_mod
   implicit none
 
   private
+
+  integer(kind=i_def) :: nummr_to_advect
 
   public  :: advection_control
   public  :: advection_alg
@@ -98,6 +101,13 @@ contains
     integer(i_def),  intent(in) :: mesh_id
 
     integer(i_def),     pointer :: shifted_mesh_id
+
+    ! In transport_only mode we transport just a single moisture species
+    if (transport_only) then
+      nummr_to_advect = 1
+    else
+      nummr_to_advect = nummr
+    end if
 
     ! Set up the mass flux spatial computation
     call flux_alg_init(mesh_id)
@@ -403,7 +413,7 @@ contains
     call advecting_wind%initialise( wind_n%get_function_space() )
     call invoke( aX_plus_bY(advecting_wind, 0.5_r_def, wind_n, 0.5_r_def, wind_np1) )
 
-    do imr = 1,nummr
+    do imr = 1, nummr_to_advect
       call advect_field( mr_inc(imr), mr(imr), advecting_wind,        &
                          scheme_method_of_lines, wind_n, wind_np1,    &
                          advect_density=.false., timestep=dt,         &
@@ -561,7 +571,7 @@ contains
                                                   ) )
 
     ! Obtain shifted moisture densities
-    do imr = 1, nummr
+    do imr = 1, nummr_to_advect
       call invoke( name = "Compute wet densities in shifted W3",               &
                    tri_matrix_vector_kernel_type(rho_X_n(imr),                 &
                                                  matrix_mr_to_sh_mass_n,       &
@@ -590,7 +600,7 @@ contains
     call add_bundle(rho_X_inc, rho_X_n, rho_X_star, nummr)
 
     ! Obtain mixing ratios back from wet densities
-    do imr = 1, nummr
+    do imr = 1, nummr_to_advect
       call invoke( name = "Compute mixing ratio from shifted density",  &
                    inc_X_times_Y(rho_X_star(imr), mm_w3_shifted_diag) )
       call invoke( tri_solve_sh_mass_to_mr_kernel_type(mr_out(imr),     &
@@ -839,7 +849,8 @@ contains
 
       case(scheme_method_of_lines)
 
-        if ( time_method == method_rk .or. si_advective_terms ) then
+        if ( ( time_method == method_rk .and. .not. transport_only ) &
+              .or. si_advective_terms ) then
         ! If using explicit timestepping then advection is called once per stage,
         ! therefore no further sub stages are needed, setting number of stages = 1
         ! and coeffs = 1 short cuts the rk advection scheme

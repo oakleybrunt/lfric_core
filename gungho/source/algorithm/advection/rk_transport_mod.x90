@@ -1,0 +1,256 @@
+!-----------------------------------------------------------------------------
+! (C) Crown copyright 2020 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-----------------------------------------------------------------------------
+
+!>@brief A Runge-Kutta time-discretisation of the transport equation
+!>@details An algorithm for timstepping the 3D transport equation using a
+!>         multistage explicit Runge-Kutta algorithm.
+module rk_transport_mod
+
+  use advection_alg_mod,                 only: advection_alg,       &
+                                               advection_alg_init,  &
+                                               advection_alg_final, &
+                                               advection_mr_alg,    &
+                                               conservative_mr_adv_alg
+  use constants_mod,                     only: r_def, i_def, pi
+  use derived_config_mod,                only: bundle_size
+  use enforce_bc_kernel_mod,             only: enforce_bc_kernel_type
+  use field_indices_mod,                 only: igh_u, igh_t, igh_d, igh_p
+  use field_mod,                         only: field_type
+  use finite_element_config_mod,         only: element_order, nqp_exact
+  use formulation_config_mod,            only: moisture_conservation, &
+                                               use_moisture
+  use fs_continuity_mod,                 only: W1
+  use function_space_mod,                only: function_space_type
+  use function_space_collection_mod,     only: function_space_collection
+  use io_config_mod,                     only: subroutine_timers
+  use log_mod,                           only: log_event,           &
+                                               log_scratch_space,   &
+                                               LOG_LEVEL_INFO
+  use mass_matrix_solver_alg_mod,        only: mass_matrix_solver_alg
+  use mr_indices_mod,                    only: nummr
+  use operator_mod,                      only: operator_type
+  use quadrature_xyoz_mod,               only: quadrature_xyoz_type
+  use quadrature_rule_gaussian_mod,      only: quadrature_rule_gaussian_type
+  use timer_mod,                         only: timer
+  use timestepping_config_mod,           only: dt
+
+  implicit none
+
+  private
+
+  ! 'State' items that need to be created once but used for final evaluation
+  type( field_type ) :: rho0, theta0, mr0(nummr)
+
+  public :: rk_transport_init
+  public :: rk_transport_step
+  public :: rk_transport_final
+
+contains
+
+  !> @brief Init routine for rk transport timestepping algorithm
+  !> @details Rho and u fields are initialised before
+  !>          this algorithm is called.
+  !> @param[in,out] rho Density like field
+  !> @param[in,out] theta Temperature like field
+  !> @param[in,out] mr Bundle of moisture mixing ratio fields. Optional.
+  subroutine rk_transport_init( rho, theta, mr )
+    implicit none
+
+    ! Prognostic fields
+    type(field_type), intent(inout)           :: rho, theta
+    type(field_type), intent(inout), optional :: mr(nummr)
+
+    if ( subroutine_timers ) call timer('rk_transport_alg')
+
+    ! Set up advection scheme
+    call advection_alg_init( rho%get_mesh_id() )
+
+    ! Store initial values for computing errors
+    call rho%copy_field(rho0)
+    call theta%copy_field(theta0)
+    if ( present(mr) ) call mr(1)%copy_field(mr0(1))
+
+    if ( subroutine_timers ) call timer('rk_transport_alg')
+
+  end subroutine rk_transport_init
+
+  !> @brief A Runge-Kutta time-discretisation of the transport equation
+  !> @details An algorithm for timstepping the transport equation using the
+  !>          Runge-Kutta algorithm. theta, rho and u fields are initialised before
+  !>          this algorithm is called.
+  !> @param[in]     timestep The integer timestep
+  !> @param[in,out] wind     3D wind field
+  !> @param[in,out] rho      Density like tracer
+  !> @param[in,out] theta    Temperature like tracer
+  !> @param[in,out] mr       Bundle of moisture variables as tracers
+  subroutine rk_transport_step( timestep, wind, rho, theta, mr )
+    use field_bundle_mod, only: clone_bundle, add_bundle, copy_bundle
+
+    implicit none
+
+    ! Prognostic fields
+    type( field_type ), intent( inout )           :: wind, rho, theta
+    type( field_type ), intent( inout ), optional :: mr(nummr)
+    integer(kind=i_def), intent( in )             :: timestep
+    type( field_type ), allocatable               :: state(:), rhs_adv(:)
+    type( field_type ), allocatable               :: mr_inc(:), mr_out(:)
+
+    if ( subroutine_timers ) call timer('rk_transport_alg')
+
+    ! Set up state array of start of time step values
+    allocate( state(bundle_size) )
+    call wind%copy_field_properties( state(igh_u) )
+    call theta%copy_field_properties( state(igh_t) )
+    call rho%copy_field_properties( state(igh_d) )
+    call rho%copy_field_properties( state(igh_p) )
+
+    call invoke( name = "Copy fields to state", &
+                 setval_X(state(igh_u), wind),  &
+                 setval_X(state(igh_t), theta), &
+                 setval_X(state(igh_d), rho),   &
+                 setval_X(state(igh_p), rho) )
+
+    ! Set up rhs_adv
+    allocate( rhs_adv(bundle_size) )
+    call clone_bundle(state, rhs_adv, bundle_size)
+
+    ! Set up moisture increments and final state
+    if (present(mr)) then
+      allocate(mr_inc(nummr))
+      allocate(mr_out(nummr))
+      call clone_bundle(mr, mr_inc, nummr)
+      call clone_bundle(mr, mr_out, nummr)
+    end if
+
+    ! Do advection of fields
+    call advection_alg(rhs_adv, state, wind, wind, wind)
+
+    ! Update state
+    call invoke( name="increment_theta_and_rho",                      &
+                 aX_plus_Y(theta, dt, rhs_adv(igh_t), state(igh_t) ), &
+                 aX_plus_Y(rho,   dt, rhs_adv(igh_d), state(igh_d) )  )
+
+    ! Do all advection of moisture and updating of fields
+    if ( use_moisture ) then
+      if ( moisture_conservation ) then
+        call conservative_mr_adv_alg(mr_out, mr, state(igh_u), state(igh_u), &
+                                     state(igh_d), rho)
+      else
+        call advection_mr_alg(mr_inc, mr, state(igh_u), state(igh_u))
+        call add_bundle(mr_inc, mr, mr_out, nummr)
+      end if
+      call copy_bundle(mr_out, mr, nummr)
+    end if
+
+    deallocate(state, rhs_adv)
+    if (allocated(mr_inc)) deallocate(mr_inc)
+    if (allocated(mr_out)) deallocate(mr_out)
+
+    if ( subroutine_timers ) call timer('rk_transport_alg')
+
+  end subroutine rk_transport_step
+
+  !> @brief Final routine for rk transport timestepping algorithm
+
+  !> @param[in] rho Density
+  !> @param[in] theta Potential temperature field
+  !> @param[in] mr Bundle of moisture mixing ratio fields. Optional.
+  subroutine rk_transport_final( rho, theta, mr )
+
+    use matrix_vector_kernel_mod, only: matrix_vector_kernel_type
+    use runtime_constants_mod,    only: get_mass_matrix, &
+                                        w3_id,           &
+                                        wt_id
+
+    implicit none
+
+    type(field_type), intent(in)           :: rho, theta
+    type(field_type), intent(in), optional :: mr(nummr)
+
+    type(field_type)                       :: drho, dtheta, dmr
+    type(field_type)                       :: l2_rho, l2_theta, l2_mr
+
+    type(function_space_type),     pointer :: rho_fs => null()
+    type(function_space_type),     pointer :: theta_fs => null()
+    type(operator_type),           pointer :: mm_wt => null()
+    type(operator_type),           pointer :: mm_w3 => null()
+
+    real(kind=r_def)                       :: l2_rho_diff, l2_theta_diff
+    real(kind=r_def)                       :: l2_rho_analytic, l2_theta_analytic
+    real(kind=r_def)                       :: l2_mr_diff, l2_mr_analytic
+
+    if ( subroutine_timers ) call timer('rk_transport_alg')
+
+    ! Compute L errors
+    theta_fs => theta%get_function_space()
+    rho_fs   => rho%get_function_space()
+
+    call dtheta%initialise( vector_space = theta_fs )
+    call l2_theta%initialise( vector_space = theta_fs )
+    call drho%initialise( vector_space = rho_fs )
+    call l2_rho%initialise( vector_space = rho_fs )
+
+    mm_w3 => get_mass_matrix(w3_id)
+    mm_wt => get_mass_matrix(wt_id)
+
+    call invoke( name = "compute_L2_error_for_theta_and_rho",           &
+                 X_minus_Y(drho,   rho,   rho0  ),                      &
+                 X_minus_Y(dtheta, theta, theta0),                      &
+                 setval_c(l2_theta, 0.0_r_def),                         &
+                 setval_c(l2_rho,   0.0_r_def),                         &
+    ! Compute L2 error for theta and rho
+                 matrix_vector_kernel_type(l2_theta, dtheta, mm_wt),    &
+                 matrix_vector_kernel_type(l2_rho,   drho,   mm_w3),    &
+                 X_innerproduct_Y(l2_theta_diff, dtheta, l2_theta),     &
+                 X_innerproduct_Y(l2_rho_diff,   drho,   l2_rho),       &
+                 setval_c(l2_theta, 0.0_r_def),                         &
+                 setval_c(l2_rho,   0.0_r_def),                         &
+    ! Compute L2 norm of analytic results
+                 matrix_vector_kernel_type(l2_theta, theta0, mm_wt),    &
+                 matrix_vector_kernel_type(l2_rho,   rho0,   mm_w3),    &
+                 X_innerproduct_Y(l2_theta_analytic, theta0, l2_theta), &
+                 X_innerproduct_Y(l2_rho_analytic,   rho0,   l2_rho)    &
+               )
+
+    ! Write out normalised L2 errors
+    write( log_scratch_space, '(A, E15.8)' ) &
+      "Transport stats: L2 theta = ", sqrt(l2_theta_diff)/sqrt(l2_theta_analytic)
+    call log_event( log_scratch_space, LOG_LEVEL_INFO )
+    write( log_scratch_space, '(A, E15.8)' ) &
+      "Transport stats: L2 rho   = ", sqrt(l2_rho_diff)/sqrt(l2_rho_analytic)
+    call log_event( log_scratch_space, LOG_LEVEL_INFO )
+
+    ! Write out Linf errors
+    call dtheta%log_absmax(LOG_LEVEL_INFO, 'Transport stats: L_inf theta')
+    call drho%log_absmax(LOG_LEVEL_INFO,   'Transport stats: L_inf rho')
+
+    ! Reproduce the above but for mr
+    if ( present(mr) ) then
+      call dmr%initialise( vector_space = theta_fs )
+      call l2_mr%initialise( vector_space = theta_fs )
+      call invoke( name = "compute_errors_for_moisture",                &
+                   X_minus_Y(dmr, mr(1), mr0(1)),                       &
+                   setval_c(l2_mr, 0.0_r_def),                          &
+                   matrix_vector_kernel_type(l2_mr, dmr, mm_wt),        &
+                   X_innerproduct_Y(l2_mr_diff, dmr, l2_mr),            &
+                   setval_c(l2_mr, 0.0_r_def),                          &
+                   matrix_vector_kernel_type(l2_mr, mr0(1), mm_wt),     &
+                   X_innerproduct_Y(l2_mr_analytic, mr0(1), l2_mr)      &
+                 )
+
+
+      ! Write out mr stats
+      write( log_scratch_space, '(A, E15.8)' ) &
+        "Transport stats: L2 mr = ", sqrt(l2_mr_diff)/sqrt(l2_mr_analytic)
+      call log_event( log_scratch_space, LOG_LEVEL_INFO )
+      call dmr%log_absmax(LOG_LEVEL_INFO,   'Transport stats: L_inf mr')
+    end if
+
+    if ( subroutine_timers ) call timer('rk_transport_alg')
+
+  end subroutine rk_transport_final
+
+end module rk_transport_mod

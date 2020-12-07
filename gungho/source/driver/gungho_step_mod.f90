@@ -125,7 +125,11 @@ module gungho_step_mod
     if ( transport_only ) then
       select case( scheme )
         case ( scheme_method_of_lines )
-          call rk_transport_step( u, rho, theta)
+          if ( use_moisture ) then
+            call rk_transport_step( clock%get_step(), u, rho, theta, mr )
+          else
+            call rk_transport_step( clock%get_step(), u, rho, theta )
+          end if
       end select
       call write_density_diagnostic( rho, clock )
       if ( write_conservation_diag ) then

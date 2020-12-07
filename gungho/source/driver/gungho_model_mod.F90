@@ -394,7 +394,11 @@ module gungho_model_mod
         case ( scheme_method_of_lines )
           ! Initialise and output initial conditions for first timestep
           call runge_kutta_init()
-          call rk_transport_init( mesh_id, u, rho, theta)
+          if ( use_moisture ) then
+            call rk_transport_init( rho, theta, mr )
+          else
+            call rk_transport_init( rho, theta )
+          end if
         case default
           call log_event("Gungho: Incorrect transport option chosen, "// &
                           "stopping program! ",LOG_LEVEL_ERROR)
@@ -563,7 +567,11 @@ module gungho_model_mod
 
     ! Call timestep finalizers
     if ( transport_only .and. scheme == scheme_method_of_lines) then
-      call rk_transport_final( rho, theta)
+      if ( use_moisture ) then
+        call rk_transport_final( rho, theta, mr )
+      else
+        call rk_transport_final( rho, theta )
+      end if
     end if
 
     if(write_minmax_tseries) call minmax_tseries_final(mesh_id)

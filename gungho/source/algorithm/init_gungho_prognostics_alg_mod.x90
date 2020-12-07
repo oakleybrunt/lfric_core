@@ -23,7 +23,9 @@ module init_gungho_prognostics_alg_mod
 
   use finite_element_config_mod,       only: element_order, &
                                              nqp_exact
-  use formulation_config_mod,          only: use_moisture, set_hydrostatic_init
+  use formulation_config_mod,          only: use_moisture,         &
+                                             set_hydrostatic_init, &
+                                             transport_only
   use initial_density_config_mod,      only: sample_init_rho
   use initial_wind_config_mod,         only: smp_init_wind,                           &
                                              profile,                                 &
@@ -196,16 +198,24 @@ contains
     end if
 
     if (use_moisture) then
-      ! Initialise moisture and update factors for moist dynamics
-      call invoke( initial_mr_kernel_type( theta, exner, rho, mr, chi_xyz ),         &
-                   moist_dyn_factors_kernel_type( moist_dyn, mr ) )
-      ! Recalculate hydrostatic pressure and dry density
-      height_w3 => get_height(W3)
-      height_wth => get_height(Wtheta)
-      call invoke_hydrostatic_exner_kernel( exner, theta, moist_dyn, height_wth, &
-                                            height_w3, chi_xyz )
-      call invoke( sample_eos_rho_kernel_type( rho, exner, theta,                &
-                                               moist_dyn(gas_law) ) )
+      if (transport_only) then
+        ! Set up moisture variables to be the same as theta
+        do i = 1, nummr
+          call invoke( setval_X(mr(i), theta) )
+        end do
+        call invoke( moist_dyn_factors_kernel_type( moist_dyn, mr ) )
+      else
+        ! Initialise moisture and update factors for moist dynamics
+        call invoke( initial_mr_kernel_type( theta, exner, rho, mr, chi_xyz ),     &
+                     moist_dyn_factors_kernel_type( moist_dyn, mr ) )
+        ! Recalculate hydrostatic pressure and dry density
+        height_w3 => get_height(W3)
+        height_wth => get_height(Wtheta)
+        call invoke_hydrostatic_exner_kernel( exner, theta, moist_dyn, height_wth, &
+                                              height_w3, chi_xyz )
+        call invoke( sample_eos_rho_kernel_type( rho, exner, theta,                &
+                                                 moist_dyn(gas_law) ) )
+      end if
     else
       call set_bundle_scalar(0.0_r_def, mr, nummr)
     end if
