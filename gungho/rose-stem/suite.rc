@@ -1009,7 +1009,7 @@
         inherit = {{mesh_family}}, TARGET
 
         [[[directives]]]
-{%-   for DIRECTIVE in TARGET_RUN_BATCHER_DIRECTIVES %}
+{%-   for DIRECTIVE in TARGET_TECHNICAL_BATCHER_DIRECTIVES %}
             {{DIRECTIVE}}
 {%-   endfor %}
 {%- endif %}
@@ -1024,7 +1024,7 @@
                      {{'\n                     '|
                        command_list( TARGET_BASE_SETUP,
                                      compiler_setup[TARGET_MESH_COMPILER],
-                                     TARGET_BUILD_SETUP,
+                                     TARGET_RUN_SETUP,
                                      TARGET_REVEAL_SETUP )}}
                      """
 
