@@ -12,7 +12,7 @@
 !> non_spatial_dimension_type to define its non-spatial dimensional meta data.
 
 
-module non_spatial_dimension_type_mod
+module non_spatial_dimension_mod
 
   use constants_mod,                              only: str_def,   &
                                                         str_short, &
@@ -125,4 +125,4 @@ module non_spatial_dimension_type_mod
   end function get_label_definition
 
 
-end module non_spatial_dimension_type_mod
+end module non_spatial_dimension_mod

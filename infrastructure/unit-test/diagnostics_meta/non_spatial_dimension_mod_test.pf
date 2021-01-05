@@ -7,7 +7,7 @@
 !> check the example meta_mod file are valid fortran and call meta_mod properly
 !>
 !-------------------------------------------------------------------------------
-module non_spatial_dimensions_mod_test
+module non_spatial_dimension_mod_test
 
   ! Global use statements go here
 
@@ -70,7 +70,7 @@ contains
 
     ! This section is where the code for a self-contained test should be put
 
-    use non_spatial_dimension_type_mod, only: non_spatial_dimension_type
+    use non_spatial_dimension_mod, only: non_spatial_dimension_type
 
     implicit none
 
@@ -106,4 +106,4 @@ contains
     @assertEqual("Charlie", label(3))
 
   end subroutine non_spatial_dimension_type_test
-end module non_spatial_dimensions_mod_test
+end module non_spatial_dimension_mod_test
