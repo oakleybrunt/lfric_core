@@ -7,7 +7,7 @@
 """
 from typing import Dict
 
-from diagnostics_metadata_reconfigurator.src.entities import Field, FieldGroup, OutputStream, OutputStreamField
+from entities import Field, FieldGroup, OutputStream, OutputStreamField
 
 
 class Metadata:
@@ -24,6 +24,11 @@ class Metadata:
         :return: A Field object with the ID given
         """
         return self._fields[field_id]
+
+    def get_fields(self) -> [Field]:
+        """:return: A sorted list of fields"""
+        return sorted(self._fields.values(),
+                      key=lambda field: field.unique_id)
 
     def get_field_groups(self) -> [FieldGroup]:
         """:return: A sorted list of fields contained in the field group"""
@@ -44,15 +49,17 @@ class Metadata:
         self._field_groups.update({field_group.name: field_group})
 
     def add_field(self, field: Field, field_group_id: str):
-        """Add a Field object to the collection of fields and the ID to the
-            given field group
+        """
+        Add a Field object to the collection of fields and the ID to the
+        given field group
         """
         self._fields.update({field.unique_id: field})
         self._field_groups[field_group_id].add_field(field)
 
     def add_output_stream_field(self, output_stream_field: OutputStreamField,
                                 stream_unique_id: int):
-        """Add an output stream field to the output stream corresponding to the
-            given output stream ID
+        """
+        Add an output stream field to the output stream corresponding to the
+        given output stream ID
         """
         self._output_streams[stream_unique_id].add_field(output_stream_field)

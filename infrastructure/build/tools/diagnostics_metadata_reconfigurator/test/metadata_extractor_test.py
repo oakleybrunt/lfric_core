@@ -6,7 +6,7 @@
 import unittest
 from pathlib import Path
 
-from diagnostics_metadata_reconfigurator.src.metadata_extractor import MetadataExtractor
+from metadata_extractor import MetadataExtractor
 
 
 TEST_DIR = Path(__file__).parent
@@ -15,10 +15,10 @@ IMMUTABLE_DATA_NO_CHECKSUM_PATH = TEST_DIR / Path(
     'input/LFRic_meta_data_no_checksum.JSON')
 IMMUTABLE_DATA_BAD_CHECKSUM_PATH = TEST_DIR / Path(
     'input/LFRic_meta_data_bad_checksum.JSON')
-ROSE_SUITE_PATH = TEST_DIR / Path('input/rose-suite')
+ROSE_SUITE_PATH = TEST_DIR / Path('input/rose-suite/rose-app.conf')
 BAD_ADDITIONAL_INPUT_ROSE_SUITE_PATH = TEST_DIR / Path(
-    'input/rose-suite-bad-additional-input/')
-BAD_ROSE_SUITE_PATH = TEST_DIR / Path('input')
+    'input/rose-suite-bad-additional-input/rose-app.conf')
+BAD_ROSE_SUITE_PATH = TEST_DIR / Path('input/rose-app.conf')
 
 
 class TestExtractor(unittest.TestCase):
@@ -39,7 +39,8 @@ class TestExtractor(unittest.TestCase):
 
     def test_extractor_incorrect_checksum(self):
         with self.assertRaises(RuntimeError):
-            MetadataExtractor(ROSE_SUITE_PATH, IMMUTABLE_DATA_BAD_CHECKSUM_PATH)
+            MetadataExtractor(ROSE_SUITE_PATH,
+                              IMMUTABLE_DATA_BAD_CHECKSUM_PATH)
 
     def test_extractor_no_rose_app_conf(self):
         with self.assertRaises(IOError):
