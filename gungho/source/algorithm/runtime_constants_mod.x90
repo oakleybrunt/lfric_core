@@ -17,7 +17,8 @@ module runtime_constants_mod
                                                LOG_LEVEL_ERROR, &
                                                log_scratch_space
   ! Configuration
-  use boundaries_config_mod,             only: limited_area
+  use boundaries_config_mod,             only: limited_area,       &
+                                               normal_only
   use base_mesh_config_mod,              only: geometry,           &
                                                geometry_spherical, &
                                                f_lat
@@ -893,15 +894,24 @@ contains
      call w2interior_mask%initialise( vector_space = w2_fs )
      call w2_mask%initialise( vector_space = w2_fs )
 
-     call create_boundary_mask( w2perp_mask, chi_xyz )
-     call create_parallel_boundary_mask ( w2parallel_mask, chi_xyz )
-     call create_limited_area_mask( w2interior_mask, chi_xyz )
+     if (normal_only) then
+       call log_event( "Using w2 dofs on boundary for LBC", &
+            LOG_LEVEL_INFO )
+       call create_boundary_mask( w2boundary_mask, chi_xyz )
+       call create_limited_area_mask( w2_mask, chi_xyz )
+     else
+       call log_event( "Using w2 dofs on boundary and tangential 1 cell in", &
+            LOG_LEVEL_INFO )
+       call create_boundary_mask( w2perp_mask, chi_xyz )
+       call create_parallel_boundary_mask ( w2parallel_mask, chi_xyz )
+       call create_limited_area_mask( w2interior_mask, chi_xyz )
 
-     call invoke( &
+       call invoke( &
           ! Add the W2parallel and W2perp masks together
           X_plus_Y ( w2boundary_mask,  w2perp_mask, w2parallel_mask ), &
           ! Subtract the W2parallel mask from the W2interior_mask
           X_minus_Y( w2_mask, w2interior_mask, w2parallel_mask ) )
+     end if
 
      ! Create the W3 and Wtheta masks directly
      call w3_mask%initialise( vector_space = w3_fs )

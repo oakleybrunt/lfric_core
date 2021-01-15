@@ -31,7 +31,9 @@ module pressure_operator_alg_mod
                                                 log_scratch_space
   use runtime_constants_mod,              only: get_mass_matrix, &
                                                 get_normalisation, &
-                                                w2_id, wt_id, w3inv_id
+                                                w2_id, wt_id, w3inv_id, &
+                                                get_mask
+  use fs_continuity_mod,                  only: W2, W3, Wtheta
   use si_operators_alg_mod,               only: get_m3_exner_star, &
                                                 get_compound_div, &
                                                 get_div_star, &
@@ -39,6 +41,7 @@ module pressure_operator_alg_mod
                                                 get_p3theta, &
                                                 get_helm_diag, &
                                                 get_hb_lumped_inv
+  use boundaries_config_mod,              only: limited_area
   implicit none
 
   type, public, extends(abstract_linear_operator_type) :: &
@@ -164,6 +167,8 @@ contains
                                     u_normalisation => null(), &
                                     h_diag => null(),          &
                                     hb_lumped_inv => null()
+    type(field_type), pointer    :: w3_mask => null(), &
+                                    w2_mask => null()
 
     if ( subroutine_timers ) call timer('helmholtz lhs')
 
@@ -172,6 +177,10 @@ contains
        select type (y)
        type is (field_vector_type)
 
+         if ( limited_area ) then
+           w3_mask       => get_mask(W3)
+           w2_mask       => get_mask(W2)
+         end if
          m3_exner_star   => get_m3_exner_star()
          div_star        => get_div_star()
          compound_div    => get_compound_div()
@@ -181,27 +190,54 @@ contains
          u_normalisation => get_normalisation(w2_id)
          hb_lumped_inv   => get_hb_lumped_inv()
          ! Compute M3*p + H[ D{\theta*}*p ]
-         if ( element_order == 0 ) then
-           ! Hard wired optimisation for desired configuration
-           call invoke( setval_c( self%grad_p, 0.0_r_def ),                              &
-                        opt_scaled_matrix_vector_kernel_type(self%grad_p, x%vector(1),   &
-                                                             div_star, hb_lumped_inv,    &
-                                                             u_normalisation),           &
-                        opt_apply_variable_hx_kernel_type(self%div_grad_p, self%grad_p,  &
-                                                          mt_lumped_inv, x%vector(1),    &
-                                                          compound_div, p3theta, ptheta2,&
-                                                          m3_exner_star, one) )
-         else
-           call invoke( setval_c( self%grad_p, 0.0_r_def ),                              &
-                        scaled_matrix_vector_kernel_type(self%grad_p, x%vector(1),       &
-                                                         div_star, hb_lumped_inv,        &
-                                                         u_normalisation),               &
-                        enforce_bc_kernel_type( self%grad_p ),                           &
-                        apply_variable_hx_kernel_type(self%div_grad_p, self%grad_p,      &
-                                                      mt_lumped_inv, x%vector(1),        &
-                                                      compound_div, p3theta, ptheta2,    &
-                                                      m3_exner_star, one) )
+         if ( limited_area ) then
+          if ( element_order == 0 ) then
+             ! Hard-wired optimisation for desired configuration
+             call invoke( setval_c( self%grad_p, 0.0_r_def ),                              &
+                          opt_scaled_matrix_vector_kernel_type(self%grad_p, x%vector(1),   &
+                                                               div_star, hb_lumped_inv,    &
+                                                               u_normalisation),           &
+                          inc_X_times_Y( self%grad_p, w2_mask ),                           &
+                          opt_apply_variable_hx_kernel_type(self%div_grad_p, self%grad_p,  &
+                                                            mt_lumped_inv, x%vector(1),    &
+                                                            compound_div, p3theta, ptheta2,&
+                                                            m3_exner_star, one) )
+           else
+             call invoke( setval_c( self%grad_p, 0.0_r_def ),                              &
+                          scaled_matrix_vector_kernel_type(self%grad_p, x%vector(1),       &
+                                                           div_star, hb_lumped_inv,        &
+                                                           u_normalisation),               &
+                          enforce_bc_kernel_type( self%grad_p ),                           &
+                          inc_X_times_Y( self%grad_p, w2_mask ),                           &
+                          apply_variable_hx_kernel_type(self%div_grad_p, self%grad_p,      &
+                                                        mt_lumped_inv, x%vector(1),        &
+                                                        compound_div, p3theta, ptheta2,    &
+                                                        m3_exner_star, one) )
 
+           end if
+         else
+           if ( element_order == 0 ) then
+             ! Hard wired optimisation for desired configuration
+             call invoke( setval_c( self%grad_p, 0.0_r_def ),                              &
+                          opt_scaled_matrix_vector_kernel_type(self%grad_p, x%vector(1),   &
+                                                               div_star, hb_lumped_inv,    &
+                                                               u_normalisation),           &
+                          opt_apply_variable_hx_kernel_type(self%div_grad_p, self%grad_p,  &
+                                                            mt_lumped_inv, x%vector(1),    &
+                                                            compound_div, p3theta, ptheta2,&
+                                                            m3_exner_star, one) )
+           else
+             call invoke( setval_c( self%grad_p, 0.0_r_def ),                              &
+                          scaled_matrix_vector_kernel_type(self%grad_p, x%vector(1),       &
+                                                           div_star, hb_lumped_inv,        &
+                                                           u_normalisation),               &
+                          enforce_bc_kernel_type( self%grad_p ),                           &
+                          apply_variable_hx_kernel_type(self%div_grad_p, self%grad_p,      &
+                                                        mt_lumped_inv, x%vector(1),        &
+                                                        compound_div, p3theta, ptheta2,    &
+                                                        m3_exner_star, one) )
+
+           end if
          end if
 
          m3_inv => get_mass_matrix(w3inv_id)
@@ -212,9 +248,15 @@ contains
            call invoke( inc_X_times_Y(y%vector(1), h_diag) )
          end if
 
+         if ( limited_area ) then
+           call invoke( inc_X_times_Y( y%vector(1), w3_mask ) )
+           nullify( w3_mask, w2_mask )
+         end if
+
          nullify( m3_exner_star, div_star, compound_div, ptheta2,  &
                   p3theta, m3_inv, mt_lumped_inv, u_normalisation, &
                   h_diag )
+
 
     if ( subroutine_timers ) call timer('helmholtz lhs')
 

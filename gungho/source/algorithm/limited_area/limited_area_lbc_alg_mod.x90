@@ -1,0 +1,158 @@
+!-----------------------------------------------------------------------------
+! (c) Crown copyright 2021 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-----------------------------------------------------------------------------
+
+!> @brief   Calculate LBCs and apply blending.
+!> @details Use the driving model to calculate the lateral boundary condition
+!!          for the mixed solve, and to apply blending.
+
+module limited_area_lbc_alg_mod
+
+  use field_mod,                      only: field_type
+  use field_collection_mod,           only: field_collection_type
+  use runtime_constants_mod,          only: get_boundary_mask, &
+                                            get_blend_mask,    &
+                                            get_lbc_mask
+  use fs_continuity_mod,              only: W2, W3, Wtheta
+  use constants_mod,                  only: i_def
+
+  implicit none
+
+  private :: blend_field
+  public  :: lam_solver_lbc
+  public  :: lam_blend_lbc
+
+contains
+
+  !> @brief   Calculate the linear solve increment on the boundary.
+  !> @details This calculates the boundary condition for the mixed solve,
+  !!          using the wind field on the cell faces. It is given by the
+  !!          difference between the driving model and the current iteration
+  !!          of the limited area model, and is written to a field in the
+  !!          LBC field collection.
+  !> @param[in]     lam_wind_field  Nested model wind field
+  !> @param[in,out] lbc_fields      LBC field collection
+  subroutine lam_solver_lbc( lam_wind_field, lbc_fields )
+
+    implicit none
+
+    type(field_type), intent(in)               :: lam_wind_field
+    type(field_collection_type), intent(inout) :: lbc_fields
+    type(field_type)                           :: boundary_u_lam
+    type(field_type), pointer                  :: mask
+    type(field_type), pointer                  :: boundary_u_driving
+    type(field_type), pointer                  :: boundary_u_diff
+
+    mask => get_boundary_mask( W2 )
+
+    boundary_u_driving => lbc_fields%get_field( 'boundary_u_driving' )
+    boundary_u_diff    => lbc_fields%get_field( 'boundary_u_diff' )
+
+    call boundary_u_driving%copy_field_properties( boundary_u_lam )
+
+    call invoke( &
+                 ! Extract the LAM u on the boundary.
+                 X_times_Y( boundary_u_lam, &
+                            lam_wind_field, &
+                            mask ),         &
+
+                 ! Calculate the difference from the driving model.
+                 X_minus_Y( boundary_u_diff,    &
+                            boundary_u_driving, &
+                            boundary_u_lam ) )
+
+    nullify( mask, boundary_u_driving, boundary_u_diff )
+
+  end subroutine lam_solver_lbc
+
+  !> @brief   Set up the blending of the LAM data with the driving model.
+  !> @details Loop over the prognostic fields on the current iteration, for
+  !!          the LAM model, which need to be blended. Link to
+  !!          the corresponding driving model field, and LBC field collection.
+  !> @param[in,out] state_u    Current LAM field for u, wind
+  !> @param[in,out] state_p    Current LAM field for p, pressure
+  !> @param[in,out] state_d    Current LAM field for d, density
+  !> @param[in,out] state_t    Current LAM field for t, temperature
+  !> @param[in]     lbc_fields Field collection containing LBC data
+  subroutine lam_blend_lbc( state_u, state_p, state_d, state_t, lbc_fields )
+
+    implicit none
+
+    type(field_type),            intent(inout) :: state_u, &
+                                                  state_p, &
+                                                  state_d, &
+                                                  state_t
+    type(field_collection_type), intent(in)    :: lbc_fields
+    character(len=*), parameter                :: name_u = 'lbc_u',     &
+                                                  name_p = 'lbc_exner', &
+                                                  name_d = 'lbc_rho',   &
+                                                  name_t = 'lbc_theta'
+
+    call blend_field( state_u, lbc_fields, name_u )
+    call blend_field( state_p, lbc_fields, name_p )
+    call blend_field( state_d, lbc_fields, name_d )
+    call blend_field( state_t, lbc_fields, name_t )
+
+  end subroutine lam_blend_lbc
+
+  !> @brief   Blend the LAM data with the driving model, for a given field.
+  !> @details The data around the edge of the domain is overwritten by the
+  !!          driving model LBC data using x_new = w * x_driving + (1-w) * x_lam
+  !!          where the weights w are defined by the blending masks. Different
+  !!          blending masks are used for fields in different function spaces:
+  !!          W2, W3 and Wtheta.
+  !> @param[in,out] lam_field  Current LAM field to be blended
+  !> @param[in]     lbc_fields Field collection containing LBC data
+  !> @param[in]     name       Name of the field to select from lbc_fields
+  subroutine blend_field(lam_field, lbc_fields, name)
+
+    implicit none
+
+    character(len=*), intent(in)            :: name
+    type(field_type), intent(inout)         :: lam_field
+    type(field_collection_type), intent(in) :: lbc_fields
+    type(field_type), pointer               :: driving_lbc => null(), &
+                                               blendmask   => null(), &
+                                               lbcmask     => null()
+    type(field_type)                        :: lam_lbc, inc
+    integer(i_def)                          :: function_space
+
+    ! Setup the temporary fields.
+    call lam_field%copy_field_properties( lam_lbc )
+    call lam_field%copy_field_properties( inc )
+
+    ! Define the function space required for masks.
+    function_space = lam_field%which_function_space()
+
+    driving_lbc => lbc_fields%get_field( name )
+    blendmask   => get_blend_mask( function_space )
+    lbcmask     => get_lbc_mask( function_space )
+
+    ! Apply blending, as follows:
+    ! x_blended = (1-w) * x_lam + w * x_driving
+    !           = x_lam + w * (x_driving - x_lam)
+    ! where w are the blending weights.
+
+    call invoke( &
+               ! Calculate x_lam (The LAM field in the boundary region).
+               ! This is just extracting the LAM field in the LBC region.
+               ! It ensures that the code still works if e.g. the blending
+               ! mask is not applied.
+               X_times_Y( lam_lbc, lam_field, lbcmask ), &
+
+               ! Calculate x_driving - x_lam (The LBC increment).
+               X_minus_Y( inc, driving_lbc, lam_lbc ),   &
+
+               ! Calculate w * (x_driving - x_lam) (Weight the increment).
+               inc_X_times_Y( inc, blendmask ),          &
+
+               ! Add weighted increment back on to the state.
+               inc_X_plus_Y( lam_field, inc ) )
+
+    nullify( driving_lbc, blendmask, lbcmask )
+
+  end subroutine blend_field
+
+end module limited_area_lbc_alg_mod

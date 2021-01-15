@@ -113,7 +113,10 @@ module mixed_schur_preconditioner_alg_mod
   use runtime_constants_mod,           only: get_mass_matrix, &
                                              get_div, &
                                              get_normalisation, &
-                                             w2_id, w3inv_id, wt_id
+                                             w2_id, w3inv_id, wt_id, &
+                                             get_mask
+  use fs_continuity_mod,               only: W2, W3, Wtheta
+  use boundaries_config_mod,           only: limited_area
 
   implicit none
 
@@ -327,6 +330,8 @@ contains
     type( field_type )             :: r_p, u_term
     real( kind=r_def ), parameter  :: minus_one = -1.0_r_def
     type( field_type )             :: rhs_uvw
+    type( field_type ), pointer    :: w2_mask => null(), &
+                                      w3_mask => null()
 
     call rhs_uvw%initialise( vector_space = self%rhs_u%get_function_space() )
     if ( split_w )then
@@ -338,6 +343,11 @@ contains
     call r_p%initialise( vector_space = rhs0%vector( igh_p )%get_function_space() )
     call u_term%initialise( vector_space = self%rhs_u%get_function_space() )
 
+    if ( limited_area ) then
+      w2_mask => get_mask(W2)
+      w3_mask => get_mask(W3)
+    endif
+
     p2theta         => get_p2theta()
     ptheta2         => get_ptheta2v()
     p3theta         => get_p3theta()
@@ -347,13 +357,25 @@ contains
     u_normalisation => get_normalisation(w2_id)
     Hb_lumped_inv   => get_Hb_lumped_inv()
     ! rhs_u = rhs_u + UNORM*P02*rhs_t
-    call invoke( name = "Compute helmholtz R_u",                                         &
-                 setval_c( self%rhs_u, 0.0_r_def ),                                      &
-                 matrix_vector_kernel_type( self%rhs_u, rhs0%vector( igh_t ), p2theta ), &
-                 inc_X_times_Y( self%rhs_u, u_normalisation ),                           &
-                 inc_X_plus_Y( self%rhs_u, rhs_uvw ),                                    &
-                 enforce_bc_kernel_type( self%rhs_u ),                                   &
-                 X_times_Y( u_term, self%rhs_u, Hb_lumped_inv ) )
+
+    if ( limited_area ) then
+      call invoke( name = "Compute_LAM_helmholtz_Ru",                                      &
+                   setval_c( self%rhs_u, 0.0_r_def ),                                      &
+                   matrix_vector_kernel_type( self%rhs_u, rhs0%vector( igh_t ), p2theta ), &
+                   inc_X_times_Y( self%rhs_u, u_normalisation ),                           &
+                   inc_X_plus_Y( self%rhs_u, rhs_uvw ),                                    &
+                   enforce_bc_kernel_type( self%rhs_u ),                                   &
+                   inc_X_times_Y(self%rhs_u, w2_mask),                                     &
+                   X_times_Y( u_term, self%rhs_u, Hb_lumped_inv ) )
+    else
+      call invoke( name = "Compute_helmholtz_Ru",                                          &
+                   setval_c( self%rhs_u, 0.0_r_def ),                                      &
+                   matrix_vector_kernel_type( self%rhs_u, rhs0%vector( igh_t ), p2theta ), &
+                   inc_X_times_Y( self%rhs_u, u_normalisation ),                           &
+                   inc_X_plus_Y( self%rhs_u, rhs_uvw ),                                    &
+                   enforce_bc_kernel_type( self%rhs_u ),                                   &
+                   X_times_Y( u_term, self%rhs_u, Hb_lumped_inv ) )
+    end if
 
     ! Compute H(u_term)
     ! r_pi = M3^-1*(rhs_pi + P03*M0^-1*rhs_t + M3rho*M3^-1*rhs_r)
@@ -375,6 +397,10 @@ contains
                    inc_X_plus_Y(self%rhs_p, rhs0%vector(igh_p)) )
     end if
 
+    if ( limited_area ) then
+      call invoke( inc_X_times_Y(self%rhs_p, w3_mask) )
+    end if
+
     if ( normalise ) then
        h_diag => get_helm_diag()
        call invoke( inc_X_times_Y(self%rhs_p, h_diag) )
@@ -386,6 +412,9 @@ contains
              compound_div, mt_lumped_inv, u_normalisation, h_diag, &
              Hb_lumped_inv )
 
+    if ( limited_area ) then
+      nullify( w2_mask, w3_mask )
+    end if
 
   end subroutine build_pressure_rhs
 
@@ -430,6 +459,9 @@ contains
     real( r_def ), parameter       :: minus_one = -1.0_r_def
     real( r_def )                  :: tau_dt
     type( field_type )             :: uv_inc, w_inc
+    type(field_type),      pointer :: w3_mask     => null(), &
+                                      w2_mask     => null(), &
+                                      wtheta_mask => null()
 
     integer( i_def )               :: p, mesh_id
 
@@ -446,6 +478,12 @@ contains
     m3_inv        => get_mass_matrix(w3inv_id)
     Hb_lumped_inv => get_Hb_lumped_inv()
 
+    if ( limited_area ) then
+      w3_mask     => get_mask(W3)
+      w2_mask     => get_mask(W2)
+      wtheta_mask => get_mask(Wtheta)
+    end if
+
     ! Create increment fields
     call u_inc%initialise( vector_space = self%rhs_u%get_function_space() )
     call theta_inc%initialise( vector_space = state%vector(igh_t)%get_function_space() )
@@ -457,29 +495,56 @@ contains
     call flux%initialise( vector_space = self%rhs_u%get_function_space() )
 
     tau_dt = -tau_r*dt
-    call invoke( name = "Compute increments",                                 &
-                 setval_c(ru_inc, 0.0_r_def),                                 &
-                 setval_c(theta_inc,  0.0_r_def),                             &
-    ! u increment
-                 matrix_vector_kernel_type(ru_inc, exner_inc, div_star),      &
-                 inc_X_times_Y(ru_inc, u_normalisation),                      &
-                 inc_X_plus_Y(ru_inc, self%rhs_u),                            &
-                 enforce_bc_kernel_type(ru_inc),                              &
-                 X_times_Y(u_inc, ru_inc, Hb_lumped_inv),                     &
-    ! theta increment
-                 matrix_vector_kernel_type(theta_inc, u_inc, ptheta2),        &
-                 inc_X_times_Y(theta_inc, t_normalisation),                   &
-                 inc_aX_plus_Y(minus_one, theta_inc, rhs%vector(igh_t)),      &
-    ! rho increment
-                 X_times_Y(flux, rho_at_u, u_inc),                            &
-                 dg_matrix_vector_kernel_type(rr_inc, flux, div),             &
-                 dg_matrix_vector_kernel_type(rho_inc, rr_inc, m3_inv),       &
-                 inc_aX_plus_Y(tau_dt, rho_inc, rhs%vector(igh_d)),           &
-    ! Increment state array
-                 inc_X_plus_Y(state%vector(igh_t), theta_inc),                &
-                 inc_X_plus_Y(state%vector(igh_d), rho_inc),                  &
-                 inc_X_plus_Y(state%vector(igh_p), exner_inc) )
-
+    if ( limited_area ) then
+      call invoke( name = "Compute_increments_for_LAM",                         &
+                   setval_c(ru_inc, 0.0_r_def),                                 &
+                   setval_c(theta_inc,  0.0_r_def),                             &
+      ! u increment
+                   matrix_vector_kernel_type(ru_inc, exner_inc, div_star),      &
+                   inc_X_times_Y(ru_inc, u_normalisation),                      &
+                   inc_X_plus_Y(ru_inc, self%rhs_u),                            &
+                   enforce_bc_kernel_type(ru_inc),                              &
+                   inc_X_times_Y(ru_inc, w2_mask),                              &
+                   X_times_Y(u_inc, ru_inc, Hb_lumped_inv),                     &
+      ! theta increment
+                   matrix_vector_kernel_type(theta_inc, u_inc, ptheta2),        &
+                   inc_X_times_Y(theta_inc, t_normalisation),                   &
+                   inc_aX_plus_Y(minus_one, theta_inc, rhs%vector(igh_t)),      &
+                   inc_X_times_Y(theta_inc, wtheta_mask),                       &
+      ! rho increment
+                   X_times_Y(flux, rho_at_u, u_inc),                            &
+                   dg_matrix_vector_kernel_type(rr_inc, flux, div),             &
+                   dg_matrix_vector_kernel_type(rho_inc, rr_inc, m3_inv),       &
+                   inc_aX_plus_Y(tau_dt, rho_inc, rhs%vector(igh_d)),           &
+                   inc_X_times_Y(rho_inc, w3_mask),                             &
+      ! Increment state array
+                   inc_X_plus_Y(state%vector(igh_t), theta_inc),                &
+                   inc_X_plus_Y(state%vector(igh_d), rho_inc),                  &
+                   inc_X_plus_Y(state%vector(igh_p), exner_inc) )
+    else
+      call invoke( name = "Compute_increments",                                 &
+                   setval_c(ru_inc, 0.0_r_def),                                 &
+                   setval_c(theta_inc,  0.0_r_def),                             &
+      ! u increment
+                   matrix_vector_kernel_type(ru_inc, exner_inc, div_star),      &
+                   inc_X_times_Y(ru_inc, u_normalisation),                      &
+                   inc_X_plus_Y(ru_inc, self%rhs_u),                            &
+                   enforce_bc_kernel_type(ru_inc),                              &
+                   X_times_Y(u_inc, ru_inc, Hb_lumped_inv),                     &
+      ! theta increment
+                   matrix_vector_kernel_type(theta_inc, u_inc, ptheta2),        &
+                   inc_X_times_Y(theta_inc, t_normalisation),                   &
+                   inc_aX_plus_Y(minus_one, theta_inc, rhs%vector(igh_t)),      &
+      ! rho increment
+                   X_times_Y(flux, rho_at_u, u_inc),                            &
+                   dg_matrix_vector_kernel_type(rr_inc, flux, div),             &
+                   dg_matrix_vector_kernel_type(rho_inc, rr_inc, m3_inv),       &
+                   inc_aX_plus_Y(tau_dt, rho_inc, rhs%vector(igh_d)),           &
+      ! Increment state array
+                   inc_X_plus_Y(state%vector(igh_t), theta_inc),                &
+                   inc_X_plus_Y(state%vector(igh_d), rho_inc),                  &
+                   inc_X_plus_Y(state%vector(igh_p), exner_inc) )
+    end if
 
     p = self%rhs_u%get_element_order()
     mesh_id = self%rhs_u%get_mesh_id()

@@ -1,0 +1,83 @@
+!-----------------------------------------------------------------------------
+! (C) Crown copyright 2021 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-----------------------------------------------------------------------------
+
+!> @brief Initialisation of analytical LBC fields.
+module init_gungho_lbcs_alg_mod
+
+  use field_mod,                       only: field_type
+  use field_collection_mod,            only: field_collection_type
+  use fs_continuity_mod,               only: W2, W3, Wtheta
+  use runtime_constants_mod,           only: get_boundary_mask, &
+                                             get_lbc_mask
+
+  implicit none
+
+  private
+  public :: init_gungho_lbcs_alg
+
+  contains
+
+  !> @brief   Copy the LBCs from the prognostic fields.
+  !> @details The prognostic fields have been defined analytically.
+  !!          We define the LBCs to be these initial conditions - so
+  !!          the LBCs are created by copying the prognostic fields in the
+  !!          LBC region, as defined by the LBC masks. This
+  !!          gives a standalone limited-area model that is forced only
+  !!          by the interior.
+  !> @param[in]     prognostic_fields The collection of prognostics
+  !> @param[in,out] lbc_fields        The collection of LBC fields
+  subroutine init_gungho_lbcs_alg( prognostic_fields, lbc_fields )
+
+    implicit none
+
+    type( field_collection_type ), intent(in)    :: prognostic_fields
+    type( field_collection_type ), intent(inout) :: lbc_fields
+
+    type( field_type ), pointer :: theta => null()
+    type( field_type ), pointer :: u     => null()
+    type( field_type ), pointer :: rho   => null()
+    type( field_type ), pointer :: exner => null()
+
+    type( field_type ), pointer :: lbc_theta  => null()
+    type( field_type ), pointer :: lbc_u      => null()
+    type( field_type ), pointer :: lbc_rho    => null()
+    type( field_type ), pointer :: lbc_exner  => null()
+    type( field_type ), pointer :: boundary_u => null()
+
+    type( field_type ), pointer :: w2_lbc_mask      => null()
+    type( field_type ), pointer :: w3_lbc_mask      => null()
+    type( field_type ), pointer :: wtheta_lbc_mask  => null()
+    type( field_type ), pointer :: w2_boundary_mask => null()
+
+    w2_lbc_mask      => get_lbc_mask( W2 )
+    w3_lbc_mask      => get_lbc_mask( W3 )
+    wtheta_lbc_mask  => get_lbc_mask( Wtheta )
+    w2_boundary_mask => get_boundary_mask( W2 )
+
+    theta => prognostic_fields%get_field( 'theta' )
+    u     => prognostic_fields%get_field( 'u' )
+    rho   => prognostic_fields%get_field( 'rho' )
+    exner => prognostic_fields%get_field( 'exner' )
+
+    lbc_theta  => lbc_fields%get_field( 'lbc_theta' )
+    lbc_u      => lbc_fields%get_field( 'lbc_u' )
+    lbc_rho    => lbc_fields%get_field( 'lbc_rho' )
+    lbc_exner  => lbc_fields%get_field( 'lbc_exner' )
+    boundary_u => lbc_fields%get_field( 'boundary_u_driving' )
+
+    call invoke( X_times_Y( lbc_u,      u,     w2_lbc_mask ),     &
+                 X_times_Y( lbc_rho,    rho,   w3_lbc_mask ),     &
+                 X_times_Y( lbc_exner,  exner, w3_lbc_mask ),     &
+                 X_times_Y( lbc_theta,  theta, wtheta_lbc_mask ), &
+                 X_times_Y( boundary_u, u,     w2_boundary_mask ) )
+
+    nullify( w2_lbc_mask, w3_lbc_mask, wtheta_lbc_mask, w2_boundary_mask )
+    nullify( theta, u, rho, exner )
+    nullify( lbc_theta, lbc_u, lbc_rho, lbc_exner, boundary_u )
+
+  end subroutine init_gungho_lbcs_alg
+
+end module init_gungho_lbcs_alg_mod

@@ -41,7 +41,8 @@ contains
     use boundaries_config_mod,     only: edge_cells_ew, edge_cells_ns, &
                                          boundary_s, boundary_n,       &
                                          boundary_e, boundary_w,       &
-                                         rim_width_ns, rim_width_ew
+                                         rim_width_ns, rim_width_ew,   &
+                                         normal_only
     use extrusion_config_mod,      only: number_of_layers
     use finite_element_config_mod, only: element_order
 
@@ -100,20 +101,32 @@ contains
     ! Add dofs located half a cell in, and multiply by the vertical
     if ( rim_width_ew >= 0 .and. rim_width_ns >= 0 ) then
       ! 4 Dirichlet Boundaries
-      expected_sum = &
-         ! Perpendicular
-         ( total_edges * number_of_layers ) &
-         ! Parallel ( minus 4 corners)
-       + ( total_edges - 4.0_r_def ) &
-       * ( 2.0_r_def * number_of_layers + 1.0_r_def )
+      if (normal_only) then
+        expected_sum = &
+          ! Perpendicular
+          ( total_edges * number_of_layers )
+      else
+        expected_sum = &
+          ! Perpendicular
+          ( total_edges * number_of_layers ) &
+          ! Parallel ( minus 4 corners)
+          + ( total_edges - 4.0_r_def ) &
+          * ( 2.0_r_def * number_of_layers + 1.0_r_def )
+      endif
     else
       ! 2 Dirichlet Boundaries and 2 Periodic Boundaries
-      expected_sum = &
-         ! Perpendicular
-         ( total_edges * number_of_layers ) &
-         ! Parallel
-       + ( total_edges ) &
-       * ( 2.0_r_def * number_of_layers + 1.0_r_def )
+      if (normal_only) then
+        expected_sum = &
+           ! Perpendicular
+           ( total_edges * number_of_layers )
+      else
+        expected_sum = &
+          ! Perpendicular
+          ( total_edges * number_of_layers ) &
+          ! Parallel
+          + ( total_edges ) &
+          * ( 2.0_r_def * number_of_layers + 1.0_r_def )
+      endif
     endif
 
     if ( abs( actual_sum - expected_sum ) > tol ) then

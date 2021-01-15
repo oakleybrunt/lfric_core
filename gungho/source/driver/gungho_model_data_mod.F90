@@ -47,6 +47,7 @@ module gungho_model_data_mod
   use section_choice_config_mod,        only : cloud, cloud_none
   use map_fd_to_prognostics_alg_mod,    only : map_fd_to_prognostics
   use init_gungho_prognostics_alg_mod,  only : init_gungho_prognostics_alg
+  use init_gungho_lbcs_alg_mod,         only : init_gungho_lbcs_alg
   use init_physics_prognostics_alg_mod, only : init_physics_prognostics_alg
   use update_tstar_alg_mod,             only : update_tstar_alg
   use moist_dyn_factors_alg_mod,        only : moist_dyn_factors_alg
@@ -265,6 +266,12 @@ contains
                                           model_data%diagnostic_fields, &
                                           model_data%mr,                &
                                           model_data%moist_dyn )
+
+        ! Initialise the LBCs by copying from the prognostic fields
+        if ( limited_area ) then
+          call init_gungho_lbcs_alg( model_data%prognostic_fields, &
+                                     model_data%lbc_fields )
+        end if
 
       case ( init_option_checkpoint_dump )
 
