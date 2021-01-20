@@ -335,6 +335,14 @@ subroutine rad_tile_code(nlayers,                                &
     ice_fract_cat(1, 1, i_sice) = real(tile_fraction(map_tile(i)), r_um)
   end do
 
+  ! Because Jules tests on flandg < 1, we need to ensure this is exactly
+  ! 1 when no sea or sea-ice is present
+  if (flandg(1,1) < 1.0_r_um .and. &
+       tile_fraction(map_tile(first_sea_tile)) == 0.0_r_def .and. &
+       ice_fract(1,1) == 0.0_r_um) then
+    flandg(1,1) = 1.0_r_um
+  end if
+
   ! Jules requires sea-ice fractions with respect to the sea area
   if (ice_fract(1, 1) > 0.0_r_um) then
     ice_fract(1, 1) = ice_fract(1, 1) / (1.0_r_um - flandg(1, 1))
