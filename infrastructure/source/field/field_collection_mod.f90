@@ -35,7 +35,7 @@ module field_collection_mod
   !-----------------------------------------------------------------------------
   ! Type that holds a collection of fields in a linked list
   !-----------------------------------------------------------------------------
-  type, public :: field_collection_type
+  type, extends(linked_list_data_type), public :: field_collection_type
 
     private
     !> The name of the field collection if provided.
