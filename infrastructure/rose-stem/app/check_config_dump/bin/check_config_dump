@@ -18,11 +18,18 @@
 SOURCE=$1
 cd ${SOURCE}
 result=$(rose config-dump -C ${SOURCE})
+
+if [[ -f ${SOURCE}/config_dump_check_fail ]] ; then
+  echo \'rose config-dump\' has not been applied to source.
+  exit 1
+fi
+
 if [[ ${result} == '' ]] ; then
   echo No changes from application of \'rose config-dump\'
   ExitStatus=0
 else
   echo \'rose config-dump\' has not been applied to source.
+  touch ${SOURCE}/config_dump_check_fail
   ExitStatus=1
 fi
 
