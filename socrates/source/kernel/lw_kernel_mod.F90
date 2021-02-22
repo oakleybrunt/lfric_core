@@ -34,7 +34,7 @@ public :: lw_code
 ! Contains the metadata needed by the PSy layer.
 type, extends(kernel_type) :: lw_kernel_type
   private
-  type(arg_type) :: meta_args(37) = (/                             &
+  type(arg_type) :: meta_args(38) = (/                             &
     arg_type(GH_FIELD,   GH_WRITE,     Wtheta),                    & ! lw_heating_rate
     arg_type(GH_FIELD,   GH_WRITE,     ANY_DISCONTINUOUS_SPACE_1), & ! lw_down_surf
     arg_type(GH_FIELD,   GH_WRITE,     ANY_DISCONTINUOUS_SPACE_2), & ! lw_up_tile
@@ -58,6 +58,7 @@ type, extends(kernel_type) :: lw_kernel_type
     arg_type(GH_FIELD,   GH_READ,      Wtheta),                    & ! area_fraction
     arg_type(GH_FIELD,   GH_READ,      Wtheta),                    & ! liquid_fraction
     arg_type(GH_FIELD,   GH_READ,      Wtheta),                    & ! ice_fraction
+    arg_type(GH_FIELD,   GH_READ,      Wtheta),                    & ! sigma_qcw
     arg_type(GH_FIELD,   GH_READ,      Wtheta),                    & ! cca
     arg_type(GH_FIELD,   GH_READ,      Wtheta),                    & ! ccw
     arg_type(GH_FIELD,   GH_READ,      Wtheta),                    & ! cloud_drop_no_conc
@@ -107,6 +108,7 @@ contains
 ! @param[in]     area_fraction           Total cloud area fraction field
 ! @param[in]     liquid_fraction         Liquid cloud fraction field
 ! @param[in]     ice_fraction            Ice cloud fraction field
+! @param[in]     sigma_qcw               Fractional standard deviation of condensate
 ! @param[in]     cca                     Convective cloud amount (fraction)
 ! @param[in]     ccw                     Convective cloud water (kg/kg) (can be ice or liquid)
 ! @param[in]     cloud_drop_no_conc      Cloud Droplet Number Concentration
@@ -166,6 +168,7 @@ subroutine lw_code(nlayers,                          &
                    area_fraction,                    &
                    liquid_fraction,                  &
                    ice_fraction,                     &
+                   sigma_qcw,                        &
                    cca, ccw,                         &
                    cloud_drop_no_conc,               &
                    tile_fraction,                    &
@@ -193,7 +196,7 @@ subroutine lw_code(nlayers,                          &
   use radiation_config_mod, only: n_radstep,  &
     l_planet_grey_surface, planet_emissivity, &
     i_cloud_ice_type_lw, i_cloud_liq_type_lw, &
-    cloud_horizontal_rsd, cloud_vertical_decorr
+    cloud_vertical_decorr
   use set_thermodynamic_mod, only: set_thermodynamic
   use set_cloud_field_mod, only: set_cloud_field
   use jules_control_init_mod, only: n_surf_tile, lw_band_tile, first_sea_tile
@@ -234,7 +237,8 @@ subroutine lw_code(nlayers,                          &
   real(r_def), dimension(undf_w3),  intent(in) :: theta_in_w3, exner, height_w3
   real(r_def), dimension(undf_wth), intent(in) :: theta, exner_in_wth, &
     rho_in_wth, height_wth, ozone, mv, mcl, mci, &
-    area_fraction, liquid_fraction, ice_fraction, cca, ccw, cloud_drop_no_conc
+    area_fraction, liquid_fraction, ice_fraction, sigma_qcw, &
+    cca, ccw, cloud_drop_no_conc
   real(r_def), dimension(undf_tile),  intent(in) :: tile_fraction
   real(r_def), dimension(undf_tile),  intent(in) :: tile_temperature
   real(r_def), dimension(undf_rtile), intent(in) :: tile_lw_albedo
@@ -358,7 +362,8 @@ subroutine lw_code(nlayers,                          &
       ice_conv_mmr_1d         = ice_conv_mmr,                                  &
       liq_conv_dim_1d         = liq_conv_dim,                                  &
       liq_conv_nc_1d          = cloud_drop_no_conc(wth_1:wth_nlayers),         &
-      cloud_horizontal_rsd    = cloud_horizontal_rsd,                          &
+      liq_rsd_1d              = sigma_qcw(wth_1:wth_nlayers),                  &
+      ice_rsd_1d              = sigma_qcw(wth_1:wth_nlayers),                  &
       cloud_vertical_decorr   = cloud_vertical_decorr,                         &
       conv_vertical_decorr    = cloud_vertical_decorr,                         &
       rand_seed               = rand_seed,                                     &

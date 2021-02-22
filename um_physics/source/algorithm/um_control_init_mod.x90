@@ -8,13 +8,15 @@
 
 module um_control_init_mod
 
-  ! LFRic namelists which have been read
+  ! LFRic namelists which have bee read
   use extrusion_config_mod,    only : number_of_layers
   use timestepping_config_mod, only : dt, outer_iterations
 
   ! Other modules used
-  use constants_mod,           only : i_um, r_um, rmdi, i_def
-  use conversions_mod,         only : pi_over_180
+  use constants_mod,           only : i_um, r_um, rmdi, i_def, r_def
+  use runtime_constants_mod,   only : get_delta_at_wtheta
+  use field_mod,               only : field_type
+  use planet_config_mod,       only : radius
 
   implicit none
 
@@ -55,7 +57,11 @@ contains
     integer(i_def),   intent(in)    :: mesh_id
 
     ! Local variables
-    type(mesh_type), pointer        :: mesh => null()
+    type(mesh_type),  pointer       :: mesh => null()
+    type(field_type), pointer       :: delta => null() ! Horizontal edge length
+    type(field_type)                :: ones
+
+    real(r_def) :: sum_delta, sum_ones
 
     ! ----------------------------------------------------------------
     ! Model dimensions - contained in UM module nlsizes_namelist_mod
@@ -127,11 +133,21 @@ contains
 
     ! The following are used in the calculation of grid-box size in
     ! UM parametrizations.
-    ! They are temporarily fixed here to be representative of an N96/C48 model.
-    ! They should ultimately be set from the LFRic mesh directly.
+    ! As the grid here should be quasi-uniform, we'll assume that the
+    ! average value is representative of all grid-points
     allocate(cos_theta_latitude(row_length,rows), source=1.0_r_um)
-    delta_lambda = 1.875_r_um*pi_over_180
-    delta_phi    = 1.875_r_um*pi_over_180
+
+    ! This is a temporary method of calculating
+    ! the global mean of a field - once psyclone#489 is live, 
+    ! it should be changed to use the built-in function
+    delta => get_delta_at_wtheta()
+    call delta%copy_field_properties(ones)
+    call invoke( setval_c(ones, 1.0_r_def), &
+                 sum_X(sum_delta, delta)  , &
+                 sum_X(sum_ones,  ones)     )
+
+    delta_lambda = sum_delta / ( sum_ones * radius )
+    delta_phi    = delta_lambda
 
   end subroutine um_control_init
 

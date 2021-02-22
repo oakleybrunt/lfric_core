@@ -105,6 +105,7 @@ subroutine radiation_alg(dtheta_rad, theta, exner, mr,                    &
   type( field_type ), pointer :: area_fraction       => null()
   type( field_type ), pointer :: liquid_fraction     => null()
   type( field_type ), pointer :: ice_fraction        => null()
+  type( field_type ), pointer :: sigma_qcw           => null()
   type( field_type ), pointer :: cca                 => null()
   type( field_type ), pointer :: ccw                 => null()
 
@@ -193,6 +194,7 @@ subroutine radiation_alg(dtheta_rad, theta, exner, mr,                    &
   area_fraction       => cloud_fields%get_field('area_fraction')
   liquid_fraction     => cloud_fields%get_field('liquid_fraction')
   ice_fraction        => cloud_fields%get_field('ice_fraction')
+  sigma_qcw           => cloud_fields%get_field('sigma_qcw')
 
   cca                 => convection_fields%get_field('cca')
   ccw                 => convection_fields%get_field('ccw')
@@ -226,7 +228,7 @@ subroutine radiation_alg(dtheta_rad, theta, exner, mr,                    &
                  stellar_irradiance_rts,                                    &
                  ozone,                                                     &
                  mr(imr_v), mr(imr_cl), mr(imr_ci),                         &
-                 area_fraction, liquid_fraction, ice_fraction,              &
+                 area_fraction, liquid_fraction, ice_fraction, sigma_qcw,   &
                  cca, ccw, cloud_drop_no_conc,                              &
                  tile_fraction,                                             &
                  tile_sw_direct_albedo, tile_sw_diffuse_albedo,             &
@@ -243,7 +245,7 @@ subroutine radiation_alg(dtheta_rad, theta, exner, mr,                    &
                  height_w3, height_wth,                                     &
                  ozone,                                                     &
                  mr(imr_v), mr(imr_cl), mr(imr_ci),                         &
-                 area_fraction, liquid_fraction, ice_fraction,              &
+                 area_fraction, liquid_fraction, ice_fraction, sigma_qcw,   &
                  cca, ccw, cloud_drop_no_conc,                              &
                  tile_fraction, tile_temperature,                           &
                  tile_lw_albedo,                                            &

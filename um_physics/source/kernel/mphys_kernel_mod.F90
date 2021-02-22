@@ -7,9 +7,10 @@
 
 module mphys_kernel_mod
 
-use argument_mod, only: arg_type,                     &
-                        GH_FIELD, GH_READ, GH_WRITE,  &
-                        CELLS, ANY_DISCONTINUOUS_SPACE_1
+use argument_mod, only: arg_type,                           &
+                        GH_FIELD, GH_READ, GH_WRITE, CELLS, & 
+                        ANY_DISCONTINUOUS_SPACE_1,          &
+                        ANY_DISCONTINUOUS_SPACE_2
 use fs_continuity_mod, only: WTHETA, W3
 
 use kernel_mod,   only: kernel_type
@@ -26,7 +27,7 @@ private
 
 type, public, extends(kernel_type) :: mphys_kernel_type
   private
-  type(arg_type) :: meta_args(29) = (/                                 &
+  type(arg_type) :: meta_args(30) = (/                                 &
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       & ! mv_wth
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       & ! ml_wth
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       & ! mi_wth
@@ -55,7 +56,8 @@ type, public, extends(kernel_type) :: mphys_kernel_type
        arg_type(GH_FIELD,   GH_WRITE,   WTHETA),                       & ! theta_inc
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       & ! dcfl_wth
        arg_type(GH_FIELD,   GH_READ,    WTHETA),                       & ! dcff_wth
-       arg_type(GH_FIELD,   GH_READ,    WTHETA)                        & ! dbcf_wth
+       arg_type(GH_FIELD,   GH_READ,    WTHETA),                       & ! dbcf_wth
+       arg_type(GH_FIELD,   GH_READ,    ANY_DISCONTINUOUS_SPACE_2)     & ! f_arr_wth
        /)
    integer :: iterates_over = CELLS
 contains
@@ -97,6 +99,7 @@ contains
 !> @param[out] dcfl_wth            Increment to liquid cloud fraction
 !> @param[out] dcff_wth            Increment to ice cloud fraction
 !> @param[out] dbcf_wth            Increment to bulk cloud fraction
+!> @param[in]  f_arr_wth           Parameters related to fractional standard deviation of condensate
 !> @param[in]  ndf_wth             Number of degrees of freedom per cell for
 !>                                  potential temperature space
 !> @param[in]  undf_wth            Number unique of degrees of freedom for
@@ -115,6 +118,10 @@ contains
 !>                                  2D fields
 !> @param[in]  map_2d              Dofmap for the cell at the base of the
 !>                                  column for 2D fields
+!> @param[in]  ndf_farr            Number of degrees of freedom per cell for fsd array
+!> @param[in]  undf_farr           Number unique of degrees of freedom for fsd array
+!> @param[in]  map_farr            Dofmap for the cell at the base of the column for fsd array
+
 subroutine mphys_code( nlayers,                     &
                        mv_wth,   ml_wth,   mi_wth,  &
                        mr_wth,   mg_wth,            &
@@ -130,11 +137,14 @@ subroutine mphys_code( nlayers,                     &
                        ls_rain_2d, ls_snow_2d,      &
                        theta_inc,                   &
                        dcfl_wth, dcff_wth, dbcf_wth,&
+                       f_arr_wth,                   &
                        ndf_wth, undf_wth, map_wth,  &
                        ndf_w3,  undf_w3,  map_w3,   &
-                       ndf_2d, undf_2d, map_2d)
+                       ndf_2d,  undf_2d,  map_2d,   &
+                       ndf_farr,undf_farr,map_farr  )
 
-    use constants_mod,             only: r_def, i_def, r_um, i_um
+    use constants_mod,              only: r_def, i_def, r_um, i_um
+    use cloud_config_mod,           only: cld_fsd_hill
 
     !---------------------------------------
     ! UM modules
@@ -148,7 +158,7 @@ subroutine mphys_code( nlayers,                     &
 
     use cloud_inputs_mod,           only: i_cld_vn, rhcrit
     use pc2_constants_mod,          only: i_cld_off, i_cld_pc2
-
+    use fsd_parameters_mod,         only: f_arr
     use electric_inputs_mod,        only: electric_method, em_gwp, em_mccaul
     use electric_main_mod,          only: electric_main
 
@@ -168,8 +178,8 @@ subroutine mphys_code( nlayers,                     &
     ! Arguments
 
     integer(kind=i_def), intent(in) :: nlayers
-    integer(kind=i_def), intent(in) :: ndf_wth, ndf_w3, ndf_2d
-    integer(kind=i_def), intent(in) :: undf_wth, undf_w3, undf_2d
+    integer(kind=i_def), intent(in) :: ndf_wth,  ndf_w3,  ndf_2d,  ndf_farr
+    integer(kind=i_def), intent(in) :: undf_wth, undf_w3, undf_2d, undf_farr
 
     real(kind=r_def), intent(in),  dimension(undf_wth) :: mv_wth
     real(kind=r_def), intent(in),  dimension(undf_wth) :: ml_wth
@@ -189,22 +199,24 @@ subroutine mphys_code( nlayers,                     &
     real(kind=r_def), intent(in),  dimension(undf_w3)  :: height_w3
     real(kind=r_def), intent(in),  dimension(undf_wth) :: height_wth
     real(kind=r_def), intent(in),  dimension(undf_wth) :: cloud_drop_no_conc
+    real(kind=r_def), intent(in),  dimension(undf_farr):: f_arr_wth
 
-    real(kind=r_def), intent(inout), dimension(undf_wth) :: dmv_wth
-    real(kind=r_def), intent(inout), dimension(undf_wth) :: dml_wth
-    real(kind=r_def), intent(inout), dimension(undf_wth) :: dmi_wth
-    real(kind=r_def), intent(inout), dimension(undf_wth) :: dmr_wth
-    real(kind=r_def), intent(inout), dimension(undf_wth) :: dmg_wth
-    real(kind=r_def), intent(inout), dimension(undf_2d)  :: ls_rain_2d
-    real(kind=r_def), intent(inout), dimension(undf_2d)  :: ls_snow_2d
-    real(kind=r_def), intent(inout), dimension(undf_wth) :: theta_inc
-    real(kind=r_def), intent(inout), dimension(undf_wth) :: dcfl_wth
-    real(kind=r_def), intent(inout), dimension(undf_wth) :: dcff_wth
-    real(kind=r_def), intent(inout), dimension(undf_wth) :: dbcf_wth
+    real(kind=r_def), intent(out), dimension(undf_wth) :: dmv_wth
+    real(kind=r_def), intent(out), dimension(undf_wth) :: dml_wth
+    real(kind=r_def), intent(out), dimension(undf_wth) :: dmi_wth
+    real(kind=r_def), intent(out), dimension(undf_wth) :: dmr_wth
+    real(kind=r_def), intent(out), dimension(undf_wth) :: dmg_wth
+    real(kind=r_def), intent(out), dimension(undf_2d)  :: ls_rain_2d
+    real(kind=r_def), intent(out), dimension(undf_2d)  :: ls_snow_2d
+    real(kind=r_def), intent(out), dimension(undf_wth) :: theta_inc
+    real(kind=r_def), intent(out), dimension(undf_wth) :: dcfl_wth
+    real(kind=r_def), intent(out), dimension(undf_wth) :: dcff_wth
+    real(kind=r_def), intent(out), dimension(undf_wth) :: dbcf_wth
 
     integer(kind=i_def), intent(in), dimension(ndf_wth) :: map_wth
     integer(kind=i_def), intent(in), dimension(ndf_w3)  :: map_w3
     integer(kind=i_def), intent(in), dimension(ndf_2d)  :: map_2d
+    integer(kind=i_def), intent(in), dimension(ndf_farr):: map_farr
 
     ! Local variables for the kernel
 
@@ -235,7 +247,7 @@ subroutine mphys_code( nlayers,                     &
 
     logical, dimension(row_length,rows) :: land_sea_mask
 
-    integer(i_um) :: i,j,k
+    integer(i_um) :: i,j,k,n
 
     integer(i_um), dimension(npd_arcl_compnts) :: i_arcl_compnts
 
@@ -325,7 +337,7 @@ subroutine mphys_code( nlayers,                     &
     do k = 1, model_levels
       do j = 1, rows
         do i = 1, row_length
-          ! height of rho levels from centre of planet
+          ! height of levels from centre of planet
           r_rho_levels(i,j,k)   = height_w3(map_w3(1) + k-1) + planet_radius
           r_theta_levels(i,j,k) = height_wth(map_wth(1) + k) + planet_radius
 
@@ -393,6 +405,17 @@ subroutine mphys_code( nlayers,                     &
     else
       allocate(qgraup_work(1,1,1))
       qgraup_work(1,1,1) = 0.0_r_um
+    end if
+
+    if ( cld_fsd_hill ) then
+      ! Parameters from fractional standard deviation (FSD) parametrization
+      ! There are 3 parameters used in the empirical fit, each stored as a different
+      ! element in the f_arr array.
+      do n = 1, 3
+        do k = 1, model_levels
+          f_arr(n,1,1,k) = f_arr_wth(map_farr(1) + (n-1)*(model_levels+1) + k)
+        end do
+      end do
     end if
 
     ! Note: need other options once Smith scheme is in use.

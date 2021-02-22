@@ -739,9 +739,10 @@ contains
     call delta_at_wtheta%initialise( vector_space = wtheta_fs )
     call max_diff_wtheta%initialise( vector_space = wtheta_fs )
 
+    call invoke( X_divideby_Y(dx_at_w2, detj_at_w2, dA_at_w2),&
+                 calc_delta_at_wtheta_kernel_type(delta_at_wtheta, dx_at_w2) )
+
     if (smagorinsky) then
-      call invoke( X_divideby_Y(dx_at_w2, detj_at_w2, dA_at_w2),&
-                   calc_delta_at_wtheta_kernel_type(delta_at_wtheta, dx_at_w2)  )
 
       ! calculate maximum diffusion coefficient allowed in this run for stability
       ! based on UMDP 28 equation 32: max_diff = dx^2/(8*dt)

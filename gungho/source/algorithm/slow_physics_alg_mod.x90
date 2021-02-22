@@ -7,7 +7,7 @@
 module slow_physics_alg_mod
 
   use clock_mod,                 only: clock_type
-  use cloud_config_mod,          only: scheme, scheme_pc2
+  use cloud_config_mod,          only: scheme, scheme_pc2, cld_fsd_hill
   use constants_mod,             only: i_def, r_def
   use log_mod,                   only: LOG_LEVEL_INFO
   use physics_config_mod,        only: heldsuarez_thermo_placement,    &
@@ -62,6 +62,7 @@ module slow_physics_alg_mod
   use radiation_config_mod,      only: l_planet_grey_surface
   use ancil_info,                only: rad_nband
   use jules_control_init_mod,    only: sw_band_tile, lw_band_tile, n_land_tile
+  use fsd_condensate_alg_mod,    only: fsd_condensate_alg
   use init_aerosol_fields_alg_mod, only: sw_band_mode, lw_band_mode, mode_dimen
 #endif
 
@@ -172,6 +173,8 @@ contains
     type( field_type ) :: dtheta_pc2_checks, theta_updated
     type( field_type ) :: dqv_pc2_checks, dqcl_pc2_checks, dqcf_pc2_checks
     type( field_type ) :: dcfl_pc2_checks, dcff_pc2_checks, dbcf_pc2_checks
+    ! ...for fractional standard deviation cloud (microphysics and radiation)
+    type( field_type ) :: f_arr
 
     ! pointers to vector spaces
     type(function_space_type), pointer :: vector_space => null()
@@ -224,6 +227,16 @@ contains
 
 #ifdef UM_PHYSICS
     !--------------------------------------------------------------------
+    ! Fractional standard deviation (FSD) of cloud condensate
+    !--------------------------------------------------------------------
+    vector_space => function_space_collection%get_fs( mesh_id, 0, Wtheta, 3)
+    call f_arr%initialise(vector_space)
+    if ( cld_fsd_hill ) then
+      call fsd_condensate_alg( f_arr, cloud_fields, convection_fields,    &
+                               height_w3, delta )
+    end if
+
+    !--------------------------------------------------------------------
     ! Glomap mode aerosol climatologies
     !--------------------------------------------------------------------
     vector_space=>function_space_collection%get_fs(mesh_id,0,Wtheta,mode_dimen)
@@ -253,7 +266,7 @@ contains
          microphysics_placement == microphysics_placement_slow) then
       call mphys_alg( mr_n, theta, rho, height_w3, height_wth,       &
                       derived_fields, microphysics_fields,           &
-                      cloud_fields, aerosol_fields,                  &
+                      cloud_fields, aerosol_fields, f_arr,           &
                       dmr_mphys, dtheta_mphys,                       &
                       dcfl_pc2_mphys, dcff_pc2_mphys, dbcf_pc2_mphys )
       microphysics_done=.true. ! Collect this increment later on

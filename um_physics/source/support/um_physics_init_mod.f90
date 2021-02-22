@@ -44,7 +44,8 @@ module um_physics_init_mod
                                         falliceshear_method,                  &
                                         falliceshear_method_real,             &
                                         falliceshear_method_constant,         &
-                                        subgrid_qv, ice_width_in => ice_width
+                                        subgrid_qv, ice_width_in => ice_width,&
+                                        use_fsd_eff_res
 
   use convection_config_mod,     only : cv_scheme,                    &
                                         cv_scheme_gregory_rowntree,   &
@@ -102,6 +103,7 @@ module um_physics_init_mod
   use log_mod,              only : log_event,         &
                                    log_scratch_space, &
                                    LOG_LEVEL_ERROR
+  use conversions_mod,      only : pi_over_180
 
   ! UM modules used
   use cderived_mod,         only : delta_lambda, delta_phi
@@ -149,6 +151,7 @@ contains
          l_simplify_pc2_init_logic, dbsdtbs_turb_0,                        &
          i_pc2_erosion_method, i_pc2_init_method, check_run_cloud,         &
          forced_cu_fac, i_pc2_conv_coupling, allicetdegc, starticetkelvin
+    use cloud_config_mod, only: cld_fsd_hill
     use cv_run_mod, only: icvdiag, cvdiag_inv, cvdiag_sh_wtest,            &
          limit_pert_opt, tv1_sd_opt, iconv_congestus, iconv_deep,          &
          ent_fac_dp, cldbase_opt_dp, cldbase_opt_sh, w_cape_limit,         &
@@ -177,7 +180,7 @@ contains
     use dust_parameters_mod, only: i_dust, i_dust_off,                     &
          dust_parameters_load
     use electric_inputs_mod, only: electric_method, no_lightning
-    use fsd_parameters_mod, only: fsd_eff_lam, fsd_eff_phi
+    use fsd_parameters_mod, only: fsd_eff_lam, fsd_eff_phi, f_cons, f_arr
     use glomap_clim_option_mod, only: i_glomap_clim_setup,                 &
          i_gc_sussocbc_5mode, l_glomap_clim_aie2
     use g_wave_input_mod, only: ussp_launch_factor, wavelstar, l_add_cgw,  &
@@ -189,7 +192,7 @@ contains
         l_mcr_qcf2, sediment_loc, i_mcr_iter_tstep, all_sed_start,           &
         check_run_precip, graupel_option, no_graupel, a_ratio_exp,           &
         a_ratio_fac, l_droplet_tpr, qclrime, l_shape_rime, ndrop_surf,       &
-        z_surf
+        z_surf, l_fsd_generator
     use pc2_constants_mod, only: i_cld_off, i_cld_smith, i_cld_pc2,        &
          rhcpt_off, acf_off, real_shear, rhcpt_tke_based,                  &
          pc2eros_exp_rh,pc2eros_hybrid_allfaces,pc2eros_hybrid_sidesonly,  &
@@ -516,7 +519,9 @@ contains
       end select
       ice_fraction_method = min_liq_overlap
       ice_width           = real(ice_width_in, r_um)
-      ! l_add_cca_to_mcica=.true. needs adding - not currently coded
+      ! l_add_cca_to_mcica is unused in LFRic, its functionality 
+      ! ... being replaced by the cloud_representation option in 
+      ! ... the radiation namelist (T=combined, F=liquid_and_ice).
       ! l_od_cld_filter=.true. should be here - only for diagnostics
       ! ...tau_thresh=0.01 should be set here if so
       l_subgrid_qv               = subgrid_qv
@@ -599,7 +604,7 @@ contains
       i_mcr_iter     = i_mcr_iter_tstep
       l_diff_icevt   = .true.
       l_droplet_tpr  = droplet_tpr
-      ! l_fsd_generator should be set here - code doesn't yet exist
+      l_fsd_generator= cld_fsd_hill
       l_mcr_qrain    = .true.
       l_psd          = .true.
       l_rain         = .true.
@@ -622,8 +627,25 @@ contains
       ! ... contained in rad_input_mod
       two_d_fsd_factor = 1.5_r_um
       ! ... contained in fsd_parameters_mod
-      fsd_eff_lam      = delta_lambda
-      fsd_eff_phi      = delta_phi
+      if (use_fsd_eff_res) then
+        ! In UM GA8, the fixed effective resolution was N96: 1.875 x 1.25 degrees
+        ! here use 1.875 degrees in both directions.
+        fsd_eff_lam    = 1.875_r_um * pi_over_180
+        fsd_eff_phi    = 1.875_r_um * pi_over_180
+      else
+        fsd_eff_lam    = delta_lambda
+        fsd_eff_phi    = delta_phi
+      end if
+
+      if ( cld_fsd_hill ) then
+        ! Parameters for fractional standard deviation (fsd) of condensate taken
+        ! from part of equation 3 in Hill et al (2015) DOI: 10.1002/qj.2506,
+        ! i.e. phi(x,c) = R21 (xc) ^ 1/3 { (0.016 xc)^2.76 + 1 } ^ -0.09
+        f_cons(1)      =  0.016
+        f_cons(2)      =  2.76
+        f_cons(3)      = -0.09
+        allocate(f_arr(3, row_length, rows, number_of_layers))
+      end if
 
     end if
 

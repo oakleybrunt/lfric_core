@@ -532,6 +532,8 @@ contains
     call add_physics_field(cloud_fields, depository, prognostic_fields, &
       'departure_exner_wth', wtheta_space, checkpoint_restart_flag,     &
       advection_flag=advection_flag)
+    call add_physics_field(cloud_fields, depository, prognostic_fields, &
+      'sigma_qcw',   wtheta_space, checkpoint_restart_flag)
 
     !========================================================================
     ! Fields owned by the surface exchange scheme

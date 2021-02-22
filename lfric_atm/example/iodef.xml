@@ -275,6 +275,7 @@
 	<field id="bulk_fraction" name="bulk_fraction" long_name="bulk_fraction" unit="1" grid_ref="full_level_face_grid" />
 	<field id="rh_crit" name="rh_crit" long_name="critical_relative_humidity" unit="1" grid_ref="full_level_face_grid" />
 	<field id="departure_exner_wth" name="departure_exner_wth" long_name="exner_at_departure_point" unit="1" grid_ref="full_level_face_grid" />
+        <field id="sigma_qcw" name="sigma_qcw" long_name="variability_cloud_condensate" unit="1" grid_ref="full_level_face_grid" />
 	<!-- convection fields -->
 	<field id="dt_conv" name="dt_conv" long_name="temperature_increment_from_convection" unit="K" grid_ref="full_level_face_grid" />
 	<field id="dmv_conv" name="dmv_conv" long_name="vapour_increment_from_convection" unit="kg kg-1" grid_ref="full_level_face_grid" />
@@ -417,6 +418,7 @@
 	<field id="init_bulk_fraction" name="bulk_fraction" long_name="bulk_fraction"  unit="1" grid_ref="full_level_face_grid" />
 	<field id="init_rh_crit" name="rh_crit" long_name="critical_relative_humidity"  unit="1" grid_ref="full_level_face_grid" />
 	<field id="init_departure_exner_wth" name="departure_exner_wth" long_name="exner_at_departure_point"  unit="1" grid_ref="full_level_face_grid" />
+        <field id="init_sigma_qcw" name="sigma_qcw" long_name="variability_cloud_condensate"  unit="1" grid_ref="full_level_face_grid" />
 	<field id="init_soil_moisture" name="soil_moisture" long_name="soil_moisture" unit="kg m-2" domain_ref="face" axis_ref="soil_pseudo_levels"/>
 	<field id="init_unfrozen_soil_moisture" name="unfrozen_soil_moisture" long_name="unfrozen_soil_moisture" unit="kg m-2" domain_ref="face" axis_ref="soil_pseudo_levels"/>
 	<field id="init_soil_temperature" name="soil_temperature" long_name="soil_temperature" unit="K" domain_ref="face" axis_ref="soil_pseudo_levels"/>

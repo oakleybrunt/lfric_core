@@ -1,0 +1,193 @@
+!-----------------------------------------------------------------------------
+! (c) Crown copyright 2021 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-----------------------------------------------------------------------------
+!> @brief Calculates fractional standard deviation (FSD) of condensate
+
+module fsd_condensate_kernel_mod
+
+use argument_mod,         only: arg_type,                     &
+                                GH_FIELD, GH_READ, GH_WRITE,  &
+                                GH_READWRITE, CELLS,          &
+                                ANY_DISCONTINUOUS_SPACE_1
+use fs_continuity_mod,    only: WTHETA, W3
+use kernel_mod,           only: kernel_type
+use cloud_config_mod,     only: use_fsd_eff_res
+use planet_config_mod,    only: radius
+use fsd_parameters_mod,   only: fsd_eff_lam, f_cons
+use extrusion_config_mod, only: domain_top
+
+implicit none
+
+private
+
+!-------------------------------------------------------------------------------
+! Public types
+!-------------------------------------------------------------------------------
+!> The type declaration for the kernel. Contains the metadata needed by the Psy layer
+
+type, public, extends(kernel_type) :: fsd_condensate_kernel_type
+  private
+  type(arg_type) :: meta_args(6) = (/                              &
+       arg_type(GH_FIELD,   GH_WRITE,   WTHETA),                   & ! sigma_qcw
+       arg_type(GH_FIELD,   GH_WRITE,   ANY_DISCONTINUOUS_SPACE_1),& ! f_arr_wth
+       arg_type(GH_FIELD,   GH_READ,    WTHETA),                   & ! acf_wth
+       arg_type(GH_FIELD,   GH_READ,    WTHETA),                   & ! cca_wth
+       arg_type(GH_FIELD,   GH_READ,    W3),                       & ! height_w3
+       arg_type(GH_FIELD,   GH_READ,    WTHETA)                    & ! delta
+       /)
+   integer :: iterates_over = CELLS
+contains
+  procedure, nopass :: fsd_condensate_code
+end type
+
+public fsd_condensate_code
+contains
+
+!> @brief Calculates fractional standard deviation (FSD) of condensate
+!> @details Uses cloud fraction, grid box size and convective cloudiness
+!>          to determine variability in condensate for use by
+!>          radiation and microphysics scheme.
+!> @param[in]     nlayers    Number of layers
+!> @param[in,out] sigma_qcw  Fractional standard deviation of condensate
+!> @param[in,out] f_arr_wth  Parameters related to fractional standard deviation of condensate
+!> @param[in]     acf_wth    Area cloud fraction
+!> @param[in]     cca_wth    Convective cloud amount
+!> @param[in]     height_w3  Height of density levels above surface
+!> @param[in]     delta      Edge length on wtheta points
+!> @param[in]     ndf_wth    Number of degrees of freedom per cell for potential temperature space
+!> @param[in]     undf_wth   Number unique of degrees of freedom  for potential temperature space
+!> @param[in]     map_wth    Dofmap for the cell at the base of the column for potential temperature space
+!> @param[in]     ndf_w3     Number of degrees of freedom per cell for density space
+!> @param[in]     undf_w3    Number unique of degrees of freedom for density space
+!> @param[in]     map_w3     Dofmap for the cell at the base of the column for density space
+!> @param[in]     ndf_farr   Number of degrees of freedom per cell for fsd array
+!> @param[in]     undf_farr  Number unique of degrees of freedom for fsd array
+!> @param[in]     map_farr   Dofmap for the cell at the base of the column for fsd array
+
+subroutine fsd_condensate_code( nlayers,                    &
+                                           ! InOut
+                                sigma_qcw_wth,              &
+                                f_arr_wth,                  &
+                                           ! In
+                                acf_wth,                    &
+                                cca_wth,                    &
+                                height_w3,                  &
+                                delta,                      &
+                                           ! DoF and Map info
+                                ndf_wth, undf_wth, map_wth, &
+                                ndf_farr,undf_farr,map_farr,&
+                                ndf_w3,  undf_w3,  map_w3   )
+
+
+    use constants_mod, only: r_def, i_def, r_um, i_um
+
+    !---------------------------------------
+    ! UM modules
+    !---------------------------------------
+
+    use rad_input_mod, only: two_d_fsd_factor ! Condensate variability is 
+    ! parametrized using an empirical function fitting it to one-dimensional 
+    ! data. The two_d_fsd_factor rescales this value to make it representative
+    ! of two-dimensional varibility. See Hill et al (2015) DOI: 10.1002/qj.2506
+
+    implicit none
+
+    integer(kind=i_def), intent(in) :: nlayers
+    integer(kind=i_def), intent(in) :: ndf_wth,  undf_wth
+    integer(kind=i_def), intent(in) :: ndf_w3,   undf_w3
+    integer(kind=i_def), intent(in) :: ndf_farr, undf_farr
+
+    integer(kind=i_def), intent(in), dimension(ndf_wth)   :: map_wth
+    integer(kind=i_def), intent(in), dimension(ndf_w3)    :: map_w3
+    integer(kind=i_def), intent(in), dimension(ndf_farr)  :: map_farr
+
+    real(kind=r_def), intent(in),    dimension(undf_wth)  :: acf_wth
+    real(kind=r_def), intent(in),    dimension(undf_wth)  :: cca_wth
+    real(kind=r_def), intent(in),    dimension(undf_w3)   :: height_w3
+    real(kind=r_def), intent(in),    dimension(undf_wth)  :: delta
+    real(kind=r_def), intent(inout), dimension(undf_wth)  :: sigma_qcw_wth
+    real(kind=r_def), intent(inout), dimension(undf_farr) :: f_arr_wth
+
+    real(kind=r_def), dimension(  nlayers) :: delta_z ! Layer thickness in vert
+    real(kind=r_def), dimension(  nlayers) :: x_in_km ! Grid box size
+    real(kind=r_def), dimension(3,nlayers) :: f_arr   ! FSD parameters
+    real(kind=r_def)                       :: conv_thick_part ! Convective contrib
+    real(kind=r_def)                       :: cloud_scale     ! Size of cld
+    real(kind=r_def), parameter            :: one_third       = 1.0_r_def/3.0_r_def
+    real(kind=r_def), parameter            :: m_to_km         = 0.001_r_def
+
+    integer(i_um) :: k, n
+
+    if (use_fsd_eff_res) then
+      ! Use a fixed effective resolution in FSD parametrization.
+      do k = 1, nlayers
+        x_in_km(k) = fsd_eff_lam * radius * m_to_km 
+      end do
+    else
+      ! Use edge length as measure of horizontal distance in FSD parametrization
+      ! (and convert from m to km).
+      do k = 1, nlayers
+        x_in_km(k) = delta(map_wth(1) + k) * m_to_km 
+      end do
+    end if
+
+    ! Calculate layer thickness
+    do k = 1, nlayers - 1
+      delta_z(k) = height_w3(map_w3(1) + k) - height_w3(map_w3(1) + k-1)
+    end do
+    ! Estimate thickness of top-most layer.
+    delta_z(nlayers) = 2 * ( domain_top - height_w3(nlayers-1) )
+
+    ! Equations taken from Hill et al (2015, DOI: 10.1002/qj.2506)
+    do k = 1, nlayers
+
+      if (cca_wth(map_wth(1) + k) > 0.0_r_def) then
+        conv_thick_part = 2.81_r_def * (x_in_km(k)**(-0.12_r_def))              &
+                        * ( delta_z(k) * m_to_km ) ** 0.07_r_def
+      else
+        conv_thick_part = 1.14_r_def * (x_in_km(k)**0.002_r_def)                &
+                        * ( delta_z(k) * m_to_km ) ** 0.12_r_def
+      end if
+
+      ! There are 3 parameters in the FSD array, so define all 3
+      f_arr(1,k) = 0.12_r_def * conv_thick_part
+      f_arr(2,k) = 0.23_r_def * conv_thick_part
+      f_arr(3,k) = 0.05_r_def * conv_thick_part
+
+      if (acf_wth(map_wth(1)+k) < 1.0_r_def) then
+        cloud_scale = acf_wth(map_wth(1)+k) * x_in_km(k)
+        sigma_qcw_wth(map_wth(1)+k) = two_d_fsd_factor *                        &
+                      (f_arr(2,k)-(f_arr(3,k)*acf_wth(map_wth(1)+k)))           &
+                      * (cloud_scale ** one_third)                              &
+                      * ((((f_cons(1) * cloud_scale) ** f_cons(2)) + 1.0_r_def) &
+                      ** (f_cons(3)))
+      else
+        sigma_qcw_wth(map_wth(1)+k) = two_d_fsd_factor * f_arr(1,k)             &
+                      * (x_in_km(k) ** one_third)                               &
+                      * ((((f_cons(1) * x_in_km(k)) ** f_cons(2)) + 1.0_r_def)  &
+                      ** (f_cons(3)))
+      end if
+
+    end do ! k
+
+    ! Recast into LFRic space
+    do n = 1, 3
+      do k = 1, nlayers
+        ! There are 3 parameters in the FSD array, so loop over all 3
+        f_arr_wth(map_farr(1) + (n-1)*(nlayers+1) + k) = f_arr(n,k)
+      end do
+    end do
+
+    ! Deal with bottom level
+    sigma_qcw_wth(map_wth(1)+0) = sigma_qcw_wth(map_wth(1)+1)
+    do n = 1, 3
+      ! There are 3 parameters in the FSD array, so loop over all 3
+      f_arr_wth(map_farr(1) + (n-1)*(nlayers+1) + 0) = &
+      f_arr_wth(map_farr(1) + (n-1)*(nlayers+1) + 1)
+    end do
+
+end subroutine fsd_condensate_code
+
+end module fsd_condensate_kernel_mod

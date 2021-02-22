@@ -37,6 +37,7 @@ contains
   !>@param[in,out] microphysics_fields    Fields for mphys scheme
   !>@param[in]     cloud_fields           Fields for cloud scheme
   !>@param[in]     aerosol_fields         Fields for aerosol scheme
+  !>@param[in]     f_arr                  Fractional standard dev params
   !>@param[in,out] dmr_mphys      Mixing ratio increment due to microphysics
   !>@param[in,out] theta_inc      Potential temperature increment in wth space
   !>@param[in,out] dcfl           Increment to liquid cloud fraction
@@ -45,7 +46,7 @@ contains
   subroutine mphys_alg( mr_n, theta, dry_rho_in_w3,                       &
                         height_w3, height_wth, derived_fields,            &
                         microphysics_fields, cloud_fields,                &
-                        aerosol_fields, dmr_mphys, theta_inc,             &
+                        aerosol_fields, f_arr, dmr_mphys, theta_inc,      &
                         dcfl, dcff, dbcf )
 
     use mphys_kernel_mod, only: mphys_kernel_type
@@ -67,6 +68,7 @@ contains
     type( field_collection_type ), intent(inout) :: microphysics_fields
     type( field_collection_type ), intent(in)    :: cloud_fields
     type( field_collection_type ), intent(in)    :: aerosol_fields
+    type( field_type ),            intent(in)    :: f_arr
 
     type( field_type ), intent( inout ) :: dmr_mphys ( nummr )
     type( field_type ), intent( inout ) :: theta_inc
@@ -128,7 +130,7 @@ contains
                                      dmr_mphys(imr_v),  dmr_mphys(imr_cl),     &
                                      dmr_mphys(imr_ci), dmr_mphys(imr_r),      &
                                      dmr_mphys(imr_g), ls_rain, ls_snow,       &
-                                     theta_inc, dcfl, dcff, dbcf ) )
+                                     theta_inc, dcfl, dcff, dbcf, f_arr ) )
 
     ! Calculate increments required by the BL scheme
     if ( boundary_layer == boundary_layer_um ) then
