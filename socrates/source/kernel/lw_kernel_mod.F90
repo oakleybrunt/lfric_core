@@ -287,8 +287,8 @@ subroutine lw_code(nlayers,                          &
 
   ! Tile fractions & temperatures
   do i_tile = 1, n_surf_tile
-    frac_tile(i_tile) = tile_fraction(map_tile(i_tile))
-    t_tile(i_tile) = tile_temperature(map_tile(i_tile))
+    frac_tile(i_tile) = tile_fraction(map_tile(1)+i_tile-1)
+    t_tile(i_tile) = tile_temperature(map_tile(1)+i_tile-1)
   end do
 
   if (mod(timestep-1_i_def, n_radstep) == 0) then
@@ -405,7 +405,7 @@ subroutine lw_code(nlayers,                          &
 
     ! Set tiled fluxes
     do i_tile = 1, n_surf_tile
-      lw_up_tile_rts(map_tile(i_tile)) = flux_up_tile_rts(i_tile)
+      lw_up_tile_rts(map_tile(1)+i_tile-1) = flux_up_tile_rts(i_tile)
     end do
 
     ! No corrections needed for model timestep
@@ -415,7 +415,7 @@ subroutine lw_code(nlayers,                          &
     lw_down_surf(map_2d(1)) = lw_down_surf_rts(map_2d(1))
 
     do i_tile = 1, n_surf_tile
-      lw_up_tile(map_tile(i_tile)) = lw_up_tile_rts(map_tile(i_tile))
+      lw_up_tile(map_tile(1)+i_tile-1) = lw_up_tile_rts(map_tile(1)+i_tile-1)
     end do
 
   else
@@ -441,7 +441,7 @@ subroutine lw_code(nlayers,                          &
 
     ! Set tiled fluxes
     do i_tile = 1, n_surf_tile
-      lw_up_tile(map_tile(i_tile)) = flux_up_tile(i_tile)
+      lw_up_tile(map_tile(1)+i_tile-1) = flux_up_tile(i_tile)
     end do
 
   end if

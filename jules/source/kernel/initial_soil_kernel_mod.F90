@@ -73,47 +73,47 @@ contains
     ! jules_control_init
     if (test == test_snow) then ! Testing with snow present
 
-      soil_temperature(map_soil(1)) = 270.0_r_def
-      soil_temperature(map_soil(2)) = 270.0_r_def
-      soil_temperature(map_soil(3)) = 275.0_r_def
-      soil_temperature(map_soil(4)) = 275.0_r_def
+      soil_temperature(map_soil(1)+0) = 270.0_r_def
+      soil_temperature(map_soil(1)+1) = 270.0_r_def
+      soil_temperature(map_soil(1)+2) = 275.0_r_def
+      soil_temperature(map_soil(1)+3) = 275.0_r_def
 
-      soil_moisture(map_soil(1)) = 40.0_r_def
-      soil_moisture(map_soil(2)) = 90.0_r_def
-      soil_moisture(map_soil(3)) = 150.0_r_def
-      soil_moisture(map_soil(4)) = 460.0_r_def
+      soil_moisture(map_soil(1)+0) = 40.0_r_def
+      soil_moisture(map_soil(1)+1) = 90.0_r_def
+      soil_moisture(map_soil(1)+2) = 150.0_r_def
+      soil_moisture(map_soil(1)+3) = 460.0_r_def
 
-      unfrozen_soil_moisture(map_soil(1)) = 0.46896_r_def
-      unfrozen_soil_moisture(map_soil(2)) = 0.46911_r_def
-      unfrozen_soil_moisture(map_soil(3)) = 0.51408_r_def
-      unfrozen_soil_moisture(map_soil(4)) = 0.51096_r_def
+      unfrozen_soil_moisture(map_soil(1)+0) = 0.46896_r_def
+      unfrozen_soil_moisture(map_soil(1)+1) = 0.46911_r_def
+      unfrozen_soil_moisture(map_soil(1)+2) = 0.51408_r_def
+      unfrozen_soil_moisture(map_soil(1)+3) = 0.51096_r_def
 
-      frozen_soil_moisture(map_soil(1)) = 0.42210_r_def
-      frozen_soil_moisture(map_soil(2)) = 0.33285_r_def
-      frozen_soil_moisture(map_soil(3)) = 0.0_r_def
-      frozen_soil_moisture(map_soil(4)) = 0.0_r_def
+      frozen_soil_moisture(map_soil(1)+0) = 0.42210_r_def
+      frozen_soil_moisture(map_soil(1)+1) = 0.33285_r_def
+      frozen_soil_moisture(map_soil(1)+2) = 0.0_r_def
+      frozen_soil_moisture(map_soil(1)+3) = 0.0_r_def
 
     else ! All other tests without snow
 
-      soil_temperature(map_soil(1)) = 285.0_r_def
-      soil_temperature(map_soil(2)) = 280.0_r_def
-      soil_temperature(map_soil(3)) = 275.0_r_def
-      soil_temperature(map_soil(4)) = 275.0_r_def
+      soil_temperature(map_soil(1)+0) = 285.0_r_def
+      soil_temperature(map_soil(1)+1) = 280.0_r_def
+      soil_temperature(map_soil(1)+2) = 275.0_r_def
+      soil_temperature(map_soil(1)+3) = 275.0_r_def
 
-      soil_moisture(map_soil(1)) = 40.0_r_def
-      soil_moisture(map_soil(2)) = 90.0_r_def
-      soil_moisture(map_soil(3)) = 150.0_r_def
-      soil_moisture(map_soil(4)) = 460.0_r_def
+      soil_moisture(map_soil(1)+0) = 40.0_r_def
+      soil_moisture(map_soil(1)+1) = 90.0_r_def
+      soil_moisture(map_soil(1)+2) = 150.0_r_def
+      soil_moisture(map_soil(1)+3) = 460.0_r_def
 
-      unfrozen_soil_moisture(map_soil(1)) = 0.89107_r_def
-      unfrozen_soil_moisture(map_soil(2)) = 0.80196_r_def
-      unfrozen_soil_moisture(map_soil(3)) = 0.51408_r_def
-      unfrozen_soil_moisture(map_soil(4)) = 0.51236_r_def
+      unfrozen_soil_moisture(map_soil(1)+0) = 0.89107_r_def
+      unfrozen_soil_moisture(map_soil(1)+1) = 0.80196_r_def
+      unfrozen_soil_moisture(map_soil(1)+2) = 0.51408_r_def
+      unfrozen_soil_moisture(map_soil(1)+3) = 0.51236_r_def
 
-      frozen_soil_moisture(map_soil(1)) = 0.0_r_def
-      frozen_soil_moisture(map_soil(2)) = 0.0_r_def
-      frozen_soil_moisture(map_soil(3)) = 0.0_r_def
-      frozen_soil_moisture(map_soil(4)) = 0.0_r_def
+      frozen_soil_moisture(map_soil(1)+0) = 0.0_r_def
+      frozen_soil_moisture(map_soil(1)+1) = 0.0_r_def
+      frozen_soil_moisture(map_soil(1)+2) = 0.0_r_def
+      frozen_soil_moisture(map_soil(1)+3) = 0.0_r_def
 
     end if
 

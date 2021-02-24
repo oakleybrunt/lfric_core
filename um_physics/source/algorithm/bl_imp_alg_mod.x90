@@ -10,11 +10,9 @@ module bl_imp_alg_mod
   use constants_mod,                 only: i_def
   use field_mod,                     only: field_type
   use field_collection_mod,          only: field_collection_type
-  use function_space_mod,            only: function_space_type
-  use function_space_collection_mod, only: function_space_collection
-  use fs_continuity_mod,             only: W3
-  use lfric_xios_write_mod,          only: write_field_single_face
-  use field_parent_mod,              only: write_interface
+  use function_space_mod,            only: function_space_type	 	
+  use function_space_collection_mod, only: function_space_collection	 	
+  use fs_continuity_mod,             only: W2
   use mr_indices_mod,                only: nummr, imr_v, imr_cl, imr_ci
   use timestepping_config_mod,       only: outer_iterations
 
@@ -72,8 +70,6 @@ contains
 
     use interp_bl_kernel_mod, only: interp_bl_kernel_type
     use bl_imp_kernel_mod, only: bl_imp_kernel_type
-    use high_to_multi_kernel_mod, only: high_to_multi_kernel_type
-    use jules_control_init_mod, only: n_surf_tile
 
     implicit none
 
@@ -176,9 +172,7 @@ contains
     type( field_type ), pointer :: n_snow_layers      => null()
     type( field_type ), pointer :: snow_depth         => null()
 
-    type( field_type ) :: tmp_diag
-    type(function_space_type), pointer  :: tmp_space => null()
-    procedure(write_interface), pointer :: write_diag_behaviour => null()
+    type(function_space_type), pointer  :: vector_space => null()
     type( field_type ) :: rhokm_w2, rhokm_surf_w2, ngstress_w2, dtrdz_w2, &
                           rdz_w2, fd_tau_w2, du_conv_w2, dw_conv
 
@@ -296,11 +290,13 @@ contains
 
     ! Set up required variables in w2 space
     call u_physics%copy_field_properties(rhokm_w2)
-    call u_physics%copy_field_properties(rhokm_surf_w2)
     call u_physics%copy_field_properties(ngstress_w2)
     call u_physics%copy_field_properties(dtrdz_w2)
     call u_physics%copy_field_properties(rdz_w2)
     call u_physics%copy_field_properties(fd_tau_w2)
+
+    vector_space => function_space_collection%get_fs(rhokm_surf%get_mesh_id(), 0, W2, 5 )
+    call rhokm_surf_w2%initialise(vector_space)
 
     call invoke(setval_c(rhokm_w2,      0.0_r_def), &
                 setval_c(rhokm_surf_w2, 0.0_r_def), &
@@ -365,30 +361,12 @@ contains
       call dmv_bl%write_field('dmv_bl')
       call zh%write_field('zh')
 
-      ! Make a 2D multi-data field for temporary diagnostic output
-      ! (this can be removed when the fields themselves are multi-data)
-      tmp_space => function_space_collection%get_fs( zh%get_mesh_id(), 0, &
-                                                     W3, n_surf_tile )
-      call tmp_diag%initialise(tmp_space)
-      write_diag_behaviour => write_field_single_face
-      call tmp_diag%set_write_behaviour(write_diag_behaviour)
-
       ! Surface diagnostics
-      call invoke( high_to_multi_kernel_type(tmp_diag, tile_heat_flux, &
-                                             n_surf_tile) )
-      call tmp_diag%write_field('tile_heat_flux')
-      call invoke( high_to_multi_kernel_type(tmp_diag, tile_moisture_flux, &
-                                             n_surf_tile) )
-      call tmp_diag%write_field('tile_moisture_flux')
-      call invoke( high_to_multi_kernel_type(tmp_diag, tile_temperature, &
-                                             n_surf_tile) )
-      call tmp_diag%write_field('tile_temperature')
-      call invoke( high_to_multi_kernel_type(tmp_diag, tile_fraction, &
-                                             n_surf_tile) )
-      call tmp_diag%write_field('tile_fraction')
-      call invoke( high_to_multi_kernel_type(tmp_diag, canopy_evap, &
-                                             n_surf_tile) )
-      call tmp_diag%write_field('canopy_evap')
+      call tile_heat_flux%write_field('tile_heat_flux')
+      call tile_moisture_flux%write_field('tile_moisture_flux')
+      call tile_temperature%write_field('tile_temperature')
+      call tile_fraction%write_field('tile_fraction')
+      call canopy_evap%write_field('canopy_evap')
 
     end if
 

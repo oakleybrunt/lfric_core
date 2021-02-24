@@ -99,10 +99,10 @@ contains
       call setup_ancil_field("land_tile_fraction", depository, ancil_fields, &
                               mesh_id, twod_mesh_id, twod=.true., ndata=n_land_tile)
       call init_time_axis("pft_time", pft_time_axis)
-      call setup_ancil_field("canopy_height_in", depository, ancil_fields, &
+      call setup_ancil_field("canopy_height", depository, ancil_fields, &
                               mesh_id, twod_mesh_id, twod=.true., ndata=npft, &
                               time_axis=pft_time_axis)
-      call setup_ancil_field("leaf_area_index_in", depository, ancil_fields, &
+      call setup_ancil_field("leaf_area_index", depository, ancil_fields, &
                               mesh_id, twod_mesh_id, twod=.true., ndata=npft, &
                               time_axis=pft_time_axis)
       call pft_time_axis%set_update_behaviour(tmp_update_ptr)
@@ -260,11 +260,11 @@ contains
     ! Local variables
     type(field_type)          :: new_field
     integer(i_def)            :: ndat, time_ndat
+    logical(l_def)            :: twod_field
     integer(i_def), parameter :: fs_order = 0
 
     ! Pointers
-    type(function_space_type),       pointer :: wth_space => null()
-    type(function_space_type),       pointer :: twod_space => null()
+    type(function_space_type),       pointer :: vec_space => null()
     procedure(read_interface),       pointer :: tmp_read_ptr => null()
     procedure(write_interface),      pointer :: tmp_write_ptr => null()
     class(field_type),               pointer :: fld_ptr => null()
@@ -276,23 +276,28 @@ contains
     else
       ndat = 1
     end if
-
-    ! Set up function spaces for field initialisation
-    wth_space   => function_space_collection%get_fs( mesh_id, fs_order, &
-                                                     WTheta, ndat )
-    twod_space => function_space_collection%get_fs( twod_mesh_id, fs_order, &
-                                                    W3, ndat )
+    if (present(twod)) then
+      twod_field = twod
+    else
+      twod_field = .false.
+    end if
 
     ! If field does not yet exist, then create it
     if ( .not. depository%field_exists( name ) ) then
       write(log_scratch_space,'(3A,I6)') &
            "Creating new field for ", trim(name)
       call log_event(log_scratch_space,LOG_LEVEL_INFO)
-      if (present(twod)) then
-        call new_field%initialise( twod_space, name=trim(name) )
+      if (twod_field) then
+        vec_space => function_space_collection%get_fs( twod_mesh_id, fs_order, &
+                                                       W3, ndat )
+        tmp_write_ptr => write_field_single_face
       else
-        call new_field%initialise( wth_space, name=trim(name) )
-      end if
+        vec_space => function_space_collection%get_fs( mesh_id, fs_order, &
+                                                       WTheta, ndat )
+        tmp_write_ptr => write_field_face
+       end if
+      call new_field%initialise( vec_space, name=trim(name) )
+      call new_field%set_write_behaviour(tmp_write_ptr)
       ! Add the new field to the field depository
       call depository%add_field(new_field)
     end if
@@ -304,41 +309,29 @@ contains
            "Creating time axis field for ", trim(name)
       call log_event(log_scratch_space,LOG_LEVEL_INFO)
 
-      ! Multiply ndat by 2 (the number of time windows) if a time axis is present
+      ! Multiply ndat by 2 (the number of time windows)
       time_ndat = ndat * 2
-      ! Set up function spaces for field initialisation
-      wth_space  => function_space_collection%get_fs( mesh_id, fs_order, &
-                                                      WTheta, time_ndat )
-      twod_space => function_space_collection%get_fs( twod_mesh_id, fs_order, &
-                                                      W3, time_ndat )
-      if (present(twod)) then
-        call new_field%initialise( twod_space, name=trim(name) )
-        call time_axis%add_field(new_field)
+      if (twod_field) then
+        vec_space => function_space_collection%get_fs( twod_mesh_id, fs_order, &
+                                                       W3, time_ndat )
       else
-        call new_field%initialise( wth_space, name=trim(name) )
-        call time_axis%add_field(new_field)
+        vec_space => function_space_collection%get_fs( mesh_id, fs_order, &
+                                                       WTheta, time_ndat )
       end if
+      call new_field%initialise( vec_space, name=trim(name) )
+      call time_axis%add_field(new_field)
     end if
 
     ! Get a field pointer from the depository
     fld_ptr => depository%get_field(name)
-    ! Set up field read behaviour for 2D and 3D fields
-    if (present(twod)) then
-      tmp_write_ptr => write_field_single_face
-    else
-      tmp_write_ptr => write_field_face
-    end if
-    ! Set field write behaviour for target field
-    call fld_ptr%set_write_behaviour(tmp_write_ptr)
 
     if (.not. present(time_axis)) then
       !Set up field read behaviour for 2D and 3D fields
-      if (present(twod))then
+      if (twod_field) then
         tmp_read_ptr => read_field_single_face
       else
         tmp_read_ptr => read_field_face
       end if
-
       ! Set field read behaviour for target field
       call fld_ptr%set_read_behaviour(tmp_read_ptr)
     end if
@@ -348,12 +341,10 @@ contains
     call ancil_fields%add_reference_to_field(abs_fld_ptr)
 
     ! Nullify pointers
-    nullify(wth_space)
-    nullify(twod_space)
+    nullify(vec_space)
     nullify(tmp_read_ptr)
     nullify(tmp_write_ptr)
     nullify(fld_ptr)
-    nullify(abs_fld_ptr)
 
   end subroutine setup_ancil_field
 

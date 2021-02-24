@@ -74,7 +74,7 @@ contains
 
       do j = 1, nsmax
         i_snow = i_snow + 1
-        indexes(j) = map_snow(i_snow)
+        indexes(j) = map_snow(1)+i_snow-1
       end do
 
       snow_layer_thickness(indexes) = (/ 0.04_r_def, 0.12_r_def, 1.5_r_def /)

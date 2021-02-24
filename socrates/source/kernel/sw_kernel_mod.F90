@@ -340,7 +340,7 @@ subroutine sw_code(nlayers,                          &
 
     ! Tile fractions
     do i_tile = 1, n_surf_tile
-      frac_tile(i_tile) = tile_fraction(map_tile(i_tile))
+      frac_tile(i_tile) = tile_fraction(map_tile(1)+i_tile-1)
     end do
 
     ! Calculate the SW fluxes (RUN the Edwards-Slingo two-stream solver)
@@ -428,16 +428,16 @@ subroutine sw_code(nlayers,                          &
 
     ! Set tiled fluxes
     do i_tile = 1, n_surf_tile
-      sw_up_tile_rts(map_tile(i_tile)) = flux_up_tile_rts(i_tile)
-      sw_up_blue_tile_rts(map_tile(i_tile)) = flux_up_blue_tile_rts(i_tile)
+      sw_up_tile_rts(map_tile(1)+i_tile-1) = flux_up_tile_rts(i_tile)
+      sw_up_blue_tile_rts(map_tile(1)+i_tile-1) = flux_up_blue_tile_rts(i_tile)
     end do
   else
     ! Not a radiation time-step
 
     ! Set tiled fluxes
     do i_tile = 1, n_surf_tile
-      flux_up_tile_rts(i_tile) = sw_up_tile_rts(map_tile(i_tile))
-      flux_up_blue_tile_rts(i_tile) = sw_up_blue_tile_rts(map_tile(i_tile))
+      flux_up_tile_rts(i_tile) = sw_up_tile_rts(map_tile(1)+i_tile-1)
+      flux_up_blue_tile_rts(i_tile) = sw_up_blue_tile_rts(map_tile(1)+i_tile-1)
     end do
   end if
 
@@ -452,8 +452,8 @@ subroutine sw_code(nlayers,                          &
     sw_direct_blue_surf(map_2d(1)) = sw_direct_blue_surf_rts(map_2d(1))
 
     do i_tile = 1, n_surf_tile
-      sw_up_tile(map_tile(i_tile))      = sw_up_tile_rts(map_tile(i_tile))
-      sw_up_blue_tile(map_tile(i_tile)) = sw_up_blue_tile_rts(map_tile(i_tile))
+      sw_up_tile(map_tile(1)+i_tile-1)      = sw_up_tile_rts(map_tile(1)+i_tile-1)
+      sw_up_blue_tile(map_tile(1)+i_tile-1) = sw_up_blue_tile_rts(map_tile(1)+i_tile-1)
     end do
   else
     ! Corrections to model timestep. The radiative fluxes have been calculated
@@ -494,8 +494,8 @@ subroutine sw_code(nlayers,                          &
 
     ! Set tiled fluxes
     do i_tile = 1, n_surf_tile
-      sw_up_tile(map_tile(i_tile)) = flux_up_tile(i_tile)
-      sw_up_blue_tile(map_tile(i_tile)) = flux_up_blue_tile(i_tile)
+      sw_up_tile(map_tile(1)+i_tile-1) = flux_up_tile(i_tile)
+      sw_up_blue_tile(map_tile(1)+i_tile-1) = flux_up_blue_tile(i_tile)
     end do
   end if
 

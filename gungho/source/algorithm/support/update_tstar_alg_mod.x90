@@ -30,10 +30,10 @@ contains
   subroutine update_tstar_alg(surface_fields, fd_fields, put_field)
 
 #ifdef UM_PHYSICS
-    use jules_control_init_mod, only: first_sea_tile
+    use jules_control_init_mod, only: first_sea_tile, n_sea_tile
 #endif
-    use single_to_multi_kernel_mod, only: single_to_multi_kernel_type
-    use multi_to_single_kernel_mod, only: multi_to_single_kernel_type
+    use multi_insert_kernel_mod, only: multi_insert_kernel_type
+    use multi_extract_kernel_mod, only: multi_extract_kernel_type
 
 
     implicit none
@@ -53,13 +53,13 @@ contains
 
     if ( put_field) then
       ! Put tstar into tile_temperature
-      call invoke( single_to_multi_kernel_type(tile_temperature, tstar, &
-                                               first_sea_tile ) )
+      call invoke( multi_insert_kernel_type(tile_temperature, tstar, &
+                                            first_sea_tile, n_sea_tile ) )
 
     else
       ! Get tstar from tile_temperature
-      call invoke( multi_to_single_kernel_type(tstar, tile_temperature, &
-                                               first_sea_tile ) )
+      call invoke( multi_extract_kernel_type(tstar, tile_temperature, &
+                                             first_sea_tile, n_sea_tile ) )
 
     end if
 #endif

@@ -492,7 +492,7 @@ contains
     ! Land sea mask
     flandg = 0.0_r_um
     do i = 1, n_land_tile
-      flandg = flandg + real(tile_fraction(map_tile(i)), r_um)
+      flandg = flandg + real(tile_fraction(map_tile(1)+i-1), r_um)
     end do
 
     ! Jules requires fractions with respect to the land area

@@ -210,10 +210,10 @@ contains
       call setup_ancil_field("wetness_under_soil", depository, &
                              fd_field_collection, mesh_id, twod_mesh_id, &
                              twod=.true.)
-      call setup_ancil_field("soil_temp_in", depository, &
+      call setup_ancil_field("soil_temperature", depository, &
                              fd_field_collection, mesh_id, twod_mesh_id, &
                              twod=.true., ndata=sm_levels)
-      call setup_ancil_field("soil_moist_in", depository, &
+      call setup_ancil_field("soil_moisture", depository, &
                              fd_field_collection, mesh_id, twod_mesh_id, &
                              twod=.true., ndata=sm_levels)
       ! surface fields
@@ -254,19 +254,19 @@ contains
       call setup_ancil_field("snowpack_density_in", depository, &
                              fd_field_collection, mesh_id, twod_mesh_id, &
                              twod=.true., ndata=n_land_tile)
-      call setup_ancil_field("snow_layer_thickness_in", depository, &
+      call setup_ancil_field("snow_layer_thickness", depository, &
                              fd_field_collection, mesh_id, twod_mesh_id, &
                              twod=.true., ndata=snow_lev_tile)
-      call setup_ancil_field("snow_layer_ice_mass_in", depository, &
+      call setup_ancil_field("snow_layer_ice_mass", depository, &
                              fd_field_collection, mesh_id, twod_mesh_id, &
                              twod=.true., ndata=snow_lev_tile)
-      call setup_ancil_field("snow_layer_liq_mass_in", depository, &
+      call setup_ancil_field("snow_layer_liq_mass", depository, &
                              fd_field_collection, mesh_id, twod_mesh_id, &
                              twod=.true., ndata=snow_lev_tile)
-      call setup_ancil_field("snow_layer_temp_in", depository, &
+      call setup_ancil_field("snow_layer_temp", depository, &
                              fd_field_collection, mesh_id, twod_mesh_id, &
                              twod=.true., ndata=snow_lev_tile)
-      call setup_ancil_field("snow_layer_rgrain_in", depository, &
+      call setup_ancil_field("snow_layer_rgrain", depository, &
                              fd_field_collection, mesh_id, twod_mesh_id, &
                              twod=.true., ndata=snow_lev_tile)
     end if

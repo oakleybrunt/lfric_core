@@ -10,10 +10,10 @@
     <axis_definition>
       <axis id="vert_axis_half_levels" name="half_levels"/>
       <axis id="vert_axis_full_levels" name="full_levels"/>
-      <axis id="veg_pseudo_levels" name="veg_pseudo_levels" n_glo="9"/>
-      <axis id="tile_pseudo_levels" name="tile_pseudo_levels" n_glo="11"/>
-      <axis id="snow_pseudo_levels" name="snow_pseudo_levels" n_glo="27"/>
-      <axis id="soil_pseudo_levels" name="soil_pseudo_levels" n_glo="4"/>
+      <axis id="land_tiles" name="land_tiles" n_glo="9"/>
+      <axis id="surface_tiles" name="surface_tiles" n_glo="11"/>
+      <axis id="snow_layers_and_tiles" name="snow_layers_and_tiles" n_glo="27"/>
+      <axis id="soil_levels" name="soil_levels" n_glo="4"/>
       <axis id="plant_func_types" name="plant_func_types" n_glo="5"/>
       <axis id="monthly_axis" name="monthly_axis" n_glo="12"/>
     </axis_definition>
@@ -21,18 +21,12 @@
     <domain_definition>
       <domain id="node" name="Mesh2d_node" nvertex="1"/>
       <domain id="face" name="Mesh2d_face" nvertex="4"/>
-            <domain id="edge" name="Mesh2d_edge" nvertex="2"/>
+      <domain id="edge" name="Mesh2d_edge" nvertex="2"/>
       <domain id="checkpoint_W0" name="checkpoint_W0" nvertex="1"/>
       <domain id="checkpoint_W1" name="checkpoint_W1" nvertex="1"/>
       <domain id="checkpoint_W2" name="checkpoint_W2" nvertex="1"/>
       <domain id="checkpoint_W3" name="checkpoint_W3" nvertex="1"/>
       <domain id="checkpoint_Wtheta" name="checkpoint_Wtheta" nvertex="1"/>
-      <domain id="checkpoint_W3_2D" name="checkpoint_W3_2D" nvertex="1"/>
-      <domain id="checkpoint_pft" name="checkpoint_pft" nvertex="1"/>
-      <domain id="checkpoint_tile" name="checkpoint_tile" nvertex="1"/>
-      <domain id="checkpoint_sice" name="checkpoint_sice" nvertex="1"/>
-      <domain id="checkpoint_soil" name="checkpoint_soil" nvertex="1"/>
-      <domain id="checkpoint_snow" name="checkpoint_snow" nvertex="1"/>
     </domain_definition>
 
     <grid_definition>
@@ -79,114 +73,114 @@
 	<field id="checkpoint_m_s" name="m_s" long_name="m_s" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
 	<field id="checkpoint_m_g" name="m_g" long_name="m_g" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
 	<!-- Aerosol fields -->
-	<field id="checkpoint_nd_nuc_sol" name="nd_nuc_sol" long_name="NUCLEATION_MODE_SOL_NUMBER" unit="1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_nuc_sol_su" name="nuc_sol_su" long_name="NUCLEATION_MODE_SOL_H2SO4_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_nuc_sol_oc" name="nuc_sol_oc" long_name="NUCLEATION_MODE_SOL_OM_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_nd_ait_sol" name="nd_ait_sol" long_name="AITKEN_MODE_SOL_NUMBER" unit="1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_ait_sol_su" name="ait_sol_su" long_name="AITKEN_MODE_SOL_H2SO4_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_ait_sol_bc" name="ait_sol_bc" long_name="AITKEN_MODE_SOL_BC_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_ait_sol_oc" name="ait_sol_oc" long_name="AITKEN_MODE_SOL_OM_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_nd_acc_sol" name="nd_acc_sol" long_name="ACCUMULATION_MODE_SOL_NUMBER" unit="1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_acc_sol_su" name="acc_sol_su" long_name="ACCUMULATION_MODE_SOL_H2SO4_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_acc_sol_bc" name="acc_sol_bc" long_name="ACCUMULATION_MODE_SOL_BC_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_acc_sol_oc" name="acc_sol_oc" long_name="ACCUMULATION_MODE_SOL_OM_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_acc_sol_ss" name="acc_sol_ss" long_name="ACCUMULATION_MODE_SOL_SEA_SALT_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_nd_cor_sol" name="nd_cor_sol" long_name="COARSE_MODE_SOL_NUMBER" unit="1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_cor_sol_su" name="cor_sol_su" long_name="COARSE_MODE_SOL_H2SO4_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_cor_sol_bc" name="cor_sol_bc" long_name="COARSE_MODE_SOL_BC_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_cor_sol_oc" name="cor_sol_oc" long_name="COARSE_MODE_SOL_OM_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_cor_sol_ss" name="cor_sol_ss" long_name="COARSE_MODE_SOL_SEA_SALT_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_nd_ait_ins" name="nd_ait_ins" long_name="AITKEN_MODE_INSOLUBLE_NUMBER" unit="1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_ait_ins_bc" name="ins_sol_bc" long_name="AITKEN_MODE_INSOLUBLE_BC_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_ait_ins_oc" name="ins_sol_oc" long_name="AITKEN_MODE_INSOLUBLE_OM_MMR" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
+	<field id="checkpoint_nd_nuc_sol" name="nd_nuc_sol" long_name="NUCLEATION_MODE_SOL_NUMBER" unit="1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_nuc_sol_su" name="nuc_sol_su" long_name="NUCLEATION_MODE_SOL_H2SO4_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_nuc_sol_oc" name="nuc_sol_oc" long_name="NUCLEATION_MODE_SOL_OM_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_nd_ait_sol" name="nd_ait_sol" long_name="AITKEN_MODE_SOL_NUMBER" unit="1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_ait_sol_su" name="ait_sol_su" long_name="AITKEN_MODE_SOL_H2SO4_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_ait_sol_bc" name="ait_sol_bc" long_name="AITKEN_MODE_SOL_BC_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_ait_sol_oc" name="ait_sol_oc" long_name="AITKEN_MODE_SOL_OM_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_nd_acc_sol" name="nd_acc_sol" long_name="ACCUMULATION_MODE_SOL_NUMBER" unit="1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_acc_sol_su" name="acc_sol_su" long_name="ACCUMULATION_MODE_SOL_H2SO4_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_acc_sol_bc" name="acc_sol_bc" long_name="ACCUMULATION_MODE_SOL_BC_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_acc_sol_oc" name="acc_sol_oc" long_name="ACCUMULATION_MODE_SOL_OM_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_acc_sol_ss" name="acc_sol_ss" long_name="ACCUMULATION_MODE_SOL_SEA_SALT_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_nd_cor_sol" name="nd_cor_sol" long_name="COARSE_MODE_SOL_NUMBER" unit="1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_cor_sol_su" name="cor_sol_su" long_name="COARSE_MODE_SOL_H2SO4_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_cor_sol_bc" name="cor_sol_bc" long_name="COARSE_MODE_SOL_BC_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_cor_sol_oc" name="cor_sol_oc" long_name="COARSE_MODE_SOL_OM_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_cor_sol_ss" name="cor_sol_ss" long_name="COARSE_MODE_SOL_SEA_SALT_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_nd_ait_ins" name="nd_ait_ins" long_name="AITKEN_MODE_INSOLUBLE_NUMBER" unit="1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_ait_ins_bc" name="ins_sol_bc" long_name="AITKEN_MODE_INSOLUBLE_BC_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_ait_ins_oc" name="ins_sol_oc" long_name="AITKEN_MODE_INSOLUBLE_OM_MMR" unit="kg kg-1" grid_ref="full_level_face_grid" />
 	<!-- Cloud fields -->
-	<field id="checkpoint_area_fraction" name="area_fraction" long_name="area_fraction" unit="1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_ice_fraction" name="ice_fraction" long_name="ice_fraction" unit="1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_liquid_fraction" name="liquid_fraction" long_name="liquid_fraction" unit="1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_bulk_fraction" name="bulk_fraction" long_name="bulk_fraction" unit="1" domain_ref="checkpoint_Wtheta" />
+	<field id="checkpoint_area_fraction" name="area_fraction" long_name="area_fraction" unit="1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_ice_fraction" name="ice_fraction" long_name="ice_fraction" unit="1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_liquid_fraction" name="liquid_fraction" long_name="liquid_fraction" unit="1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_bulk_fraction" name="bulk_fraction" long_name="bulk_fraction" unit="1" grid_ref="full_level_face_grid" />
 	<!-- Convection fields -->
-	<field id="checkpoint_cca" name="cca" long_name="convective_cloud_amount" unit="1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_ccw" name="ccw" long_name="convective_cloud_water" unit="kg kg-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_conv_rain" name="conv_rain" long_name="surface_convective_rainfall_rate" unit="kg m-2 s-1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_conv_snow" name="conv_snow" long_name="surface_convective_snowfall_rate" unit="kg m-2 s-1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_dd_mf_cb" name="dd_mf_cb" long_name="downdraft_massflux_at_cloud_base" unit="Pa s-1" domain_ref="checkpoint_W3_2D" />
+	<field id="checkpoint_cca" name="cca" long_name="convective_cloud_amount" unit="1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_ccw" name="ccw" long_name="convective_cloud_water" unit="kg kg-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_conv_rain" name="conv_rain" long_name="surface_convective_rainfall_rate" unit="kg m-2 s-1" domain_ref="face" />
+	<field id="checkpoint_conv_snow" name="conv_snow" long_name="surface_convective_snowfall_rate" unit="kg m-2 s-1" domain_ref="face" />
+	<field id="checkpoint_dd_mf_cb" name="dd_mf_cb" long_name="downdraft_massflux_at_cloud_base" unit="Pa s-1" domain_ref="face" />
 	<!-- Turbulence fields -->
-	<field id="checkpoint_zh" name="zh" long_name="boundary_layer_depth" unit="m" domain_ref="checkpoint_W3_2D" />
+	<field id="checkpoint_zh" name="zh" long_name="boundary_layer_depth" unit="m" domain_ref="face" />
 	<!-- Surface fields -->
-	<field id="checkpoint_z0msea" name="z0msea" long_name="sea_surface_roughness_length" unit="m" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_surface_conductance" name="surface_conductance" long_name="surface_conductance" unit="m s-1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_chloro_sea" name="chloro_sea" long_name="sea_chlorophyll_content" unit="kg m-3" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_leaf_area_index" name="leaf_area_index" long_name="leaf_area_index" unit="1" domain_ref="checkpoint_pft" />
-	<field id="checkpoint_canopy_height" name="canopy_height" long_name="canopy_height" unit="m" domain_ref="checkpoint_pft" />
-	<field id="checkpoint_tile_fraction" name="tile_fraction" long_name="surface_tile_fraction" unit="1" domain_ref="checkpoint_tile" />
-	<field id="checkpoint_tile_temperature" name="tile_temperature" long_name="surface_tile_temperature" unit="K" domain_ref="checkpoint_tile" />
-	<field id="checkpoint_canopy_water" name="tile_canopy_water" long_name="canopy_water_content_on_tiles" unit="kg m-2" domain_ref="checkpoint_tile" />
-	<field id="checkpoint_sea_ice_thickness" name="sea_ice_thickness" long_name="sea_ice_thickness" unit="m" domain_ref="checkpoint_sice" />
-	<field id="checkpoint_sea_ice_temperature" name="sea_ice_temperature" long_name="sea_ice_bulk_temperature" unit="K" domain_ref="checkpoint_sice" />
+	<field id="checkpoint_z0msea" name="z0msea" long_name="sea_surface_roughness_length" unit="m" domain_ref="face" />
+	<field id="checkpoint_surface_conductance" name="surface_conductance" long_name="surface_conductance" unit="m s-1" domain_ref="face" />
+	<field id="checkpoint_chloro_sea" name="chloro_sea" long_name="sea_chlorophyll_content" unit="kg m-3" domain_ref="face" />
+	<field id="checkpoint_leaf_area_index" name="leaf_area_index" long_name="leaf_area_index" unit="1" domain_ref="face" axis_ref="plant_func_types" />
+	<field id="checkpoint_canopy_height" name="canopy_height" long_name="canopy_height" unit="m" domain_ref="face" axis_ref="plant_func_types" />
+	<field id="checkpoint_tile_fraction" name="tile_fraction" long_name="surface_tile_fraction" unit="1" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="checkpoint_tile_temperature" name="tile_temperature" long_name="surface_tile_temperature" unit="K" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="checkpoint_canopy_water" name="tile_canopy_water" long_name="canopy_water_content_on_tiles" unit="kg m-2" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="checkpoint_sea_ice_thickness" name="sea_ice_thickness" long_name="sea_ice_thickness" unit="m" domain_ref="face" />
+	<field id="checkpoint_sea_ice_temperature" name="sea_ice_temperature" long_name="sea_ice_bulk_temperature" unit="K" domain_ref="face" />
 	<!-- Orography fields -->
-	<field id="checkpoint_sd_orog" name="sd_orog" long_name="sd_orog"  unit="m" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_grad_xx_orog" name="grad_xx_orog" long_name="grad_xx_orog"  unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_grad_xy_orog" name="grad_xy_orog" long_name="grad_xy_orog"  unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_grad_yy_orog" name="grad_yy_orog" long_name="grad_yy_orog"  unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_peak_to_trough_orog" name="peak_to_trough_orog" long_name="peak_to_trough_orog"  unit="m" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_silhouette_area_orog" name="silhouette_area_orog" long_name="silhouette_area_orog"  unit="m" domain_ref="checkpoint_W3_2D" />
+	<field id="checkpoint_sd_orog" name="sd_orog" long_name="sd_orog"  unit="m" domain_ref="face" />
+	<field id="checkpoint_grad_xx_orog" name="grad_xx_orog" long_name="grad_xx_orog"  unit="1" domain_ref="face" />
+	<field id="checkpoint_grad_xy_orog" name="grad_xy_orog" long_name="grad_xy_orog"  unit="1" domain_ref="face" />
+	<field id="checkpoint_grad_yy_orog" name="grad_yy_orog" long_name="grad_yy_orog"  unit="1" domain_ref="face" />
+	<field id="checkpoint_peak_to_trough_orog" name="peak_to_trough_orog" long_name="peak_to_trough_orog"  unit="m" domain_ref="face" />
+	<field id="checkpoint_silhouette_area_orog" name="silhouette_area_orog" long_name="silhouette_area_orog"  unit="m" domain_ref="face" />
 	<!-- Radiation fields -->
-	<field id="checkpoint_albedo_obs_vis" name="albedo_obs_vis" long_name="observed_visible_albedo" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_albedo_obs_nir" name="albedo_obs_nir" long_name="observed_near-infrared_albedo" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_ozone" name="ozone" long_name="ozone" unit="1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_lw_down_surf_rts" name="lw_down_surf_rts" long_name="surface_downward_longwave_flux" unit="W m-2" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_sw_down_surf_rts" name="sw_down_surf_rts" long_name="surface_downward_shortwave_flux" unit="W m-2" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_sw_direct_surf_rts" name="sw_direct_surf_rts" long_name="surface_direct_shortwave_flux" unit="W m-2" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_sw_direct_toa_rts" name="sw_direct_toa_rts" long_name="toa_direct_shortwave_flux" unit="W m-2" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_sw_down_blue_surf_rts" name="sw_down_blue_surf_rts" long_name="surface_downward_0-690nm_flux" unit="W m-2" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_sw_direct_blue_surf_rts" name="sw_direct_blue_surf_rts" long_name="surface_direct_0-690nm_flux" unit="W m-2" domain_ref="checkpoint_W3_2D" />
-        <field id="checkpoint_lw_up_tile_rts" name="lw_up_tile_rts" long_name="surface_upward_longwave_flux_on_tiles" unit="W m-2" domain_ref="checkpoint_tile" />
-        <field id="checkpoint_sw_up_tile_rts" name="sw_up_tile_rts" long_name="surface_upward_shortwave_flux_on_tiles" unit="W m-2" domain_ref="checkpoint_tile" />
-        <field id="checkpoint_sw_up_blue_tile_rts" name="sw_up_blue_tile_rts" long_name="surface_upward_0-690nm_flux_on_tiles" unit="W m-2" domain_ref="checkpoint_tile" />
-	<field id="checkpoint_sw_heating_rate_rts" name="sw_heating_rate_rts" long_name="shortwave_heating_rate" unit="K s-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_lw_heating_rate_rts" name="lw_heating_rate_rts" long_name="longwave_heating_rate" unit="K s-1" domain_ref="checkpoint_Wtheta" />
-	<field id="checkpoint_cos_zenith_angle_rts" name="cos_zenith_angle_rts" long_name="cosine_of_the_solar_zenith_angle" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_lit_fraction_rts" name="lit_fraction_rts" long_name="sunlit_fraction_of_the_timestep" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_stellar_irradiance_rts" name="stellar_irradiance_rts" long_name="stellar_irradiance" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_sin_stellar_declination_rts" name="sin_stellar_declination_rts" long_name="sin_stellar_declination" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_stellar_eqn_of_time_rts" name="stellar_eqn_of_time_rts" long_name="stellar_equation_of_time" unit="1" domain_ref="checkpoint_W3_2D" />
+	<field id="checkpoint_albedo_obs_vis" name="albedo_obs_vis" long_name="observed_visible_albedo" unit="1" domain_ref="face" />
+	<field id="checkpoint_albedo_obs_nir" name="albedo_obs_nir" long_name="observed_near-infrared_albedo" unit="1" domain_ref="face" />
+	<field id="checkpoint_ozone" name="ozone" long_name="ozone" unit="1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_lw_down_surf_rts" name="lw_down_surf_rts" long_name="surface_downward_longwave_flux" unit="W m-2" domain_ref="face" />
+	<field id="checkpoint_sw_down_surf_rts" name="sw_down_surf_rts" long_name="surface_downward_shortwave_flux" unit="W m-2" domain_ref="face" />
+	<field id="checkpoint_sw_direct_surf_rts" name="sw_direct_surf_rts" long_name="surface_direct_shortwave_flux" unit="W m-2" domain_ref="face" />
+	<field id="checkpoint_sw_direct_toa_rts" name="sw_direct_toa_rts" long_name="toa_direct_shortwave_flux" unit="W m-2" domain_ref="face" />
+	<field id="checkpoint_sw_down_blue_surf_rts" name="sw_down_blue_surf_rts" long_name="surface_downward_0-690nm_flux" unit="W m-2" domain_ref="face" />
+	<field id="checkpoint_sw_direct_blue_surf_rts" name="sw_direct_blue_surf_rts" long_name="surface_direct_0-690nm_flux" unit="W m-2" domain_ref="face" />
+        <field id="checkpoint_lw_up_tile_rts" name="lw_up_tile_rts" long_name="surface_upward_longwave_flux_on_tiles" unit="W m-2" domain_ref="face" axis_ref="surface_tiles" />
+        <field id="checkpoint_sw_up_tile_rts" name="sw_up_tile_rts" long_name="surface_upward_shortwave_flux_on_tiles" unit="W m-2" domain_ref="face" axis_ref="surface_tiles" />
+        <field id="checkpoint_sw_up_blue_tile_rts" name="sw_up_blue_tile_rts" long_name="surface_upward_0-690nm_flux_on_tiles" unit="W m-2" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="checkpoint_sw_heating_rate_rts" name="sw_heating_rate_rts" long_name="shortwave_heating_rate" unit="K s-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_lw_heating_rate_rts" name="lw_heating_rate_rts" long_name="longwave_heating_rate" unit="K s-1" grid_ref="full_level_face_grid" />
+	<field id="checkpoint_cos_zenith_angle_rts" name="cos_zenith_angle_rts" long_name="cosine_of_the_solar_zenith_angle" unit="1" domain_ref="face" />
+	<field id="checkpoint_lit_fraction_rts" name="lit_fraction_rts" long_name="sunlit_fraction_of_the_timestep" unit="1" domain_ref="face" />
+	<field id="checkpoint_stellar_irradiance_rts" name="stellar_irradiance_rts" long_name="stellar_irradiance" unit="1" domain_ref="face" />
+	<field id="checkpoint_sin_stellar_declination_rts" name="sin_stellar_declination_rts" long_name="sin_stellar_declination" unit="1" domain_ref="face" />
+	<field id="checkpoint_stellar_eqn_of_time_rts" name="stellar_eqn_of_time_rts" long_name="stellar_equation_of_time" unit="1" domain_ref="face" />
 	<!-- Snow fields -->
-	<field id="checkpoint_tile_snow_mass" name="tile_snow_mass" long_name="tile_snow_mass" unit="kg m-2" domain_ref="checkpoint_tile" />
-	<field id="checkpoint_tile_snow_rgrain" name="tile_snow_rgrain" long_name="tile_snow_grain_size" unit="microns" domain_ref="checkpoint_tile" />
-	<field id="checkpoint_n_snow_layers" name="n_snow_layers" long_name="number_of_snow_layers" unit="1" domain_ref="checkpoint_tile" />
-	<field id="checkpoint_snow_depth" name="snow_depth" long_name="snow_depth_on_tiles" unit="m" domain_ref="checkpoint_tile" />
-	<field id="checkpoint_snowpack_density" name="snowpack_density" long_name="snowpack_density_on_tiles" unit="kg m-3" domain_ref="checkpoint_tile" />
-	<field id="checkpoint_snow_under_canopy" name="snow_under_canopy" long_name="snow_under_canopy_on_tiles" unit="m" domain_ref="checkpoint_tile" />
-	<field id="checkpoint_snow_layer_thickness" name="snow_layer_thickness" long_name="snow_layer_thickness_on_tiles" unit="m" domain_ref="checkpoint_snow" />
-	<field id="checkpoint_snow_layer_ice_mass" name="snow_layer_ice_mass" long_name="snow_layer_ice_mass_on_tiles" unit="kg m-2" domain_ref="checkpoint_snow" />
-	<field id="checkpoint_snow_layer_liq_mass" name="snow_layer_liq_mass" long_name="snow_layer_liquid_mass_on_tiles" unit="kg m-2" domain_ref="checkpoint_snow" />
-	<field id="checkpoint_snow_layer_temp" name="snow_layer_temp" long_name="snow_layer_temperature_on_tiles" unit="K" domain_ref="checkpoint_snow" />
-	<field id="checkpoint_snow_layer_rgrain" name="snow_layer_rgrain" long_name="snow_layer_grain_size_on_tiles" unit="microns" domain_ref="checkpoint_snow" />
-	<field id="checkpoint_snow_soot" name="snow_soot" long_name="snow_soot_content" unit="kg kg-1" domain_ref="checkpoint_W3_2D" />
+	<field id="checkpoint_tile_snow_mass" name="tile_snow_mass" long_name="tile_snow_mass" unit="kg m-2" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="checkpoint_tile_snow_rgrain" name="tile_snow_rgrain" long_name="tile_snow_grain_size" unit="microns" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="checkpoint_n_snow_layers" name="n_snow_layers" long_name="number_of_snow_layers" unit="1" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="checkpoint_snow_depth" name="snow_depth" long_name="snow_depth_on_tiles" unit="m" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="checkpoint_snowpack_density" name="snowpack_density" long_name="snowpack_density_on_tiles" unit="kg m-3" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="checkpoint_snow_under_canopy" name="snow_under_canopy" long_name="snow_under_canopy_on_tiles" unit="m" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="checkpoint_snow_layer_thickness" name="snow_layer_thickness" long_name="snow_layer_thickness_on_tiles" unit="m" domain_ref="face" axis_ref="snow_layers_and_tiles" />
+	<field id="checkpoint_snow_layer_ice_mass" name="snow_layer_ice_mass" long_name="snow_layer_ice_mass_on_tiles" unit="kg m-2" domain_ref="face" axis_ref="snow_layers_and_tiles" />
+	<field id="checkpoint_snow_layer_liq_mass" name="snow_layer_liq_mass" long_name="snow_layer_liquid_mass_on_tiles" unit="kg m-2" domain_ref="face" axis_ref="snow_layers_and_tiles" />
+	<field id="checkpoint_snow_layer_temp" name="snow_layer_temp" long_name="snow_layer_temperature_on_tiles" unit="K" domain_ref="face" axis_ref="snow_layers_and_tiles" />
+	<field id="checkpoint_snow_layer_rgrain" name="snow_layer_rgrain" long_name="snow_layer_grain_size_on_tiles" unit="microns" domain_ref="face" axis_ref="snow_layers_and_tiles" />
+	<field id="checkpoint_snow_soot" name="snow_soot" long_name="snow_soot_content" unit="kg kg-1" domain_ref="face" />
 	<!-- Soil fields -->
-	<field id="checkpoint_soil_albedo" name="soil_albedo" long_name="soil_albedo" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_soil_roughness" name="soil_roughness" long_name="roughness_length_of_soil" unit="m" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_soil_thermal_cond" name="soil_thermal_cond" long_name="thermal_conductivity_of_soil" unit="W m-1 K-1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_soil_carbon_content" name="soil_carbon_content" long_name="soil_carbon_content" unit="kgC m-2" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_mean_topog_index" name="mean_topog_index" long_name="mean_topographic_index" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_a_sat_frac" name="a_sat_frac" long_name="saturated_fraction_a_parameter" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_c_sat_frac" name="c_sat_frac" long_name="saturated_fraction_c_parameter" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_a_wet_frac" name="a_wet_frac" long_name="wet_fraction_a_parameter" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_c_wet_frac" name="c_wet_frac" long_name="wet_fraction_c_parameter" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_soil_sat_frac" name="soil_sat_frac" long_name="soil_saturated_fraction" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_water_table" name="water_table" long_name="water_table_depth" unit="m" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_wetness_under_soil" name="wetness_under_soil" long_name="wetness_below_soil_column" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_soil_moist_wilt" name="soil_moist_wilt" long_name="soil_moisture_at_wilting_point" unit="m3 m-3" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_soil_moist_crit" name="soil_moist_crit" long_name="soil_moisture_at_critical_point" unit="m3 m-3" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_soil_moist_sat" name="soil_moist_sat" long_name="soil_moisture_at_saturation" unit="m3 m-3" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_soil_cond_sat" name="soil_cond_sat" long_name="soil_conductivity_at_saturation" unit="kg m-2 s-1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_soil_thermal_cap" name="soil_thermal_cap" long_name="soil_thermal_capacity" unit="J K-1 m-3" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_soil_suction_sat" name="soil_suction_sat" long_name="soil_suction_at_saturation" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_clapp_horn_b" name="clapp_horn_b" long_name="exponent_for_soil_moisture_functions" unit="1" domain_ref="checkpoint_W3_2D" />
-	<field id="checkpoint_soil_temperature" name="soil_temperature" long_name="soil_temperature" unit="K" domain_ref="checkpoint_soil" />
-	<field id="checkpoint_soil_moisture" name="soil_moisture" long_name="soil_moisture_content" unit="kg kg-1" domain_ref="checkpoint_soil" />
-	<field id="checkpoint_unfrozen_soil_moisture" name="unfrozen_soil_moisture" long_name="unfrozen_soil_moisture_proportion" unit="1" domain_ref="checkpoint_soil" />
-	<field id="checkpoint_frozen_soil_moisture" name="frozen_soil_moisture" long_name="frozen_soil_moisture_proportion" unit="1" domain_ref="checkpoint_soil" />
+	<field id="checkpoint_soil_albedo" name="soil_albedo" long_name="soil_albedo" unit="1" domain_ref="face" />
+	<field id="checkpoint_soil_roughness" name="soil_roughness" long_name="roughness_length_of_soil" unit="m" domain_ref="face" />
+	<field id="checkpoint_soil_thermal_cond" name="soil_thermal_cond" long_name="thermal_conductivity_of_soil" unit="W m-1 K-1" domain_ref="face" />
+	<field id="checkpoint_soil_carbon_content" name="soil_carbon_content" long_name="soil_carbon_content" unit="kgC m-2" domain_ref="face" />
+	<field id="checkpoint_mean_topog_index" name="mean_topog_index" long_name="mean_topographic_index" unit="1" domain_ref="face" />
+	<field id="checkpoint_a_sat_frac" name="a_sat_frac" long_name="saturated_fraction_a_parameter" unit="1" domain_ref="face" />
+	<field id="checkpoint_c_sat_frac" name="c_sat_frac" long_name="saturated_fraction_c_parameter" unit="1" domain_ref="face" />
+	<field id="checkpoint_a_wet_frac" name="a_wet_frac" long_name="wet_fraction_a_parameter" unit="1" domain_ref="face" />
+	<field id="checkpoint_c_wet_frac" name="c_wet_frac" long_name="wet_fraction_c_parameter" unit="1" domain_ref="face" />
+	<field id="checkpoint_soil_sat_frac" name="soil_sat_frac" long_name="soil_saturated_fraction" unit="1" domain_ref="face" />
+	<field id="checkpoint_water_table" name="water_table" long_name="water_table_depth" unit="m" domain_ref="face" />
+	<field id="checkpoint_wetness_under_soil" name="wetness_under_soil" long_name="wetness_below_soil_column" unit="1" domain_ref="face" />
+	<field id="checkpoint_soil_moist_wilt" name="soil_moist_wilt" long_name="soil_moisture_at_wilting_point" unit="m3 m-3" domain_ref="face" />
+	<field id="checkpoint_soil_moist_crit" name="soil_moist_crit" long_name="soil_moisture_at_critical_point" unit="m3 m-3" domain_ref="face" />
+	<field id="checkpoint_soil_moist_sat" name="soil_moist_sat" long_name="soil_moisture_at_saturation" unit="m3 m-3" domain_ref="face" />
+	<field id="checkpoint_soil_cond_sat" name="soil_cond_sat" long_name="soil_conductivity_at_saturation" unit="kg m-2 s-1" domain_ref="face" />
+	<field id="checkpoint_soil_thermal_cap" name="soil_thermal_cap" long_name="soil_thermal_capacity" unit="J K-1 m-3" domain_ref="face" />
+	<field id="checkpoint_soil_suction_sat" name="soil_suction_sat" long_name="soil_suction_at_saturation" unit="1" domain_ref="face" />
+	<field id="checkpoint_clapp_horn_b" name="clapp_horn_b" long_name="exponent_for_soil_moisture_functions" unit="1" domain_ref="face" />
+	<field id="checkpoint_soil_temperature" name="soil_temperature" long_name="soil_temperature" unit="K" domain_ref="face" axis_ref="soil_levels" />
+	<field id="checkpoint_soil_moisture" name="soil_moisture" long_name="soil_moisture_content" unit="kg kg-1" domain_ref="face" axis_ref="soil_levels" />
+	<field id="checkpoint_unfrozen_soil_moisture" name="unfrozen_soil_moisture" long_name="unfrozen_soil_moisture_proportion" unit="1" domain_ref="face" axis_ref="soil_levels" />
+	<field id="checkpoint_frozen_soil_moisture" name="frozen_soil_moisture" long_name="frozen_soil_moisture_proportion" unit="1" domain_ref="face" axis_ref="soil_levels" />
       </field_group>
 
       <!-- derived fields group -->
@@ -339,26 +333,26 @@
 	<field id="z0msea" name="z0msea" long_name="sea_surface_roughness_length" unit="m" domain_ref="face" />
 	<field id="gross_prim_prod" name="gross_prim_prod" long_name="gross_primary_productivity" unit="kgC m-2 s-1" domain_ref="face" />
 	<field id="net_prim_prod" name="net_prim_prod" long_name="net_primary_productivity" unit="kgC m-2 s-1" domain_ref="face" />
-	<field id="tile_heat_flux" name="tile_heat_flux" long_name="surface_sensible_heat_flux" unit="W m-2" domain_ref="face" axis_ref="tile_pseudo_levels"/>
-	<field id="tile_moisture_flux" name="tile_moisture_flux" long_name="surface_moisture_flux" unit="kg m-2 s-1" domain_ref="face" axis_ref="tile_pseudo_levels"/>
-	<field id="tile_fraction" name="tile_fraction" long_name="surface_tile_fraction" unit="1" domain_ref="face" axis_ref="tile_pseudo_levels"/>
-	<field id="tile_temperature" name="tile_temperature" long_name="surface_tile_temperature" unit="K" domain_ref="face" axis_ref="tile_pseudo_levels"/>
-	<field id="canopy_evap" name="canopy_evap" long_name="canopy_evaporation" unit="kg m-2 s-1" domain_ref="face" axis_ref="tile_pseudo_levels"/>
+	<field id="tile_heat_flux" name="tile_heat_flux" long_name="surface_sensible_heat_flux" unit="W m-2" domain_ref="face" axis_ref="surface_tiles"/>
+	<field id="tile_moisture_flux" name="tile_moisture_flux" long_name="surface_moisture_flux" unit="kg m-2 s-1" domain_ref="face" axis_ref="surface_tiles"/>
+	<field id="tile_fraction" name="tile_fraction" long_name="surface_tile_fraction" unit="1" domain_ref="face" axis_ref="surface_tiles"/>
+	<field id="tile_temperature" name="tile_temperature" long_name="surface_tile_temperature" unit="K" domain_ref="face" axis_ref="surface_tiles"/>
+	<field id="canopy_evap" name="canopy_evap" long_name="canopy_evaporation" unit="kg m-2 s-1" domain_ref="face" axis_ref="surface_tiles"/>
 	<!-- snow fields -->
-	<field id="total_snowmelt" name="total_snowmelt" long_name="total_snowmelt" unit="kg m-2 s-1" domain_ref="face" axis_ref="veg_pseudo_levels"/>
-	<field id="snow_sublimation" name="snow_sublimation" long_name="snow_sublimation" unit="kg m-2 s-1" domain_ref="face" axis_ref="veg_pseudo_levels"/>
-	<field id="snow_depth" name="snow_depth" long_name="snow_depth" unit="m" domain_ref="face" axis_ref="veg_pseudo_levels"/>
-	<field id="tile_snow_rgrain" name="tile_snow_rgrain" long_name="tile_snow_grain_size" unit="microns" domain_ref="face" axis_ref="veg_pseudo_levels"/>
-	<field id="snowpack_density" name="snowpack_density" long_name="snowpack_density" unit="kg m-3" domain_ref="face" axis_ref="veg_pseudo_levels"/>
-	<field id="snow_layer_temp" name="snow_layer_temp" long_name="snow_layer_temperature" unit="K" domain_ref="face" axis_ref="snow_pseudo_levels"/>
-	<field id="snow_layer_thickness" name="snow_layer_thickness" long_name="snow_layer_thickness" unit="m" domain_ref="face" axis_ref="snow_pseudo_levels"/>
-	<field id="snow_layer_ice_mass" name="snow_layer_ice_mass" long_name="snow_layer_ice_mass" unit="kg m-2" domain_ref="face" axis_ref="snow_pseudo_levels"/>
-	<field id="snow_layer_liq_mass" name="snow_layer_liq_mass" long_name="snow_layer_liquid_mass" unit="kg m-2" domain_ref="face" axis_ref="snow_pseudo_levels"/>
-	<field id="snow_layer_rgrain" name="snow_layer_rgrain" long_name="snow_layer_grain_size" unit="microns" domain_ref="face" axis_ref="snow_pseudo_levels"/>
+	<field id="total_snowmelt" name="total_snowmelt" long_name="total_snowmelt" unit="kg m-2 s-1" domain_ref="face" axis_ref="surface_tiles"/>
+	<field id="snow_sublimation" name="snow_sublimation" long_name="snow_sublimation" unit="kg m-2 s-1" domain_ref="face" axis_ref="surface_tiles"/>
+	<field id="snow_depth" name="snow_depth" long_name="snow_depth" unit="m" domain_ref="face" axis_ref="surface_tiles"/>
+	<field id="tile_snow_rgrain" name="tile_snow_rgrain" long_name="tile_snow_grain_size" unit="microns" domain_ref="face" axis_ref="surface_tiles"/>
+	<field id="snowpack_density" name="snowpack_density" long_name="snowpack_density" unit="kg m-3" domain_ref="face" axis_ref="surface_tiles"/>
+	<field id="snow_layer_temp" name="snow_layer_temp" long_name="snow_layer_temperature" unit="K" domain_ref="face" axis_ref="snow_layers_and_tiles"/>
+	<field id="snow_layer_thickness" name="snow_layer_thickness" long_name="snow_layer_thickness" unit="m" domain_ref="face" axis_ref="snow_layers_and_tiles"/>
+	<field id="snow_layer_ice_mass" name="snow_layer_ice_mass" long_name="snow_layer_ice_mass" unit="kg m-2" domain_ref="face" axis_ref="snow_layers_and_tiles"/>
+	<field id="snow_layer_liq_mass" name="snow_layer_liq_mass" long_name="snow_layer_liquid_mass" unit="kg m-2" domain_ref="face" axis_ref="snow_layers_and_tiles"/>
+	<field id="snow_layer_rgrain" name="snow_layer_rgrain" long_name="snow_layer_grain_size" unit="microns" domain_ref="face" axis_ref="snow_layers_and_tiles"/>
 	<!-- soil fields -->
-	<field id="soil_moisture" name="soil_moisture" long_name="soil_moisture" unit="kg m-2" domain_ref="face" axis_ref="soil_pseudo_levels"/>
-	<field id="unfrozen_soil_moisture" name="unfrozen_soil_moisture" long_name="unfrozen_soil_moisture" unit="kg m-2" domain_ref="face" axis_ref="soil_pseudo_levels"/>
-	<field id="soil_temperature" name="soil_temperature" long_name="soil_temperature" unit="K" domain_ref="face" axis_ref="soil_pseudo_levels"/>
+	<field id="soil_moisture" name="soil_moisture" long_name="soil_moisture" unit="kg m-2" domain_ref="face" axis_ref="soil_levels"/>
+	<field id="unfrozen_soil_moisture" name="unfrozen_soil_moisture" long_name="unfrozen_soil_moisture" unit="kg m-2" domain_ref="face" axis_ref="soil_levels"/>
+	<field id="soil_temperature" name="soil_temperature" long_name="soil_temperature" unit="K" domain_ref="face" axis_ref="soil_levels"/>
 	<field id="soil_respiration" name="soil_respiration" long_name="soil_respiration" unit="kg m-2 s-1" domain_ref="face" />
 	<field id="water_table" name="water_table" long_name="water_table_depth" unit="m" domain_ref="face" />
 	<!-- turbulence fields -->
@@ -370,7 +364,7 @@
 	<!-- radiation fields -->
 	<field id="lw_down_surf" name="lw_down_surf" long_name="surface_downward_longwave_flux" unit="W m-2" domain_ref="face" />
 	<field id="sw_down_surf" name="sw_down_surf" long_name="surface_downward_shortwave_flux" unit="W m-2" domain_ref="face" />
-	<field id="sw_up_tile" name="sw_up_tile" long_name="surface_upward_shortwave_flux_on_tiles" unit="W m-2" domain_ref="face" axis_ref="tile_pseudo_levels"/>
+	<field id="sw_up_tile" name="sw_up_tile" long_name="surface_upward_shortwave_flux_on_tiles" unit="W m-2" domain_ref="face" axis_ref="surface_tiles"/>
 	<field id="sw_direct_surf" name="sw_direct_surf" long_name="surface_direct_shortwave_flux" unit="W m-2" domain_ref="face" />
 	<field id="sw_down_blue_surf" name="sw_down_blue_surf" long_name="surface_downward_0-690nm_flux" unit="W m-2" domain_ref="face" />
 	<field id="sw_direct_blue_surf" name="sw_direct_blue_surf" long_name="surface_direct_0-690nm_flux" unit="W m-2" domain_ref="face" />
@@ -419,9 +413,9 @@
 	<field id="init_rh_crit" name="rh_crit" long_name="critical_relative_humidity"  unit="1" grid_ref="full_level_face_grid" />
 	<field id="init_departure_exner_wth" name="departure_exner_wth" long_name="exner_at_departure_point"  unit="1" grid_ref="full_level_face_grid" />
         <field id="init_sigma_qcw" name="sigma_qcw" long_name="variability_cloud_condensate"  unit="1" grid_ref="full_level_face_grid" />
-	<field id="init_soil_moisture" name="soil_moisture" long_name="soil_moisture" unit="kg m-2" domain_ref="face" axis_ref="soil_pseudo_levels"/>
-	<field id="init_unfrozen_soil_moisture" name="unfrozen_soil_moisture" long_name="unfrozen_soil_moisture" unit="kg m-2" domain_ref="face" axis_ref="soil_pseudo_levels"/>
-	<field id="init_soil_temperature" name="soil_temperature" long_name="soil_temperature" unit="K" domain_ref="face" axis_ref="soil_pseudo_levels"/>
+	<field id="init_soil_moisture" name="soil_moisture" long_name="soil_moisture" unit="kg m-2" domain_ref="face" axis_ref="soil_levels"/>
+	<field id="init_unfrozen_soil_moisture" name="unfrozen_soil_moisture" long_name="unfrozen_soil_moisture" unit="kg m-2" domain_ref="face" axis_ref="soil_levels"/>
+	<field id="init_soil_temperature" name="soil_temperature" long_name="soil_temperature" unit="K" domain_ref="face" axis_ref="soil_levels"/>
       </field_group>
 
     </field_definition>
@@ -451,114 +445,114 @@
 	<field id="restart_m_s" name="m_s" long_name="m_s" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
 	<field id="restart_m_g" name="m_g" long_name="m_g" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
 	<!-- Aerosol fields -->
-	<field id="restart_nd_nuc_sol" name="nd_nuc_sol" long_name="NUCLEATION_MODE_SOL_NUMBER" unit="1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_nuc_sol_su" name="nuc_sol_su" long_name="NUCLEATION_MODE_SOL_H2SO4_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_nuc_sol_oc" name="nuc_sol_oc" long_name="NUCLEATION_MODE_SOL_OM_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_nd_ait_sol" name="nd_ait_sol" long_name="AITKEN_MODE_SOL_NUMBER" unit="1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_ait_sol_su" name="ait_sol_su" long_name="AITKEN_MODE_SOL_H2SO4_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_ait_sol_bc" name="ait_sol_bc" long_name="AITKEN_MODE_SOL_BC_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_ait_sol_oc" name="ait_sol_oc" long_name="AITKEN_MODE_SOL_OM_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_nd_acc_sol" name="nd_acc_sol" long_name="ACCUMULATION_MODE_SOL_NUMBER" unit="1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_acc_sol_su" name="acc_sol_su" long_name="ACCUMULATION_MODE_SOL_H2SO4_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_acc_sol_bc" name="acc_sol_bc" long_name="ACCUMULATION_MODE_SOL_BC_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_acc_sol_oc" name="acc_sol_oc" long_name="ACCUMULATION_MODE_SOL_OM_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_acc_sol_ss" name="acc_sol_ss" long_name="ACCUMULATION_MODE_SOL_SEA_SALT_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_nd_cor_sol" name="nd_cor_sol" long_name="COARSE_MODE_SOL_NUMBER" unit="1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_cor_sol_su" name="cor_sol_su" long_name="COARSE_MODE_SOL_H2SO4_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_cor_sol_bc" name="cor_sol_bc" long_name="COARSE_MODE_SOL_BC_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_cor_sol_oc" name="cor_sol_oc" long_name="COARSE_MODE_SOL_OM_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_cor_sol_ss" name="cor_sol_ss" long_name="COARSE_MODE_SOL_SEA_SALT_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_nd_ait_ins" name="nd_ait_ins" long_name="AITKEN_MODE_INSOLUBLE_NUMBER" unit="1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_ait_ins_bc" name="ins_sol_bc" long_name="AITKEN_MODE_INSOLUBLE_BC_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_ait_ins_oc" name="ins_sol_oc" long_name="AITKEN_MODE_INSOLUBLE_OM_MMR" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
+	<field id="restart_nd_nuc_sol" name="nd_nuc_sol" long_name="NUCLEATION_MODE_SOL_NUMBER" unit="1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_nuc_sol_su" name="nuc_sol_su" long_name="NUCLEATION_MODE_SOL_H2SO4_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_nuc_sol_oc" name="nuc_sol_oc" long_name="NUCLEATION_MODE_SOL_OM_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_nd_ait_sol" name="nd_ait_sol" long_name="AITKEN_MODE_SOL_NUMBER" unit="1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_ait_sol_su" name="ait_sol_su" long_name="AITKEN_MODE_SOL_H2SO4_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_ait_sol_bc" name="ait_sol_bc" long_name="AITKEN_MODE_SOL_BC_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_ait_sol_oc" name="ait_sol_oc" long_name="AITKEN_MODE_SOL_OM_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_nd_acc_sol" name="nd_acc_sol" long_name="ACCUMULATION_MODE_SOL_NUMBER" unit="1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_acc_sol_su" name="acc_sol_su" long_name="ACCUMULATION_MODE_SOL_H2SO4_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_acc_sol_bc" name="acc_sol_bc" long_name="ACCUMULATION_MODE_SOL_BC_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_acc_sol_oc" name="acc_sol_oc" long_name="ACCUMULATION_MODE_SOL_OM_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_acc_sol_ss" name="acc_sol_ss" long_name="ACCUMULATION_MODE_SOL_SEA_SALT_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_nd_cor_sol" name="nd_cor_sol" long_name="COARSE_MODE_SOL_NUMBER" unit="1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_cor_sol_su" name="cor_sol_su" long_name="COARSE_MODE_SOL_H2SO4_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_cor_sol_bc" name="cor_sol_bc" long_name="COARSE_MODE_SOL_BC_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_cor_sol_oc" name="cor_sol_oc" long_name="COARSE_MODE_SOL_OM_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_cor_sol_ss" name="cor_sol_ss" long_name="COARSE_MODE_SOL_SEA_SALT_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_nd_ait_ins" name="nd_ait_ins" long_name="AITKEN_MODE_INSOLUBLE_NUMBER" unit="1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_ait_ins_bc" name="ins_sol_bc" long_name="AITKEN_MODE_INSOLUBLE_BC_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_ait_ins_oc" name="ins_sol_oc" long_name="AITKEN_MODE_INSOLUBLE_OM_MMR" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
 	<!-- Cloud fields -->
-	<field id="restart_area_fraction" name="area_fraction" long_name="area_fraction" unit="1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_ice_fraction" name="ice_fraction" long_name="ice_fraction" unit="1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_liquid_fraction" name="liquid_fraction" long_name="liquid_fraction" unit="1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_bulk_fraction" name="bulk_fraction" long_name="bulk_fraction" unit="1" operation="instant" domain_ref="checkpoint_Wtheta" />
+	<field id="restart_area_fraction" name="area_fraction" long_name="area_fraction" unit="1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_ice_fraction" name="ice_fraction" long_name="ice_fraction" unit="1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_liquid_fraction" name="liquid_fraction" long_name="liquid_fraction" unit="1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_bulk_fraction" name="bulk_fraction" long_name="bulk_fraction" unit="1" operation="instant" grid_ref="full_level_face_grid" />
 	<!-- Convection fields -->
-	<field id="restart_cca" name="cca" long_name="convective_cloud_amount" unit="1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_ccw" name="ccw" long_name="convective_cloud_water" unit="kg kg-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_conv_rain" name="conv_rain" long_name="surface_convective_rainfall_rate" unit="kg m-2 s-1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_conv_snow" name="conv_snow" long_name="surface_convective_snowfall_rate" unit="kg m-2 s-1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_dd_mf_cb" name="dd_mf_cb" long_name="downdraft_massflux_at_cloud_base" unit="Pa s-1" operation="instant" domain_ref="checkpoint_W3_2D" />
+	<field id="restart_cca" name="cca" long_name="convective_cloud_amount" unit="1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_ccw" name="ccw" long_name="convective_cloud_water" unit="kg kg-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_conv_rain" name="conv_rain" long_name="surface_convective_rainfall_rate" unit="kg m-2 s-1" operation="instant" domain_ref="face" />
+	<field id="restart_conv_snow" name="conv_snow" long_name="surface_convective_snowfall_rate" unit="kg m-2 s-1" operation="instant" domain_ref="face" />
+	<field id="restart_dd_mf_cb" name="dd_mf_cb" long_name="downdraft_massflux_at_cloud_base" unit="Pa s-1" operation="instant" domain_ref="face" />
 	<!-- Turbulence fields -->
-	<field id="restart_zh" name="zh" long_name="boundary_layer_depth" unit="m" operation="instant" domain_ref="checkpoint_W3_2D" />
+	<field id="restart_zh" name="zh" long_name="boundary_layer_depth" unit="m" operation="instant" domain_ref="face" />
 	<!-- Surface fields -->
-	<field id="restart_z0msea" name="z0msea" long_name="sea_surface_roughness_length" unit="m" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_surface_conductance" name="surface_conductance" long_name="surface_conductance" unit="m s-1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_chloro_sea" name="chloro_sea" long_name="sea_chlorophyll_content" unit="kg m-3" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_leaf_area_index" name="leaf_area_index" long_name="leaf_area_index" unit="1" operation="instant" domain_ref="checkpoint_pft" />
-	<field id="restart_canopy_height" name="canopy_height" long_name="canopy_height" unit="m" operation="instant" domain_ref="checkpoint_pft" />
-	<field id="restart_tile_fraction" name="tile_fraction" long_name="tile_fraction" unit="1" operation="instant" domain_ref="checkpoint_tile" />
-	<field id="restart_tile_temperature" name="tile_temperature" long_name="tile_temperature" unit="K" operation="instant" domain_ref="checkpoint_tile" />
-	<field id="restart_canopy_water" name="tile_canopy_water" long_name="canopy_water_content_on_tiles" unit="kg m-2" operation="instant" domain_ref="checkpoint_tile" />
-	<field id="restart_sea_ice_thickness" name="sea_ice_thickness" long_name="sea_ice_thickness" unit="m" operation="instant" domain_ref="checkpoint_sice" />
-	<field id="restart_sea_ice_temperature" name="sea_ice_temperature" long_name="sea_ice_bulk_temperature" unit="K" operation="instant" domain_ref="checkpoint_sice" />
+	<field id="restart_z0msea" name="z0msea" long_name="sea_surface_roughness_length" unit="m" operation="instant" domain_ref="face" />
+	<field id="restart_surface_conductance" name="surface_conductance" long_name="surface_conductance" unit="m s-1" operation="instant" domain_ref="face" />
+	<field id="restart_chloro_sea" name="chloro_sea" long_name="sea_chlorophyll_content" unit="kg m-3" operation="instant" domain_ref="face" />
+	<field id="restart_leaf_area_index" name="leaf_area_index" long_name="leaf_area_index" unit="1" operation="instant" domain_ref="face" axis_ref="plant_func_types" />
+	<field id="restart_canopy_height" name="canopy_height" long_name="canopy_height" unit="m" operation="instant" domain_ref="face" axis_ref="plant_func_types" />
+	<field id="restart_tile_fraction" name="tile_fraction" long_name="tile_fraction" unit="1" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="restart_tile_temperature" name="tile_temperature" long_name="tile_temperature" unit="K" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="restart_canopy_water" name="tile_canopy_water" long_name="canopy_water_content_on_tiles" unit="kg m-2" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="restart_sea_ice_thickness" name="sea_ice_thickness" long_name="sea_ice_thickness" unit="m" operation="instant" domain_ref="face" />
+	<field id="restart_sea_ice_temperature" name="sea_ice_temperature" long_name="sea_ice_bulk_temperature" unit="K" operation="instant" domain_ref="face" />
 	<!-- Orography fields -->
-	<field id="restart_sd_orog" name="sd_orog" long_name="sd_orog"  unit="m" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_grad_xx_orog" name="grad_xx_orog" long_name="grad_xx_orog"  unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_grad_xy_orog" name="grad_xy_orog" long_name="grad_xy_orog"  unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_grad_yy_orog" name="grad_yy_orog" long_name="grad_yy_orog"  unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_peak_to_trough_orog" name="peak_to_trough_orog" long_name="peak_to_trough_orog"  unit="m" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_silhouette_area_orog" name="silhouette_area_orog" long_name="silhouette_area_orog"  unit="m" operation="instant" domain_ref="checkpoint_W3_2D" />
+	<field id="restart_sd_orog" name="sd_orog" long_name="sd_orog"  unit="m" operation="instant" domain_ref="face" />
+	<field id="restart_grad_xx_orog" name="grad_xx_orog" long_name="grad_xx_orog"  unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_grad_xy_orog" name="grad_xy_orog" long_name="grad_xy_orog"  unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_grad_yy_orog" name="grad_yy_orog" long_name="grad_yy_orog"  unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_peak_to_trough_orog" name="peak_to_trough_orog" long_name="peak_to_trough_orog"  unit="m" operation="instant" domain_ref="face" />
+	<field id="restart_silhouette_area_orog" name="silhouette_area_orog" long_name="silhouette_area_orog"  unit="m" operation="instant" domain_ref="face" />
 	<!-- Radiation fields -->
-	<field id="restart_albedo_obs_vis" name="albedo_obs_vis" long_name="observed_visible_albedo" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_albedo_obs_nir" name="albedo_obs_nir" long_name="observed_near-infrared_albedo" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_ozone" name="ozone" long_name="ozone" unit="1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_lw_down_surf_rts" name="lw_down_surf_rts" long_name="surface_downward_longwave_flux" unit="W m-2" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_sw_down_surf_rts" name="sw_down_surf_rts" long_name="surface_downward_shortwave_flux" unit="W m-2" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_sw_direct_surf_rts" name="sw_direct_surf_rts" long_name="surface_direct_shortwave_flux" unit="W m-2" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_sw_direct_toa_rts" name="sw_direct_toa_rts" long_name="toa_direct_shortwave_flux" unit="W m-2" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_sw_down_blue_surf_rts" name="sw_down_blue_surf_rts" long_name="surface_downward_0-690nm_flux" unit="W m-2" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_sw_direct_blue_surf_rts" name="sw_direct_blue_surf_rts" long_name="surface_direct_0-690nm_flux" unit="W m-2" operation="instant" domain_ref="checkpoint_W3_2D" />
-        <field id="restart_lw_up_tile_rts" name="lw_up_tile_rts" long_name="surface_upward_longwave_flux_on_tiles" unit="W m-2" operation="instant" domain_ref="checkpoint_tile" />
-        <field id="restart_sw_up_tile_rts" name="sw_up_tile_rts" long_name="surface_upward_shortwave_flux_on_tiles" unit="W m-2" operation="instant" domain_ref="checkpoint_tile" />
-        <field id="restart_sw_up_blue_tile_rts" name="sw_up_blue_tile_rts" long_name="surface_upward_0-690nm_flux_on_tiles" unit="W m-2" operation="instant" domain_ref="checkpoint_tile" />
-	<field id="restart_sw_heating_rate_rts" name="sw_heating_rate_rts" long_name="shortwave_heating_rate" unit="K s-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_lw_heating_rate_rts" name="lw_heating_rate_rts" long_name="longwave_heating_rate" unit="K s-1" operation="instant" domain_ref="checkpoint_Wtheta" />
-	<field id="restart_cos_zenith_angle_rts" name="cos_zenith_angle_rts" long_name="cosine_of_the_solar_zenith_angle" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_lit_fraction_rts" name="lit_fraction_rts" long_name="sunlit_fraction_of_the_timestep" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_stellar_irradiance_rts" name="stellar_irradiance_rts" long_name="stellar_irradiance" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_sin_stellar_declination_rts" name="sin_stellar_declination_rts" long_name="sin_stellar_declination" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_stellar_eqn_of_time_rts" name="stellar_eqn_of_time_rts" long_name="stellar_equation_of_time" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
+	<field id="restart_albedo_obs_vis" name="albedo_obs_vis" long_name="observed_visible_albedo" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_albedo_obs_nir" name="albedo_obs_nir" long_name="observed_near-infrared_albedo" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_ozone" name="ozone" long_name="ozone" unit="1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_lw_down_surf_rts" name="lw_down_surf_rts" long_name="surface_downward_longwave_flux" unit="W m-2" operation="instant" domain_ref="face" />
+	<field id="restart_sw_down_surf_rts" name="sw_down_surf_rts" long_name="surface_downward_shortwave_flux" unit="W m-2" operation="instant" domain_ref="face" />
+	<field id="restart_sw_direct_surf_rts" name="sw_direct_surf_rts" long_name="surface_direct_shortwave_flux" unit="W m-2" operation="instant" domain_ref="face" />
+	<field id="restart_sw_direct_toa_rts" name="sw_direct_toa_rts" long_name="toa_direct_shortwave_flux" unit="W m-2" operation="instant" domain_ref="face" />
+	<field id="restart_sw_down_blue_surf_rts" name="sw_down_blue_surf_rts" long_name="surface_downward_0-690nm_flux" unit="W m-2" operation="instant" domain_ref="face" />
+	<field id="restart_sw_direct_blue_surf_rts" name="sw_direct_blue_surf_rts" long_name="surface_direct_0-690nm_flux" unit="W m-2" operation="instant" domain_ref="face" />
+        <field id="restart_lw_up_tile_rts" name="lw_up_tile_rts" long_name="surface_upward_longwave_flux_on_tiles" unit="W m-2" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+        <field id="restart_sw_up_tile_rts" name="sw_up_tile_rts" long_name="surface_upward_shortwave_flux_on_tiles" unit="W m-2" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+        <field id="restart_sw_up_blue_tile_rts" name="sw_up_blue_tile_rts" long_name="surface_upward_0-690nm_flux_on_tiles" unit="W m-2" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="restart_sw_heating_rate_rts" name="sw_heating_rate_rts" long_name="shortwave_heating_rate" unit="K s-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_lw_heating_rate_rts" name="lw_heating_rate_rts" long_name="longwave_heating_rate" unit="K s-1" operation="instant" grid_ref="full_level_face_grid" />
+	<field id="restart_cos_zenith_angle_rts" name="cos_zenith_angle_rts" long_name="cosine_of_the_solar_zenith_angle" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_lit_fraction_rts" name="lit_fraction_rts" long_name="sunlit_fraction_of_the_timestep" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_stellar_irradiance_rts" name="stellar_irradiance_rts" long_name="stellar_irradiance" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_sin_stellar_declination_rts" name="sin_stellar_declination_rts" long_name="sin_stellar_declination" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_stellar_eqn_of_time_rts" name="stellar_eqn_of_time_rts" long_name="stellar_equation_of_time" unit="1" operation="instant" domain_ref="face" />
 	<!-- Snow fields -->
-	<field id="restart_tile_snow_mass" name="tile_snow_mass" long_name="tile_snow_mass" unit="kg m-2" operation="instant" domain_ref="checkpoint_tile" />
-	<field id="restart_tile_snow_rgrain" name="tile_snow_rgrain" long_name="tile_snow_grain_size" unit="microns" operation="instant" domain_ref="checkpoint_tile" />
-	<field id="restart_n_snow_layers" name="n_snow_layers" long_name="number_of_snow_layers" unit="1" operation="instant" domain_ref="checkpoint_tile" />
-	<field id="restart_snow_depth" name="snow_depth" long_name="snow_depth_on_tiles" unit="m" operation="instant" domain_ref="checkpoint_tile" />
-	<field id="restart_snowpack_density" name="snowpack_density" long_name="snowpack_density_on_tiles" unit="kg m-3" operation="instant" domain_ref="checkpoint_tile" />
-	<field id="restart_snow_under_canopy" name="snow_under_canopy" long_name="snow_under_canopy_on_tiles" unit="m" operation="instant" domain_ref="checkpoint_tile" />
-	<field id="restart_snow_layer_thickness" name="snow_layer_thickness" long_name="snow_layer_thickness_on_tiles" unit="m" operation="instant" domain_ref="checkpoint_snow" />
-	<field id="restart_snow_layer_ice_mass" name="snow_layer_ice_mass" long_name="snow_layer_ice_mass_on_tiles" unit="kg m-2" operation="instant" domain_ref="checkpoint_snow" />
-	<field id="restart_snow_layer_liq_mass" name="snow_layer_liq_mass" long_name="snow_layer_liquid_mass_on_tiles" unit="kg m-2" operation="instant" domain_ref="checkpoint_snow" />
-	<field id="restart_snow_layer_temp" name="snow_layer_temp" long_name="snow_layer_temperature_on_tiles" unit="K" operation="instant" domain_ref="checkpoint_snow" />
-	<field id="restart_snow_layer_rgrain" name="snow_layer_rgrain" long_name="snow_layer_grain_size_on_tiles" unit="microns" operation="instant" domain_ref="checkpoint_snow" />
-	<field id="restart_snow_soot" name="snow_soot" long_name="snow_soot_content" unit="kg kg-1" operation="instant" domain_ref="checkpoint_W3_2D" />
+	<field id="restart_tile_snow_mass" name="tile_snow_mass" long_name="tile_snow_mass" unit="kg m-2" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="restart_tile_snow_rgrain" name="tile_snow_rgrain" long_name="tile_snow_grain_size" unit="microns" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="restart_n_snow_layers" name="n_snow_layers" long_name="number_of_snow_layers" unit="1" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="restart_snow_depth" name="snow_depth" long_name="snow_depth_on_tiles" unit="m" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="restart_snowpack_density" name="snowpack_density" long_name="snowpack_density_on_tiles" unit="kg m-3" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="restart_snow_under_canopy" name="snow_under_canopy" long_name="snow_under_canopy_on_tiles" unit="m" operation="instant" domain_ref="face" axis_ref="surface_tiles" />
+	<field id="restart_snow_layer_thickness" name="snow_layer_thickness" long_name="snow_layer_thickness_on_tiles" unit="m" operation="instant" domain_ref="face" axis_ref="snow_layers_and_tiles" />
+	<field id="restart_snow_layer_ice_mass" name="snow_layer_ice_mass" long_name="snow_layer_ice_mass_on_tiles" unit="kg m-2" operation="instant" domain_ref="face" axis_ref="snow_layers_and_tiles" />
+	<field id="restart_snow_layer_liq_mass" name="snow_layer_liq_mass" long_name="snow_layer_liquid_mass_on_tiles" unit="kg m-2" operation="instant" domain_ref="face" axis_ref="snow_layers_and_tiles" />
+	<field id="restart_snow_layer_temp" name="snow_layer_temp" long_name="snow_layer_temperature_on_tiles" unit="K" operation="instant" domain_ref="face" axis_ref="snow_layers_and_tiles" />
+	<field id="restart_snow_layer_rgrain" name="snow_layer_rgrain" long_name="snow_layer_grain_size_on_tiles" unit="microns" operation="instant" domain_ref="face" axis_ref="snow_layers_and_tiles" />
+	<field id="restart_snow_soot" name="snow_soot" long_name="snow_soot_content" unit="kg kg-1" operation="instant" domain_ref="face" />
 	<!-- Soil fields -->
-	<field id="restart_soil_albedo" name="soil_albedo" long_name="soil_albedo" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_soil_roughness" name="soil_roughness" long_name="roughness_length_of_soil" unit="m" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_soil_thermal_cond" name="soil_thermal_cond" long_name="thermal_conductivity_of_soil" unit="W m-1 K-1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_soil_carbon_content" name="soil_carbon_content" long_name="soil_carbon_content" unit="kgC m-2" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_mean_topog_index" name="mean_topog_index" long_name="mean_topographic_index" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_a_sat_frac" name="a_sat_frac" long_name="saturated_fraction_a_parameter" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_c_sat_frac" name="c_sat_frac" long_name="saturated_fraction_c_parameter" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_a_wet_frac" name="a_wet_frac" long_name="wet_fraction_a_parameter" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_c_wet_frac" name="c_wet_frac" long_name="wet_fraction_c_parameter" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_soil_sat_frac" name="soil_sat_frac" long_name="soil_saturated_fraction" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_water_table" name="water_table" long_name="water_table_depth" unit="m" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_wetness_under_soil" name="wetness_under_soil" long_name="wetness_below_soil_column" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_soil_moist_wilt" name="soil_moist_wilt" long_name="soil_moisture_at_wilting_point" unit="m3 m-3" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_soil_moist_crit" name="soil_moist_crit" long_name="soil_moisture_at_critical_point" unit="m3 m-3" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_soil_moist_sat" name="soil_moist_sat" long_name="soil_moisture_at_saturation" unit="m3 m-3" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_soil_cond_sat" name="soil_cond_sat" long_name="soil_conductivity_at_saturation" unit="kg m-2 s-1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_soil_thermal_cap" name="soil_thermal_cap" long_name="soil_thermal_capacity" unit="J K-1 m-3" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_soil_suction_sat" name="soil_suction_sat" long_name="soil_suction_at_saturation" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_clapp_horn_b" name="clapp_horn_b" long_name="exponent_for_soil_moisture_functions" unit="1" operation="instant" domain_ref="checkpoint_W3_2D" />
-	<field id="restart_soil_temperature" name="soil_temperature" long_name="soil_temperature" unit="K" operation="instant" domain_ref="checkpoint_soil" />
-	<field id="restart_soil_moisture" name="soil_moisture" long_name="soil_moisture_content" unit="kg kg-1" operation="instant" domain_ref="checkpoint_soil" />
-	<field id="restart_unfrozen_soil_moisture" name="unfrozen_soil_moisture" long_name="unfrozen_soil_moisture_proportion" unit="1" operation="instant" domain_ref="checkpoint_soil" />
-	<field id="restart_frozen_soil_moisture" name="frozen_soil_moisture" long_name="frozen_soil_moisture_proportion" unit="1" operation="instant" domain_ref="checkpoint_soil" />
+	<field id="restart_soil_albedo" name="soil_albedo" long_name="soil_albedo" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_soil_roughness" name="soil_roughness" long_name="roughness_length_of_soil" unit="m" operation="instant" domain_ref="face" />
+	<field id="restart_soil_thermal_cond" name="soil_thermal_cond" long_name="thermal_conductivity_of_soil" unit="W m-1 K-1" operation="instant" domain_ref="face" />
+	<field id="restart_soil_carbon_content" name="soil_carbon_content" long_name="soil_carbon_content" unit="kgC m-2" operation="instant" domain_ref="face" />
+	<field id="restart_mean_topog_index" name="mean_topog_index" long_name="mean_topographic_index" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_a_sat_frac" name="a_sat_frac" long_name="saturated_fraction_a_parameter" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_c_sat_frac" name="c_sat_frac" long_name="saturated_fraction_c_parameter" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_a_wet_frac" name="a_wet_frac" long_name="wet_fraction_a_parameter" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_c_wet_frac" name="c_wet_frac" long_name="wet_fraction_c_parameter" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_soil_sat_frac" name="soil_sat_frac" long_name="soil_saturated_fraction" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_water_table" name="water_table" long_name="water_table_depth" unit="m" operation="instant" domain_ref="face" />
+	<field id="restart_wetness_under_soil" name="wetness_under_soil" long_name="wetness_below_soil_column" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_soil_moist_wilt" name="soil_moist_wilt" long_name="soil_moisture_at_wilting_point" unit="m3 m-3" operation="instant" domain_ref="face" />
+	<field id="restart_soil_moist_crit" name="soil_moist_crit" long_name="soil_moisture_at_critical_point" unit="m3 m-3" operation="instant" domain_ref="face" />
+	<field id="restart_soil_moist_sat" name="soil_moist_sat" long_name="soil_moisture_at_saturation" unit="m3 m-3" operation="instant" domain_ref="face" />
+	<field id="restart_soil_cond_sat" name="soil_cond_sat" long_name="soil_conductivity_at_saturation" unit="kg m-2 s-1" operation="instant" domain_ref="face" />
+	<field id="restart_soil_thermal_cap" name="soil_thermal_cap" long_name="soil_thermal_capacity" unit="J K-1 m-3" operation="instant" domain_ref="face" />
+	<field id="restart_soil_suction_sat" name="soil_suction_sat" long_name="soil_suction_at_saturation" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_clapp_horn_b" name="clapp_horn_b" long_name="exponent_for_soil_moisture_functions" unit="1" operation="instant" domain_ref="face" />
+	<field id="restart_soil_temperature" name="soil_temperature" long_name="soil_temperature" unit="K" operation="instant" domain_ref="face" axis_ref="soil_levels" />
+	<field id="restart_soil_moisture" name="soil_moisture" long_name="soil_moisture_content" unit="kg kg-1" operation="instant" domain_ref="face" axis_ref="soil_levels" />
+	<field id="restart_unfrozen_soil_moisture" name="unfrozen_soil_moisture" long_name="unfrozen_soil_moisture_proportion" unit="1" operation="instant" domain_ref="face" axis_ref="soil_levels" />
+	<field id="restart_frozen_soil_moisture" name="frozen_soil_moisture" long_name="frozen_soil_moisture_proportion" unit="1" operation="instant" domain_ref="face" axis_ref="soil_levels" />
       </file>
 
       <file id="lfric_diag" name="lfric_diag" output_freq="6h" convention="UGRID" enabled=".TRUE.">
@@ -666,13 +660,13 @@
       </file>
 
       <file id="surface_frac_ancil" name="surface_frac_ancil" mode="read" output_freq="1ts" convention="UGRID" cyclic="true" enabled=".FALSE.">
-	<field id="land_tile_fraction" name="m01s00i216" long_name="fractions_of_vegetation_types" unit="1" operation="once" domain_ref="face" axis_ref="veg_pseudo_levels"/>
+	<field id="land_tile_fraction" name="m01s00i216" long_name="fractions_of_vegetation_types" unit="1" operation="once" domain_ref="face" axis_ref="land_tiles"/>
       </file>
 
       <file id="plant_func_ancil" name="plant_func_ancil" mode="read" output_freq="1ts" convention="UGRID" cyclic="true" enabled=".FALSE.">
 	<field id="pft_time" name="month_number" unit="months" operation="once" axis_ref="monthly_axis"/>
-	<field id="canopy_height_in_data" name="canopy_height" long_name="canopy_height" unit="1" operation="once" grid_ref="pft_monthly_grid"/>
-	<field id="leaf_area_index_in_data" name="leaf_area_index" long_name="leaf_area_index" unit="1" operation="once" grid_ref="pft_monthly_grid"/>
+	<field id="canopy_height_data" name="canopy_height" long_name="canopy_height" unit="1" operation="once" grid_ref="pft_monthly_grid"/>
+	<field id="leaf_area_index_data" name="leaf_area_index" long_name="leaf_area_index" unit="1" operation="once" grid_ref="pft_monthly_grid"/>
       </file>
 
       <file id="ozone_ancil" name="ozone_ancil" mode="read" output_freq="1ts" convention="UGRID" cyclic="true" enabled=".FALSE.">

@@ -697,7 +697,7 @@ contains
     ! Local variables for the kernel
     !-----------------------------------------------------------------------
     ! loop counters etc
-    integer(i_def) :: k, i, i_tile, i_sice, i_pft, n, i_snow, j
+    integer(i_def) :: k, i, i_tile, i_sice, n, i_snow, j
 
     ! local switches and scalars
     integer(i_um) :: error_code
@@ -743,7 +743,7 @@ contains
          p_star, lw_down, cos_zenith_angle, tstar, zh_prev, ddmfx,           &
          zlcl, zhpar, flux_e, flux_h, z0msea, photosynth_act_rad, tstar_sea, &
          zh, dzh, tstar_land, tstar_ssi, dtstar_sea, wstar, wthvs, ice_fract,&
-         tstar_sice, u_0_p, v_0_p, zlcl_uv, qsat_lcl, delthvu, dtstar_sice,  &
+         tstar_sice, u_0_p, v_0_p, zlcl_uv, qsat_lcl, delthvu,               &
          alpha1_sea, ashtf_prime_sea, bl_type_1, bl_type_2, bl_type_3,       &
          bl_type_4, bl_type_5, bl_type_6, bl_type_7, chr1p5m_sice, rhokh_sea,&
          u_s, uw0, vw0, z0hssi, z0mssi, zhnl, ti_sice, zeroes, surf_dep_flux
@@ -766,7 +766,7 @@ contains
     ! fields on sea-ice categories
     real(r_um), dimension(row_length,rows,nice_use) ::                       &
          tstar_sice_ncat, fqw_ice, ftl_ice, ice_fract_ncat, alpha1_sice,     &
-         ashtf_prime, rhokh_sice, k_sice_ncat, ti_sice_ncat
+         ashtf_prime, rhokh_sice, k_sice_ncat, ti_sice_ncat, dtstar_sice
 
     ! field on land points and soil levels
     real(r_um), dimension(land_field,sm_levels) :: soil_layer_moisture,      &
@@ -902,12 +902,12 @@ contains
     ! Land tile fractions
     flandg = 0.0_r_um
     do i = 1, n_land_tile
-      flandg(1,1) = flandg(1,1) + real(tile_fraction(tile_stencil(i,1)), r_um)
-      flandg(0,1) = flandg(0,1) + real(tile_fraction(tile_stencil(i,2)), r_um)
-      flandg(1,0) = flandg(1,0) + real(tile_fraction(tile_stencil(i,3)), r_um)
-      flandg(2,1) = flandg(2,1) + real(tile_fraction(tile_stencil(i,4)), r_um)
-      flandg(1,2) = flandg(1,2) + real(tile_fraction(tile_stencil(i,5)), r_um)
-      frac_surft(1, i) = real(tile_fraction(tile_stencil(i,1)), r_um)
+      flandg(1,1) = flandg(1,1) + real(tile_fraction(tile_stencil(1,1)+i-1), r_um)
+      flandg(0,1) = flandg(0,1) + real(tile_fraction(tile_stencil(1,2)+i-1), r_um)
+      flandg(1,0) = flandg(1,0) + real(tile_fraction(tile_stencil(1,3)+i-1), r_um)
+      flandg(2,1) = flandg(2,1) + real(tile_fraction(tile_stencil(1,4)+i-1), r_um)
+      flandg(1,2) = flandg(1,2) + real(tile_fraction(tile_stencil(1,5)+i-1), r_um)
+      frac_surft(1, i) = real(tile_fraction(tile_stencil(1,1)+i-1), r_um)
     end do
     ! Set these to land to exclude them until full stencil is available
     flandg(0,0) = 1.0_r_um
@@ -936,14 +936,14 @@ contains
     ice_fract = 0.0_r_um
     do i = first_sea_ice_tile, first_sea_ice_tile + n_sea_ice_tile - 1
       i_sice = i_sice + 1
-      ice_fract = ice_fract + real(tile_fraction(tile_stencil(i,1)), r_um)
-      ice_fract_ncat(1, 1, i_sice) = real(tile_fraction(tile_stencil(i,1)), r_um)
+      ice_fract = ice_fract + real(tile_fraction(tile_stencil(1,1)+i-1), r_um)
+      ice_fract_ncat(1, 1, i_sice) = real(tile_fraction(tile_stencil(1,1)+i-1), r_um)
     end do
 
     ! Because Jules tests on flandg < 1, we need to ensure this is exactly
     ! 1 when no sea or sea-ice is present
     if (flandg(1,1) < 1.0_r_um .and. &
-         tile_fraction(tile_stencil(first_sea_tile,1)) == 0.0_r_def .and. &
+         tile_fraction(tile_stencil(1,1)+first_sea_tile-1) == 0.0_r_def .and. &
          ice_fract(1,1) == 0.0_r_um) then
       flandg(1,1) = 1.0_r_um
     end if
@@ -1002,14 +1002,14 @@ contains
     ! Land tile temperatures
     tstar_land = 0.0_r_um
     do i = 1, n_land_tile
-      tstar_surft(1, i) = real(tile_temperature(map_tile(i)), r_um)
+      tstar_surft(1, i) = real(tile_temperature(map_tile(1)+i-1), r_um)
       tstar_land = tstar_land + frac_surft(1, i) * tstar_surft(1, i)
     end do
 
     ! Sea temperature
     tstar_sea = 0.0_r_um
-    if (tile_fraction(tile_stencil(first_sea_tile,1)) > 0.0_r_def) then
-      tstar_sea = real(tile_temperature(map_tile(first_sea_tile)), r_um)
+    if (tile_fraction(tile_stencil(1,1)+first_sea_tile-1) > 0.0_r_def) then
+      tstar_sea = real(tile_temperature(map_tile(1)+first_sea_tile-1), r_um)
     end if
 
     ! Sea-ice temperatures
@@ -1018,7 +1018,7 @@ contains
     if (ice_fract(1, 1) > 0.0_r_um) then
       do i = first_sea_ice_tile, first_sea_ice_tile + n_sea_ice_tile - 1
         i_sice = i_sice + 1
-        tstar_sice_ncat(1, 1, i_sice) = real(tile_temperature(map_tile(i)), r_um)
+        tstar_sice_ncat(1, 1, i_sice) = real(tile_temperature(map_tile(1)+i-1), r_um)
         tstar_sice = tstar_sice &
                    + ice_fract_ncat(1,1,i_sice) * tstar_sice_ncat(1,1,i_sice) &
                    / ice_fract
@@ -1036,17 +1036,17 @@ contains
     if (ice_fract(1, 1) > 0.0_r_um) then
       do i = 1, n_sea_ice_tile
         k_sice_ncat(1, 1, i) = 2.0_r_um * kappai / de
-        ti_sice_ncat(1, 1, i) = real(sea_ice_temperature(map_sice(i)), r_um)
+        ti_sice_ncat(1, 1, i) = real(sea_ice_temperature(map_sice(1)+i-1), r_um)
         ti_sice = ti_sice &
                 + ice_fract_ncat(1,1,i) * ti_sice_ncat(1,1,i) / ice_fract
       end do
     end if
 
-    do i_pft = 1, npft
+    do n = 1, npft
       ! Leaf area index
-      lai_pft(1, i_pft) = real(leaf_area_index(map_pft(i_pft)), r_um)
+      lai_pft(1, n) = real(leaf_area_index(map_pft(1)+n-1), r_um)
       ! Canopy height
-      canht_pft(1, i_pft) = real(canopy_height(map_pft(i_pft)), r_um)
+      canht_pft(1, n) = real(canopy_height(map_pft(1)+n-1), r_um)
     end do
 
     ! Roughness length (z0_tile)
@@ -1070,13 +1070,13 @@ contains
       ! Clapp and Hornberger b coefficient (bexp_soilt)
       bexp_soilt(1, 1, i) = real(clapp_horn_b(map_2d(1)), r_um)
       ! Soil temperature (t_soil_soilt)
-      t_soil_soilt(1, i) = real(soil_temperature(map_soil(i)), r_um)
+      t_soil_soilt(1, i) = real(soil_temperature(map_soil(1)+i-1), r_um)
       ! Soil moisture content (kg m-2, soil_layer_moisture)
-      soil_layer_moisture(1, i) = real(soil_moisture(map_soil(i)), r_um)
+      soil_layer_moisture(1, i) = real(soil_moisture(map_soil(1)+i-1), r_um)
       ! Unfrozen soil moisture proportion (sthu_soilt)
-      sthu_soilt(1, i) = real(unfrozen_soil_moisture(map_soil(i)), r_um)
+      sthu_soilt(1, i) = real(unfrozen_soil_moisture(map_soil(1)+i-1), r_um)
       ! Frozen soil moisture proportion (sthf_soilt)
-      sthf_soilt(1, i) = real(frozen_soil_moisture(map_soil(i)), r_um)
+      sthf_soilt(1, i) = real(frozen_soil_moisture(map_soil(1)+i-1), r_um)
     end do
 
     ! Soil thermal conductivity (hcon_soilt)
@@ -1114,19 +1114,19 @@ contains
     ! Net SW radiation on tiles
     do i = 1, n_land_tile
       sw_surft(1, i) = real(sw_down_surf(map_2d(1)) - &
-                            sw_up_tile(map_tile(i)), r_um)
+                            sw_up_tile(map_tile(1)+i-1), r_um)
     end do
 
     ! Net SW on open sea
     sw_sea(1) = real(sw_down_surf(map_2d(1)) - &
-                     sw_up_tile(map_tile(first_sea_tile)), r_um)
+                     sw_up_tile(map_tile(1)+first_sea_tile-1), r_um)
 
     ! Net SW on sea-ice
     i_sice = 0
     do i = first_sea_ice_tile, first_sea_ice_tile + n_sea_ice_tile - 1
       i_sice = i_sice + 1
       sw_sicat(1, i_sice) = real(sw_down_surf(map_2d(1)) - &
-                                 sw_up_tile(map_tile(i)), r_um)
+                                 sw_up_tile(map_tile(1)+i-1), r_um)
     end do
 
     ! photosynthetically active downwelling SW radiation
@@ -1151,20 +1151,21 @@ contains
 
     ! Canopy water on each tile (canopy_surft)
     do i = 1, n_land_tile
-      canopy_surft(1, i) = real(canopy_water(map_tile(i)), r_um)
+      canopy_surft(1, i) = real(canopy_water(map_tile(1)+i-1), r_um)
     end do
 
     i_snow = 0
     do i = 1, n_land_tile
-      snow_surft(1, i) = real(tile_snow_mass(map_tile(i)), r_um)
-      nsnow_surft(1, i) = int(n_snow_layers(map_tile(i)), i_um)
-      snowdepth_surft(1, i) = real(snow_depth(map_tile(i)), r_um)
+      snow_surft(1, i) = real(tile_snow_mass(map_tile(1)+i-1), r_um)
+      nsnow_surft(1, i) = int(n_snow_layers(map_tile(1)+i-1), i_um)
+      snowdepth_surft(1, i) = real(snow_depth(map_tile(1)+i-1), r_um)
       do j = 1, nsmax
+        ds_surft(1, i, j) = real(snow_layer_thickness(map_snow(1)+i_snow), r_um)
+        sice_surft(1, i, j) = real(snow_layer_ice_mass(map_snow(1)+i_snow), r_um)
+        sliq_surft(1, i, j) = real(snow_layer_liq_mass(map_snow(1)+i_snow), r_um)
+        tsnow_surft(1, i, j) = real(snow_layer_temp(map_snow(1)+i_snow), r_um)
+        ! Counting from 0 so increment here
         i_snow = i_snow + 1
-        ds_surft(1, i, j) = real(snow_layer_thickness(map_snow(i_snow)), r_um)
-        sice_surft(1, i, j) = real(snow_layer_ice_mass(map_snow(i_snow)), r_um)
-        sliq_surft(1, i, j) = real(snow_layer_liq_mass(map_snow(i_snow)), r_um)
-        tsnow_surft(1, i, j) = real(snow_layer_temp(map_snow(i_snow)), r_um)
       end do
     end do
 
@@ -1546,11 +1547,11 @@ contains
 
     end if
 
-    rhokm_surf(map_surf(1)) = rhokm_land(1,1)
-    rhokm_surf(map_surf(2)) = rhokm_ssi(1,1)
-    rhokm_surf(map_surf(3)) = flandg(1,1)
-    rhokm_surf(map_surf(4)) = flandfac(1,1)
-    rhokm_surf(map_surf(5)) = fseafac(1,1)
+    rhokm_surf(map_surf(1)+0) = rhokm_land(1,1)
+    rhokm_surf(map_surf(1)+1) = rhokm_ssi(1,1)
+    rhokm_surf(map_surf(1)+2) = flandg(1,1)
+    rhokm_surf(map_surf(1)+3) = flandfac(1,1)
+    rhokm_surf(map_surf(1)+4) = fseafac(1,1)
     do k=1,bl_levels
       rhokm_bl(map_wth(1) + k) = rhokm(1,1,k)
       rhokh_bl(map_w3(1) + k) = rhokh(1,1,k)
@@ -1574,42 +1575,42 @@ contains
     end do
 
     do i = 1, n_land_tile
-      alpha1_tile(map_tile(i)) = alpha1(1, i)
-      ashtf_prime_tile(map_tile(i)) = ashtf_prime_surft(1, i)
-      dtstar_tile(map_tile(i)) = dtstar_surft(1, i)
-      fraca_tile(map_tile(i)) = fraca(1, i)
-      z0h_tile(map_tile(i)) = z0h_surft(1, i)
-      z0m_tile(map_tile(i)) = z0m_surft(1, i)
-      rhokh_tile(map_tile(i)) = rhokh_surft(1, i)
-      chr1p5m_tile(map_tile(i)) = chr1p5m(1, i)
-      resfs_tile(map_tile(i)) = resfs(1, i)
-      canhc_tile(map_tile(i)) = canhc_surft(1, i)
+      alpha1_tile(map_tile(1)+i-1) = alpha1(1, i)
+      ashtf_prime_tile(map_tile(1)+i-1) = ashtf_prime_surft(1, i)
+      dtstar_tile(map_tile(1)+i-1) = dtstar_surft(1, i)
+      fraca_tile(map_tile(1)+i-1) = fraca(1, i)
+      z0h_tile(map_tile(1)+i-1) = z0h_surft(1, i)
+      z0m_tile(map_tile(1)+i-1) = z0m_surft(1, i)
+      rhokh_tile(map_tile(1)+i-1) = rhokh_surft(1, i)
+      chr1p5m_tile(map_tile(1)+i-1) = chr1p5m(1, i)
+      resfs_tile(map_tile(1)+i-1) = resfs(1, i)
+      canhc_tile(map_tile(1)+i-1) = canhc_surft(1, i)
     end do
 
     i_tile = 0
     do i = 1, n_land_tile
       do n = 1, sm_levels
+        tile_water_extract(map_smtile(1)+i_tile) = wt_ext_surft(1,n,i)
         i_tile = i_tile + 1
-        tile_water_extract(map_smtile(i_tile)) = wt_ext_surft(1,n,i)
       end do
     end do
 
-    alpha1_tile(map_tile(first_sea_tile)) = alpha1_sea(1,1)
-    ashtf_prime_tile(map_tile(first_sea_tile)) = ashtf_prime_sea(1,1)
-    dtstar_tile(map_tile(first_sea_tile)) = dtstar_sea(1,1)
-    rhokh_tile(map_tile(first_sea_tile)) = rhokh_sea(1,1)
+    alpha1_tile(map_tile(1)+first_sea_tile-1) = alpha1_sea(1,1)
+    ashtf_prime_tile(map_tile(1)+first_sea_tile-1) = ashtf_prime_sea(1,1)
+    dtstar_tile(map_tile(1)+first_sea_tile-1) = dtstar_sea(1,1)
+    rhokh_tile(map_tile(1)+first_sea_tile-1) = rhokh_sea(1,1)
 
     i_sice = 0
     do i = first_sea_ice_tile, first_sea_ice_tile + n_sea_ice_tile - 1
       i_sice = i_sice + 1
-      alpha1_tile(map_tile(i)) = alpha1_sice(1,1,i_sice)
-      ashtf_prime_tile(map_tile(i)) = ashtf_prime(1,1,i_sice)
-      rhokh_tile(map_tile(i)) = rhokh_sice(1,1,i_sice)
+      alpha1_tile(map_tile(1)+i-1) = alpha1_sice(1,1,i_sice)
+      ashtf_prime_tile(map_tile(1)+i-1) = ashtf_prime(1,1,i_sice)
+      rhokh_tile(map_tile(1)+i-1) = rhokh_sice(1,1,i_sice)
+      dtstar_tile(map_tile(1)+i-1) = dtstar_sice(1,1,i_sice)
     end do
-    dtstar_tile(map_tile(first_sea_ice_tile)) = dtstar_sice(1,1)
-    z0h_tile(map_tile(first_sea_ice_tile)) = z0hssi(1,1)
-    z0m_tile(map_tile(first_sea_ice_tile)) = z0mssi(1,1)
-    chr1p5m_tile(map_tile(first_sea_ice_tile)) = chr1p5m_sice(1,1)
+    z0h_tile(map_tile(1)+first_sea_ice_tile-1) = z0hssi(1,1)
+    z0m_tile(map_tile(1)+first_sea_ice_tile-1) = z0mssi(1,1)
+    chr1p5m_tile(map_tile(1)+first_sea_ice_tile-1) = chr1p5m_sice(1,1)
 
     blend_height_tq(map_2d(1)) = real(k_blend_tq(1,1), r_def)
     blend_height_uv(map_2d(1)) = real(k_blend_uv(1,1), r_def)
@@ -1634,44 +1635,44 @@ contains
     parcel_buoyancy(map_2d(1)) = delthvu(1,1)
     qsat_at_lcl(map_2d(1)) = qsat_lcl(1,1)
 
-    bl_types(map_bl(1)) = bl_type_1(1,1)
-    bl_types(map_bl(2)) = bl_type_2(1,1)
-    bl_types(map_bl(3)) = bl_type_3(1,1)
-    bl_types(map_bl(4)) = bl_type_4(1,1)
-    bl_types(map_bl(5)) = bl_type_5(1,1)
-    bl_types(map_bl(6)) = bl_type_6(1,1)
-    bl_types(map_bl(7)) = bl_type_7(1,1)
+    bl_types(map_bl(1)+0) = bl_type_1(1,1)
+    bl_types(map_bl(1)+1) = bl_type_2(1,1)
+    bl_types(map_bl(1)+2) = bl_type_3(1,1)
+    bl_types(map_bl(1)+3) = bl_type_4(1,1)
+    bl_types(map_bl(1)+4) = bl_type_5(1,1)
+    bl_types(map_bl(1)+5) = bl_type_6(1,1)
+    bl_types(map_bl(1)+6) = bl_type_7(1,1)
 
-    do i = 1, npft
+    do n = 1, npft
       ! Unloading rate of snow from plant functional types
-      snow_unload_rate(map_pft(i)) = real(unload_backgrnd_pft(1, i), r_def)
+      snow_unload_rate(map_pft(1)+n-1) = real(unload_backgrnd_pft(1, n), r_def)
     end do
 
     do i = 1, n_land_tile
       ! Land tile temperatures
-      tile_temperature(map_tile(i)) = real(tstar_surft(1, i), r_def)
+      tile_temperature(map_tile(1)+i-1) = real(tstar_surft(1, i), r_def)
       ! sensible heat flux
-      tile_heat_flux(map_tile(i)) = real(ftl_surft(1, i), r_def)
+      tile_heat_flux(map_tile(1)+i-1) = real(ftl_surft(1, i), r_def)
       ! moisture flux
-      tile_moisture_flux(map_tile(i)) = real(fqw_surft(1, i), r_def)
+      tile_moisture_flux(map_tile(1)+i-1) = real(fqw_surft(1, i), r_def)
     end do
 
     ! Sea temperature
-    tile_temperature(map_tile(first_sea_tile)) = real(tstar_sea(1,1), r_def)
+    tile_temperature(map_tile(1)+first_sea_tile-1) = real(tstar_sea(1,1), r_def)
     ! heat flux - NB actually grid box mean but okay for aquaplanet
-    tile_heat_flux(map_tile(first_sea_tile)) = real(ftl(1,1,1), r_def)
+    tile_heat_flux(map_tile(1)+first_sea_tile-1) = real(ftl(1,1,1), r_def)
     ! moisture flux - NB actually grid box mean but okay for aquaplanet
-    tile_moisture_flux(map_tile(first_sea_tile)) = real(fqw(1,1,1), r_def)
+    tile_moisture_flux(map_tile(1)+first_sea_tile-1) = real(fqw(1,1,1), r_def)
 
     i_sice = 0
     do i = first_sea_ice_tile, first_sea_ice_tile + n_sea_ice_tile - 1
       i_sice = i_sice + 1
       ! sea-ice temperature
-      tile_temperature(map_tile(i)) = real(tstar_sice_ncat(1,1,i_sice), r_def)
+      tile_temperature(map_tile(1)+i-1) = real(tstar_sice_ncat(1,1,i_sice), r_def)
       ! sea-ice heat flux
-      tile_heat_flux(map_tile(i)) = real(ftl_ice(1,1,i_sice), r_def)
+      tile_heat_flux(map_tile(1)+i-1) = real(ftl_ice(1,1,i_sice), r_def)
       ! sea-ice moisture flux
-      tile_moisture_flux(map_tile(i)) = real(fqw_ice(1,1,i_sice), r_def)
+      tile_moisture_flux(map_tile(1)+i-1) = real(fqw_ice(1,1,i_sice), r_def)
     end do
 
     ! update blended Smagorinsky diffusion coefficients only if using Smagorinsky scheme

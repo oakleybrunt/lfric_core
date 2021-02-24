@@ -14,7 +14,8 @@ module interp_bl_kernel_mod
   use kernel_mod,               only: kernel_type
   use argument_mod,             only: arg_type, func_type,                 &
                                       GH_FIELD, GH_INC, GH_READ, CELLS,    &
-                                      ANY_DISCONTINUOUS_SPACE_1
+                                      ANY_DISCONTINUOUS_SPACE_1,           &
+                                      ANY_SPACE_1
   use constants_mod,            only: r_def, i_def
   use fs_continuity_mod,        only: W2, W3, WTHETA
   use kernel_mod,               only: kernel_type
@@ -40,7 +41,7 @@ module interp_bl_kernel_mod
          arg_type(GH_FIELD, GH_READ,  WTHETA),                    &! fd_taux
          arg_type(GH_FIELD, GH_READ,  WTHETA),                    &! fd_tauy
          arg_type(GH_FIELD, GH_INC,   W2),                        &! rhokm_w2
-         arg_type(GH_FIELD, GH_INC,   W2),                        &! rhokm_surf_w2
+         arg_type(GH_FIELD, GH_INC,   ANY_SPACE_1),               &! rhokm_surf_w2
          arg_type(GH_FIELD, GH_INC,   W2),                        &! ngstress_w2
          arg_type(GH_FIELD, GH_INC,   W2),                        &! dtrdz_w2
          arg_type(GH_FIELD, GH_INC,   W2),                        &! rdz_w2
@@ -76,15 +77,18 @@ contains
   !> @param[in]     ndf_wth       Number of DOFs per cell for potential temperature space
   !> @param[in]     undf_wth      Number of unique DOFs for potential temperature space
   !> @param[in]     map_wth       dofmap for the cell at the base of the column for potential temperature space
-  !> @param[in]     ndf_surf       Number of DOFs per cell for surface variables
-  !> @param[in]     undf_surf      Number of unique DOFs for surface variables
-  !> @param[in]     map_surf       dofmap for the cell at the base of the column for surface variables
+  !> @param[in]     ndf_surf      Number of DOFs per cell for surface variables
+  !> @param[in]     undf_surf     Number of unique DOFs for surface variables
+  !> @param[in]     map_surf      dofmap for the cell at the base of the column for surface variables
   !> @param[in]     ndf_w3        Number of DOFs per cell for density space
   !> @param[in]     undf_w3       Number of unique DOFs for density space
   !> @param[in]     map_w3        dofmap for the cell at the base of the column for density space
   !> @param[in]     ndf_w2        Number of DOFs per cell for w2 space
   !> @param[in]     undf_w2       Number of unique DOFs for w2 space
   !> @param[in]     map_w2        dofmap for the cell at the base of the column for w2 space
+  !> @param[in]     ndf_w2_2d     Number of DOFs per cell for w2 surface space
+  !> @param[in]     undf_w2_2d    Number of unique DOFs for w2 surface space
+  !> @param[in]     map_w2_2d     dofmap for the cell at the base of the column for w2 surface space
   subroutine interp_bl_code(nlayers,       &
                             rhokm_bl,      &
                             rhokm_surf,    &
@@ -110,7 +114,10 @@ contains
                             map_w3,        &
                             ndf_w2,        &
                             undf_w2,       &
-                            map_w2)
+                            map_w2,        &
+                            ndf_w2_2d,     &
+                            undf_w2_2d,    &
+                            map_w2_2d)
 
     !---------------------------------------
     ! UM modules containing switches or global constants
@@ -122,11 +129,12 @@ contains
     ! Arguments
     integer, intent(in) :: nlayers
 
-    integer(kind=i_def), intent(in) :: ndf_wth, ndf_w3, ndf_w2
-    integer(kind=i_def), intent(in) :: undf_wth, undf_w3, undf_w2
+    integer(kind=i_def), intent(in) :: ndf_wth, ndf_w3, ndf_w2, ndf_w2_2d
+    integer(kind=i_def), intent(in) :: undf_wth, undf_w3, undf_w2, undf_w2_2d
     integer(kind=i_def), intent(in) :: map_wth(ndf_wth)
     integer(kind=i_def), intent(in) :: map_w3(ndf_w3)
     integer(kind=i_def), intent(in) :: map_w2(ndf_w2)
+    integer(kind=i_def), intent(in) :: map_w2_2d(ndf_w2_2d)
 
     integer(kind=i_def), intent(in) :: ndf_surf, undf_surf
     integer(kind=i_def), intent(in) :: map_surf(ndf_surf)
@@ -144,8 +152,9 @@ contains
                                                            ngstress_w2,        &
                                                            rdz_w2,             &
                                                            dtrdz_w2,           &
-                                                           rhokm_surf_w2,      &
                                                            fd_tau_w2
+
+    real(kind=r_def), dimension(undf_w2_2d), intent(inout) :: rhokm_surf_w2
 
     ! Internal variables
     integer :: k, df
@@ -156,30 +165,30 @@ contains
     ! w2 fields are available
     do df = 1,3,2
       ! rhokm_land
-      rhokm_surf_w2(map_w2(df) + 1) = rhokm_surf_w2(map_w2(df) + 1) +        &
-                                       0.5_r_def * rhokm_surf(map_surf(1))
-      rhokm_surf_w2(map_w2(df+1) + 1) = rhokm_surf_w2(map_w2(df+1) + 1) +    &
-                                         0.5_r_def * rhokm_surf(map_surf(1))
+      rhokm_surf_w2(map_w2_2d(df)) = rhokm_surf_w2(map_w2_2d(df)) +            &
+                                   0.5_r_def * rhokm_surf(map_surf(1))
+      rhokm_surf_w2(map_w2_2d(df+1)) = rhokm_surf_w2(map_w2_2d(df+1)) +        &
+                                     0.5_r_def * rhokm_surf(map_surf(1))
       ! rhokm_ssi
-      rhokm_surf_w2(map_w2(df) + 2) = rhokm_surf_w2(map_w2(df) + 2) +        &
-                                       0.5_r_def * rhokm_surf(map_surf(2))
-      rhokm_surf_w2(map_w2(df+1) + 2) = rhokm_surf_w2(map_w2(df+1) + 2) +    &
-                                         0.5_r_def * rhokm_surf(map_surf(2))
+      rhokm_surf_w2(map_w2_2d(df) + 1) = rhokm_surf_w2(map_w2_2d(df) + 1) +    &
+                                       0.5_r_def * rhokm_surf(map_surf(1) + 1)
+      rhokm_surf_w2(map_w2_2d(df+1) + 1) = rhokm_surf_w2(map_w2_2d(df+1) + 1) +&
+                                         0.5_r_def * rhokm_surf(map_surf(1)+1)
       ! flandg
-      rhokm_surf_w2(map_w2(df) + 3) = rhokm_surf_w2(map_w2(df) + 3) +        &
-                                       0.5_r_def * rhokm_surf(map_surf(3))
-      rhokm_surf_w2(map_w2(df+1) + 3) = rhokm_surf_w2(map_w2(df+1) + 3) +    &
-                                         0.5_r_def * rhokm_surf(map_surf(3))
+      rhokm_surf_w2(map_w2_2d(df) + 2) = rhokm_surf_w2(map_w2_2d(df) + 2) +    &
+                                       0.5_r_def * rhokm_surf(map_surf(1) + 2)
+      rhokm_surf_w2(map_w2_2d(df+1) + 2) = rhokm_surf_w2(map_w2_2d(df+1) + 2) +&
+                                         0.5_r_def * rhokm_surf(map_surf(1)+2)
       ! Variable called flandfac in UM BL code
-      rhokm_surf_w2(map_w2(df) + 4) = rhokm_surf_w2(map_w2(df) + 4) +        &
-                                       0.5_r_def * rhokm_surf(map_surf(4))
-      rhokm_surf_w2(map_w2(df+1) + 4) = rhokm_surf_w2(map_w2(df+1) + 4) +    &
-                                         0.5_r_def * rhokm_surf(map_surf(4))
+      rhokm_surf_w2(map_w2_2d(df) + 3) = rhokm_surf_w2(map_w2_2d(df) + 3) +    &
+                                       0.5_r_def * rhokm_surf(map_surf(1) + 3)
+      rhokm_surf_w2(map_w2_2d(df+1) + 3) = rhokm_surf_w2(map_w2_2d(df+1) + 3) +&
+                                         0.5_r_def * rhokm_surf(map_surf(1)+3)
       ! Variable called fseafac in UM BL code
-      rhokm_surf_w2(map_w2(df) + 5) = rhokm_surf_w2(map_w2(df) + 5) +        &
-                                       0.5_r_def * rhokm_surf(map_surf(5))
-      rhokm_surf_w2(map_w2(df+1) + 5) = rhokm_surf_w2(map_w2(df+1) + 5) +    &
-                                         0.5_r_def * rhokm_surf(map_surf(5))
+      rhokm_surf_w2(map_w2_2d(df) + 4) = rhokm_surf_w2(map_w2_2d(df) + 4) +    &
+                                       0.5_r_def * rhokm_surf(map_surf(1) + 4)
+      rhokm_surf_w2(map_w2_2d(df+1) + 4) = rhokm_surf_w2(map_w2_2d(df+1) + 4) +&
+                                         0.5_r_def * rhokm_surf(map_surf(1)+4)
     end do
 
     do k = 1, bl_levels

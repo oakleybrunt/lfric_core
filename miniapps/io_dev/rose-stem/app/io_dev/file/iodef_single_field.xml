@@ -22,12 +22,6 @@
       <domain id="checkpoint_W2" name="checkpoint_W2" nvertex="1"/>
       <domain id="checkpoint_W3" name="checkpoint_W3" nvertex="1"/>
       <domain id="checkpoint_Wtheta" name="checkpoint_Wtheta" nvertex="1"/>
-      <domain id="checkpoint_W3_2D" name="checkpoint_W3_2D" nvertex="1"/>
-      <domain id="checkpoint_pft" name="checkpoint_pft" nvertex="1"/>
-      <domain id="checkpoint_tile" name="checkpoint_tile" nvertex="1"/>
-      <domain id="checkpoint_sice" name="checkpoint_sice" nvertex="1"/>
-      <domain id="checkpoint_soil" name="checkpoint_soil" nvertex="1"/>
-      <domain id="checkpoint_snow" name="checkpoint_snow" nvertex="1"/>
     </domain_definition>
 
     <grid_definition>
@@ -77,14 +71,14 @@
       <field_group id="checkpoint_fields" freq_op="1ts" operation="once"  enabled=".FALSE." >
         <field id="checkpoint_W0_field" name="checkpoint_W0_field" long_name="Field on W0 function space" unit="1" domain_ref="checkpoint_W0" />
         <field id="checkpoint_W3_field" name="checkpoint_W3_field" long_name="Field on W3 function space" unit="1" domain_ref="checkpoint_W3" />
-        <field id="checkpoint_W3_2D_field" name="checkpoint_W3_2D_field" long_name="Two dimensional field on W3 function space" unit="1" domain_ref="checkpoint_W3_2D" />
+        <field id="checkpoint_W3_2D_field" name="checkpoint_W3_2D_field" long_name="Two dimensional field on W3 function space" unit="1" domain_ref="face" />
       </field_group>
 
       <!-- Restart group -->
       <field_group id="restart_fields" freq_op="1ts" operation="once"  enabled=".FALSE." >
         <field id="restart_W0_field" name="restart_W0_field" long_name="Field on W0 function space" unit="1" domain_ref="checkpoint_W0" />
         <field id="restart_W3_field" name="restart_W3_field" long_name="Field on W3 function space" unit="1" domain_ref="checkpoint_W3" />
-        <field id="restart_W3_2D_field" name="restart_W3_2D_field" long_name="Two dimensional field on W3 function space" unit="1" domain_ref="checkpoint_W3_2D" />
+        <field id="restart_W3_2D_field" name="restart_W3_2D_field" long_name="Two dimensional field on W3 function space" unit="1" domain_ref="face" />
       </field_group>
 
     </field_definition>

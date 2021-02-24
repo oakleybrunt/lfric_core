@@ -11,6 +11,7 @@
    <axis_definition>
     <axis id="vert_axis_half_levels" name="half_levels"/>
     <axis id="vert_axis_full_levels" name="full_levels"/>
+    <axis id="monthly_axis" name="monthly_axis" n_glo="12"/>
    </axis_definition>
 
    <domain_definition>
@@ -22,12 +23,6 @@
       <domain id="checkpoint_W2" name="checkpoint_W2" nvertex="1"/>
       <domain id="checkpoint_W3" name="checkpoint_W3" nvertex="1"/>
       <domain id="checkpoint_Wtheta" name="checkpoint_Wtheta" nvertex="1"/>
-      <domain id="checkpoint_W3_2D" name="checkpoint_W3_2D" nvertex="1"/>
-      <domain id="checkpoint_pft" name="checkpoint_pft" nvertex="1"/>
-      <domain id="checkpoint_tile" name="checkpoint_tile" nvertex="1"/>
-      <domain id="checkpoint_sice" name="checkpoint_sice" nvertex="1"/>
-      <domain id="checkpoint_soil" name="checkpoint_soil" nvertex="1"/>
-      <domain id="checkpoint_snow" name="checkpoint_snow" nvertex="1"/>
  </domain_definition>
 
    <grid_definition>
@@ -46,6 +41,11 @@
     <grid id="half_level_edge_grid">
       <domain domain_ref="edge"/>
       <axis axis_ref="vert_axis_half_levels"/>
+    </grid>
+    <grid id="3D_monthly_grid">
+      <domain domain_ref="face"/>
+      <axis axis_ref="vert_axis_half_levels"/>
+      <axis axis_ref="monthly_axis"/>
     </grid>
    </grid_definition>
 
@@ -272,9 +272,11 @@
        <field id="read_tstar" name="tstar" long_name="surface_temperature" standard_name="surface_temperature" unit="K" domain_ref="face" operation="instant" />
       </file>
 
+        <!-- ANCIL FILES -->
+
       <file id="orography_ancil" name="orography_ancil" mode="read" output_freq="1ts" convention="UGRID" cyclic="true" enabled=".FALSE.">
        <field id="surface_altitude" name="surface_altitude" long_name="Surface altitude" unit="m" operation="once" domain_ref="face"/>
-      </file>
+       </file>
 
     </file_definition>
 

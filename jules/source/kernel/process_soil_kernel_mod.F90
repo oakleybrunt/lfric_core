@@ -158,14 +158,14 @@ contains
       c_wet_frac(map_2d(1)) = real(c_fwet(1), r_def)
 
       ! Calculate frozen and unfrozen soil fractions
-      call freeze_soil(soil_pts, sm_levels, clapp_horn_b(map_2d(1)),  &
-                       dzsoil, soil_suction_sat(map_2d(1)),           &
-                       soil_moisture(map_soil(1:sm_levels)),          &
-                       soil_temperature(map_soil(1:sm_levels)),       &
+      call freeze_soil(soil_pts, sm_levels, clapp_horn_b(map_2d(1)),           &
+                       dzsoil, soil_suction_sat(map_2d(1)),                    &
+                       soil_moisture(map_soil(1):map_soil(1)+sm_levels-1),     &
+                       soil_temperature(map_soil(1):map_soil(1)+sm_levels-1),  &
                        soil_moist_sat(map_2d(1)), sthu, sthf)
 
-      unfrozen_soil_moisture(map_soil(1:sm_levels)) = sthu
-      frozen_soil_moisture(map_soil(1:sm_levels)) = sthf
+      unfrozen_soil_moisture(map_soil(1):map_soil(1)+sm_levels-1) = sthu
+      frozen_soil_moisture(map_soil(1):map_soil(1)+sm_levels-1) = sthf
 
     else
 
@@ -174,8 +174,8 @@ contains
       c_sat_frac(map_2d(1)) = 0.0_r_def
       a_wet_frac(map_2d(1)) = 0.0_r_def
       c_wet_frac(map_2d(1)) = 0.0_r_def
-      unfrozen_soil_moisture(map_soil(1:sm_levels)) = 0.0_r_def
-      frozen_soil_moisture(map_soil(1:sm_levels)) = 0.0_r_def
+      unfrozen_soil_moisture(map_soil(1):map_soil(1)+sm_levels-1) = 0.0_r_def
+      frozen_soil_moisture(map_soil(1):map_soil(1)+sm_levels-1) = 0.0_r_def
 
     end if
 

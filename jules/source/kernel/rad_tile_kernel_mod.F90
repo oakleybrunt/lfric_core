@@ -243,7 +243,7 @@ subroutine rad_tile_code(nlayers,                                &
   real(r_def), intent(in) :: height_wth(undf_wth)
 
   ! Local variables for the kernel
-  integer(i_def) :: i, i_tile, i_pft, i_sice, i_band, n
+  integer(i_def) :: i, i_tile, i_sice, i_band, n
   integer(i_def) :: df_rtile
 
   ! Inputs to surf_couple_radiation
@@ -288,8 +288,8 @@ subroutine rad_tile_code(nlayers,                                &
   ! Land tile fractions
   flandg = 0.0_r_um
   do i = 1, n_land_tile
-    flandg = flandg + real(tile_fraction(map_tile(i)), r_um)
-    frac_tile(1, i) = real(tile_fraction(map_tile(i)), r_um)
+    flandg = flandg + real(tile_fraction(map_tile(1)+i-1), r_um)
+    frac_tile(1, i) = real(tile_fraction(map_tile(1)+i-1), r_um)
   end do
 
   ! Jules requires fractions with respect to the land area
@@ -302,7 +302,7 @@ subroutine rad_tile_code(nlayers,                                &
     land_index = 0
   end if
 
-  if (tile_fraction(map_tile(ice)) > 0.5_r_def) then
+  if (tile_fraction(map_tile(1)+ice-1) > 0.0_r_def) then
     l_lice_point = .true.
   else
     l_lice_point = .false.
@@ -313,17 +313,17 @@ subroutine rad_tile_code(nlayers,                                &
 
   ! Land tile temperatures
   do i = 1, n_land_tile
-    tstar_tile(1, i) = real(tile_temperature(map_tile(i)), r_um)
+    tstar_tile(1, i) = real(tile_temperature(map_tile(1)+i-1), r_um)
   end do
 
   ! Sea temperature
-  tstar_sea = real(tile_temperature(map_tile(first_sea_tile)), r_um)
+  tstar_sea = real(tile_temperature(map_tile(1)+first_sea_tile-1), r_um)
 
   ! Sea-ice temperatures
   i_sice = 0
   do i = first_sea_ice_tile, first_sea_ice_tile + n_sea_ice_tile - 1
     i_sice = i_sice + 1
-    tstar_sice_cat(1, 1, i_sice) = real(tile_temperature(map_tile(i)), r_um)
+    tstar_sice_cat(1, 1, i_sice) = real(tile_temperature(map_tile(1)+i-1), r_um)
   end do
 
   ! Sea-ice fraction
@@ -331,14 +331,14 @@ subroutine rad_tile_code(nlayers,                                &
   ice_fract = 0.0_r_um
   do i = first_sea_ice_tile, first_sea_ice_tile + n_sea_ice_tile - 1
     i_sice = i_sice + 1
-    ice_fract = ice_fract + real(tile_fraction(map_tile(i)), r_um)
-    ice_fract_cat(1, 1, i_sice) = real(tile_fraction(map_tile(i)), r_um)
+    ice_fract = ice_fract + real(tile_fraction(map_tile(1)+i-1), r_um)
+    ice_fract_cat(1, 1, i_sice) = real(tile_fraction(map_tile(1)+i-1), r_um)
   end do
 
   ! Because Jules tests on flandg < 1, we need to ensure this is exactly
   ! 1 when no sea or sea-ice is present
   if (flandg(1,1) < 1.0_r_um .and. &
-       tile_fraction(map_tile(first_sea_tile)) == 0.0_r_def .and. &
+       tile_fraction(map_tile(1)+first_sea_tile-1) == 0.0_r_def .and. &
        ice_fract(1,1) == 0.0_r_um) then
     flandg(1,1) = 1.0_r_um
   end if
@@ -381,19 +381,16 @@ subroutine rad_tile_code(nlayers,                                &
     end if
   end do
 
-  do i_sice = 1, n_sea_ice_tile
+  do n = 1, n_sea_ice_tile
     ! Sea-ice thickness
-    ice_thick_cat(1,1,i_sice) = real(sea_ice_thickness(map_sice(i_sice)),r_um)
+    ice_thick_cat(1,1,n) = real(sea_ice_thickness(map_sice(1)+n-1),r_um)
   end do
 
-  ! Leaf area index
-  do i_pft = 1, npft
-    lai(1, i_pft) = real(leaf_area_index(map_pft(i_pft)), r_um)
-  end do
-
-  ! Canopy height
-  do i_pft = 1, npft
-    canht(1, i_pft) = real(canopy_height(map_pft(i_pft)), r_um)
+  do n = 1, npft
+    ! Leaf area index
+    lai(1, n) = real(leaf_area_index(map_pft(1)+n-1), r_um)
+    ! Canopy height
+    canht(1, n) = real(canopy_height(map_pft(1)+n-1), r_um)
   end do
 
   ! Roughness length (z0_tile)
@@ -425,17 +422,17 @@ subroutine rad_tile_code(nlayers,                                &
 
   ! Lying snow mass on land tiles
   do i = 1, n_land_tile
-    snow_tile(1, i) = real(tile_snow_mass(map_tile(i)), r_um)
-    rgrain(1, i) = real(tile_snow_rgrain(map_tile(i)), r_um)
-    snowdepth_surft(1, i) = real(snow_depth(map_tile(i)), r_um)
-    rho_snow_grnd_surft(1, i) = real(snowpack_density(map_tile(i)), r_um)
+    snow_tile(1, i) = real(tile_snow_mass(map_tile(1)+i-1), r_um)
+    rgrain(1, i) = real(tile_snow_rgrain(map_tile(1)+i-1), r_um)
+    snowdepth_surft(1, i) = real(snow_depth(map_tile(1)+i-1), r_um)
+    rho_snow_grnd_surft(1, i) = real(snowpack_density(map_tile(1)+i-1), r_um)
   end do
 
   ! Lying snow mass on sea ice categories
   i_sice = 0
   do i = first_sea_ice_tile, first_sea_ice_tile + n_sea_ice_tile - 1
     i_sice = i_sice + 1
-    snow_sice_cat(1, 1, i_sice) = real(tile_snow_mass(map_tile(i)), r_um)
+    snow_sice_cat(1, 1, i_sice) = real(tile_snow_mass(map_tile(1)+i-1), r_um)
   end do
 
   ! Snow soot content
@@ -475,7 +472,7 @@ subroutine rad_tile_code(nlayers,                                &
     df_rtile = n_surf_tile*(i_band-1)
     do i_tile = 1, n_land_tile
       df_rtile = df_rtile + 1
-      if (tile_fraction(map_tile(i_tile)) > 0.0_r_def) then
+      if (tile_fraction(map_tile(1)+i_tile-1) > 0.0_r_def) then
         tile_sw_direct_albedo(map_sw_tile(1)+df_rtile-1) &
           = sw_weight_blue(i_band) &
           * real(alb_tile(1, i_tile, 1), r_def)  & ! visible direct albedo
@@ -496,7 +493,7 @@ subroutine rad_tile_code(nlayers,                                &
     df_rtile = first_sea_tile-1 + n_surf_tile*(i_band-1)
     do i_tile = first_sea_tile, first_sea_tile + n_sea_tile - 1
       df_rtile = df_rtile + 1
-      if (tile_fraction(map_tile(i_tile)) > 0.0_r_def) then
+      if (tile_fraction(map_tile(1)+i_tile-1) > 0.0_r_def) then
         tile_sw_direct_albedo(map_sw_tile(1)+df_rtile-1) &
           = real(open_sea_albedo(1, 1, 1, i_band), r_def)
         tile_sw_diffuse_albedo(map_sw_tile(1)+df_rtile-1) &
@@ -511,7 +508,7 @@ subroutine rad_tile_code(nlayers,                                &
     df_rtile = first_sea_ice_tile-1 + n_surf_tile*(i_band-1)
     do i_tile = first_sea_ice_tile, first_sea_ice_tile + n_sea_ice_tile - 1
       df_rtile = df_rtile + 1
-      if (tile_fraction(map_tile(i_tile)) > 0.0_r_def) then
+      if (tile_fraction(map_tile(1)+i_tile-1) > 0.0_r_def) then
         tile_sw_direct_albedo(map_sw_tile(1)+df_rtile-1) &
           = sw_weight_blue(i_band) &
           * real(sea_ice_albedo(1, 1, 1), r_def) &
@@ -538,7 +535,7 @@ subroutine rad_tile_code(nlayers,                                &
     df_rtile = n_surf_tile*(i_band-1)
     do i_tile = 1, n_land_tile
       df_rtile = df_rtile + 1
-      if (tile_fraction(map_tile(i_tile)) > 0.0_r_def) then
+      if (tile_fraction(map_tile(1)+i_tile-1) > 0.0_r_def) then
         if (i_tile <= npft) then
           tile_lw_albedo(map_lw_tile(1)+df_rtile-1) &
             = 1.0_r_def - real(emis_pft(i_tile), r_def)
@@ -555,7 +552,7 @@ subroutine rad_tile_code(nlayers,                                &
     df_rtile = first_sea_tile-1 + n_surf_tile*(i_band-1)
     do i_tile = first_sea_tile, first_sea_tile + n_sea_tile - 1
       df_rtile = df_rtile + 1
-      if (tile_fraction(map_tile(i_tile)) > 0.0_r_def) then
+      if (tile_fraction(map_tile(1)+i_tile-1) > 0.0_r_def) then
         tile_lw_albedo(map_lw_tile(1)+df_rtile-1) &
           = 1.0_r_def - real(emis_sea, r_def)
       else
@@ -567,7 +564,7 @@ subroutine rad_tile_code(nlayers,                                &
     df_rtile = first_sea_ice_tile-1 + n_surf_tile*(i_band-1)
     do i_tile = first_sea_ice_tile, first_sea_ice_tile + n_sea_ice_tile - 1
       df_rtile = df_rtile + 1
-      if (tile_fraction(map_tile(i_tile)) > 0.0_r_def) then
+      if (tile_fraction(map_tile(1)+i_tile-1) > 0.0_r_def) then
         tile_lw_albedo(map_lw_tile(1)+df_rtile-1) &
           = 1.0_r_def - real(emis_sice, r_def)
       else
