@@ -87,4 +87,5 @@ tau_u=0.0
   seed_red                  = 1
   seed_green                = 50
   seed_blue                 = 20
+  iodef_path                = 'iodef.xml'
 /

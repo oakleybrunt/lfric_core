@@ -8,9 +8,9 @@ export PROJECT_NAME = diagnostics
 export PROJECT_DIR_NAME = diagnostics
 PROFILE ?= fast-debug
 
-export IGNORE_DEPENDENCIES = netcdf MPI yaxt pfunit_mod xios mod_wait
+export IGNORE_DEPENDENCIES = netcdf MPI yaxt pfunit_mod xios mod_wait fox_sax fox_common
 export EXTERNAL_DYNAMIC_LIBRARIES = yaxt yaxt_c netcdff netcdf hdf5
-export EXTERNAL_STATIC_LIBRARIES = xios
+export EXTERNAL_STATIC_LIBRARIES = xios FoX_sax FoX_common FoX_utils FoX_fsys
 
 LFRIC_TARGET_PLATFORM ?= generic-x86
 export OPTIMISATION_PATH ?= $(wildcard optimisation/$(LFRIC_TARGET_PLATFORM))

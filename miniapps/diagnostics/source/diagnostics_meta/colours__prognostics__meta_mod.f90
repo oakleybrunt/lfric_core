@@ -10,7 +10,7 @@
 !   * the field group name
 !   * meta_mod
 ! all joined by '__' (double underscores)
-module diagnostics_colours__prognostics__meta_mod
+module colours__prognostics__meta_mod
 
     ! The required use statements include:
     !   * field_meta_data_type to hold the metadata for each field
@@ -18,7 +18,7 @@ module diagnostics_colours__prognostics__meta_mod
     !       (eg W3, STANDARD_TIMESTEP & BILINEAR below)
     !   * any dimensions that fields live on
     use diagnostics_mod,                only: field_meta_data_type
-    use constants_mod,                  only: REAL_TYPE
+    use constants_mod,                  only: REAL_TYPE, str_def
     use fs_continuity_mod,              only: W3
     use time_step_enum_mod,             only: STANDARD_TIMESTEP
     use interpolation_enum_mod,         only: BILINEAR
@@ -37,15 +37,16 @@ module diagnostics_colours__prognostics__meta_mod
     !> (with _mod replaced with _type)
     !> The type contains an instance of field_meta_data_type for each
     !> field in the field group
-    type, public :: diagnostics_colours__prognostics__meta_type
+    type, public :: colours__prognostics__meta_type
         type(field_meta_data_type), public :: &
                 red, &
                 green, &
                 blue
-    end type diagnostics_colours__prognostics__meta_type
+        character(str_def) :: name = "colours__prognostics"
+    end type colours__prognostics__meta_type
 
-    interface diagnostics_colours__prognostics__meta_type
-        module procedure diagnostics_colours__prognostics__meta_constructor
+    interface colours__prognostics__meta_type
+        module procedure colours__prognostics__meta_constructor
     end interface
 
 contains
@@ -54,19 +55,19 @@ contains
     !>
     !> Contains the metadata type for the field group and instantiates each
     !> field with the appropriate metadata
-    function diagnostics_colours__prognostics__meta_constructor() result(self)
+    function colours__prognostics__meta_constructor() result(self)
         implicit none
 
-        type(diagnostics_colours__prognostics__meta_type) :: self
+        type(colours__prognostics__meta_type) :: self
 
         self%red = field_meta_data_type(&
-            unique_id = "prognostics__red", &
+            unique_id = "colours__red", &
             long_name = "", &
             units = "1", &
             function_space = W3, &
             order = 0, &
             io_driver = "write_field_face", &
-            trigger = "_checksum: true;", &
+            trigger = "__checksum: true;", &
             description = "A red prognostic field", &
             data_type = REAL_TYPE, &
             time_step = STANDARD_TIMESTEP, &
@@ -78,13 +79,13 @@ contains
             standard_name = "red")
 
         self%green = field_meta_data_type(&
-            unique_id = "prognostics__green", &
+            unique_id = "colours__green", &
             long_name = "", &
             units = "1", &
             function_space = W3, &
             order = 0, &
             io_driver = "write_field_face", &
-            trigger = "_checksum: true;", &
+            trigger = "__checksum: true;", &
             description = "A green prognostic field", &
             data_type = REAL_TYPE, &
             time_step = STANDARD_TIMESTEP, &
@@ -94,13 +95,13 @@ contains
             standard_name = "green")
 
         self%blue = field_meta_data_type(&
-            unique_id = "prognostics__blue", &
+            unique_id = "colours__blue", &
             long_name = "", &
             units = "1", &
             function_space = W3, &
             order = 0, &
             io_driver = "write_field_face", &
-            trigger = "_checksum: true;", &
+            trigger = "__checksum: true;", &
             description = "A blue prognostic field", &
             data_type = REAL_TYPE, &
             time_step = STANDARD_TIMESTEP, &
@@ -109,6 +110,6 @@ contains
             vertical_dimension = model_height_dimension(bottom=BOTTOM_ATMOSPHERIC_LEVEL, top=TOP_ATMOSPHERIC_LEVEL), &
             standard_name = "blue")
 
-        end function diagnostics_colours__prognostics__meta_constructor
+        end function colours__prognostics__meta_constructor
 
-end module diagnostics_colours__prognostics__meta_mod
+end module colours__prognostics__meta_mod

@@ -159,7 +159,6 @@ contains
     character(len = *), intent(in)    :: localname
     character(len = *), intent(in)    :: name
     type(dictionary_t), intent(in)    :: attributes
-    integer                           :: i
 
     ! Ignore element if parser is still in a field group that is not enabled
     if (ignore_element) then

@@ -85,19 +85,24 @@
 
 {%- set canned_configurations  = ['diagnostics'] %}
 
+{# Set the resolutions for the run_application and check_compilers tasks #}
+{%- set check_compilers_res = '("C3",)' %}
+{%- set run_app_res = '[("C3",)]' %}
+
+{# Set env for run_application here to make string formatting easier #}
+{%- set env = '{"nrun":5}' %}
+
 {%- set groups = {
 'developer': [
     'validate_rose_meta_graph("diagnostics",appName="diagnostics")',
-    'check_config_dump_graph()',
     'check_style_graph()',
-    'run_application("diagnostics", "default", resolutions=[("C3",)],
-                     env={"nrun":5})',
-    'check_compilers("diagnostics", "default", "fast-debug", resolution=("C3",))',
-    'check_compilers("diagnostics", "default", "full-debug", resolution=("C3",))',
+    'generate_iodef("diagnostics", "default", {}, {})'.format(run_app_res, check_compilers_res),
+    'run_application("diagnostics", "default", resolutions={}, env={})'.format(run_app_res, env),
+    'check_compilers("diagnostics", "default", "fast-debug", resolution={})'.format(check_compilers_res),
+    'check_compilers("diagnostics", "default", "full-debug", resolution={})'.format(check_compilers_res),
     'canned_test("diagnostics")'],
 'nightly': [
-    'null_task_graph()']
-} %}
+    'null_task_graph()'] } %}
 
 #########################################################################################
 

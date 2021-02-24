@@ -1,0 +1,28 @@
+{# Macro to add iodef generation tasks to test suite graph #}
+{# Adding them before mesh generation as this is simpler than before run tasks #}
+{# Resolutions is list of resolutions used in run_application #}
+{# Compiler_resolution is the resolution used in check_compilers #}
+{%- macro generate_iodef(appName, configuration, resolutions, compiler_resolution) %}
+
+  export_source => generate_metadata
+  generate_metadata => validate_diagnostics_conf
+  validate_diagnostics_conf => reconfigure_metadata
+
+{%- set mesh_label = (TARGET_MESH_COMPILER|lower + '_' +
+                        mesh_rdef + '-bit_' +
+                        mesh_build) %}
+
+{# Append compiler resolution in case it isn't in resolutions #}
+{%- do resolutions.append(compiler_resolution) %}
+
+{# Make sure reconfigure task is before all mesh generation tasks by
+   looping through all resolutions #}
+{%- for resolution in resolutions %}
+{%-   set res_value, dt_values, res_label, dt_labels, res_opt = resolution | get_resolution_labels() %}
+
+{%-   if res_label != '' %}
+  reconfigure_metadata => generate_mesh{{res_label}}_{{mesh_label}}
+{%-   endif %}
+
+{%- endfor %} {# resolutions #}
+{%- endmacro %}

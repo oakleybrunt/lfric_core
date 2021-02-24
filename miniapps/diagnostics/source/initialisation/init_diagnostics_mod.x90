@@ -11,85 +11,109 @@
 
 module init_diagnostics_mod
 
-    use constants_mod, only : i_def, str_short
-    use field_mod, only : field_type
-    use field_parent_mod, only :write_interface
-    use field_collection_mod, only : field_collection_type
-    use finite_element_config_mod, only : element_order
-    use fs_continuity_mod, only : W3
+    use constants_mod,                 only : i_def, str_short, str_def
+    use field_mod,                     only : field_type
+    use field_parent_mod,              only : write_interface
+    use field_collection_mod,          only : field_collection_type
+    use fieldspec_mod,                 only : fieldspec_type
+    use fieldspec_collection_mod,      only : fieldspec_collection_type, &
+                                              fieldspec_collection_iterator_type
     use function_space_collection_mod, only : function_space_collection
-    use io_config_mod, only : write_diag, &
-            use_xios_io
-    use lfric_xios_write_mod, only : write_field_face
-    use log_mod, only : log_event, &
-            LOG_LEVEL_INFO, &
-            LOG_LEVEL_ERROR
-    use pure_abstract_field_mod, only : pure_abstract_field_type
-    use runtime_constants_mod, only : create_runtime_constants
+    use gungho_model_data_mod,         only : model_data_type
+    use io_config_mod,                 only : write_diag, &
+                                              use_xios_io
+    use io_driver_enum_mod,            only : name_from_io_driver
+    use lfric_xios_write_mod,          only : write_field_face
+    use log_mod,                       only : log_event, &
+                                              log_scratch_space , &
+                                              LOG_LEVEL_INFO, &
+                                              LOG_LEVEL_ERROR
+    use pure_abstract_field_mod,       only : pure_abstract_field_type
+    use runtime_constants_mod,         only : create_runtime_constants
 
     implicit none
 
 
 contains
 
-    subroutine init_diagnostics(mesh_id, twod_mesh_id, chi_xyz, chi_sph, panel_id, &
-                                depository, prognostic_fields, diagnostic_fields)
+    subroutine init_diagnostics(mesh_id, twod_mesh_id, chi_xyz, chi_sph, &
+                                panel_id, model_data, fieldspec_collection)
 
         implicit none
 
         integer(i_def), intent(in) :: mesh_id
         integer(i_def), intent(in) :: twod_mesh_id
 
-        type(field_collection_type), intent(out) :: depository
-        type(field_collection_type), intent(out) :: prognostic_fields
-        type(field_collection_type), intent(out) :: diagnostic_fields
+        type (model_data_type), intent(inout) :: model_data
+        type (fieldspec_collection_type), intent(in) :: fieldspec_collection
+
         ! Coordinate field
         type(field_type), intent(inout) :: chi_xyz(:)
         type(field_type), intent(inout) :: chi_sph(:)
         type(field_type), intent(inout) :: panel_id
+
         type (field_type), allocatable :: new_field
         type (field_type), pointer :: tmp_field
         class(pure_abstract_field_type), pointer  :: tmp_field_ptr => null()
 
-        procedure(write_interface), pointer :: tmp_ptr
+        character(str_def)                   :: field_collection_name
+        type(field_collection_type), pointer :: field_collection => null()
 
-        character(len=*), dimension(3), parameter :: prog_field_list = (/"red  ", "green", "blue "/)
-        character(len=*), dimension(1), parameter :: diag_field_list = (/"hex"/)
-        integer(i_def) :: i
+        type(fieldspec_collection_iterator_type)  :: iterator
+        type(fieldspec_type), pointer :: fieldspec => null()
+
+        procedure(write_interface), pointer :: tmp_ptr
 
         allocate(new_field)
 
-        ! Create the depository, prognostics and diagnostics field collections.
-        depository = field_collection_type(name = 'depository')
-        prognostic_fields = field_collection_type(name = "prognostics")
-        diagnostic_fields = field_collection_type(name = "diagnostics")
+        ! Create the depository
+        model_data%depository = field_collection_type(name = 'depository')
 
         call log_event('diagnostics: Initialising miniapp ...', LOG_LEVEL_INFO)
 
-        tmp_ptr => write_field_face
-        do i = 1, size(prog_field_list)
+        iterator = fieldspec_collection%get_iterator()
+        do
+            if (.not.iterator%has_next()) exit
+            fieldspec => iterator%next()
+
+            ! Initialise field
             call new_field%initialise(vector_space = &
-                    function_space_collection%get_fs(mesh_id, element_order, W3), &
-                    name = trim(prog_field_list(i)))
-            call depository%add_field(new_field)
-            tmp_field => depository%get_field(trim(prog_field_list(i)))
+                    function_space_collection%get_fs( &
+                            fieldspec%get_mesh_id(), &
+                            fieldspec%get_order(), &
+                            fieldspec%get_function_space()), &
+                    name = trim(fieldspec%get_unique_id()))
+
+            call log_event("Add to depository", LOG_LEVEL_INFO)
+            call model_data%depository%add_field(new_field)
+
+            tmp_field => model_data%depository%get_field(fieldspec%get_unique_id())
             tmp_field_ptr => tmp_field
-            call prognostic_fields%add_reference_to_field(tmp_field_ptr)
-            call invoke(setval_c(tmp_field, 0.0_r_def))
-            if (write_diag .and. use_xios_io) then
-                call tmp_field%set_write_behaviour(tmp_ptr)
+
+            ! Add field collection to model data if necessary
+            field_collection_name = fieldspec%get_field_group_id()
+            if (.not. model_data%field_collection_exists(field_collection_name)) then
+                write(log_scratch_space, '(3A)') "Adding field collection", &
+                        field_collection_name, "to model data"
+                call log_event(log_scratch_space, LOG_LEVEL_INFO)
+                call model_data%add_empty_field_collection(field_collection_name)
             end if
-        end do
-        do i = 1, size(diag_field_list)
-            call new_field%initialise(vector_space = &
-                    function_space_collection%get_fs(mesh_id, element_order, W3), &
-                    name = trim(diag_field_list(i)))
-            call depository%add_field(new_field)
-            tmp_field => depository%get_field(trim(diag_field_list(i)))
-            tmp_field_ptr => tmp_field
-            call diagnostic_fields%add_reference_to_field(tmp_field_ptr)
+
+            call log_event("Adding reference to field to model data field collection", LOG_LEVEL_INFO)
+            field_collection => model_data%get_field_collection(field_collection_name)
+            call field_collection%add_reference_to_field(tmp_field_ptr)
+
+            ! Set field to 0
             call invoke(setval_c(tmp_field, 0.0_r_def))
+
+            ! Set write behaviour
             if (write_diag .and. use_xios_io) then
+
+                select case(name_from_io_driver(fieldspec%get_io_driver()))
+                    case("WRITE_FIELD_FACE")
+                        tmp_ptr => write_field_face
+                end select
+
                 call tmp_field%set_write_behaviour(tmp_ptr)
             end if
         end do

@@ -52,7 +52,7 @@
                     <variable name="io_driver" type="string">
                         WRITE_FIELD_FACE<!--Relates to a param linked to the driver io method--></variable>
                     <variable name="field_kind" type="int">0</variable>
-                    <variable name="field_type" type="string">REAL</variable>
+                    <variable name="field_type" type="string">REAL_TYPE</variable>
                     <variable name="checksum" type="bool">true</variable>
                 </field>
                 <!-- Dry Rho after timestep (STASH sec 0, item 389) -->
@@ -65,7 +65,7 @@
                         WRITE_FIELD_FACE
                     </variable>
                     <variable name="field_kind" type="int">1</variable>
-                    <variable name="field_type" type="string">INTEGER</variable>
+                    <variable name="field_type" type="string">INTEGER_TYPE</variable>
                     <variable name="checksum" type="bool">true</variable>
                 </field>
                 <!-- U component of wind after timestep (STASH sec 0, item 2) -->
@@ -78,7 +78,7 @@
                         WRITE_FIELD_FACE
                     </variable>
                     <variable name="field_kind" type="int">2</variable>
-                    <variable name="field_type" type="string">INTEGER</variable>
+                    <variable name="field_type" type="string">INTEGER_TYPE</variable>
                     <variable name="checksum" type="bool">true</variable>
                 </field>
             </field_group>
@@ -89,7 +89,7 @@
                     <variable name="function_space" type="string">Wtheta</variable>
                     <variable name="element_order" type="int">2</variable>
                     <variable name="field_kind" type="int">3</variable>
-                    <variable name="field_type" type="string">REAL</variable>
+                    <variable name="field_type" type="string">REAL_TYPE</variable>
                     <variable name="checksum" type="bool">false</variable>
                 </field>
 
@@ -98,7 +98,7 @@
                     <variable name="function_space" type="string">Wtheta</variable>
                     <variable name="element_order" type="int">4</variable>
                     <variable name="field_kind" type="int">4</variable>
-                    <variable name="field_type" type="string">REAL</variable>
+                    <variable name="field_type" type="string">REAL_TYPE</variable>
                     <variable name="checksum" type="bool">false</variable>
                 </field>
                 <field grid_ref="full_level_face_grid" id="alpha" long_name="air_potential_temperature" name="alpha"
@@ -107,7 +107,7 @@
                     <variable name="function_space" type="int">W2</variable>
                     <variable name="element_order" type="int">1</variable>
                     <variable name="field_kind" type="int">5</variable>
-                    <variable name="field_type" type="string">REAL</variable>
+                    <variable name="field_type" type="string">REAL_TYPE</variable>
                     <variable name="checksum" type="bool">false</variable>
                 </field>
             </field_group>

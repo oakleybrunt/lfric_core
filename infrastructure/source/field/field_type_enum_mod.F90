@@ -28,7 +28,7 @@ module field_type_enum_mod
   integer(i_native), public, parameter :: field_type_enumerator(2) &
           = [ integer_type, real_type ]
   character(str_short), public, parameter :: field_type_name(2) &
-          = [character(str_short) :: 'INTEGER', 'REAL']
+          = [character(str_short) :: 'INTEGER_TYPE', 'REAL_TYPE']
 
 contains
 

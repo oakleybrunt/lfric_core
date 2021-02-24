@@ -11,3 +11,36 @@
     stop =  "color=#bf9c00"
     model = "color=#0074cd"
     post =  "color=#af3936"
+
+
+##############################################################################
+# GENERATE IODEF.XML
+##############################################################################
+
+{%- if 'generate_metadata' in scheduledTasks %}
+[runtime]
+  [[GENERATE_IODEF]]
+    inherit = None, TARGET
+  [[generate_metadata]]
+    inherit = GENERATE_IODEF
+    pre-script = """
+                 {{'\n                     '|
+                   command_list( TARGET_BASE_SETUP,
+                                 compiler_setup[TARGET_MESH_COMPILER],
+                                 TARGET_REVEAL_SETUP )}}
+                 """
+    script = rose task-run --app-key=generate_metadata
+  [[validate_diagnostics_conf]]
+    inherit = GENERATE_IODEF
+    script = rose task-run --app-key=validate_diagnostics_conf
+  [[reconfigure_metadata]]
+    inherit = GENERATE_IODEF
+    pre-script = """
+                 {{'\n                     '|
+                   command_list( TARGET_BASE_SETUP,
+                                 compiler_setup[TARGET_MESH_COMPILER],
+                                 TARGET_REVEAL_SETUP )}}
+                 """
+    script = rose task-run --app-key=reconfigure_metadata
+    post-script = cp iodef.xml $CYLC_SUITE_RUN_DIR/app/diagnostics/file/iodef.xml
+{%- endif %}

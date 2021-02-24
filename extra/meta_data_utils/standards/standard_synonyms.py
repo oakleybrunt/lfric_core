@@ -6,7 +6,7 @@
 from enum import Enum
 
 
-class StandardSynonyms(Enum):
+class StandardSynonyms(str, Enum):
     # validated standards
     CF = "CF"
     CMIP6 = "CMIP6"

@@ -77,9 +77,9 @@ help=Unit of Measure: {field.units}
 
                 if field.synonyms:
                     attribute_string = f"    =Synonyms:{os.linesep}"
-                    for key, values in field.synonyms:
+                    for key, values in field.synonyms.items():
                         for value in values:
-                            attribute_string += f"       ={key}: " \
+                            attribute_string += f"       ={key.value}: " \
                                                 f"{str(value)}{os.linesep}"
 
                     rose_meta += attribute_string

@@ -6,7 +6,7 @@
 !> Tests that the diagnostics miniapp diagnostic fields can be compiled and
 !> that their unique ids are correct
 !-------------------------------------------------------------------------------
-module diagnostics_colours__diagnostics__meta_mod_test
+module colours__diagnostics__meta_mod_test
 
     use pFUnit_Mod
 
@@ -19,17 +19,17 @@ contains
     @test
     subroutine test_diagnostics()
 
-        use diagnostics_colours__diagnostics__meta_mod, only : &
-                diagnostics_colours__diagnostics__meta_type
+        use colours__diagnostics__meta_mod, only : &
+                colours__diagnostics__meta_type
 
         implicit none
 
-        type(diagnostics_colours__diagnostics__meta_type) :: diagnostics
+        type(colours__diagnostics__meta_type) :: diagnostics
 
-        diagnostics = diagnostics_colours__diagnostics__meta_type()
+        diagnostics = colours__diagnostics__meta_type()
 
-        @assertEqual("diagnostics__hex", diagnostics%hex%get_unique_id())
+        @assertEqual("colours__hex", diagnostics%hex%get_unique_id())
 
     end subroutine test_diagnostics
 
-end module diagnostics_colours__diagnostics__meta_mod_test
+end module colours__diagnostics__meta_mod_test

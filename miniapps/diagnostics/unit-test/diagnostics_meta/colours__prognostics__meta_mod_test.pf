@@ -6,7 +6,7 @@
 !> Test that the diagnostics miniapp prognostic fields can be compiled and
 !> that their unique ids are correct
 !-------------------------------------------------------------------------------
-module diagnostics_colours__prognostics__meta_mod_test
+module colours__prognostics__meta_mod_test
 
     use pFUnit_Mod
 
@@ -19,19 +19,19 @@ contains
     @test
     subroutine test_prognostics()
 
-        use diagnostics_colours__prognostics__meta_mod, only : &
-                diagnostics_colours__prognostics__meta_type
+        use colours__prognostics__meta_mod, only : &
+                colours__prognostics__meta_type
 
         implicit none
 
-        type(diagnostics_colours__prognostics__meta_type) :: prognostics
+        type(colours__prognostics__meta_type) :: prognostics
 
-        prognostics = diagnostics_colours__prognostics__meta_type()
+        prognostics = colours__prognostics__meta_type()
 
-        @assertEqual("prognostics__red", prognostics%red%get_unique_id())
-        @assertEqual("prognostics__green", prognostics%green%get_unique_id())
-        @assertEqual("prognostics__blue", prognostics%blue%get_unique_id())
+        @assertEqual("colours__red", prognostics%red%get_unique_id())
+        @assertEqual("colours__green", prognostics%green%get_unique_id())
+        @assertEqual("colours__blue", prognostics%blue%get_unique_id())
 
     end subroutine test_prognostics
 
-end module diagnostics_colours__prognostics__meta_mod_test
+end module colours__prognostics__meta_mod_test

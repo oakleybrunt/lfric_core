@@ -2,14 +2,14 @@
 <simulation>
 
   <context id = "diagnostics">
-  
+
    <calendar type = "Gregorian" start_date = "2016-01-01 15:00:00" />
 
    <axis_definition>
     <axis id="vert_axis_half_levels" name="half_levels"/>
     <axis id="vert_axis_full_levels" name="full_levels"/>
    </axis_definition>
-   
+
    <domain_definition>
       <domain id="node" name="Mesh2d_node" nvertex="1"/>
       <domain id="face" name="Mesh2d_face" nvertex="4"/>
@@ -19,9 +19,15 @@
       <domain id="checkpoint_W2" name="checkpoint_W2" nvertex="1"/>
       <domain id="checkpoint_W3" name="checkpoint_W3" nvertex="1"/>
       <domain id="checkpoint_Wtheta" name="checkpoint_Wtheta" nvertex="1"/>
+      <domain id="checkpoint_W3_2D" name="checkpoint_W3_2D" nvertex="1"/>
+      <domain id="checkpoint_pft" name="checkpoint_pft" nvertex="1"/>
+      <domain id="checkpoint_tile" name="checkpoint_tile" nvertex="1"/>
+      <domain id="checkpoint_sice" name="checkpoint_sice" nvertex="1"/>
+      <domain id="checkpoint_soil" name="checkpoint_soil" nvertex="1"/>
+      <domain id="checkpoint_snow" name="checkpoint_snow" nvertex="1"/>
    </domain_definition>
-   
-   
+
+
    <grid_definition>
     <grid id="node_grid">
       <domain domain_ref="node"/>
@@ -41,34 +47,76 @@
     </grid>
    </grid_definition>
 
-   <field_definition prec="8" >
-   
-     <!-- Main diagnostic group -->
-     <field_group id="diagnostic_fields" freq_op="1ts" enabled=".TRUE." operation="instant" >
-       <field id="diagnostics_red" name="diagnostics_red" long_name="diagnostics_red" unit="1" grid_ref="half_level_face_grid" />
-       <field id="diagnostics_green" name="diagnostics_green" long_name="diagnostics_green" unit="1" grid_ref="half_level_face_grid" />
-       <field id="diagnostics_blue" name="diagnostics_blue" long_name="diagnostics_blue" unit="1" grid_ref="half_level_face_grid" />
-       <field id="diagnostics_hex" name="diagnostics_hex" long_name="diagnostics_hex" unit="1" grid_ref="half_level_face_grid" />
-     </field_group>
-     
-   </field_definition>
-
-   <file_definition
-      type="one_file" 
-      par_access="collective"
-      time_counter="none">
-      
-     <file id="lfric_diag" name="diagnostics_diag" output_freq="1ts" convention="UGRID" enabled=".TRUE.">
-       <field field_ref="diagnostics_red"/>
-       <field field_ref="diagnostics_green"/>
-       <field field_ref="diagnostics_blue"/>
-       <field field_ref="diagnostics_hex"/>
-     </file>
-      
+    <field_definition prec="8">
+      <field_group enabled=".TRUE." freq_op="1ts"
+                   id="colours__diagnostics"
+                   operation="instant">
+        <field grid_ref="half_level_face_grid" id="colours__hex"
+               standard_name="hex" unit="1">
+          <variable name="checksum" type="bool">false</variable>
+          <variable name="element_order" type="int">0</variable>
+          <variable name="field_type" type="string">REAL_TYPE</variable>
+          <variable name="function_space" type="string">W3</variable>
+          <variable name="io_driver" type="string">WRITE_FIELD_FACE</variable>
+          <variable name="mesh_id" type="int">1</variable>
+        </field>
+      </field_group>
+      <field_group enabled=".TRUE." freq_op="1ts"
+                   id="colours__prognostics"
+                   operation="instant">
+        <field grid_ref="half_level_face_grid" id="colours__blue"
+               standard_name="blue" unit="1">
+          <variable name="checksum" type="bool">false</variable>
+          <variable name="element_order" type="int">0</variable>
+          <variable name="field_type" type="string">REAL_TYPE</variable>
+          <variable name="function_space" type="string">W3</variable>
+          <variable name="io_driver" type="string">WRITE_FIELD_FACE</variable>
+          <variable name="mesh_id" type="int">1</variable>
+        </field>
+        <field grid_ref="half_level_face_grid" id="colours__green"
+               standard_name="green" unit="1">
+          <variable name="checksum" type="bool">false</variable>
+          <variable name="element_order" type="int">0</variable>
+          <variable name="field_type" type="string">REAL_TYPE</variable>
+          <variable name="function_space" type="string">W3</variable>
+          <variable name="io_driver" type="string">WRITE_FIELD_FACE</variable>
+          <variable name="mesh_id" type="int">1</variable>
+        </field>
+        <field grid_ref="half_level_face_grid" id="colours__red"
+               standard_name="red" unit="1">
+          <variable name="checksum" type="bool">false</variable>
+          <variable name="element_order" type="int">0</variable>
+          <variable name="field_type" type="string">REAL_TYPE</variable>
+          <variable name="function_space" type="string">W3</variable>
+          <variable name="io_driver" type="string">WRITE_FIELD_FACE</variable>
+          <variable name="mesh_id" type="int">1</variable>
+        </field>
+      </field_group>
+    </field_definition>
+    <file_definition par_access="collective" time_counter="none"
+                     type="one_file">
+      <file convention="UGRID" enabled=".TRUE." id="Prognostics"
+            name="Prognostics" output_freq="1ts">
+        <field field_ref="colours__red"
+               name="colours__red__instant_1ts"
+               operation="instant"/>
+        <field field_ref="colours__green"
+               name="colours__green__instant_1ts"
+               operation="instant"/>
+        <field field_ref="colours__blue"
+               name="colours__blue__instant_1ts"
+               operation="instant"/>
+      </file>
+      <file convention="UGRID" enabled=".TRUE." id="Diagnostics"
+            name="Diagnostics" output_freq="1ts">
+        <field field_ref="colours__hex"
+               name="colours__hex__instant_1ts"
+               operation="instant"/>
+      </file>
     </file_definition>
-    
+
   </context>
-  
+
   <context id = "xios">
     <variable_definition>
       <variable_group id = "buffer">

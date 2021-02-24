@@ -8,27 +8,44 @@
 module seed_diagnostics_mod
 
     use psykal_lite_set_target_data_point_mod, only : invoke_set_target_data_point_kernel
-    use field_mod, only : field_type
-    use constants_mod, only : r_def, i_def
+    use field_mod,                      only : field_type
+    use field_collection_mod,           only : field_collection_type
+    use constants_mod,                  only : r_def, i_def
     use diagnostics_miniapp_config_mod, only : seed_red, seed_green, seed_blue
-    use gungho_model_data_mod,      only : model_data_type
+    use gungho_model_data_mod,          only : model_data_type
+    use colours__prognostics__meta_mod, only : colours__prognostics__meta_type
+    use log_mod,                        only : log_event, log_scratch_space, &
+                                               LOG_LEVEL_INFO
 
     implicit none
 contains
     subroutine seed_diagnostics (model_data)
 
         implicit none
-        ! Prognostic fields
+
         type (model_data_type), target, intent(inout) :: model_data
-        type(field_type), pointer :: red => null(), green => null(), blue => null()
-        real(kind = r_def) :: max
+
+        ! Prognostic fields
+        type(field_type), pointer :: red => null()
+        type(field_type), pointer :: green => null()
+        type(field_type), pointer :: blue => null()
+
+        real(kind = r_def)    :: max
         integer(kind = i_def) :: i
+
+        type(colours__prognostics__meta_type) :: prognostics_meta
+        type(field_collection_type), pointer  :: prognostic_fields => null()
 
         max = 255
 
-        red => model_data%prognostic_fields%get_field("red")
-        green => model_data%prognostic_fields%get_field("green")
-        blue => model_data%prognostic_fields%get_field("blue")
+        ! Use metadata to get prognostic field collection
+        prognostics_meta = colours__prognostics__meta_type()
+        prognostic_fields => model_data%get_field_collection( prognostics_meta%name )
+
+        ! Get individual fields from prognostics field collection
+        red => prognostic_fields%get_field( prognostics_meta%red%get_unique_id() )
+        green => prognostic_fields%get_field( prognostics_meta%green%get_unique_id() )
+        blue => prognostic_fields%get_field( prognostics_meta%blue%get_unique_id() )
 
         ! Seed the data, spread over all faces
 

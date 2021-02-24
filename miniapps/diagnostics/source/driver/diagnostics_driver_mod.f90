@@ -9,38 +9,37 @@
 !>
 module diagnostics_driver_mod
 
-    use clock_mod, only : clock_type
-    use constants_mod, only : i_def, i_native, str_def
+    use clock_mod,                     only : clock_type
+    use constants_mod,                 only : i_def, i_native, str_def
     use diagnostics_configuration_mod, only : load_configuration, program_name
-    use field_mod, only : field_type
-    use field_parent_mod, only : field_parent_type
-    use field_collection_mod, only : field_collection_type, &
-            field_collection_iterator_type
-    use gungho_model_data_mod, only : model_data_type
-    use init_clock_mod, only : initialise_clock
-    use integer_field_mod, only : integer_field_type
-    use io_config_mod, only : write_diag, &
-            use_xios_io
-    use local_mesh_collection_mod, only : local_mesh_collection, &
-            local_mesh_collection_type
-    use log_mod, only : log_event, &
-            log_set_level, &
-            log_scratch_space, &
-            initialise_logging, &
-            finalise_logging, &
-            LOG_LEVEL_ALWAYS, &
-            LOG_LEVEL_ERROR, &
-            LOG_LEVEL_WARNING, &
-            LOG_LEVEL_INFO, &
-            LOG_LEVEL_DEBUG, &
-            LOG_LEVEL_TRACE
-
-    use mpi_mod, only : store_comm,    &
-                        get_comm_size, &
-                        get_comm_rank
-    use xios,    only : xios_context_finalize, &
-                        xios_update_calendar
-    use yaxt, only : xt_initialize, xt_finalize
+    use field_mod,                     only : field_type
+    use field_parent_mod,              only : field_parent_type
+    use field_collection_mod,          only : field_collection_type, &
+                                              field_collection_iterator_type
+    use fieldspec_collection_mod,      only : fieldspec_collection
+    use gungho_model_data_mod,         only : model_data_type
+    use init_clock_mod,                only : initialise_clock
+    use io_config_mod,                 only : write_diag, &
+                                              use_xios_io
+    use local_mesh_collection_mod,     only : local_mesh_collection, &
+                                              local_mesh_collection_type
+    use log_mod,                       only : log_event, &
+                                              log_set_level, &
+                                              log_scratch_space, &
+                                              initialise_logging, &
+                                              finalise_logging, &
+                                              LOG_LEVEL_ALWAYS, &
+                                              LOG_LEVEL_ERROR, &
+                                              LOG_LEVEL_WARNING, &
+                                              LOG_LEVEL_INFO, &
+                                              LOG_LEVEL_DEBUG, &
+                                              LOG_LEVEL_TRACE
+    use mpi_mod,                       only : store_comm,    &
+                                              get_comm_size, &
+                                              get_comm_rank
+    use xios,                          only : xios_context_finalize, &
+                                              xios_update_calendar
+    use yaxt,                          only : xt_initialize, xt_finalize
 
     implicit none
 
@@ -72,24 +71,25 @@ contains
     !>
     subroutine initialise( filename, model_communicator )
 
-        use convert_to_upper_mod, only : convert_to_upper
-        use create_fem_mod, only : init_fem
-        use create_mesh_mod, only : init_mesh
-        use derived_config_mod, only : set_derived_config
+        use convert_to_upper_mod,       only : convert_to_upper
+        use create_fem_mod,             only : init_fem
+        use create_mesh_mod,            only : init_mesh
+        use derived_config_mod,         only : set_derived_config
+        use fieldspec_xml_parser_mod,   only : populate_fieldspec_collection
         use global_mesh_collection_mod, only : global_mesh_collection, &
                                                global_mesh_collection_type
-        use init_diagnostics_mod, only : init_diagnostics
-        use lfric_xios_io_mod, only : initialise_xios
-        use logging_config_mod, only : run_log_level, &
-                key_from_run_log_level, &
-                RUN_LOG_LEVEL_ERROR, &
-                RUN_LOG_LEVEL_INFO, &
-                RUN_LOG_LEVEL_DEBUG, &
-                RUN_LOG_LEVEL_TRACE, &
-                RUN_LOG_LEVEL_WARNING
-
-        use mod_wait, only : init_wait
-        use seed_diagnostics_mod, only : seed_diagnostics
+        use init_diagnostics_mod,       only : init_diagnostics
+        use lfric_xios_io_mod,          only : initialise_xios
+        use logging_config_mod,         only : run_log_level, &
+                                               key_from_run_log_level, &
+                                               RUN_LOG_LEVEL_ERROR, &
+                                               RUN_LOG_LEVEL_INFO, &
+                                               RUN_LOG_LEVEL_DEBUG, &
+                                               RUN_LOG_LEVEL_TRACE, &
+                                               RUN_LOG_LEVEL_WARNING
+        use mod_wait,                   only : init_wait
+        use seed_diagnostics_mod,       only : seed_diagnostics
+        use diagnostics_miniapp_config_mod, only : iodef_path
 
         implicit none
 
@@ -192,12 +192,13 @@ contains
         end if
 
 
+        call log_event("Populating fieldspec collection", LOG_LEVEL_INFO)
+        call populate_fieldspec_collection(iodef_path)
+
         ! Create and initialise prognostic fields
         call init_diagnostics(mesh_id, twod_mesh_id,        &
                               chi_xyz, chi_sph, panel_id,   &
-                              model_data%depository,        &
-                              model_data%prognostic_fields, &
-                              model_data%diagnostic_fields)
+                              model_data, fieldspec_collection)
 
         call log_event("seed starting values", LOG_LEVEL_INFO)
         ! Seed values as this is a test!
@@ -212,17 +213,11 @@ contains
     !>
     subroutine run()
 
-        use diagnostics_alg_mod, only : diagnostics_alg
-        use diagnostics_step_mod, only : diagnostics_step
+        use diagnostics_alg_mod,        only : diagnostics_alg
+        use diagnostics_step_mod,       only : diagnostics_step
         use gungho_update_calendar_mod, only : gungho_update_calendar
 
         implicit none
-
-        type(field_collection_type), pointer :: depository
-        class(field_parent_type), pointer :: tmp_field
-        ! Iterator for field collection
-        type(field_collection_iterator_type) :: iterator
-        character(str_def) :: name
 
         ! standard timestepping from gungho
         do while (clock%tick())
@@ -242,25 +237,6 @@ contains
                                    model_data,   &
                                    clock )
 
-            ! leaving the writing non-standard as it will be replaced wholesale by
-            ! diag work - for the time being dump everything!
-            ! this could use an additional collection on the model_data (something
-            ! like model_data%auto_write_fields to loop over
-            if (write_diag) then
-                depository => model_data%depository
-                iterator = depository%get_iterator()
-                do
-                    if (.not.iterator%has_next()) exit
-
-                    tmp_field => iterator%next()
-                    select type(tmp_field)
-                    type is (field_type)
-                        name = trim(adjustl(tmp_field%get_name()))
-                        call log_event("write_" // name, LOG_LEVEL_INFO)
-                        call tmp_field%write_field('diagnostics_' // name)
-                    end select
-                end do
-            end if
         end do
 
     end subroutine run
@@ -270,13 +246,15 @@ contains
     !>
     subroutine finalise()
 
-        use checksum_alg_mod, only : checksum_alg
+        use checksum_alg_mod,  only : checksum_alg
         use configuration_mod, only : final_configuration
+        use fieldspec_mod,     only : fieldspec_type
 
         implicit none
 
         type(field_collection_type), pointer :: depository
         class(field_parent_type), pointer :: tmp_field
+        class(fieldspec_type), pointer :: fieldspec
         ! Iterator for field collection
         type(field_collection_iterator_type) :: iterator
         character(str_def) :: name
@@ -296,8 +274,12 @@ contains
             select type(tmp_field)
             type is (field_type)
                 name = trim(adjustl(tmp_field%get_name()))
-                call checksum_alg('diagnostics', tmp_field, &
-                    'diagnostics_' // name)
+
+                fieldspec => fieldspec_collection%get_fieldspec(name)
+                if (fieldspec%get_checksum()) then
+                    call checksum_alg('diagnostics', tmp_field, name)
+                end if
+
             end select
         end do
         !-------------------------------------------------------------------------

@@ -35,10 +35,10 @@ contains
     integer(i_native) :: test_field_type
 
     test_field_type = integer_type
-    @assertEqual('INTEGER', name_from_field_type(test_field_type))
+    @assertEqual('INTEGER_TYPE', name_from_field_type(test_field_type))
 
     test_field_type = real_type
-    @assertEqual('REAL', name_from_field_type(test_field_type))
+    @assertEqual('REAL_TYPE', name_from_field_type(test_field_type))
 
   end subroutine test_name_from_field_type
 
@@ -50,10 +50,10 @@ contains
 
     character(str_def) :: test_name
 
-    test_name = 'INTEGER'
+    test_name = 'INTEGER_TYPE'
     @assertEqual(integer_type, field_type_from_name(test_name))
 
-    test_name = 'REAL'
+    test_name = 'REAL_TYPE'
     @assertEqual(real_type, field_type_from_name(test_name))
 
   end subroutine test_field_type_from_name

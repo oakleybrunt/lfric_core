@@ -62,8 +62,8 @@ module non_spatial_dimension_mod
     self%name = name
 
     if(present(axis_definition) .and. present(label_definition))then
-      call log_event( "A non_spatial_dimension_type cannot have an and &
-      axis_definition and label_definition", LOG_LEVEL_ERROR )
+      call log_event( "A non_spatial_dimension_type cannot have an &
+      &axis_definition and label_definition", LOG_LEVEL_ERROR )
     end if
 
     if(present(axis_definition)) then

@@ -10,7 +10,7 @@
 !   * the field group name
 !   * meta_mod
 ! all joined by '__' (double underscores)
-module diagnostics_colours__diagnostics__meta_mod
+module colours__diagnostics__meta_mod
 
     ! The required use statements include:
     !   * field_meta_data_type to hold the metadata for each field
@@ -18,7 +18,7 @@ module diagnostics_colours__diagnostics__meta_mod
     !       (eg W3, STANDARD_TIMESTEP & BILINEAR below)
     !   * any dimensions that fields live on
     use diagnostics_mod,                only: field_meta_data_type
-    use constants_mod,                  only: REAL_TYPE
+    use constants_mod,                  only: REAL_TYPE, str_def
     use fs_continuity_mod,              only: W3
     use time_step_enum_mod,             only: STANDARD_TIMESTEP
     use interpolation_enum_mod,         only: BILINEAR
@@ -37,12 +37,13 @@ module diagnostics_colours__diagnostics__meta_mod
     !> (with _mod replaced with _type)
     !> The type contains an instance of field_meta_data_type for each
     !> field in the field group
-    type, public :: diagnostics_colours__diagnostics__meta_type
+    type, public :: colours__diagnostics__meta_type
         type(field_meta_data_type), public :: hex
-    end type diagnostics_colours__diagnostics__meta_type
+        character(str_def) :: name = "colours__prognostics"
+    end type colours__diagnostics__meta_type
 
-    interface diagnostics_colours__diagnostics__meta_type
-        module procedure diagnostics_colours__diagnostics__meta_constructor
+    interface colours__diagnostics__meta_type
+        module procedure colours__diagnostics__meta_constructor
     end interface
 
 contains
@@ -51,20 +52,20 @@ contains
     !>
     !> Contains the metadata type for the field group and instantiates each
     !> field with the appropriate metadata
-    function diagnostics_colours__diagnostics__meta_constructor() result(self)
+    function colours__diagnostics__meta_constructor() result(self)
 
         implicit none
 
-        type(diagnostics_colours__diagnostics__meta_type) :: self
+        type(colours__diagnostics__meta_type) :: self
 
         self%hex = field_meta_data_type(&
-            unique_id = "diagnostics__hex", &
+            unique_id = "colours__hex", &
             long_name = "", &
             units = "1", &
             function_space = W3, &
             order = 0, &
             io_driver = "write_field_face", &
-            trigger = "_checksum: true;", &
+            trigger = "__checksum: true;", &
             description = "A colourful diagnostic field", &
             data_type = REAL_TYPE, &
             time_step = STANDARD_TIMESTEP, &
@@ -75,6 +76,6 @@ contains
                                                  TOP_ATMOSPHERIC_LEVEL), &
             standard_name = "hex")
 
-        end function diagnostics_colours__diagnostics__meta_constructor
+        end function colours__diagnostics__meta_constructor
 
-end module diagnostics_colours__diagnostics__meta_mod
+end module colours__diagnostics__meta_mod
