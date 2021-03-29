@@ -30,6 +30,10 @@
                                  TARGET_REVEAL_SETUP )}}
                  """
     script = rose task-run --app-key=generate_metadata
+    [[[environment]]]
+      GPL_UTILS_LOC='svn://fcm1/lfric.xm_svn/GPL-utilities/trunk'
+      GPL_UTILS_REV='@head'
+
   [[validate_diagnostics_conf]]
     inherit = GENERATE_IODEF
     script = rose task-run --app-key=validate_diagnostics_conf
