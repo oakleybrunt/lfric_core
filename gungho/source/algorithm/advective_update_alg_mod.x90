@@ -64,6 +64,7 @@ module advective_update_alg_mod
   type( field_type ), public              :: advective_av_chi3, &
                                              wt_metrics, chi3_at_wt
   integer(i_def), public                  :: nfaces_re_h, nfaces_re_v
+  type(field_type), public                :: w1_multiplicity
 
 
   public :: advective_update_alg_init
@@ -224,6 +225,9 @@ contains
                        multiplicity_kernel_type(wt_field),    &
                        sample_field_kernel_type(chi3_at_wt, wt_field, chi_sph(3)) )
         end if
+        call w1_multiplicity%initialise( w1_fs )
+        call invoke( setval_c(w1_multiplicity, 0.0_r_def), &
+                     multiplicity_kernel_type(w1_multiplicity) )
         !======================================================================!
       else
         call log_event( "Gungho: subgrid mappings needed for FV MoL with high &
@@ -302,8 +306,15 @@ contains
       call log_event( "Gungho: Unrecognized option for operator.", LOG_LEVEL_ERROR )
 
     case(operators_fv)
-      call invoke( setval_c(advective_av, 0.0_r_def) )
-      if ( consistent_metric )  call invoke( setval_c(advective_av_chi3, 0.0_r_def) )
+      ! Set default value (for advective_av and advective_av_chi3)
+      ! to be average of the field at W1 points and then update where the wind
+      ! is non-zero using an upwind reconstruction
+      call invoke( setval_c(advective_av, 0.0_r_def), &
+                   sample_field_kernel_type(advective_av, w1_multiplicity, adv_field) )
+      if ( consistent_metric ) then
+        call invoke( setval_c(advective_av_chi3, 0.0_r_def), &
+                     sample_field_kernel_type(advective_av_chi3, w1_multiplicity, chi3_at_wt) )
+      end if
       if ( oned_reconstruction ) then
        ! Use 1d reconstruction
         call invoke_poly1d_adv_recon( advective_av, wind, adv_field, adv_coeffs, &

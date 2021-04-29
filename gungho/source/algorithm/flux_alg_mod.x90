@@ -272,20 +272,23 @@ contains
       call log_event( "Gungho: Unrecognized option for operator.", LOG_LEVEL_ERROR )
 
     case(operators_fv)
-     if ( oned_reconstruction ) then
-       ! Use 1d flux reconstruction
-       call invoke_poly1d_flux( mass_flux, wind, density, flux_coeffs, &
-                                fv_flux_order, flux_stencil_extent, nfaces_re_h )
-     else
-       ! Use 2d flux reconstruction
-       call invoke_poly2d_flux( mass_flux, wind, density, flux_coeffs, &
-                                fv_flux_order, flux2d_stencil_size, nfaces_re_h )
-     end if
-     ! Compute vertical components of mass flux
-     call invoke_poly1d_vert_flux( mass_flux, wind, density,   &
-                                   vert_flux_coeffs,           &
-                                   fv_flux_order, nfaces_re_v, &
-                                   logspace=logspace_loc)
+      ! Set default value to be 0 and then update the mass flux
+      ! in cases where the wind is nonzero using an upwind reconstruction
+      call invoke( setval_c( mass_flux, 0.0_r_def) )
+      if ( oned_reconstruction ) then
+        ! Use 1d flux reconstruction
+        call invoke_poly1d_flux( mass_flux, wind, density, flux_coeffs, &
+                                 fv_flux_order, flux_stencil_extent, nfaces_re_h )
+      else
+        ! Use 2d flux reconstruction
+        call invoke_poly2d_flux( mass_flux, wind, density, flux_coeffs, &
+                                 fv_flux_order, flux2d_stencil_size, nfaces_re_h )
+      end if
+      ! Compute vertical components of mass flux
+      call invoke_poly1d_vert_flux( mass_flux, wind, density,   &
+                                    vert_flux_coeffs,           &
+                                    fv_flux_order, nfaces_re_v, &
+                                    logspace=logspace_loc)
 
     case(operators_fem)
       ! Project density*wind into the mass flux space

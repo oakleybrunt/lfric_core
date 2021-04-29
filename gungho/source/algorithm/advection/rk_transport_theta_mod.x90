@@ -55,7 +55,7 @@ module rk_transport_theta_mod
   use rtheta_kernel_mod,                 only: rtheta_kernel_type
   use poly_advective_kernel_mod,         only: poly_advective_kernel_type
   use consistent_wind_kernel_mod,        only: consistent_wind_kernel_type
-
+  use sample_field_kernel_mod,           only: sample_field_kernel_type
   ! Derived Types
   use field_mod,                         only: field_type
   use function_space_mod,                only: function_space_type
@@ -74,7 +74,8 @@ module rk_transport_theta_mod
                                                chi3_at_wt,                  &
                                                nfaces_re_h, nfaces_re_v,    &
                                                advective_stencil_extent,    &
-                                               advective2d_stencil_size
+                                               advective2d_stencil_size,    &
+                                               w1_multiplicity
 
   implicit none
 
@@ -146,15 +147,23 @@ contains
       ! Compute advection terms
       select case(operators)
         case(operators_fv)
-          ! Use polynomial reconstruction
-          call invoke( setval_c(theta_av, 0.0_r_def) )
+          ! Set default value (for theta_av)
+          ! to be average of the field at W1 points and then update where the wind
+          ! is non-zero using an upwind reconstruction
+          call invoke( setval_c(theta_av, 0.0_r_def), &
+                       sample_field_kernel_type(theta_av, w1_multiplicity, theta) )
           if ( oned_reconstruction ) then
             call invoke_poly1d_adv_recon( theta_av, u, theta, adv_coeffs,               &
                                           fv_advective_order, advective_stencil_extent, &
                                           nfaces_h                                      )
             ! Horizontal advection of metric terms
             if ( consistent_metric ) then
-              call invoke( setval_c(advective_av_chi3, 0.0_r_def) )
+              ! Set default value (for advective_av_chi3)
+              ! to be average of the field at W1 points and then update where the wind
+              ! is non-zero using an upwind reconstruction
+              call invoke( setval_c(advective_av_chi3, 0.0_r_def), &
+                           sample_field_kernel_type(advective_av_chi3, w1_multiplicity, &
+                                                    chi3_at_wt) )
               call invoke_poly1d_adv_recon( advective_av_chi3, u,                         &
                                             chi3_at_wt, adv_coeffs,                       &
                                             fv_advective_order, advective_stencil_extent, &
@@ -167,7 +176,8 @@ contains
                                           nfaces_h                                      )
             ! Horizontal advection of metric terms
             if ( consistent_metric ) then
-              call invoke( setval_c(advective_av_chi3, 0.0_r_def) )
+              call invoke( sample_field_kernel_type(advective_av_chi3, w1_multiplicity, &
+                                                    chi3_at_wt) )
               call invoke_poly2d_adv_recon( advective_av_chi3, u,                         &
                                             chi3_at_wt, adv_coeffs,                       &
                                             fv_advective_order, advective2d_stencil_size, &

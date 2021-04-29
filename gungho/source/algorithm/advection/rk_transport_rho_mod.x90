@@ -247,8 +247,9 @@ contains
     ! Runge-Kutta algorithm
     do stage = 1,num_rk_stage
       ! Compute advection terms
-      ! mass flux ( F = rho * u )
-
+      ! Set default mass flux ( F = rho * u ) to be 0 and then update the mass flux
+      ! in cases where the wind is nonzero using an upwind reconstruction
+      call invoke( setval_c(mass_flux, 0.0_r_def) )
       if ( oned_reconstruction ) then
          call invoke_poly1d_flux( mass_flux, u, rho, flux_coeffs,    &
                                  fv_flux_order, flux_stencil_extent, &

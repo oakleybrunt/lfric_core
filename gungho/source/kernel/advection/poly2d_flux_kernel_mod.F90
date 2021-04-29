@@ -144,7 +144,7 @@ subroutine poly2d_flux_code( nlayers,              &
     do df = 1,nfaces_re_h
       ! Check if this is the upwind cell
       direction = wind(map_w2(df) + k )*v_dot_n(df)
-      if ( direction >= 0.0_r_def ) then
+      if ( direction > 0.0_r_def ) then
         polynomial_density = 0.0_r_def
         do p = 1,cells_in_stencil
           polynomial_density = polynomial_density &
