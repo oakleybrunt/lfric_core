@@ -370,6 +370,7 @@
 	<field id="zh" name="zh" long_name="boundary_layer_depth" unit="m" domain_ref="face" />
         <field id="dsldzm" name="dsldzm" long_name="liquid_temperature_gradient" unit="kg m-1" grid_ref="full_level_face_grid" />
         <field id="wvar" name="wvar" long_name="vertical_velocity_variance" unit="m2 s-2" grid_ref="full_level_face_grid" />
+        <field id="gradrinr" name="gradrinr" long_name="gradient_richardson_number" unit="1" grid_ref="full_level_face_grid" />
 	<!-- radiation fields -->
 	<field id="lw_down_surf" name="lw_down_surf" long_name="surface_downward_longwave_flux" unit="W m-2" domain_ref="face" />
 	<field id="sw_down_surf" name="sw_down_surf" long_name="surface_downward_shortwave_flux" unit="W m-2" domain_ref="face" />

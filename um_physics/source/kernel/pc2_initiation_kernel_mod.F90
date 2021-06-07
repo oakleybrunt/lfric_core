@@ -11,6 +11,7 @@ use argument_mod,      only: arg_type,          &
                              GH_FIELD, GH_REAL, &
                              GH_READ, GH_WRITE, &
                              CELL_COLUMN,       &
+                             ANY_DISCONTINUOUS_SPACE_9, &
                              ANY_DISCONTINUOUS_SPACE_1
 use fs_continuity_mod, only: WTHETA, W3
 use kernel_mod,        only: kernel_type
@@ -26,7 +27,7 @@ private
 
 type, public, extends(kernel_type) :: pc2_initiation_kernel_type
   private
-  type(arg_type) :: meta_args(32) = (/                                   &
+  type(arg_type) :: meta_args(37) = (/                                   &
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                    & ! mv_wth
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                    & ! ml_wth
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                    & ! mi_wth
@@ -38,6 +39,11 @@ type, public, extends(kernel_type) :: pc2_initiation_kernel_type
        arg_type(GH_FIELD, GH_REAL, GH_READ,  W3),                        & ! exner_w3
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                    & ! dsldzm
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                    & ! wvar
+       arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                    & ! gradrinr
+       arg_type(GH_FIELD, GH_REAL, GH_READ,  ANY_DISCONTINUOUS_SPACE_1), & ! zh
+       arg_type(GH_FIELD, GH_REAL, GH_READ,  ANY_DISCONTINUOUS_SPACE_1), & ! zhsc
+       arg_type(GH_FIELD, GH_REAL, GH_READ,  ANY_DISCONTINUOUS_SPACE_1), & ! inv_depth
+       arg_type(GH_FIELD, GH_REAL, GH_READ,  ANY_DISCONTINUOUS_SPACE_9), & ! bl_type_ind
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                    & ! tau_dec_bm
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                    & ! tau_hom_bm
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                    & ! tau_mph_bm
@@ -85,6 +91,11 @@ contains
 !> @param[in]     exner_w3       Exner pressure in w3 space
 !> @param[in]     dsldzm         Liquid potential temperature gradient in wth
 !> @param[in]     wvar           Vertical velocity variance in wth
+!> @param[in]     gradrinr       Gradient Richardson Number in wth
+!> @param[in]     zh             Mixed-layer height
+!> @param[in]     zhsc           Decoupled layer height 
+!> @param[in]     inv_depth      Depth of BL top inversion layer 
+!> @param[in]     bl_type_ind    Diagnosed BL types 
 !> @param[in]     tau_dec_bm     Decorrelation time scale in wth
 !> @param[in]     tau_hom_bm     Homogenisation time scale in wth
 !> @param[in]     tau_mph_bm     Phase-relaxation time scale in wth
@@ -115,6 +126,9 @@ contains
 !> @param[in]     ndf_2d         Number of degrees of freedom per cell for density space
 !> @param[in]     undf_2d        Number of unique degrees of freedom for density space
 !> @param[in]     map_2d         Dofmap for the cell at the base of the column for density space
+!> @param[in]     ndf_bl         Number of DOFs per cell for BL types
+!> @param[in]     undf_bl        Number of total DOFs for BL types
+!> @param[in]     map_bl         Dofmap for cell for BL types
 
 subroutine pc2_initiation_code( nlayers,                           &
                                 mv_wth,                            &
@@ -128,6 +142,11 @@ subroutine pc2_initiation_code( nlayers,                           &
                                 exner_w3,                          &
                                 dsldzm,                            &
                                 wvar,                              &
+                                gradrinr,                          &
+                                zh,                                &
+                                zhsc,                              &
+                                inv_depth,                         &
+                                bl_type_ind,                       &
                                 tau_dec_bm,                        &
                                 tau_hom_bm,                        &
                                 tau_mph_bm,                        &
@@ -154,7 +173,8 @@ subroutine pc2_initiation_code( nlayers,                           &
                                 ! Other
                                 ndf_wth, undf_wth, map_wth,        &
                                 ndf_w3,  undf_w3,  map_w3,         &
-                                ndf_2d,  undf_2d,  map_2d   )
+                                ndf_2d,  undf_2d,  map_2d,         &
+                                ndf_bl,  undf_bl,  map_bl)
 
     use constants_mod, only: r_def, i_def, r_um, i_um
 
@@ -183,6 +203,7 @@ subroutine pc2_initiation_code( nlayers,                           &
     integer(kind=i_def), intent(in) :: ndf_wth , ndf_w3
     integer(kind=i_def), intent(in) :: undf_wth, undf_w3
     integer(kind=i_def), intent(in) :: ndf_2d, undf_2d
+    integer(kind=i_def), intent(in) :: ndf_bl, undf_bl
 
     real(kind=r_def), intent(in), dimension(undf_wth) :: mv_wth
     real(kind=r_def), intent(in), dimension(undf_wth) :: ml_wth
@@ -196,6 +217,7 @@ subroutine pc2_initiation_code( nlayers,                           &
 
     real(kind=r_def), intent(in), dimension(undf_wth) :: dsldzm
     real(kind=r_def), intent(in), dimension(undf_wth) :: wvar
+    real(kind=r_def), intent(in), dimension(undf_wth) :: gradrinr
     real(kind=r_def), intent(in), dimension(undf_wth) :: tau_dec_bm
     real(kind=r_def), intent(in), dimension(undf_wth) :: tau_hom_bm
     real(kind=r_def), intent(in), dimension(undf_wth) :: tau_mph_bm
@@ -203,6 +225,11 @@ subroutine pc2_initiation_code( nlayers,                           &
     real(kind=r_def), intent(inout), dimension(undf_wth) :: sskew_bm
     real(kind=r_def), intent(inout), dimension(undf_wth) :: svar_bm
     real(kind=r_def), intent(inout), dimension(undf_wth) :: svar_tb
+
+    real(kind=r_def), intent(in), dimension(undf_2d)  :: zh
+    real(kind=r_def), intent(in), dimension(undf_2d)  :: zhsc
+    real(kind=r_def), intent(in), dimension(undf_2d)  :: inv_depth
+    real(kind=r_def), intent(in), dimension(undf_bl)  :: bl_type_ind
 
     real(kind=r_def), intent(in), dimension(undf_2d) :: zlcl_mixed
     real(kind=r_def), intent(in), dimension(undf_2d) :: r_cumulus
@@ -219,6 +246,7 @@ subroutine pc2_initiation_code( nlayers,                           &
     integer(kind=i_def), intent(in), dimension(ndf_wth) :: map_wth
     integer(kind=i_def), intent(in), dimension(ndf_w3)  :: map_w3
     integer(kind=i_def), intent(in), dimension(ndf_2d)  :: map_2d
+    integer(kind=i_def), intent(in), dimension(ndf_bl)  :: map_bl
 
     ! The changes to the fields as a result
     real(kind=r_def), intent(inout), dimension(undf_wth) :: dtheta_inc_wth
@@ -243,7 +271,11 @@ subroutine pc2_initiation_code( nlayers,                           &
                   tgrad_in, tau_dec_in,                      &
                   tau_hom_in, tau_mph_in, z_theta
 
-    real(r_um), dimension(row_length,rows,nlayers) :: wvar_in
+    real(r_um), dimension(row_length,rows,model_levels) ::   &
+                  wvar_in, gradrinr_in
+
+    real(r_um), dimension(row_length,rows) ::                &
+                  zh_in, zhsc_in, dzh_in, bl_type_7_in
 
     real(r_um), dimension(row_length,rows,model_levels) ::   &
                   tlts, qtts, ptts, qsl_tl
@@ -306,6 +338,7 @@ subroutine pc2_initiation_code( nlayers,                           &
       ! Bimodal cloud scheme inputs
       tgrad_in(1,1,k)   = dsldzm(map_wth(1) + k)
       wvar_in(1,1,k)    = wvar(map_wth(1) + k)
+      gradrinr_in(1,1,k)= gradrinr(map_wth(1) + k)
       tau_dec_in(1,1,k) = tau_dec_bm(map_wth(1) + k)
       tau_hom_in(1,1,k) = tau_hom_bm(map_wth(1) + k)
       tau_mph_in(1,1,k) = tau_mph_bm(map_wth(1) + k)
@@ -335,6 +368,12 @@ subroutine pc2_initiation_code( nlayers,                           &
       tlts(1,1,k) = t_n(1,1) - ( lcrcp * ml_n_wth(map_wth(1) + k) )
 
     end do     ! k
+
+    ! 2d fields for gradrinr-based entrainment zones
+    zh_in(1,1)        = zh(map_2d(1))
+    zhsc_in(1,1)      = zhsc(map_2d(1))
+    dzh_in(1,1)       = real(inv_depth(map_2d(1)), r_um)
+    bl_type_7_in(1,1) = bl_type_ind(map_bl(1)+6)
 
     ! Calculate qsat(TL) with respect to liquid water, operate on whole column.
     if ( l_mr_physics ) then
@@ -391,12 +430,18 @@ subroutine pc2_initiation_code( nlayers,                           &
                             p_theta_levels,                &
                             l_cumulus,                     &
                             rhcpt,                         &
+                            ! Bimodal inputs
                             tgrad_in,                      &
                             wvar_in,                       &
                             tau_dec_in,                    &
                             tau_hom_in,                    &
                             tau_mph_in,                    &
                             z_theta,                       &
+                            gradrinr_in,                   &
+                            zh_in,                         &
+                            zhsc_in,                       &
+                            dzh_in,                        &
+                            bl_type_7_in,                  &
                             calculate_increments,          &
                             ! Output increments
                             t_incr,                        &

@@ -10,6 +10,8 @@ module bm_kernel_mod
   use argument_mod,       only : arg_type,              &
                                  GH_FIELD, GH_REAL,     &
                                  GH_READ, GH_READWRITE, &
+                                 ANY_DISCONTINUOUS_SPACE_1, &
+                                 ANY_DISCONTINUOUS_SPACE_9, &
                                  GH_WRITE, CELL_COLUMN
   use constants_mod,      only : r_def, r_double, i_def, i_um, r_um
   use fs_continuity_mod,  only : W3, Wtheta
@@ -23,7 +25,7 @@ module bm_kernel_mod
   !>
   type, public, extends(kernel_type) :: bm_kernel_type
     private
-    type(arg_type) :: meta_args(20) = (/                    &
+    type(arg_type) :: meta_args(25) = (/                    &
          arg_type(GH_FIELD, GH_REAL, GH_READ,      WTHETA), & ! theta_in_wth
          arg_type(GH_FIELD, GH_REAL, GH_READ,      W3),     & ! exner_in_w3
          arg_type(GH_FIELD, GH_REAL, GH_READ,      WTHETA), & ! exner_in_wth
@@ -33,6 +35,11 @@ module bm_kernel_mod
          arg_type(GH_FIELD, GH_REAL, GH_READ,      WTHETA), & ! tau_hom_bm
          arg_type(GH_FIELD, GH_REAL, GH_READ,      WTHETA), & ! tau_mph_bm
          arg_type(GH_FIELD, GH_REAL, GH_READ,      WTHETA), & ! height_wth
+         arg_type(GH_FIELD, GH_REAL, GH_READ,      WTHETA), & ! gradrinr
+         arg_type(GH_FIELD, GH_REAL, GH_READ,      ANY_DISCONTINUOUS_SPACE_1), & ! zh
+         arg_type(GH_FIELD, GH_REAL, GH_READ,      ANY_DISCONTINUOUS_SPACE_1), & ! zhsc
+         arg_type(GH_FIELD, GH_REAL, GH_READ,      ANY_DISCONTINUOUS_SPACE_1), & ! inv_depth
+         arg_type(GH_FIELD, GH_REAL, GH_READ,      ANY_DISCONTINUOUS_SPACE_9), & ! bl_type_ind
          arg_type(GH_FIELD, GH_REAL, GH_READWRITE, WTHETA), & ! m_v
          arg_type(GH_FIELD, GH_REAL, GH_READWRITE, WTHETA), & ! m_cl
          arg_type(GH_FIELD, GH_REAL, GH_READWRITE, WTHETA), & ! m_ci
@@ -70,6 +77,11 @@ contains
   !> @param[in]     tau_hom_bm    Homogenisation time scale in wth
   !> @param[in]     tau_mph_bm    Phase-relaxation time scale in wth
   !> @param[in]     height_wth    Theta-level height in wth
+  !> @param[in]     gradrinr      Gradient Richardson Number in wth
+  !> @param[in]     zh            Mixed-layer height
+  !> @param[in]     zhsc          Decoupled layer height 
+  !> @param[in]     inv_depth     Depth of BL top inversion layer 
+  !> @param[in]     bl_type_ind   Diagnosed BL types 
   !> @param[in,out] m_v           Vapour mixing ratio in wth
   !> @param[in,out] m_cl          Cloud liquid mixing ratio in wth
   !> @param[in,out] m_ci          Ice liquid mixing ratio in wth
@@ -87,6 +99,12 @@ contains
   !> @param[in]     ndf_w3        Number of degrees of freedom per cell for density space
   !> @param[in]     undf_w3       Number unique of degrees of freedom  for density space
   !> @param[in]     map_w3        Dofmap for the cell at the base of the column for density space
+  !> @param[in]     ndf_2d        Number of DOFs per cell for 2D fields
+  !> @param[in]     undf_2d       Number of unique DOFs for 2D fields
+  !> @param[in]     map_2d        Dofmap for the cell at the base of the column for 2D fields
+  !> @param[in]     ndf_bl        Number of DOFs per cell for BL types
+  !> @param[in]     undf_bl       Number of total DOFs for BL types
+  !> @param[in]     map_bl        Dofmap for cell for BL types
 
   subroutine bm_code(nlayers,      &
                      theta_in_wth, &
@@ -98,6 +116,11 @@ contains
                      tau_hom_bm,   &
                      tau_mph_bm,   &
                      height_wth,   &
+                     gradrinr,     &
+                     zh,           &
+                     zhsc,         &
+                     inv_depth,    &
+                     bl_type_ind,  &
                      m_v,          &
                      m_cl,         &
                      m_ci,         &
@@ -114,7 +137,13 @@ contains
                      map_wth,      &
                      ndf_w3,       &
                      undf_w3,      &
-                     map_w3)
+                     map_w3,       &
+                     ndf_2d,       &
+                     undf_2d,      &
+                     map_2d,       &
+                     ndf_bl,       &
+                     undf_bl,      &
+                     map_bl)
 
     !---------------------------------------
     ! UM modules
@@ -122,7 +151,7 @@ contains
     ! Structures holding diagnostic arrays - not used
 
     ! Other modules containing stuff passed to CLD
-    use nlsizes_namelist_mod, only: row_length, rows, bl_levels
+    use nlsizes_namelist_mod, only: row_length, rows
     use planet_constants_mod, only: p_zero, kappa, cp
     use water_constants_mod,  only: lc
     use bm_ctl_mod,           only: bm_ctl
@@ -132,17 +161,21 @@ contains
 
     ! Arguments
     integer(kind=i_def), intent(in)     :: nlayers
-    integer(kind=i_def), intent(in)     :: ndf_wth, ndf_w3
-    integer(kind=i_def), intent(in)     :: undf_wth, undf_w3
+    integer(kind=i_def), intent(in)     :: ndf_wth, ndf_w3, ndf_2d
+    integer(kind=i_def), intent(in)     :: undf_wth, undf_w3, undf_2d
+    integer(kind=i_def), intent(in)     :: ndf_bl, undf_bl
 
     integer(kind=i_def), intent(in),    dimension(ndf_wth)  :: map_wth
     integer(kind=i_def), intent(in),    dimension(ndf_w3)   :: map_w3
+    integer(kind=i_def), intent(in),    dimension(ndf_2d)   :: map_2d
+    integer(kind=i_def), intent(in),    dimension(ndf_bl)   :: map_bl
 
     real(kind=r_def),    intent(in),    dimension(undf_w3)  :: exner_in_w3
     real(kind=r_def),    intent(in),    dimension(undf_wth) :: exner_in_wth
     real(kind=r_def),    intent(in),    dimension(undf_wth) :: theta_in_wth
     real(kind=r_def),    intent(in),    dimension(undf_wth) :: dsldzm
     real(kind=r_def),    intent(in),    dimension(undf_wth) :: wvar
+    real(kind=r_def),    intent(in),    dimension(undf_wth) :: gradrinr
     real(kind=r_def),    intent(in),    dimension(undf_wth) :: tau_dec_bm
     real(kind=r_def),    intent(in),    dimension(undf_wth) :: tau_hom_bm
     real(kind=r_def),    intent(in),    dimension(undf_wth) :: tau_mph_bm
@@ -159,6 +192,11 @@ contains
     real(kind=r_def),    intent(inout), dimension(undf_wth) :: svar_bm
     real(kind=r_def),    intent(inout), dimension(undf_wth) :: svar_tb
 
+    real(kind=r_def),    intent(in),    dimension(undf_2d)  :: zh
+    real(kind=r_def),    intent(in),    dimension(undf_2d)  :: zhsc
+    real(kind=r_def),    intent(in),    dimension(undf_2d)  :: inv_depth
+    real(kind=r_def),    intent(in),    dimension(undf_bl)  :: bl_type_ind
+
     ! Local variables for the kernel
     integer(i_um) :: k
 
@@ -170,10 +208,14 @@ contains
          qt, qcl_out, qcf_in, tl, tgrad_in,                   &
          tau_dec_in, tau_hom_in, tau_mph_in, z_theta
 
-    real(r_um), dimension(row_length,rows,nlayers) :: wvar_in
+    real(r_um), dimension(row_length,rows,nlayers) ::        &
+         wvar_in, gradrinr_in
 
-    real(r_um), dimension(row_length,rows,nlayers) ::         &
-      sskew_out, svar_turb_out, svar_bm_out
+    real(r_um), dimension(row_length,rows) ::                &
+         zh_in, zhsc_in, dzh_in, bl_type_7_in
+
+    real(r_um), dimension(row_length,rows,nlayers) ::        &
+         sskew_out, svar_turb_out, svar_bm_out
 
     ! profile fields from level 0 upwards
     real(r_um), dimension(row_length,rows,0:nlayers) ::       &
@@ -202,7 +244,14 @@ contains
       tau_mph_in(1,1,k) = tau_mph_bm(map_wth(1) + k)
       z_theta(1,1,k) = height_wth(map_wth(1) + k) - height_wth(map_wth(1) + 0)
       wvar_in(1,1,k)     = wvar(map_wth(1) + k)
+      gradrinr_in(1,1,k) = gradrinr(map_wth(1) + k)
     end do
+
+    ! 2d fields for gradrinr-based entrainment zones
+    zh_in(1,1)        = zh(map_2d(1))
+    zhsc_in(1,1)       = zhsc(map_2d(1))
+    dzh_in(1,1)       = real(inv_depth(map_2d(1)), r_um)
+    bl_type_7_in(1,1) = bl_type_ind(map_bl(1)+6)
 
     do k = 1, nlayers-1
       ! pressure on theta levels
@@ -217,7 +266,8 @@ contains
 
     call bm_ctl( p_theta_levels, tgrad_in, wvar_in,                   &
                  tau_dec_in, tau_hom_in, tau_mph_in, z_theta,         &
-                 nlayers, bl_levels, l_mr_physics,                    &
+                 gradrinr_in, zh_in, zhsc_in, dzh_in, bl_type_7_in,   &
+                 nlayers, l_mr_physics,                               &
                  tl, cf_inout, qt, qcf_in, qcl_out,                   &
                  cfl_inout, cff_inout,                                &
                  sskew_out, svar_turb_out, svar_bm_out,               &

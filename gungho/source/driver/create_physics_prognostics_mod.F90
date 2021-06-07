@@ -382,6 +382,8 @@ contains
 
     call add_physics_field( turbulence_fields, depository, prognostic_fields,  &
       'wvar',    wtheta_space, checkpoint_flag=turb_gen_mixph )
+    call add_physics_field( turbulence_fields, depository, prognostic_fields,  &
+      'gradrinr', wtheta_space )
 
     ! 2D fields, don't need checkpointing
     call add_physics_field( turbulence_fields, depository, prognostic_fields,  &
@@ -400,6 +402,8 @@ contains
       'blend_height_uv',  twod_space, twod=.true. )
     call add_physics_field( turbulence_fields, depository, prognostic_fields,  &
       'zh_nonloc',  twod_space, twod=.true. )
+    call add_physics_field( turbulence_fields, depository, prognostic_fields,  &
+      'zhsc',  twod_space, twod=.true. )
 
     ! Space for the three fields required to regrid this
     vector_space => function_space_collection%get_fs(twod_mesh_id, 0, W3, 5)

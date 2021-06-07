@@ -98,6 +98,7 @@ contains
     type( field_type ), pointer :: blend_height_uv => null()
     type( field_type ), pointer :: bl_type_ind     => null()
     type( field_type ), pointer :: zh_nonloc       => null()
+    type( field_type ), pointer :: zhsc            => null()
     type( field_type ), pointer :: z_lcl           => null()
     type( field_type ), pointer :: inv_depth       => null()
     type( field_type ), pointer :: qcl_at_inv_top  => null()
@@ -144,7 +145,8 @@ contains
 
     type( field_type ), pointer :: dsldzm           => null()
     type( field_type ), pointer :: wvar             => null()
-
+    type( field_type ), pointer :: gradrinr  => null()
+ 
     type( field_type ), pointer :: dtheta_mphys => null()
 
     type( field_type ), pointer :: z0msea              => null()
@@ -234,6 +236,7 @@ contains
     blend_height_tq => turbulence_fields%get_field('blend_height_tq')
     blend_height_uv => turbulence_fields%get_field('blend_height_uv')
     zh_nonloc       => turbulence_fields%get_field('zh_nonloc')
+    zhsc            => turbulence_fields%get_field('zhsc')
     z_lcl           => turbulence_fields%get_field('z_lcl')
     inv_depth       => turbulence_fields%get_field('inv_depth')
     qcl_at_inv_top  => turbulence_fields%get_field('qcl_at_inv_top')
@@ -255,6 +258,7 @@ contains
     lmix_bl         => turbulence_fields%get_field('lmix_bl')
     dsldzm          => turbulence_fields%get_field('dsldzm')
     wvar            => turbulence_fields%get_field('wvar')
+    gradrinr        => turbulence_fields%get_field('gradrinr')
 
     ! Radiation fields
     cos_zenith_angle  => radiation_fields%get_field('cos_zenith_angle')
@@ -398,13 +402,13 @@ contains
                            rhokm_bl, rhokm_surf, rhokh_bl, ngstress_bl,        &
                            bq_bl, bt_bl, moist_flux_bl, heat_flux_bl,          &
                            dtrdz_uv_bl, dtrdz_tq_bl, rdz_tq_bl, rdz_uv_bl,     &
-                           fd_taux, fd_tauy, lmix_bl,                          &
+                           fd_taux, fd_tauy, lmix_bl, gradrinr,                &
                            alpha1_tile, ashtf_prime_tile, dtstar_tile,         &
                            fraca_tile, z0h_tile, z0m_tile, rhokh_tile,         &
                            chr1p5m_tile, resfs_tile, canhc_tile,               &
                            tile_water_extract,                                 &
                            blend_height_tq, blend_height_uv, ustar,            &
-                           soil_moist_avail, zh_nonloc, z_lcl, inv_depth,      &
+                           soil_moist_avail, zh_nonloc, zhsc, z_lcl, inv_depth,&
                            qcl_at_inv_top, shallow_flag,                       &
                            uw0_flux, vw0_flux, lcl_height, parcel_top,         &
                            level_parcel_top, wstar, thv_flux,                  &
@@ -422,6 +426,7 @@ contains
       call net_prim_prod%write_field('net_prim_prod')
       call wvar%write_field('wvar')
       call dsldzm%write_field('dsldzm')
+      call gradrinr%write_field('gradrinr')
 
     end if
 

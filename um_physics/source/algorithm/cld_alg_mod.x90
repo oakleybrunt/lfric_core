@@ -91,11 +91,16 @@ contains
     type( field_type ), pointer :: cumulus => null()
     type( field_type ), pointer :: rh_crit => null()
 
-    type( field_type ), pointer :: dsldzm     => null()
-    type( field_type ), pointer :: wvar       => null()
-    type( field_type ), pointer :: tau_dec_bm => null()
-    type( field_type ), pointer :: tau_hom_bm => null()
-    type( field_type ), pointer :: tau_mph_bm => null()
+    type( field_type ), pointer :: dsldzm      => null()
+    type( field_type ), pointer :: wvar        => null()
+    type( field_type ), pointer :: gradrinr    => null()
+    type( field_type ), pointer :: zh          => null()
+    type( field_type ), pointer :: zhsc        => null()
+    type( field_type ), pointer :: inv_depth   => null()
+    type( field_type ), pointer :: bl_type_ind => null()
+    type( field_type ), pointer :: tau_dec_bm  => null()
+    type( field_type ), pointer :: tau_hom_bm  => null()
+    type( field_type ), pointer :: tau_mph_bm  => null()
 
     type( field_type ), pointer :: sskew_bm   => null()
     type( field_type ), pointer :: svar_bm    => null()
@@ -138,8 +143,14 @@ contains
       cf_liq     => cloud_fields%get_field('liquid_fraction')
       cf_bulk    => cloud_fields%get_field('bulk_fraction')
 
-      dsldzm     => turbulence_fields%get_field('dsldzm')
-      wvar       => turbulence_fields%get_field('wvar')
+      dsldzm      => turbulence_fields%get_field('dsldzm')
+      wvar        => turbulence_fields%get_field('wvar')
+      gradrinr    => turbulence_fields%get_field('gradrinr')
+      zh          => turbulence_fields%get_field('zh')
+      zhsc        => turbulence_fields%get_field('zhsc')
+      inv_depth   => turbulence_fields%get_field('inv_depth')
+      bl_type_ind => turbulence_fields%get_field('bl_type_ind')
+
       tau_dec_bm => cloud_fields%get_field('tau_dec_bm')
       tau_hom_bm => cloud_fields%get_field('tau_hom_bm')
       tau_mph_bm => cloud_fields%get_field('tau_mph_bm')
@@ -151,9 +162,9 @@ contains
       height_wth => get_height(Wtheta, mesh_id)
 
       call invoke( bm_kernel_type(  theta, exner , exner_wth, dsldzm,          &
-                                    wvar, tau_dec_bm, tau_hom_bm,              &
-                                    tau_mph_bm, height_wth,                    &
-                                    mr(imr_v), mr(imr_cl),                     &
+                                    wvar, tau_dec_bm, tau_hom_bm, tau_mph_bm,  &
+                                    height_wth, gradrinr, zh, zhsc, inv_depth, &
+                                    bl_type_ind, mr(imr_v), mr(imr_cl),        &
                                     mr(imr_ci), cf_area, cf_ice, cf_liq,       &
                                     cf_bulk, theta_inc,                        &
                                     sskew_bm, svar_bm, svar_tb)   )

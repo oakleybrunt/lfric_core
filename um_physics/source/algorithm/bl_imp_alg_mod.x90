@@ -100,6 +100,7 @@ contains
     type( field_type ), pointer :: u_physics_star => null()
 
     type( field_type ), pointer :: zh => null()
+    type( field_type ), pointer :: zhsc => null()
     type( field_type ), pointer :: ntml => null()
     type( field_type ), pointer :: cumulus => null()
     type( field_type ), pointer :: rhokm_surf => null()
@@ -132,6 +133,7 @@ contains
 
     type( field_type ), pointer :: dsldzm     => null()
     type( field_type ), pointer :: wvar       => null()
+    type( field_type ), pointer :: gradrinr    => null()
     type( field_type ), pointer :: tau_dec_bm => null()
     type( field_type ), pointer :: tau_hom_bm => null()
     type( field_type ), pointer :: tau_mph_bm => null()
@@ -203,6 +205,7 @@ contains
 
     ! Unpack turbulence fields
     zh => turbulence_fields%get_field('zh')
+    zhsc => turbulence_fields%get_field('zhsc')
     ntml => turbulence_fields%get_field('ntml')
     cumulus => turbulence_fields%get_field('cumulus')
     rhokm_surf => turbulence_fields%get_field('rhokm_surf')
@@ -228,6 +231,7 @@ contains
     fd_tauy => turbulence_fields%get_field('fd_tauy')
     dsldzm  => turbulence_fields%get_field('dsldzm')
     wvar    => turbulence_fields%get_field('wvar')
+    gradrinr => turbulence_fields%get_field('gradrinr')
 
     ! Unpack cloud fields
     cf_area => cloud_fields%get_field('area_fraction')
@@ -356,7 +360,7 @@ contains
                            dtheta_bl, du_bl, dt_conv, du_conv_w2,              &
                            mr(imr_v), mr(imr_cl), mr(imr_ci),                  &
                            cf_area, cf_ice, cf_liq, cf_bulk, rh_crit,          &
-                           dsldzm, wvar, tau_dec_bm, tau_hom_bm,               &
+                           dsldzm, wvar, gradrinr, tau_dec_bm, tau_hom_bm,     &
                            tau_mph_bm,                                         &
                            rhokm_w2, rhokm_surf_w2, rhokh_bl, ngstress_w2,     &
                            bq_bl, bt_bl, moist_flux_bl, heat_flux_bl,          &
@@ -367,7 +371,7 @@ contains
                            tile_water_extract, z_lcl, inv_depth,               &
                            qcl_at_inv_top,                                     &
                            blend_height_tq, blend_height_uv, ustar,            &
-                           soil_moist_avail, zh_nonloc, zh, bl_type_ind),      &
+                           soil_moist_avail, zh_nonloc, zh, zhsc, bl_type_ind),&
 
     ! Map the wind back into dynamics quantities
                 inc_X_times_Y(du_bl, dA),                                    &

@@ -86,11 +86,16 @@ contains
     type( field_type ), pointer :: area_fraction   => null()
     type( field_type ), pointer :: rh_crit         => null()
 
-    type( field_type ), pointer :: dsldzm     => null()
-    type( field_type ), pointer :: wvar       => null()
-    type( field_type ), pointer :: tau_dec_bm => null()
-    type( field_type ), pointer :: tau_hom_bm => null()
-    type( field_type ), pointer :: tau_mph_bm => null()
+    type( field_type ), pointer :: dsldzm      => null()
+    type( field_type ), pointer :: wvar        => null()
+    type( field_type ), pointer :: gradrinr    => null()
+    type( field_type ), pointer :: zh          => null()
+    type( field_type ), pointer :: zhsc        => null()
+    type( field_type ), pointer :: inv_depth   => null()
+    type( field_type ), pointer :: bl_type_ind => null()
+    type( field_type ), pointer :: tau_dec_bm  => null()
+    type( field_type ), pointer :: tau_hom_bm  => null()
+    type( field_type ), pointer :: tau_mph_bm  => null()
 
     type( field_type ), pointer :: sskew_bm   => null()
     type( field_type ), pointer :: svar_bm    => null()
@@ -126,6 +131,11 @@ contains
 
     dsldzm          => turbulence_fields%get_field('dsldzm')
     wvar            => turbulence_fields%get_field('wvar')
+    gradrinr        => turbulence_fields%get_field('gradrinr')
+    zh              => turbulence_fields%get_field('zh')
+    zhsc            => turbulence_fields%get_field('zhsc')
+    inv_depth       => turbulence_fields%get_field('inv_depth')
+    bl_type_ind     => turbulence_fields%get_field('bl_type_ind')
 
     height_wth      => get_height(Wtheta, theta%get_mesh_id())
 
@@ -148,6 +158,11 @@ contains
                                               exner_w3,          &
                                               dsldzm,            &
                                               wvar,              &
+                                              gradrinr,          &
+                                              zh,                &
+                                              zhsc,              &
+                                              inv_depth,         &
+                                              bl_type_ind,       &
                                               tau_dec_bm,        &
                                               tau_hom_bm,        &
                                               tau_mph_bm,        &

@@ -51,7 +51,7 @@ module bl_exp_kernel_mod
   !>
   type, public, extends(kernel_type) :: bl_exp_kernel_type
     private
-    type(arg_type) :: meta_args(123) = (/                                      &
+    type(arg_type) :: meta_args(125) = (/                                      &
          arg_type(GH_FIELD, GH_REAL,  GH_READ,      WTHETA),                   &! theta_in_wth
          arg_type(GH_FIELD, GH_REAL,  GH_READ,      W3),                       &! rho_in_w3
          arg_type(GH_FIELD, GH_REAL,  GH_READ,      W3),                       &! wetrho_in_w3
@@ -143,6 +143,7 @@ module bl_exp_kernel_mod
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     WTHETA),                   &! fd_taux
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     WTHETA),                   &! fd_tauy
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     WTHETA),                   &! lmix_bl
+         arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     WTHETA),                   &! gradrinr
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     ANY_DISCONTINUOUS_SPACE_2),&! alpha1_tile
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     ANY_DISCONTINUOUS_SPACE_2),&! ashtf_prime_tile
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     ANY_DISCONTINUOUS_SPACE_2),&! dtstar_tile
@@ -159,6 +160,7 @@ module bl_exp_kernel_mod
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     ANY_DISCONTINUOUS_SPACE_1),&! ustar
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     ANY_DISCONTINUOUS_SPACE_1),&! soil_moist_avail
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     ANY_DISCONTINUOUS_SPACE_1),&! zh_nonloc
+         arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     ANY_DISCONTINUOUS_SPACE_1),&! zhsc_2d
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     ANY_DISCONTINUOUS_SPACE_1),&! z_lcl
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     ANY_DISCONTINUOUS_SPACE_1),&! inv_depth
          arg_type(GH_FIELD, GH_REAL,  GH_WRITE,     ANY_DISCONTINUOUS_SPACE_1),&! qcl_at_inv_top
@@ -262,6 +264,8 @@ contains
   !> @param[in]     cf_bulk                Bulk cloud fraction
   !> @param[in]     cf_liquid              Liquid cloud fraction
   !> @param[in,out] rh_crit                Critical rel humidity
+  !> @param[in,out] dsldzm                 Liquid potential temperature gradient in wth
+  !> @param[in,out] wvar                   Vertical velocity variance in wth
   !> @param[in,out] visc_m_blend           Blended BL-Smag diffusion coefficient for momentum
   !> @param[in,out] visc_h_blend           Blended BL-Smag diffusion coefficient for scalars
   !> @param[in,out] du_bl                  Wind increment from BL scheme
@@ -277,6 +281,10 @@ contains
   !> @param[in,out] dtrdz_tq_bl            dt/(rho*r*r*dz) in wth
   !> @param[in,out] rdz_tq_bl              1/dz in w3
   !> @param[in,out] rdz_uv_bl              1/dz in wth space
+  !> @param[in,out] fd_taux                'Zonal' momentum stress from form drag
+  !> @param[in,out] fd_tauy                'Meridional' momentum stress from form drag
+  !> @param[in,out] lmix_bl                Turbulence mixing length in wth
+  !> @param[in,out] gradrinr               Gradient Richardson number in wth
   !> @param[in,out] alpha1_tile            dqsat/dT in surface layer on tiles
   !> @param[in,out] ashtf_prime_tile       Heat flux coefficient on tiles
   !> @param[in,out] dtstar_tile            Change in surface temperature on tiles
@@ -293,6 +301,7 @@ contains
   !> @param[in,out] ustar                  Friction velocity
   !> @param[in,out] soil_moist_avail       Available soil moisture for evaporation
   !> @param[in,out] zh_nonloc              Depth of non-local BL scheme
+  !> @param[in,out] zhsc_2d                Height of decoupled layer top
   !> @param[in,out] z_lcl                  Height of the LCL (wtheta levels)
   !> @param[in,out] inv_depth              Depth of BL top inversion layer
   !> @param[in,out] qcl_at_inv_top         Cloud water at top of inversion
@@ -440,6 +449,7 @@ contains
                          fd_taux,                               &
                          fd_tauy,                               &
                          lmix_bl,                               &
+                         gradrinr,                              &
                          alpha1_tile,                           &
                          ashtf_prime_tile,                      &
                          dtstar_tile,                           &
@@ -456,6 +466,7 @@ contains
                          ustar,                                 &
                          soil_moist_avail,                      &
                          zh_nonloc,                             &
+                         zhsc_2d,                               &
                          z_lcl,                                 &
                          inv_depth,                             &
                          qcl_at_inv_top,                        &
@@ -592,7 +603,8 @@ contains
                                                            dtrdz_tq_bl,        &
                                                            rdz_uv_bl,          &
                                                            fd_taux, fd_tauy,   &
-                                                           lmix_bl
+                                                           lmix_bl,            &
+                                                           gradrinr
     real(kind=r_def), dimension(undf_w3),  intent(inout):: rhokh_bl,           &
                                                            moist_flux_bl,      &
                                                            heat_flux_bl,       &
@@ -620,6 +632,7 @@ contains
                                                            ozone
 
     real(kind=r_def), dimension(undf_2d), intent(inout) :: zh_2d,              &
+                                                           zhsc_2d,            &
                                                            z0msea_2d
 
     real(kind=r_def), dimension(undf_2d), intent(inout) :: ntml_2d,            &
@@ -1609,6 +1622,7 @@ contains
     end if
     do k=2,bl_levels
       rdz_uv_bl(map_wth(1) + k) = rdz_u(1,1,k)
+      gradrinr(map_wth(1) + k-1) = BL_diag%gradrich(1,1,k)
       lmix_bl(map_wth(1) + k-1)  = BL_diag%elm3d(1,1,k)
       ngstress_bl(map_wth(1) + k) = f_ngstress(1,1,k)
     end do
@@ -1739,6 +1753,7 @@ contains
 
     ! update BL prognostics
     zh_2d(map_2d(1))     = zh(1,1)
+    zhsc_2d(map_2d(1))   = zhsc(1,1)
     z0msea_2d(map_2d(1)) = z0msea(1,1)
     ntml_2d(map_2d(1))   = real(ntml(1,1))
     if (cumulus(1,1)) then
@@ -1771,6 +1786,7 @@ contains
     ! deallocate diagnostics deallocated in atmos_physics2
     call dealloc_bl_expl(bl_diag)
     call dealloc_sf_expl(sf_diag)
+    deallocate(BL_diag%gradrich)
     deallocate(BL_diag%elm3d)
     deallocate(BL_diag%tke)
 

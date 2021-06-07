@@ -46,7 +46,7 @@ module bl_imp_kernel_mod
   !>
   type, public, extends(kernel_type) :: bl_imp_kernel_type
     private
-    type(arg_type) :: meta_args(90) = (/                                          &
+    type(arg_type) :: meta_args(92) = (/                                          &
          arg_type(GH_SCALAR, GH_INTEGER, GH_READ),                                &! outer
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      WTHETA),                   &! theta_in_wth
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      W3),                       &! wetrho_in_w3
@@ -100,6 +100,7 @@ module bl_imp_kernel_mod
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      WTHETA),                   &! rh_crit_wth
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      WTHETA),                   &! dsldzm
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      WTHETA),                   &! wvar
+         arg_type(GH_FIELD,  GH_REAL,    GH_READ,      WTHETA),                   &! gradrinr
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      WTHETA),                   &! tau_dec_bm
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      WTHETA),                   &! tau_hom_bm
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      WTHETA),                   &! tau_mph_bm
@@ -136,6 +137,7 @@ module bl_imp_kernel_mod
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      ANY_DISCONTINUOUS_SPACE_1),&! soil_moist_avail
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      ANY_DISCONTINUOUS_SPACE_1),&! zh_nonloc
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      ANY_DISCONTINUOUS_SPACE_1),&! zh_2d
+         arg_type(GH_FIELD,  GH_REAL,    GH_READ,      ANY_DISCONTINUOUS_SPACE_1),&! zhsc_2d
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      ANY_DISCONTINUOUS_SPACE_7) &! bl_type_ind
          /)
     integer :: operates_on = CELL_COLUMN
@@ -206,6 +208,7 @@ contains
   !> @param[in]     rh_crit_wth          Critical relative humidity
   !> @param[in]     dsldzm               Liquid potential temperature gradient in wth
   !> @param[in]     wvar                 Vertical velocity variance in wth
+  !> @param[in]     gradrinr             Gradient Richardson number in wth
   !> @param[in]     tau_dec_bm           Decorrelation time scale in wth
   !> @param[in]     tau_hom_bm           Homogenisation time scale in wth
   !> @param[in]     tau_mph_bm           Phase-relaxation time scale in wth
@@ -242,6 +245,7 @@ contains
   !> @param[in]     soil_moist_avail     Available soil moisture for evaporation
   !> @param[in]     zh_nonloc            Depth of non-local BL scheme
   !> @param[in]     zh_2d                Total BL depth
+  !> @param[in]     zhsc_2d              Height of decoupled layer top
   !> @param[in]     bl_type_ind          Diagnosed BL types
   !> @param[in]     ndf_wth              Number of DOFs per cell for potential temperature space
   !> @param[in]     undf_wth             Number of unique DOFs for potential temperature space
@@ -330,6 +334,7 @@ contains
                          rh_crit_wth,                        &
                          dsldzm,                             &
                          wvar,                               &
+                         gradrinr,                           &
                          tau_dec_bm,                         &
                          tau_hom_bm,                         &
                          tau_mph_bm,                         &
@@ -366,6 +371,7 @@ contains
                          soil_moist_avail,                   &
                          zh_nonloc,                          &
                          zh_2d,                              &
+                         zhsc_2d,                            &
                          bl_type_ind,                        &
                          ndf_wth,                            &
                          undf_wth,                           &
@@ -485,6 +491,7 @@ contains
                                                            dtrdz_tq_bl,        &
                                                            dsldzm,             &
                                                            wvar,               &
+                                                           gradrinr,           &
                                                            tau_dec_bm,         &
                                                            tau_hom_bm,         &
                                                            tau_mph_bm
@@ -506,7 +513,7 @@ contains
                                                         blend_height_uv,      &
                                                         ustar,                &
                                                         soil_moist_avail,     &
-                                                        zh_nonloc
+                                                        zh_nonloc, zhsc_2d
 
     real(kind=r_def), intent(in)    :: tile_fraction(undf_tile)
     real(kind=r_def), intent(inout) :: tile_temperature(undf_tile)
@@ -666,7 +673,7 @@ contains
     real(r_um), dimension(row_length,rows,nlayers) ::                        &
          tgrad_in, tau_dec_in, tau_hom_in, tau_mph_in
 
-    real(r_um), dimension(row_length,rows,nlayers) :: wvar_in
+    real(r_um), dimension(row_length,rows,nlayers) :: wvar_in, gradrinr_in
 
     real(r_um), dimension(row_length,rows,0:nlayers,tr_vars) :: free_tracers
 
@@ -721,7 +728,7 @@ contains
     end if
 
     if (bl_diag%l_elm3d) then
-      allocate(bl_diag%elm3d(pdims%i_start:pdims%i_end,                 &
+      allocate(bl_diag%elm3d(pdims%i_start:pdims%i_end,                &
                            pdims%j_start:pdims%j_end,bl_levels))
       do k = 1, bl_levels
         bl_diag%elm3d(:,:,k) = 0.0
@@ -730,6 +737,7 @@ contains
       allocate(bl_diag%elm3d(1,1,1))
     end if
 
+    allocate(bl_diag%gradrich(1,1,1))
 
     ! Following variables need to be initialised to stop crashed in unused
     ! UM code
@@ -1116,6 +1124,7 @@ contains
     smc_soilt(1) = soil_moist_avail(map_2d(1))
     zhnl(1,1) = zh_nonloc(map_2d(1))
     zh(1,1) = zh_2d(map_2d(1))
+    zhsc(1,1) = zhsc_2d(map_2d(1))
     zlcl(1,1) = real(z_lcl(map_2d(1)), r_um)
     dzh(1,1) = real(inv_depth(map_2d(1)), r_um)
     qcl_inv_top(1,1) = real(qcl_at_inv_top(map_2d(1)), r_um)
@@ -1180,6 +1189,7 @@ contains
       tau_hom_in(1,1,k)  = tau_hom_bm(map_wth(1) + k)
       tau_mph_in(1,1,k)  = tau_mph_bm(map_wth(1) + k)
       wvar_in(1,1,k)     = wvar(map_wth(1) + k )
+      gradrinr_in(1,1,k) = gradrinr(map_wth(1) + k)
     end do
 
     if (scheme == scheme_pc2) then
@@ -1248,8 +1258,9 @@ contains
           , cf_latest, cfl_latest, cff_latest                           &
           , R_u, R_v, R_w, cloud_fraction_liquid, cloud_fraction_frozen &
           , sum_eng_fluxes,sum_moist_flux, rhcpt                        &
-    ! IN arguments for bimodal scheme
-          , tgrad_in, wvar_in, tau_dec_in, tau_hom_in, tau_mph_in       &
+    ! IN arguments for bimodal scheme (dzh is a duplicate argument for
+    ! UM compatibility)
+          , tgrad_in, wvar_in, tau_dec_in, tau_hom_in, tau_mph_in, dzh  &
     ! INOUT tracer fields
           , aerosol, free_tracers,  resist_b,  resist_b_surft           &
           , dust_div1,dust_div2,dust_div3,dust_div4,dust_div5,dust_div6 &
@@ -1312,6 +1323,9 @@ contains
     else
       allocate(bl_diag%elm3d(1,1,1))
     end if
+
+    allocate(bl_diag%gradrich(1,1,1))
+
 
     ! Land tile temperatures
     tstar_land = 0.0_r_um
@@ -1515,8 +1529,9 @@ contains
           , cf_latest, cfl_latest, cff_latest                           &
           , R_u, R_v, R_w, cloud_fraction_liquid, cloud_fraction_frozen &
           , sum_eng_fluxes,sum_moist_flux, rhcpt                        &
-    ! IN arguments for bimodal scheme
-          , tgrad_in, wvar_in, tau_dec_in, tau_hom_in, tau_mph_in       &
+    ! IN arguments for bimodal scheme (dzh is a duplicate argument for
+    ! UM compatibility)
+          , tgrad_in, wvar_in, tau_dec_in, tau_hom_in, tau_mph_in, dzh  &
     ! INOUT tracer fields
           , aerosol, free_tracers,  resist_b,  resist_b_surft           &
           , dust_div1,dust_div2,dust_div3,dust_div4,dust_div5,dust_div6 &
