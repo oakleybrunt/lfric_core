@@ -295,7 +295,7 @@ contains
     implicit none
     class(field_vector_type),                 intent(in)    :: self
     class(abstract_vector_type), allocatable, intent(inout) :: vec
-    integer :: pos, mesh_id, elem, fs_label, astat, nfctr
+    integer(kind=i_def) :: pos, mesh_id, elem, fs_label, astat, nfctr
 
     allocate(field_vector_type::vec,stat=astat )
     select type (vec)
@@ -336,18 +336,18 @@ contains
     implicit none
     class(field_vector_type), intent(out) :: self
     class(abstract_vector_type), intent(in) :: source
-    integer :: stat1
-    integer :: pos, nfctr
+    integer(kind=i_def) :: stat1
+    integer(kind=i_def) :: pos, nfctr
 
     ! make field_vector
     select type (source)
     type is (field_vector_type)
-       if(.not.allocated(self%vector)) then
+       if (.not.allocated(self%vector)) then
           allocate(self%vector(size(source%vector)),stat=stat1)
        end if
 
        ! if fields don't exist set false, otherwise copy and set true
-       if(source%vector_set) then
+       if (source%vector_set) then
           nfctr = size(self%vector)
           do pos = 1, nfctr
              call source%vector(pos)%copy_field(self%vector(pos))

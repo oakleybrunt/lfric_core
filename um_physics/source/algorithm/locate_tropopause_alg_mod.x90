@@ -7,6 +7,7 @@
 
 module locate_tropopause_alg_mod
 
+use constants_mod,                 only: i_def
 use field_mod,                     only: field_type
 use fs_continuity_mod,             only: W3, Wtheta
 use function_space_collection_mod, only: function_space_collection
@@ -36,7 +37,7 @@ subroutine locate_tropopause_alg(trop_level, theta, exner_in_wth, twod_mesh_id)
 
   type( field_type ), intent(inout) :: trop_level
   type( field_type ), intent(in)    :: theta, exner_in_wth
-  integer,            intent(in)    :: twod_mesh_id
+  integer( kind=i_def ), intent(in) :: twod_mesh_id
 
   ! Local fields
   type( field_type ),         pointer :: height_wth => null()

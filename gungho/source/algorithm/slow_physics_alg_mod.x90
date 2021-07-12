@@ -11,7 +11,7 @@ module slow_physics_alg_mod
   use cloud_config_mod,          only: scheme, scheme_pc2, cld_fsd_hill
   use convection_config_mod,     only: cv_scheme, cv_scheme_lambert_lewis, &
                                        cv_scheme_gregory_rowntree
-  use constants_mod,             only: i_def, r_def
+  use constants_mod,             only: i_def, r_def, l_def
   use log_mod,                   only: LOG_LEVEL_INFO
   use physics_config_mod,        only: heldsuarez_thermo_placement,    &
                                        heldsuarez_wind_placement,      &
@@ -147,10 +147,10 @@ contains
     type( field_collection_type ), intent(inout) :: snow_fields
     type( field_collection_type ), intent(inout) :: aerosol_fields
 
-    integer, intent(in) :: mesh_id
-    integer, intent(in) :: twod_mesh_id
-    class(clock_type),  intent(in) :: clock
-    real( kind=r_def ), intent(in) :: dt
+    integer( kind=i_def ), intent(in) :: mesh_id
+    integer( kind=i_def ), intent(in) :: twod_mesh_id
+    class(clock_type),     intent(in) :: clock
+    real( kind=r_def ),    intent(in) :: dt
 
     ! Local fields...
     ! ...for H-S physics
@@ -210,17 +210,17 @@ contains
     type( field_type ), pointer :: ice_fraction    => null()
     type( field_type ), pointer :: bulk_fraction   => null()
 
-    integer(i_def) :: i_mr
+    integer( kind=i_def ) :: i_mr
 
     ! Flags to indicate whether scheme has run and increments need adding
-    logical :: held_suarez_thermo_done
-    logical :: held_suarez_wind_done
-    logical :: microphysics_done
-    logical :: radiation_done
-    logical :: spectral_gwd_done
-    logical :: orographic_drag_done
-    logical :: methox_done
-    logical :: boundary_layer_done
+    logical( kind=l_def ) :: held_suarez_thermo_done
+    logical( kind=l_def ) :: held_suarez_wind_done
+    logical( kind=l_def ) :: microphysics_done
+    logical( kind=l_def ) :: radiation_done
+    logical( kind=l_def ) :: spectral_gwd_done
+    logical( kind=l_def ) :: orographic_drag_done
+    logical( kind=l_def ) :: methox_done
+    logical( kind=l_def ) :: boundary_layer_done
 
     if ( subroutine_timers ) call timer("slow_physics")
 
@@ -298,7 +298,7 @@ contains
                       cloud_fields, aerosol_fields, turbulence_fields,       &
                       f_arr, dmr_mphys, dtheta_mphys, dcfl_pc2_mphys,        &
                       dcff_pc2_mphys, dbcf_pc2_mphys, dt )
-      microphysics_done=.true. ! Collect this increment later on
+      microphysics_done = .true. ! Collect this increment later on
     end if
 
     !--------------------------------------------------------------------
@@ -356,7 +356,7 @@ contains
                           aer_sw_absorption, aer_lw_absorption,              &
                           aer_sw_scattering, aer_lw_scattering,              &
                           aer_sw_asymmetry,  aer_lw_asymmetry )
-      radiation_done=.true. ! Collect this increment later on
+      radiation_done = .true. ! Collect this increment later on
 
       if (cloud == cloud_um .and. scheme == scheme_pc2) then
         ! PC2 code will be called with dtheta_rad as the only forcing.
@@ -391,7 +391,7 @@ contains
                             microphysics_fields, &
                             convection_fields,   &
                             theta)
-      spectral_gwd_done=.true. ! Collect this increment later on
+      spectral_gwd_done = .true. ! Collect this increment later on
     end if
 
     !--------------------------------------------------------------------
@@ -407,7 +407,7 @@ contains
                                orography_fields,       &
                                theta,                  &
                                mr_n)
-      orographic_drag_done=.true. ! Collect this increment later on
+      orographic_drag_done = .true. ! Collect this increment later on
     end if
 
     ! Call methane oxidation code
@@ -467,7 +467,7 @@ contains
                         turbulence_fields, convection_fields, cloud_fields, &
                         surface_fields, soil_fields, snow_fields,           &
                         outer_iterations, clock)
-        boundary_layer_done=.true. ! Collect this increment later on
+        boundary_layer_done = .true. ! Collect this increment later on
 
         if ( surface == surface_jules ) then
           call jules_extra_alg(microphysics_fields, convection_fields,        &
@@ -482,7 +482,7 @@ contains
     !=====================================================================
     ! Update the main fields and increments to pass out
     !=====================================================================
-    if (held_suarez_thermo_done)then
+    if (held_suarez_thermo_done) then
       call invoke(inc_X_plus_Y(dtheta, dtheta_hs))
     end if
 

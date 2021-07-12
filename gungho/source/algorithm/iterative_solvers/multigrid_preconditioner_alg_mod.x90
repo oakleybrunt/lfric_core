@@ -18,7 +18,7 @@ module multigrid_preconditioner_alg_mod
                                              LOG_LEVEL_INFO, &
                                              LOG_LEVEL_ERROR, &
                                              log_scratch_space
-  use constants_mod,                   only: i_def, r_def
+  use constants_mod,                   only: i_def, r_def, l_def
 
   implicit none
 
@@ -172,7 +172,7 @@ contains
 
     class(multigrid_preconditioner_type), intent(inout)    :: self
     integer(kind=i_def), intent(in) :: level
-    logical, intent(in) :: initial_solution_is_zero
+    logical(kind=l_def), intent(in) :: initial_solution_is_zero
 
     ! Call smoother on coarsest level
     if (level == self%n_level) then
@@ -259,7 +259,7 @@ contains
     class(multigrid_preconditioner_type), intent(inout)    :: self
     integer(kind=i_def), intent(in) :: nsmooth
     integer(kind=i_def), intent(in) :: level
-    logical, intent(in) :: initial_solution_is_zero
+    logical(kind=l_def), intent(in) :: initial_solution_is_zero
     type(function_space_type), pointer :: fs => null()
 
     type(field_vector_type) :: res

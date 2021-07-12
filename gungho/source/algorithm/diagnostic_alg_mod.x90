@@ -6,7 +6,7 @@
 !> @brief Algorithms to do field processing to produce generic and specific
 !>        diagnostics for different I/O methods
 module diagnostic_alg_mod
-  use constants_mod,                    only: i_def, r_def, str_max_filename
+  use constants_mod,                    only: i_def, r_def, l_def, str_max_filename
   use finite_element_config_mod,        only: element_order
   use base_mesh_config_mod,             only: geometry, &
                                               geometry_spherical
@@ -304,7 +304,7 @@ contains
     character(len=*), intent(in)    :: field_name
     type(field_type), intent(in)    :: field
     integer(i_def),   intent(in)    :: mesh_id
-    logical,          intent(in)    :: W3_project
+    logical(l_def),   intent(in)    :: W3_project
 
     ! Local variables
     type(field_type), pointer       :: chi_sph(:) => null()
@@ -487,7 +487,7 @@ contains
     character(len=*), intent(in)    :: field_name
     type(field_type), intent(in)    :: field
     integer(i_def),   intent(in)    :: mesh_id
-    logical,          intent(in)    :: W3_project
+    logical(l_def),   intent(in)    :: W3_project
 
     ! Local variables
     type(mesh_type), pointer        :: mesh => null()

@@ -17,11 +17,11 @@
 !!                      until this is resolved we also pass in the global maximum
 !!                      size as an integer argument.
 !!       3. Issue #1248 There is no PSyclone support for passing logical types
-!!                      to kernels and so as an itermediate solution we create
+!!                      to kernels and so as an intermediate solution we create
 !!                      an integer argument that = 1 (.true.) or = 0 (.false.).
 module flux_alg_mod
 
-  use constants_mod,                  only: r_def, i_def
+  use constants_mod,                  only: r_def, i_def, l_def
   use enforce_bc_kernel_mod,          only: enforce_bc_kernel_type
   use geometric_constants_mod,        only: get_coordinates,          &
                                             get_panel_id
@@ -62,14 +62,14 @@ module flux_alg_mod
 
   private
 
-  ! These are made puclic to be used in other transport modules
-  integer(i_def), public                 :: flux_stencil_extent, &
-                                            flux2d_stencil_size
+  ! These are made public to be used in other transport modules
+  integer(kind=i_def), public :: flux_stencil_extent, &
+                                 flux2d_stencil_size
   ! Interpolation coefficients needed for nonuniform fv operators
-  type( field_type ), public :: flux_coeffs, &
-                                vert_flux_coeffs
-  integer(i_def), public     :: nfaces_re_h, nfaces_re_v
-  integer(i_def), public     :: ndata_h, ndata_v
+  type( field_type ), public  :: flux_coeffs, &
+                                 vert_flux_coeffs
+  integer(kind=i_def), public :: nfaces_re_h, nfaces_re_v
+  integer(kind=i_def), public :: ndata_h, ndata_v
 
   public  :: flux_alg
   public  :: flux_alg_init
@@ -93,15 +93,15 @@ contains
     use mesh_mod,                          only: mesh_type
     implicit none
 
-    integer(i_def),  intent(in) :: mesh_id
+    integer(kind=i_def), intent(in) :: mesh_id
 
-    integer(i_def)              :: flux_stencil_size,  &
-                                   polynomial
-    type( field_type ), pointer :: chi_sph(:) => null()
-    type( field_type ), pointer :: panel_id => null()
-    type( field_type ), pointer :: md_w3 => null()
+    integer(kind=i_def)             :: flux_stencil_size,  &
+                                        polynomial
+    type( field_type ), pointer     :: chi_sph(:) => null()
+    type( field_type ), pointer     :: panel_id => null()
+    type( field_type ), pointer     :: md_w3 => null()
 
-    type( quadrature_rule_gaussian_type )      :: gaussian_quadrature
+    type( quadrature_rule_gaussian_type )  :: gaussian_quadrature
 
     type( quadrature_xyoz_type )           :: qr
     type( quadrature_face_type )           :: qrf
@@ -109,9 +109,9 @@ contains
     type( field_type )                     :: w3_field
     class(reference_element_type), pointer :: reference_element => null()
     type(mesh_type),               pointer :: mesh => null()
-    integer(i_def)                         :: face_quad_order
-    integer(i_def)                         :: nqp_xy, nqp_z, nqp_xyz
-    real(r_def)                            :: transform_radius, chi3_max
+    integer(kind=i_def)                    :: face_quad_order
+    integer(kind=i_def)                    :: nqp_xy, nqp_z, nqp_xyz
+    real(kind=r_def)                       :: transform_radius, chi3_max
     type( function_space_type ),   pointer :: multidata_fs => null()
 
     if ( operators == operators_fv ) then
@@ -244,9 +244,9 @@ contains
 
   implicit none
 
-  type(field_type), intent(in)    :: density, wind
-  type(field_type), intent(inout) :: mass_flux
-  logical, optional, intent(in) :: logspace
+  type(field_type), intent(in)              :: density, wind
+  type(field_type), intent(inout)           :: mass_flux
+  logical(kind=l_def), optional, intent(in) :: logspace
 
   type(field_type),    pointer :: chi_sph(:) => null()
   type(field_type),    pointer :: panel_id => null()
@@ -259,8 +259,8 @@ contains
 
   type(function_space_type), pointer  :: u_fs  => null()
   integer(kind=i_def) :: mesh_id
-  integer(i_def) :: logspace_loc
-  integer(i_def) :: stencil_extent
+  integer(kind=i_def) :: logspace_loc
+  integer(kind=i_def) :: stencil_extent
 
 
   ! Psyclone doesn't support the passing of logicals to kernels

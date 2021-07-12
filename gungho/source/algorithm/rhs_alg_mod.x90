@@ -8,7 +8,7 @@
 !>        equations
 module rhs_alg_mod
 
-  use constants_mod,                       only: r_def, i_def
+  use constants_mod,                       only: r_def, i_def, l_def
   use log_mod,                             only: log_event, &
                                                  LOG_LEVEL_ERROR
   use enforce_bc_kernel_mod,               only: enforce_bc_kernel_type
@@ -81,19 +81,19 @@ contains
   !> @param[in]     dlayer_rhs Use damping layer in rhs yes/no
   !> @param[in]     dt The model timestep length
 subroutine rhs_alg(rhs, alpha_dt, base_state, state, moist_dyn, compute_eos, &
-                     dlayer_rhs, dt)
+                   dlayer_rhs, dt)
 
     implicit none
 
     real(kind=r_def),             intent(in)    :: alpha_dt
-    logical,                      intent(in)    :: dlayer_rhs
+    logical(kind=l_def),          intent(in)    :: dlayer_rhs
 
     ! Form of state and rhs is [u,theta,rho,exner]
     type(field_type), target,     intent(in)    :: base_state(bundle_size)
     type(field_type), target,     intent(in)    :: state(bundle_size)
     type(field_type),             intent(in)    :: moist_dyn(num_moist_factors)
     type(field_type),             intent(inout) :: rhs(bundle_size)
-    logical,                      intent(in)    :: compute_eos
+    logical(kind=l_def),          intent(in)    :: compute_eos
     real(kind=r_def),             intent(in)    :: dt
 
     type(operator_type), pointer :: mm_vel    => null(), &

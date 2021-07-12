@@ -17,10 +17,6 @@ module diagnostics_calc_mod
   use diagnostic_alg_mod,            only: divergence_diagnostic_alg,   &
                                            density_diagnostic_alg,      &
                                            hydbal_diagnostic_alg,       &
-                                           split_wind_diagnostic_alg,   &
-                                           scalar_nodal_diagnostic_alg, &
-                                           scalar_ugrid_diagnostic_alg, &
-                                           vector_nodal_diagnostic_alg, &
                                            vorticity_diagnostic_alg
   use io_config_mod,                 only: use_xios_io,          &
                                            nodal_output_on_w3

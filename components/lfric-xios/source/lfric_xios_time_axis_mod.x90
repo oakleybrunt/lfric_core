@@ -4,7 +4,7 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> @brief A module containing a time axis object
+!> @brief A module containing a time axis object.
 !>
 !> @details Fields need to be updated at different times and frequencies. The
 !>          time axis object can be linked to a field to provide information
@@ -81,10 +81,10 @@ module lfric_xios_time_axis_mod
 
   abstract interface
 
-  !> Interface for updating the field data associated with the time axis
-  !> @param[in]    field_name  Name of the field to be updated
-  !> @param[inout] field_proxy Field proxy to be updated
-  !> @param[in]    times       The time data corresponding to the new field data
+  !> @brief Interface for updating the field data associated with the time axis.
+  !> @param[in]     field_name  Name of the field to be updated
+  !> @param[in,out] field_proxy Field proxy to be updated
+  !> @param[in]     times       The time data corresponding to the new field data
   !>
   subroutine update_interface(field_name, field_proxy, times)
     import i_def, field_proxy_type
@@ -99,17 +99,17 @@ public :: update_interface
 
 contains
 
-  !> Initialise a <code>time_axis_type</code> object.
+  !> @brief Initialise a <code>time_axis_type</code> object.
   !>
-  !> @param [in] input_data   The input time data array
-  !> @param [in] name         The time axis name
-  !> @param [in] input_units  The units of time data
-  !> @param [in] cyclic       Flag determining if axis is cyclic
-  !> @param [in] upper_limit  The maximum value that the time axis can take
-  !>                          before it cycles
-  !> @param [in] interp_flag  Flag determining if time_axis fields are linearly
-  !>                          interpolated before being passed to the model data
-  !> @param [in] update_freq  The update frequency of the time axis in timesteps
+  !> @param[in] input_data   The input time data array
+  !> @param[in] name         The time axis name
+  !> @param[in] input_units  The units of time data
+  !> @param[in] cyclic       Flag determining if axis is cyclic
+  !> @param[in] upper_limit  The maximum value that the time axis can take
+  !>                         before it cycles
+  !> @param[in] interp_flag  Flag determining if time_axis fields are linearly
+  !>                         interpolated before being passed to the model data
+  !> @param[in] update_freq  The update frequency of the time axis in timesteps
 subroutine initialise( self, input_data, name, input_units, cyclic, &
                          upper_limit, interp_flag, update_freq )
 
@@ -148,8 +148,8 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
 
   end subroutine initialise
 
-  !> Sets routine that updates field data for time axis
-  !> @param [in] update_behaviour Pointer to update routine
+  !> @brief Sets routine that updates field data for time axis.
+  !> @param[in] update_behaviour Pointer to update routine
   subroutine set_update_behaviour(self, update_behaviour)
 
     implicit none
@@ -161,8 +161,8 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
 
   end subroutine set_update_behaviour
 
-  !> Returns the time_axis name
-  !> @result output_name The time axis name
+  !> @brief Returns the time_axis name.
+  !> @return output_name The time axis name
   function get_name(self) result(output_name)
 
     implicit none
@@ -175,8 +175,8 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
 
   end function get_name
 
-  !> Returns the time_axis units
-  !> @result output_units The time axis units
+  !> @brief Returns the time_axis units.
+  !> @return output_units The time axis units
   function get_units(self) result(output_units)
 
     implicit none
@@ -189,14 +189,14 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
 
   end function get_units
 
-  !> Performs a cshift on the data and index data arrays.
+  !> @brief Performs a cshift on the data and index data arrays.
   subroutine shift_forward(self)
 
     implicit none
 
     class(time_axis_type), intent(inout) :: self
 
-    if( self%cyclic ) then
+    if ( self%cyclic ) then
       self%time_data(1) = self%time_data(1) + self%upper_limit
     end if
 
@@ -205,8 +205,8 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
 
   end subroutine shift_forward
 
-  !> Returns start and end time data for active time window
-  !> @result time_window The active time window of the time axis
+  !> @brief Returns start and end time data for active time window.
+  !> @return time_window The active time window of the time axis
   function get_time_window(self) result(time_window)
 
     implicit none
@@ -219,8 +219,8 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
 
   end function get_time_window
 
-  !> Returns start and end time indices for active time window
-  !> @result time_window_index The indices of the active time window
+  !> @brief Returns start and end time indices for active time window.
+  !> @return time_window_index The indices of the active time window
   function get_index_window(self) result(time_window_index)
 
     implicit none
@@ -233,8 +233,8 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
 
   end function get_index_window
 
-  !> Returns time axis update frequency
-  !> @result update_frequency The update frequency of the time axis in timesteps
+  !> @brief Returns time axis update frequency.
+  !> @return update_frequency The update frequency of the time axis in timesteps
   function get_update_frequency(self) result(update_frequency)
 
     implicit none
@@ -247,9 +247,9 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
 
   end function get_update_frequency
 
-  !> Takes model time and shifts forward through time axis so active time
-  !> window is aligned with model time
-  !> @param [in] input_time The current time of the model
+  !> @brief Takes model time and shifts forward through time axis so active
+  !>        time window is aligned with model time.
+  !> @param[in] input_time The current time of the model
   subroutine align(self, input_time)
 
     implicit none
@@ -308,7 +308,7 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
 
   end subroutine align
 
-  !> Adds a field to the time axis field collection
+  !> @brief Adds a field to the time axis field collection.
   !> @param[in] field Field to be added to the time axis
   subroutine add_field(self, field)
 
@@ -321,7 +321,7 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
 
   end subroutine add_field
 
-  !> Updates associated data fields using update routine
+  !> @brief Updates associated data fields using update routine.
   subroutine update_fields(self)
 
     implicit none
@@ -329,7 +329,7 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
     class(time_axis_type), intent(inout) :: self
 
     type( field_collection_iterator_type) :: read_iter
-    class( field_parent_type ), pointer   :: field => null()
+    class( field_parent_type ), pointer   :: updated_field => null()
 
     type(field_proxy_type) :: tmp_proxy
 
@@ -337,22 +337,22 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
     read_iter = self%fields%get_iterator()
     do
       if ( .not.read_iter%has_next() ) exit
-      field => read_iter%next()
-      select type(field)
+      updated_field => read_iter%next()
+      select type(updated_field)
         type is (field_type)
-          tmp_proxy = field%get_proxy()
+          tmp_proxy = updated_field%get_proxy()
           call log_event( &
-            'Reading '//trim(adjustl(field%get_name())), &
+            'Reading '//trim(adjustl(updated_field%get_name())), &
             LOG_LEVEL_INFO)
-          call self%update_behaviour(field%get_name(), tmp_proxy, self%index_data(1:2))
+          call self%update_behaviour(updated_field%get_name(), tmp_proxy, self%index_data(1:2))
       end select
     end do
 
-    nullify(field)
+    nullify(updated_field)
 
   end subroutine update_fields
 
-  !> Populates model fields using time axis data fields
+  !> @brief Populates model fields using time axis data fields.
   !> @param[in] model_fields Field collection to populate from data fields
   !> @param[in] clock        The model clock object
   subroutine populate_model_fields(self, model_fields, clock)
@@ -363,7 +363,7 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
     type(field_collection_type), intent(in)    :: model_fields
     type(clock_type),            intent(in)    :: clock
 
-    class(field_parent_type), pointer :: field => null()
+    class(field_parent_type), pointer :: field_next => null()
     type(field_type),         pointer :: model_field => null()
     type(field_type),         pointer :: data_field => null()
 
@@ -377,8 +377,8 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
     do
       if ( .not. pop_iter%has_next() ) exit
 
-      field => pop_iter%next()
-      field_name = field%get_name()
+      field_next => pop_iter%next()
+      field_name = field_next%get_name()
 
       if ( model_fields%field_exists(trim(field_name)) ) then
         model_field => model_fields%get_field(trim(field_name))
@@ -403,12 +403,12 @@ subroutine initialise( self, input_data, name, input_units, cyclic, &
 
     end do
 
-    nullify(field)
+    nullify(field_next)
 
   end subroutine populate_model_fields
 
-  !> Populates a model field by interpolating between the data entries of the
-  !> current time window
+  !> @brief Populates a model field by interpolating between the data entries of
+  !>        the current time window.
   !> @param[in] model_field Pointer to field to be populated from data fields
   !> @param[in] model_proxy Field proxy object for model field
   !> @param[in] data_proxy  Field proxy object for input data field

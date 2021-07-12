@@ -7,7 +7,7 @@
 !>@brief Semi-Implicit solver for the gungho dynamical core
 module semi_implicit_solver_alg_mod
 
-  use constants_mod,                      only: i_def,r_def
+  use constants_mod,                      only: i_def, r_def, l_def
   use log_mod,                            only: log_event,         &
                                                 log_scratch_space, &
                                                 LOG_LEVEL_INFO,    &
@@ -357,6 +357,7 @@ contains
     use operator_mod,                  only: operator_type
     use quadrature_xyoz_mod,           only: quadrature_xyoz_type
     use moisture_conservation_alg_mod, only: moisture_conservation_alg
+
     implicit none
 
     ! Prognostic fields
@@ -365,13 +366,13 @@ contains
     type( field_type ),                         intent( in )    :: moist_dyn_gas_law
     type( field_type ), dimension(nummr),       intent( in )    :: mr
     type( field_type ),                         intent( in )    :: rho_guess
-    integer( i_def ),                           intent( in )    :: step
-    logical,                                    intent( in )    :: write_moisture_diag
+    integer( kind=i_def ),                      intent( in )    :: step
+    logical( kind=l_def),                       intent( in )    :: write_moisture_diag
 
     type( field_vector_type ) :: inc
 
-    real( r_def )     :: si_err(bundle_size)
-    integer ( i_def ) :: mesh_id
+    real( kind=r_def )    :: si_err(bundle_size)
+    integer( kind=i_def ) :: mesh_id
 
     type( field_type ),           pointer :: t_normalisation => null(), &
                                              u_normalisation => null()
@@ -431,7 +432,7 @@ contains
     call vector_state%axpy(1.0_r_def, inc)
 
     ! Recreate field arrays out of field vectors
-    if ( split_w )then
+    if ( split_w ) then
       call invoke( combine_w2_field_kernel_type( state( igh_u ),                &
                                                  vector_state%vector( igh_uv ), &
                                                  vector_state%vector( igh_w ) ) )
@@ -478,10 +479,10 @@ contains
     type(field_vector_type),                  intent(inout) :: vector_state
     type(field_type), dimension(bundle_size), intent(in) :: state
 
-    type(field_type) :: uv, w
-    integer(i_def  ) :: p, mesh_id
+    type(field_type)    :: uv, w
+    integer(kind=i_def) :: p, mesh_id
 
-    if ( split_w )then
+    if ( split_w ) then
       p       = state(igh_u)%get_element_order()
       mesh_id = state(igh_u)%get_mesh_id()
 

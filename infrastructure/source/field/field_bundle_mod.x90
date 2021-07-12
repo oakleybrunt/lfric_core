@@ -26,11 +26,11 @@ contains
     use finite_element_config_mod, only: element_order
 
     implicit none
-    integer,          intent(in)    :: bundle_size
-    type(field_type), intent(in)    :: x(bundle_size)
-    type(field_type), intent(inout) :: y(bundle_size)
+    integer(kind=i_def), intent(in)    :: bundle_size
+    type(field_type),    intent(in)    :: x(bundle_size)
+    type(field_type),    intent(inout) :: y(bundle_size)
 
-    integer(i_def) :: i
+    integer(kind=i_def) :: i
 
     do i = 1,bundle_size
       call x(i)%copy_field_properties(y(i))
@@ -44,10 +44,10 @@ contains
 !> @param[in] bundle_size Number of fields in the bundle x
   subroutine set_bundle_scalar(a, x, bundle_size)
     implicit none
-    integer(i_def),   intent(in)    :: bundle_size
-    type(field_type), intent(inout) :: x(bundle_size)
-    real(kind=r_def), intent(in)    :: a
-    integer(i_def) :: i
+    integer(kind=i_def), intent(in)    :: bundle_size
+    type(field_type),    intent(inout) :: x(bundle_size)
+    real(kind=r_def),    intent(in)    :: a
+    integer(kind=i_def) :: i
 
     do i = 1,bundle_size
        call invoke( setval_c( x(i), a ) )
@@ -63,11 +63,11 @@ contains
 !> @param[in] bundle_size Number of fields in the bundle
   subroutine bundle_axpy(a, x, y, z, bundle_size)
     implicit none
-    integer(i_def),   intent(in)    :: bundle_size
-    real(kind=r_def), intent(in)    :: a
-    type(field_type), intent(in)    :: x(bundle_size), y(bundle_size)
-    type(field_type), intent(inout) :: z(bundle_size)
-    integer(i_def) :: i
+    integer(kind=i_def), intent(in)    :: bundle_size
+    real(kind=r_def),    intent(in)    :: a
+    type(field_type),    intent(in)    :: x(bundle_size), y(bundle_size)
+    type(field_type),    intent(inout) :: z(bundle_size)
+    integer(kind=i_def) :: i
 
     do i = 1,bundle_size
       call invoke( aX_plus_Y( z(i), a, x(i), y(i) ) )
@@ -81,10 +81,10 @@ contains
 !> @param[in] bundle_size Number of fields in the bundle
   subroutine copy_bundle(x, y, bundle_size)
     implicit none
-    integer(i_def),   intent(in)    :: bundle_size
-    type(field_type), intent(in)    :: x(bundle_size)
-    type(field_type), intent(inout) :: y(bundle_size)
-    integer(i_def) :: i
+    integer(kind=i_def), intent(in)    :: bundle_size
+    type(field_type),    intent(in)    :: x(bundle_size)
+    type(field_type),    intent(inout) :: y(bundle_size)
+    integer(kind=i_def) :: i
 
     do i = 1,bundle_size
        call invoke( setval_X( y(i), x(i) ) )
@@ -98,10 +98,10 @@ contains
 !> @param[in] bundle_size Number of fields in the bundle
   subroutine minus_bundle(x, y, z, bundle_size)
     implicit none
-    integer(i_def),   intent(in)    :: bundle_size
-    type(field_type), intent(in)    :: x(bundle_size), y(bundle_size)
-    type(field_type), intent(inout) :: z(bundle_size)
-    integer(i_def) :: i
+    integer(kind=i_def), intent(in)    :: bundle_size
+    type(field_type),    intent(in)    :: x(bundle_size), y(bundle_size)
+    type(field_type),    intent(inout) :: z(bundle_size)
+    integer(kind=i_def) :: i
 
     do i = 1,bundle_size
       call invoke( X_minus_Y( z(i), x(i), y(i) ) )
@@ -115,11 +115,11 @@ contains
 !> @param[in] bundle_size Number of fields in the bundle
   subroutine bundle_ax(a, x, y, bundle_size)
     implicit none
-    integer(i_def),   intent(in)    :: bundle_size
-    type(field_type), intent(inout) :: y(bundle_size)
-    type(field_type), intent(in)    :: x(bundle_size)
-    real(kind=r_def), intent(in)    :: a
-    integer(i_def) :: i
+    integer(kind=i_def), intent(in)    :: bundle_size
+    type(field_type),    intent(inout) :: y(bundle_size)
+    type(field_type),    intent(in)    :: x(bundle_size)
+    real(kind=r_def),    intent(in)    :: a
+    integer(kind=i_def) :: i
 
     do i = 1,bundle_size
       call invoke( a_times_X( y(i), a, x(i) ) )
@@ -132,9 +132,9 @@ contains
 !> @param[in] bundle_size Number of fields in the bundle
   subroutine bundle_divide(x, y, bundle_size)
     implicit none
-    integer(i_def),   intent(in)    :: bundle_size
-    type(field_type), intent(inout) :: x(bundle_size), y(bundle_size)
-    integer(i_def) :: i
+    integer(kind=i_def), intent(in)    :: bundle_size
+    type(field_type),    intent(inout) :: x(bundle_size), y(bundle_size)
+    integer(kind=i_def) :: i
 
     do i = 1,bundle_size
       call invoke( inc_X_divideby_Y( x(i), y(i) ) )
@@ -150,9 +150,9 @@ contains
     use finite_element_config_mod, only: element_order
 
     implicit none
-    integer(i_def),   intent(in) :: bundle_size
-    type(field_type), intent(in) :: x(bundle_size)
-    integer(i_def)               :: i
+    integer(kind=i_def), intent(in) :: bundle_size
+    type(field_type),    intent(in) :: x(bundle_size)
+    integer(kind=i_def) :: i
 
     do i = 1,bundle_size
       call x(i)%log_minmax(LOG_LEVEL_INFO, 'field')
@@ -169,11 +169,11 @@ contains
 !> @param[in] bundle_size Number of fields in the bundle
   subroutine bundle_axpby(a, x, b, y, z, bundle_size)
     implicit none
-    integer(i_def),   intent(in)    :: bundle_size
-    real(kind=r_def), intent(in)    :: a, b
-    type(field_type), intent(in)    :: x(bundle_size), y(bundle_size)
-    type(field_type), intent(inout) :: z(bundle_size)
-    integer(i_def) :: i
+    integer(kind=i_def), intent(in)    :: bundle_size
+    real(kind=r_def),    intent(in)    :: a, b
+    type(field_type),    intent(in)    :: x(bundle_size), y(bundle_size)
+    type(field_type),    intent(inout) :: z(bundle_size)
+    integer(kind=i_def) :: i
 
     do i = 1,bundle_size
       call invoke( aX_plus_bY( z(i), a, x(i), b, y(i) ) )
@@ -187,10 +187,10 @@ contains
 !> @param[in] bundle_size Number of fields in the bundle
   subroutine add_bundle(x, y, z, bundle_size)
     implicit none
-    integer(i_def),   intent(in)    :: bundle_size
-    type(field_type), intent(in)    :: x(bundle_size), y(bundle_size)
-    type(field_type), intent(inout) :: z(bundle_size)
-    integer(i_def) :: i
+    integer(kind=i_def), intent(in)    :: bundle_size
+    type(field_type),    intent(in)    :: x(bundle_size), y(bundle_size)
+    type(field_type),    intent(inout) :: z(bundle_size)
+    integer(kind=i_def) :: i
 
     do i = 1,bundle_size
       call invoke( X_plus_Y( z(i), x(i), y(i) ) )

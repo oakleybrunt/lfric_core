@@ -555,34 +555,34 @@ contains
   !> @param[in] space   the space of the desired mass matrix
   !> @param[in] mesh_id the ID of the mesh to get the object for
   !> @return The mass matrix operator
-  function get_mass_matrix(space, mesh_id) result(mm)
+  function get_mass_matrix(space, mesh_id) result(mm_op)
     implicit none
     integer(kind=i_def),   intent(in) :: space
     integer(kind=i_def),   intent(in) :: mesh_id
     integer(kind=i_def)               :: mesh_index
-    type(operator_type),      pointer :: mm
+    type(operator_type),      pointer :: mm_op
 
     mesh_index = find_mesh_index(mesh_id)
 
     select case (space)
       case (W0)
-        mm => mm_w0(mesh_index)
+        mm_op => mm_w0(mesh_index)
       case (W1)
-        mm => mm_w1(mesh_index)
+        mm_op => mm_w1(mesh_index)
       case (W2)
-        mm => mm_w2(mesh_index)
+        mm_op => mm_w2(mesh_index)
       case (W2broken)
-        mm => mm_w2b(mesh_index)
+        mm_op => mm_w2b(mesh_index)
       case (W2V)
-        mm => mm_w2v(mesh_index)
+        mm_op => mm_w2v(mesh_index)
       case (W2H)
-        mm => mm_w2h(mesh_index)
+        mm_op => mm_w2h(mesh_index)
       case (W3)
-        mm => mm_w3(mesh_index)
+        mm_op => mm_w3(mesh_index)
       case (WTHETA)
-        mm => mm_wtheta(mesh_index)
+        mm_op => mm_wtheta(mesh_index)
       case default
-        mm => null()
+        mm_op => null()
         call log_event( "Mass matrix operator does not exist", LOG_LEVEL_ERROR)
         stop
     end select

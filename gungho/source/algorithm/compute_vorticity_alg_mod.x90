@@ -7,12 +7,12 @@
 !>@brief Algorithm to compute the vorticity: curl(u)
 !>@details Compute the vorticity (xi) in W1 as the projection of the weak
 !>         curl of the velocity field (u): <c,xi> = <curl(c),u>.
-!>         If the inuput u field is in the weak form (such as if we were
+!>         If the input u field is in the weak form (such as if we were
 !>         advecting the residual r_u as for a SL scheme) then we first
 !>         compute a strong form of u by inverting the W2 mass matrix
 module compute_vorticity_alg_mod
 
-  use constants_mod, only: r_def, i_def
+  use constants_mod, only: r_def, i_def, l_def
 
   implicit none
 
@@ -21,10 +21,10 @@ module compute_vorticity_alg_mod
 
 contains
 
-  !>@brief Algorithm to compute the vorticity field
-  !>@param[inout] xi Vorticity field = curl(u)
-  !>@param[in]    u Velocity field
-  !>~param[in]    weak_form_u Is u in weak form or not
+  !> @brief Algorithm to compute the vorticity field
+  !> @param[in,out] xi Vorticity field = curl(u)
+  !> @param[in]     u Velocity field
+  !> @param[in]     weak_form_u Is u in weak form or not
   subroutine compute_vorticity_alg(xi, u, weak_form_u)
 
     use field_mod,                      only: field_type
@@ -49,13 +49,13 @@ contains
 
     type(field_type),     intent(inout) :: xi
     type(field_type),     intent(in)    :: u
-    logical,              intent(in)    :: weak_form_u
+    logical(kind=l_def),  intent(in)    :: weak_form_u
 
     type(field_type)                    :: advected_u, r_xi, u_in_w1, r_u
     type(field_type),           pointer :: m1_lumped_inv => null()
     type(operator_type),        pointer :: curl => null()
     type(function_space_type) , pointer :: w1_fs => null()
-    integer(i_def)                      :: mesh_id
+    integer(kind=i_def)                 :: mesh_id
     type(quadrature_xyoz_type), pointer :: qr => null()
 
     mesh_id = u%get_mesh_id()

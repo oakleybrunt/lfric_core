@@ -41,30 +41,30 @@ contains
 !> @param[in]  mesh id of the mesh object the model for fields
 !> @param[in]  space_dimension Dimension of the space f_in (scalar or vector)
 !> @param[in]  qr Quadrature rule to perform integrations
-  subroutine galerkin_projection_algorithm( f_out,          &
-                                            f_in,           &
-                                            mesh,           &
+  subroutine galerkin_projection_algorithm( f_out,           &
+                                            f_in,            &
+                                            mesh,            &
                                             space_dimension, &
                                             qr)
 
     implicit none
 
 ! Dimension of space to project
-    integer,            intent(in)    :: space_dimension
+    integer( kind = i_def ),      intent(in)    :: space_dimension
 ! Field to output
-    type( field_type ), intent(inout) :: f_out(space_dimension)
+    type( field_type ),           intent(inout) :: f_out(space_dimension)
 ! Field to input
-    type( field_type ), intent(in)           :: f_in
-    integer( i_def ),   intent(in)           :: mesh
-    type( quadrature_xyoz_type ), intent(in) :: qr
+    type( field_type ),           intent(in)    :: f_in
+    integer(kind=i_def),          intent(in)    :: mesh
+    type( quadrature_xyoz_type ), intent(in)    :: qr
 ! Coordinate fields
     type( field_type ), pointer :: chi_sph(:) => null()
     type( field_type ), pointer :: panel_id => null()
 
-    integer                          :: out_fs
+    integer( kind=i_def )            :: out_fs
     type( field_type )               :: rhs(space_dimension)
     type( field_type )               :: w2_field
-    integer                          :: dir
+    integer( kind=i_def )            :: dir
 
     chi_sph => get_coordinates(mesh)
     panel_id => get_panel_id(mesh)

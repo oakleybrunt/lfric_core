@@ -11,7 +11,7 @@ module mass_matrix_operator_alg_mod
   use vector_mod,                         only: abstract_vector_type
   use field_mod,                          only: field_type
   use field_vector_mod,                   only: field_vector_type
-  use constants_mod,                      only: i_def, r_def
+  use constants_mod,                      only: i_def, r_def, l_def
   use log_mod,                            only: log_event,       &
                                                 LOG_LEVEL_ERROR, &
                                                 LOG_LEVEL_INFO,  &
@@ -22,7 +22,7 @@ module mass_matrix_operator_alg_mod
   type, public, extends(abstract_linear_operator_type) :: &
                         mass_matrix_operator_type
   private
-  logical                      :: apply_bc
+  logical(kind=l_def)          :: apply_bc
   type(operator_type), pointer :: mass_matrix => null()
      contains
      !> over-ride the abstract interface
@@ -52,7 +52,7 @@ contains
     implicit none
 
     type(mass_matrix_operator_type)         :: self
-    logical,                     intent(in) :: apply_bc
+    logical(kind=l_def),         intent(in) :: apply_bc
     type(operator_type), target, intent(in) :: mass_matrix
 
     call log_event( 'Constructing mass matrix operator...', LOG_LEVEL_INFO )

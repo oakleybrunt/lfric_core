@@ -49,7 +49,8 @@ contains
     type( field_type )                    :: projected_field(1)
     type( field_type ), pointer           :: height_w3 => null()
     type( field_type ), pointer           :: height_wt => null()
-    integer(i_def)                        :: mesh_id
+    integer( kind=i_def )                 :: mesh_id
+    integer( kind=i_def )                 :: space_dim
 
     call source_field%log_minmax(LOG_LEVEL_INFO, 'source field')
 
@@ -85,10 +86,11 @@ contains
 
     else
       ! Do galerkin projection
+      space_dim = 1_i_def
       qr = quadrature_xyoz_type(nqp_exact, quadrature_rule)
       call projected_field(1)%initialise( vector_space = target_field%get_function_space() )
       call galerkin_projection_algorithm(projected_field, source_field, mesh_id, &
-         1, qr)
+                                         space_dim, qr)
       call invoke( setval_X(target_field, projected_field(1)) )
     end if
 
@@ -126,7 +128,8 @@ contains
     type( quadrature_xyoz_type )          :: qr
     type( quadrature_rule_gaussian_type ) :: quadrature_rule
     type( field_type )                    :: projected_field(3)
-    integer( i_def )                      :: mesh_id
+    integer( kind=i_def )                 :: mesh_id
+    integer( kind=i_def )                 :: space_dim
 
     mesh_id =  source_field%get_mesh_id()
 
@@ -163,13 +166,14 @@ contains
     else
 
       ! This method remains for posterity, but should be used with caution.
-    qr = quadrature_xyoz_type(nqp_exact, quadrature_rule)
+      space_dim = 3_i_def
+      qr = quadrature_xyoz_type(nqp_exact, quadrature_rule)
 
       call projected_field(1)%initialise( vector_space = u1_field%get_function_space() )
       call projected_field(2)%initialise( vector_space = u2_field%get_function_space() )
       call projected_field(3)%initialise( vector_space = u3_field%get_function_space() )
       call galerkin_projection_algorithm(projected_field, source_field, mesh_id, &
-                                         3, qr)
+                                         space_dim, qr)
       call invoke( name = "Copy wind fields2",             &
                    setval_X(u1_field, projected_field(1)), &
                    setval_X(u2_field, projected_field(2)), &

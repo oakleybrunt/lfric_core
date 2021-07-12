@@ -83,7 +83,7 @@ contains
     implicit none
 
     type(field_type),             intent(in) :: x0(bundle_size)
-    integer                                  :: iter, mesh_id
+    integer(kind=i_def)                      :: iter, mesh_id
 
     if ( si_preconditioner  == si_preconditioner_pressure .or.  &
          si_postconditioner == si_postconditioner_pressure .or. &

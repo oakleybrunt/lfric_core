@@ -221,7 +221,7 @@ contains
     integer(i_def), intent(in) :: t_step, outer
     real(r_def),    intent(in) :: dt
 
-    logical                            :: do_moisture_diagnostics
+    logical(l_def)                     :: do_moisture_diagnostics
     integer(i_def)                     :: imr
     ! Substepping variables
     type(field_type)                   :: cfl
@@ -902,7 +902,7 @@ end subroutine advection_alg
     type(field_type), intent(in)        :: wind_n, wind_np1
     real(r_def),      intent(in)        :: dt_step
     integer(i_def),   intent(in)        :: n_substeps
-    logical,          intent(in)        :: from_si
+    logical(l_def),   intent(in)        :: from_si
 
     type(field_type), dimension(3)      :: u_scalar, adv_wind_update
     type( field_type ),        pointer  :: chi_sph(:) => null()
@@ -1016,10 +1016,10 @@ end subroutine advection_alg
     integer(i_def),   intent(in)    :: adv_scheme
     logical(l_def),   intent(in)    :: advect_density
     real(r_def),      intent(in)    :: timestep
-    logical,          intent(in)    :: si_advective_terms
-    logical,          intent(in)    :: shifted
-    logical,          intent(in)    :: density_predictor
-    logical,          intent(in)    :: logspace
+    logical(l_def),   intent(in)    :: si_advective_terms
+    logical(l_def),   intent(in)    :: shifted
+    logical(l_def),   intent(in)    :: density_predictor
+    logical(l_def),   intent(in)    :: logspace
     real(r_def),      intent(in)    :: dt
 
     integer(i_def)                  :: mesh_id

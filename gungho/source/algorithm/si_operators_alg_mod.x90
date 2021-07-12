@@ -615,7 +615,7 @@ contains
   !> @return The operator
   function get_m3_exner_star_mg(level) result(op)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(operator_type), pointer ::op
     op => m3_exner_star(level)
   end function get_m3_exner_star_mg
@@ -635,7 +635,7 @@ contains
   !> @return The operator
   function get_div_star_mg(level) result(op)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(operator_type), pointer ::op
     op => div_star(level)
   end function get_div_star_mg
@@ -655,7 +655,7 @@ contains
   !> @return The operator
   function get_p2theta_mg(level) result(op)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(operator_type), pointer ::op
     op => p2theta(level)
   end function get_p2theta_mg
@@ -675,7 +675,7 @@ contains
   !> @return The operator
   function get_ptheta2_mg(level) result(op)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(operator_type), pointer ::op
     op => ptheta2(level)
   end function get_ptheta2_mg
@@ -695,7 +695,7 @@ contains
   !> @return The operator
   function get_ptheta2v_mg(level) result(op)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(operator_type), pointer ::op
     op => ptheta2v(level)
   end function get_ptheta2v_mg
@@ -715,7 +715,7 @@ contains
   !> @return The operator
   function get_p3theta_mg(level) result(op)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(operator_type), pointer ::op
     op => p3theta(level)
   end function get_p3theta_mg
@@ -735,7 +735,7 @@ contains
   !> @return The operator
   function get_compound_div_mg(level) result(op)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(operator_type), pointer ::op
     op => compound_div(level)
   end function get_compound_div_mg
@@ -755,7 +755,7 @@ contains
   !> @return The field
   function get_rho_at_u_mg(level) result(field)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(field_type), pointer :: field
     field => rho_at_u(level)
   end function get_rho_at_u_mg
@@ -775,7 +775,7 @@ contains
   !> @return The field
   function get_tri_precon_mg(level) result(field)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(field_type), pointer :: field(:)
     field => tri_precon(:,level)
   end function get_tri_precon_mg
@@ -795,7 +795,7 @@ contains
   !> @return The field
   function get_helmholtz_operator_mg(level) result(field)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(field_type), pointer :: field(:)
     field => helmholtz_operator(:,level)
   end function get_helmholtz_operator_mg
@@ -815,7 +815,7 @@ contains
   !> @return The field
   function get_helm_diag_mg(level) result(field)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(field_type), pointer :: field
     field => helm_diag(level)
   end function get_helm_diag_mg
@@ -835,7 +835,7 @@ contains
   !> @return The field
   function get_hb_lumped_inv_mg(level) result(field)
     implicit none
-    integer, intent(in) :: level
+    integer(kind=i_def), intent(in) :: level
     type(field_type), pointer :: field
     field => hb_lumped_inv(level)
   end function get_hb_lumped_inv_mg
