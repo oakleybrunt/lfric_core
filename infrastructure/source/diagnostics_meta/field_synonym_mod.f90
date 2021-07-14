@@ -19,9 +19,12 @@ module field_synonym_mod
 
   type, public :: field_synonym_type
 
-    !> String containing the name of the type of data being stored
+    !> @brief String containing the name of the type of data being stored
+    !>
+    !> This should come from a model field_synonyms_enum_mod, such as
+    !> `um_physics/source/diagnostics_meta/meta_type/field_synonyms_enum_mod.f90`
     integer(i_native) :: type
-    !> Value of the data
+    !> @brief Value of the data
     character(str_def) :: value
 
   end type field_synonym_type

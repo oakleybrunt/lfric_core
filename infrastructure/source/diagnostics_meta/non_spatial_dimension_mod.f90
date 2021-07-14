@@ -39,17 +39,35 @@ module non_spatial_dimension_mod
   !> Defines the configurable non_spatial dimension
   type, public :: non_spatial_dimension_type
 
-    !> Name of the non-spatial dimension
+    !> @brief Name of the non-spatial dimension
     character(str_def)                              :: dimension_name
-    !> Category of the dimension: either numerical or categorical
+
+    !> @brief Optional. Category of the dimension: either numerical or categorical
+    !>
+    !> Specified using the enums NUMERICAL / CATEGORICAL within
+    !> \link non_spatial_dimension_mod.f90 non_spatial_dimension_mod.f90
+    !> \endlink
     integer(i_native)                               :: dimension_category
+
     !> Description to be displayed in the Rose GUI help text
     character(str_long)                             :: help_text
-    !> Definition of the axis if it is labelled using strings
+
+    !> @brief Optional. Definition of the axis if it is labelled using strings
+    !>
+    !> Array of strings to use as the labels
+    !> e.g. `['fine','medium','coarse']`
     character(str_short), dimension(:), allocatable :: label_definition
-    !> Definition of the axis if it is described by real numbers
+
+    !> @brief Definition of the axis if it is described by real numbers
+    !>
+    !> Array of real numbers. These define the **boundaries** of the data
+    !> points.
     real     (r_def),     dimension(:), allocatable :: axis_definition
-    !> Units of the non-spatial dimension
+
+    !> @brief Optional. Units of the non-spatial dimension
+    !>
+    !> If the dimension has a suitable unit this should specify it so that
+    !> the resultant netCDF file has the unit included.
     character(str_def)                              :: non_spatial_units
 
   contains

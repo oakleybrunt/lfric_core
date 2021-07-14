@@ -5,23 +5,23 @@
 !-----------------------------------------------------------------------------
 
 !> @brief Procedures to parse an iodef.xml file and add a fieldspec object to
-!>        the collection
+!> the collection
 !>
 !> @details Uses the FoX library to parse an iodef.xml file and pass the values
-!>          to a fieldspec_factory object. This is then used to create a
-!>          fieldspec object , which is added to the fieldspec_collection
+!> to a fieldspec_factory object. This is then used to create a
+!> fieldspec object , which is added to the fieldspec_collection
 !>
-!>          The parser expects to find an iodef.xml file with a field_definition
-!>          section with the following structure (shown here with details
-!>          ignored by the parser removed for clarity):
+!> The parser expects to find an iodef.xml file with a field_definition
+!> section with the following structure (shown here with details
+!> ignored by the parser removed for clarity):
 !>
-!>          <field_definition> \n
-!>            <field_group id="example_field_group_1" enabled=".TRUE."> \n
-!>              <field id="example_field_1"> \n
-!>                <variable name="variable_1_name">variable_1_value</variable> \n
-!>              </field> \n
-!>            </field_group> \n
-!>          </field_definition>
+!>     <field_definition>
+!>       <field_group id="example_field_group_1" enabled=".TRUE.">
+!>         <field id="example_field_1">
+!>           <variable name="variable_1_name">variable_1_value</variable>
+!>         </field>
+!>       </field_group>
+!>     </field_definition>
 
 module fieldspec_xml_parser_mod
 
