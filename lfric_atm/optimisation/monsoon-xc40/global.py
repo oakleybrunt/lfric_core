@@ -55,9 +55,9 @@ def trans(psy):
                     not in FunctionSpace.VALID_DISCONTINUOUS_NAMES:
                 schedule, _ = ctrans.apply(loop)
 
-        # Add OpenMP to loops unless they are over colours
+        # Add OpenMP to loops unless they are over colours or are null
         for loop in schedule.loops():
-            if loop.loop_type != "colours":
+            if loop.loop_type not in ["colours", "null"]:
                 schedule, _ = oregtrans.apply(loop)
                 schedule, _ = otrans.apply(loop, options={"reprod": True})
 
