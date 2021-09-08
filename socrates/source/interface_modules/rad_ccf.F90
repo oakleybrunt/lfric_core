@@ -10,7 +10,9 @@ module rad_ccf
   use constants_mod,                     only: lfric_pi => pi
   use lfric_atm_chemistry_constants_mod, only: avogadro, boltzmann, &
                                                lfric_stefan_boltzmann &
-                                                  => stefan_boltzmann
+                                                  => stefan_boltzmann, &
+                                               planck_constant, &
+                                               speed_of_light
   use lfric_atm_conversions_mod,         only: lfric_seconds_per_day &
                                                   => seconds_per_day
   use lfric_atm_rel_mol_mass_mod,        only: relative_molecular_mass_dry_air
@@ -20,13 +22,16 @@ module rad_ccf
   implicit none
   private
   public :: k_boltzmann, n_avogadro, stefan_boltzmann, pi, seconds_per_day, &
-            mol_weight_air, n2_mass_frac, repsilon, rho_water
+            mol_weight_air, n2_mass_frac, repsilon, rho_water, &
+            h_planck, c_light
   public :: set_socrates_constants
 
   real(RealK), parameter :: k_boltzmann  = real(boltzmann, RealK)
   real(RealK), parameter :: n_avogadro   = real(avogadro, RealK)
   real(RealK), parameter :: stefan_boltzmann &
                                          = real(lfric_stefan_boltzmann, RealK)
+  real(RealK), parameter :: h_planck     = real(planck_constant, RealK)
+  real(RealK), parameter :: c_light      = real(speed_of_light, RealK)
   real(RealK), parameter :: pi           = real(lfric_pi, RealK)
   real(RealK), parameter :: rho_water    = real(density_h2o, RealK)
   real(RealK), parameter :: seconds_per_day &
