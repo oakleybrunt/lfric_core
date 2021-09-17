@@ -16,7 +16,8 @@
 module example_science_section__example_fields__meta_mod
 
   use diagnostics_mod,                only: field_meta_data_type
-  use constants_mod,                  only: real_type, r_def, i_def, str_short
+  use constants_mod,                  only: real_type, r_def, i_def, &
+                                            str_short, str_def
   !> Only import the dimensions that you will actually be using
   use vertical_dimensions_mod,        only: model_height_dimension, &
                                             model_depth_dimension, &
@@ -56,6 +57,7 @@ module example_science_section__example_fields__meta_mod
       surface_altitude, &
       air_temperature_over_tiles, &
       low_type_cloud_area_fraction
+      character(str_def) :: name = "example_science_section__example_fields"
 
     end type example_science_section__example_fields__meta_type
 
