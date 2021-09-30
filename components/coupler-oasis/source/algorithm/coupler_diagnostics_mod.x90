@@ -44,9 +44,15 @@ module coupler_diagnostics_mod
    integer(kind=i_def), intent(in)              :: dfirst_sea_tile
    integer(kind=i_def), intent(in)              :: dn_sea_tile
    real(kind=r_def), intent(in)                 :: hlat
-!local variables
+   ! Local variables
    logical(l_def)                               :: lfail    ! failure flag
-   type( field_type ), pointer                  :: fld1_ptr ! pointer to a field
+
+   ! PSyclone requires field types to be discoverable within the algorithm.
+   ! Therefore depository fields need to be dereferenced to a known type
+   ! before calling invokes
+   type( field_type ), pointer                  :: fld_ptr1, fld_ptr2 => null()
+   type( field_type ), pointer                  :: fld_ptr3, fld_ptr4 => null()
+
    real(r_def)                                  :: dtime    ! seconds in timestep
 
    lfail = .false.
@@ -55,37 +61,50 @@ module coupler_diagnostics_mod
       dtime = real(clock%get_seconds_per_step(), r_def)
       select case(fld%get_name())
          case ("lf_taux")
-            fld1_ptr => depository%get_field("taux")
-            call invoke(inc_X_plus_bY( fld, dtime, fld1_ptr ))
+            fld_ptr1 => depository%get_field("taux")
+            call invoke(inc_X_plus_bY( fld, dtime, fld_ptr1 ))
+            fld_ptr1 => null()
          case ("lf_tauy")
-            fld1_ptr => depository%get_field("tauy")
-            call invoke(inc_X_plus_bY( fld, dtime, fld1_ptr ))
+            fld_ptr1 => depository%get_field("tauy")
+            call invoke(inc_X_plus_bY( fld, dtime, fld_ptr1 ))
+            fld_ptr1 => null()
          case ("lf_solar")
-            call invoke(multi_extract_kernel_type(field1,                     &
-                      depository%get_field("sw_up_tile"),                     &
-                      dfirst_sea_tile, dn_sea_tile),                          &
-                      X_minus_Y(field2, depository%get_field("sw_down_surf"), &
-                                                                    field1) )
+            fld_ptr1 => depository%get_field("sw_up_tile")
+            fld_ptr2 => depository%get_field("sw_down_surf")
+
+            call invoke( multi_extract_kernel_type(field1,                   &
+                      fld_ptr1,                                              &
+                      dfirst_sea_tile, dn_sea_tile),                         &
+                      X_minus_Y(field2, fld_ptr2, field1) )
             call invoke(inc_X_plus_bY( fld, dtime, field2 ))
+            fld_ptr1 => null()
+            fld_ptr2 => null()
          case ("lf_heatflux")
-!longwave lw_down_surf - lw_up_tile
-            call invoke(multi_extract_kernel_type(field1,                     &
-                      depository%get_field("lw_up_tile"),                     &
-                      dfirst_sea_tile, dn_sea_tile),                          &
-                      X_minus_Y(field2, depository%get_field("lw_down_surf"), &
-                                                                    field1) )
-!add longwave
+           !longwave lw_down_surf - lw_up_tile
+           fld_ptr1 => depository%get_field("lw_up_tile")
+           fld_ptr2 => depository%get_field("lw_down_surf")
+           fld_ptr3 => depository%get_field("tile_heat_flux")
+           fld_ptr4 => depository%get_field("tile_moisture_flux")
+           call invoke( multi_extract_kernel_type(field1,                    &
+                        fld_ptr1,                                            &
+                        dfirst_sea_tile, dn_sea_tile),                       &
+                        X_minus_Y(field2, fld_ptr2, field1) )
+            ! add longwave
             call invoke(inc_X_plus_bY(fld, dtime, field1))
-!sensible heat flux - field1, moisture heat flux - field2
-            call invoke(multi_extract_kernel_type(field1,           &
-                  depository%get_field("tile_heat_flux"),           &
-                           dfirst_sea_tile, dn_sea_tile),           &
-                        multi_extract_kernel_type(field2,           &
-              depository%get_field("tile_moisture_flux"),           &
+            ! sensible heat flux - field1, moisture heat flux - field2
+            call invoke(multi_extract_kernel_type(field1,         &
+                                              fld_ptr3,           &
+                           dfirst_sea_tile, dn_sea_tile),         &
+                        multi_extract_kernel_type(field2,         &
+                                              fld_ptr4,           &
                            dfirst_sea_tile, dn_sea_tile))
-!field3 = field1 + hlat*field2
+            ! field3 = field1 + hlat*field2
             call invoke(aX_plus_bY(field3, 1._r_def, field1, hlat, field2))
             call invoke(inc_X_minus_bY( fld, dtime, field3 ))
+            fld_ptr1 => null()
+            fld_ptr2 => null()
+            fld_ptr3 => null()
+            fld_ptr4 => null()
          case default
             lfail = .true.
             write(log_scratch_space, '(3A)' )                                 &
@@ -94,7 +113,7 @@ module coupler_diagnostics_mod
             call log_event( log_scratch_space, LOG_LEVEL_INFO )
       end select
    else if(istep == 0) then
-!for now. It will be set by restart when available
+     !for now. It will be set by restart when available
       call cpl_reset_field(fld)
       write(log_scratch_space, '(2A)' ) "cpl_diagnostics: variable ",  &
                                    trim(fld%get_name())//": set to 0"

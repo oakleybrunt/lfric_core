@@ -11,7 +11,7 @@ MODULE constants_def_mod
 !
 
 ! Use some constants from LFRic infrastructure
-USE constants_mod, ONLY: r_def, real_missing_data_indicator => rmdi
+USE constants_mod, ONLY: lfric_r_def => r_def, lfric_i_def => i_def, real_missing_data_indicator => rmdi
 
 IMPLICIT NONE
 
@@ -30,7 +30,8 @@ INTEGER, PARAMETER :: max_no_fields = 100
 
 ! Global parameters used in the API
 CHARACTER,         PARAMETER :: empty_string = ''
-INTEGER,           PARAMETER :: r_prec = r_def
-REAL(KIND=r_prec), PARAMETER :: rmdi = real_missing_data_indicator
+INTEGER,           PARAMETER :: r_def = lfric_r_def
+INTEGER,           PARAMETER :: i_def = lfric_i_def
+REAL(KIND=r_def),  PARAMETER :: rmdi = real_missing_data_indicator
 
 END MODULE constants_def_mod

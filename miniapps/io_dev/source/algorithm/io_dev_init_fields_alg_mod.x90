@@ -38,6 +38,8 @@ subroutine io_dev_init_fields_alg(core_fields, chi, panel_id)
     type(field_collection_iterator_type) :: iter
 
     class(field_parent_type), pointer :: fld => null()
+    type(field_type), pointer :: fld_actual => null()
+    type(integer_field_type), pointer :: integer_fld_actual => null()
 
     iter = core_fields%get_iterator()
     do
@@ -47,12 +49,18 @@ subroutine io_dev_init_fields_alg(core_fields, chi, panel_id)
         type is (field_type)
           ! Initialise fields to default analytic value (product of x, y and z
           ! coordinates)
-          call invoke ( setval_c(fld, 0.0_r_def),                   &
-                        io_dev_init_kernel_type(fld, chi, panel_id) )
+
+          ! PSyclone needs to know the actual rather than abstract type
+          fld_actual => fld
+          call invoke ( setval_c(fld_actual, 0.0_r_def),                   &
+                        io_dev_init_kernel_type(fld_actual, chi, panel_id) )
 
         type is (integer_field_type)
           ! Initialise fields to default analytic value (dof ID)
-          call invoke( io_dev_init_int_kernel_type(fld) )
+
+          ! PSyclone needs to know the actual rather than abstract type
+          integer_fld_actual => fld
+          call invoke( io_dev_init_int_kernel_type(integer_fld_actual) )
 
       end select
     end do

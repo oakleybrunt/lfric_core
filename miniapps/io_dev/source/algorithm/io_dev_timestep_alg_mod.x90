@@ -38,6 +38,7 @@ subroutine io_dev_timestep_alg(core_fields, clock)
     real(r_def)                          :: ts_scale_factor
 
     class(field_parent_type), pointer :: fld => null()
+    type(field_type),         pointer :: fld_actual => null()
 
     ! Set up scaling factor for field using clock
     ts_scale_factor = 1.0_r_def / sqrt( real(clock%get_seconds_per_step(), r_def) )
@@ -49,8 +50,9 @@ subroutine io_dev_timestep_alg(core_fields, clock)
       select type(fld)
         type is (field_type)
 
-        ! Apply scaling factor to field
-        call invoke ( inc_a_times_x(ts_scale_factor, fld) )
+          ! Apply scaling factor to field
+          fld_actual => fld
+          call invoke ( inc_a_times_x(ts_scale_factor, fld_actual) )
 
       end select
     end do

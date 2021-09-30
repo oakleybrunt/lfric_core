@@ -22,7 +22,7 @@ SUBROUTINE X_powint_n(dep_graph)
 USE gen_io_check_mod,       ONLY: gen_io_check
 USE field_mod,              ONLY: field_type
 USE log_mod,                ONLY: log_event, log_scratch_space, LOG_LEVEL_ERROR
-USE constants_def_mod,      ONLY: genpar_len
+USE constants_def_mod,      ONLY: genpar_len, i_def
 
 IMPLICIT NONE
 
@@ -39,7 +39,7 @@ CLASS(dependency_graph), INTENT(IN OUT) :: dep_graph
 TYPE(field_type), POINTER :: field_y => NULL(), field_x => NULL()
 !
 ! Exponent
-INTEGER :: exponent
+INTEGER(KIND=i_def) :: exponent
 !
 ! Parameter list
 CHARACTER(LEN=genpar_len) :: parlist

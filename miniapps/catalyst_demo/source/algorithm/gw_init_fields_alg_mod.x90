@@ -63,6 +63,7 @@ contains
 
     ! Coordinate fields
     type( field_type ), pointer :: chi(:) => null()
+    type( field_type ), pointer :: panel_id => null()
 
     real(kind=r_def), parameter :: initial_time = 0.0_r_def
     integer(kind=i_def)         :: mesh_id

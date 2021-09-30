@@ -24,7 +24,7 @@ SUBROUTINE aX_plus_bY(dep_graph)
 USE gen_io_check_mod,       ONLY: gen_io_check
 USE field_mod,              ONLY: field_type
 USE log_mod,                ONLY: log_event, log_scratch_space, LOG_LEVEL_ERROR
-USE constants_def_mod,      ONLY: genpar_len, r_prec
+USE constants_def_mod,      ONLY: genpar_len, r_def
 
 IMPLICIT NONE
 
@@ -42,7 +42,7 @@ TYPE(field_type), POINTER :: field_y => NULL(), field_x => NULL(),             &
                              field_z => NULL()
 !
 ! Scaling factors
-REAL(KIND=r_prec) :: scale_fac_a, scale_fac_b
+REAL(KIND=r_def) :: scale_fac_a, scale_fac_b
 !
 ! Parameter list
 CHARACTER(LEN=genpar_len) :: parlist

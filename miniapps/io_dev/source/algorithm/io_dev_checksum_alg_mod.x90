@@ -39,6 +39,7 @@ contains
     integer(i_def)                       :: stat, iter_index, file_unit
 
     class(field_parent_type), pointer :: fld => null()
+    type(field_type), pointer :: fld_actual => null()
 
     allocate( checksum_bundle( state%get_length() ) )
 
@@ -51,8 +52,10 @@ contains
       iter_index = iter_index + 1
       select type(fld)
         type is (field_type)
-        call invoke( X_innerproduct_X(tmp_checksum, fld) )
-        checksum_bundle(iter_index) = tmp_checksum
+          ! PSyclone needs to know the actual rather than abstract type
+          fld_actual => fld
+          call invoke( X_innerproduct_X(tmp_checksum, fld_actual) )
+          checksum_bundle(iter_index) = tmp_checksum
 
       end select
     end do
