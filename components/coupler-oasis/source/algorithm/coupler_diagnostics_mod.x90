@@ -1,39 +1,60 @@
+
 !-----------------------------------------------------------------------------
 ! (c) Crown copyright 2021 Met Office. All rights reserved.
 ! The file LICENCE, distributed with this code, contains details of the terms
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!> @brief This modules handles calculation of the diagnostics sent to other components
+!> @brief   This module handles calculation of fields sent to the coupler
+!> @details Here, we set up fields, essentailly as diagnostics, which are
+!           to be passed to external models via an external coupler which
+!           deals with any regridding, interpolation, etc.
 
 module coupler_diagnostics_mod
   use field_mod,                     only: field_type
   use field_collection_mod,          only: field_collection_type
   use clock_mod,                     only: clock_type
-  use constants_mod,                 only: str_def, l_def, i_def, r_def, imdi, i_timestep
+  use constants_mod,                 only: str_def, l_def, i_def, r_def, imdi, &
+                                           rmdi, i_timestep
   use log_mod,                       only: log_event,       &
                                            LOG_LEVEL_INFO,  &
                                            LOG_LEVEL_ERROR, &
                                            log_scratch_space
-  implicit none
-  private
-  type( field_type )                 :: field1, field2, field3      ! scratch fields to derive values for coupling
-                                                                    ! allocated in cpl_define
-  public field1, field2, field3
-  public cpl_diagnostics, cpl_reset_field
+#if defined(UM_PHYSICS)
+  use cv_run_mod,                    only: l_param_conv
+  use jules_control_init_mod,        only: n_sea_tile, first_sea_tile
+  use driver_water_constants_mod,    only: latent_heat_h2o_condensation
+#endif
 
+  implicit none
+
+  private
+  ! workspace used for coupling field calculation
+  type( field_type )                 :: cpl_field1, cpl_field2, cpl_field3
+
+#if !defined(UM_PHYSICS)
+  !
+  ! Dummy variables required when NOT running with UM_PHYSICS
+  !
+  logical ::  l_param_conv = .false.
+  ! index of the sea tile set here to prevent using jules_control_init_mod
+  ! when UM physics is not used
+  integer(i_def),parameter              :: n_sea_tile = imdi
+  ! index of the first sea and tile
+  integer(i_def), parameter             :: first_sea_tile = imdi
+  ! latent heat of condensation
+  real(r_def), parameter                :: latent_heat_h2o_condensation = rmdi
+#endif
+
+  public cpl_diagnostics, cpl_reset_field, initialise_scratch_fields
   contains
 
   !> @brief assignes data to coupling fields
   !> @param[in, out] fld coupling field
   !> @param[in] depository field collection - all fields
   !> @param[in] clock model clock
-  !> @param[in] dn_sea_tile index of the sea tile
-  !> @param[in] dfirst_sea_tile index of the first sea and tile
-  !> @param[in] hlat latent_heat condensation
   !> @param[in] istep model time step
-  subroutine cpl_diagnostics(fld, depository, clock, dn_sea_tile, &
-                                            dfirst_sea_tile, hlat, istep)
+  subroutine cpl_diagnostics(fld, depository, clock, istep)
 
    use multi_extract_kernel_mod,    only: multi_extract_kernel_type
    implicit none
@@ -41,19 +62,14 @@ module coupler_diagnostics_mod
    type( field_collection_type ), intent(in)    :: depository
    class(clock_type), intent(in)                :: clock
    integer(i_def), intent(in)                   :: istep
-   integer(kind=i_def), intent(in)              :: dfirst_sea_tile
-   integer(kind=i_def), intent(in)              :: dn_sea_tile
-   real(kind=r_def), intent(in)                 :: hlat
    ! Local variables
    logical(l_def)                               :: lfail    ! failure flag
-
-   ! PSyclone requires field types to be discoverable within the algorithm.
-   ! Therefore depository fields need to be dereferenced to a known type
-   ! before calling invokes
-   type( field_type ), pointer                  :: fld_ptr1, fld_ptr2 => null()
-   type( field_type ), pointer                  :: fld_ptr3, fld_ptr4 => null()
-
-   real(r_def)                                  :: dtime    ! seconds in timestep
+   !local pointers
+   type( field_type ), pointer                  :: fld_ptr1 => null()
+   type( field_type ), pointer                  :: fld_ptr2 => null()
+   type( field_type ), pointer                  :: fld_ptr3 => null()
+   type( field_type ), pointer                  :: fld_ptr4 => null()
+   real(r_def)                                  :: dtime    !seconds in timestep
 
    lfail = .false.
 
@@ -61,61 +77,113 @@ module coupler_diagnostics_mod
       dtime = real(clock%get_seconds_per_step(), r_def)
       select case(fld%get_name())
          case ("lf_taux")
-            fld_ptr1 => depository%get_field("taux")
+            fld_ptr1 => depository%get_field("taux_ssi")
             call invoke(inc_X_plus_bY( fld, dtime, fld_ptr1 ))
             fld_ptr1 => null()
          case ("lf_tauy")
-            fld_ptr1 => depository%get_field("tauy")
+            fld_ptr1 => depository%get_field("tauy_ssi")
             call invoke(inc_X_plus_bY( fld, dtime, fld_ptr1 ))
             fld_ptr1 => null()
          case ("lf_solar")
             fld_ptr1 => depository%get_field("sw_up_tile")
             fld_ptr2 => depository%get_field("sw_down_surf")
-
-            call invoke( multi_extract_kernel_type(field1,                   &
-                      fld_ptr1,                                              &
-                      dfirst_sea_tile, dn_sea_tile),                         &
-                      X_minus_Y(field2, fld_ptr2, field1) )
-            call invoke(inc_X_plus_bY( fld, dtime, field2 ))
+            call invoke(                                                       &
+            !
+            ! Extract SW up from tile field, subtract from SW down at surface
+            ! and increment our coupling field with the net (SW/solar)
+            ! contribution.
+            !
+                        multi_extract_kernel_type(cpl_field1, fld_ptr1,        &
+                        first_sea_tile, n_sea_tile),                           &
+                        X_minus_Y(cpl_field2, fld_ptr2, cpl_field1),           &
+                        inc_X_plus_bY( fld, dtime, cpl_field2 ))
             fld_ptr1 => null()
             fld_ptr2 => null()
          case ("lf_heatflux")
-           !longwave lw_down_surf - lw_up_tile
-           fld_ptr1 => depository%get_field("lw_up_tile")
-           fld_ptr2 => depository%get_field("lw_down_surf")
-           fld_ptr3 => depository%get_field("tile_heat_flux")
-           fld_ptr4 => depository%get_field("tile_moisture_flux")
-           call invoke( multi_extract_kernel_type(field1,                    &
-                        fld_ptr1,                                            &
-                        dfirst_sea_tile, dn_sea_tile),                       &
-                        X_minus_Y(field2, fld_ptr2, field1) )
-            ! add longwave
-            call invoke(inc_X_plus_bY(fld, dtime, field1))
-            ! sensible heat flux - field1, moisture heat flux - field2
-            call invoke(multi_extract_kernel_type(field1,         &
-                                              fld_ptr3,           &
-                           dfirst_sea_tile, dn_sea_tile),         &
-                        multi_extract_kernel_type(field2,         &
-                                              fld_ptr4,           &
-                           dfirst_sea_tile, dn_sea_tile))
-            ! field3 = field1 + hlat*field2
-            call invoke(aX_plus_bY(field3, 1._r_def, field1, hlat, field2))
-            call invoke(inc_X_minus_bY( fld, dtime, field3 ))
+            fld_ptr1 => depository%get_field("lw_up_tile")
+            fld_ptr2 => depository%get_field("lw_down_surf")
+            fld_ptr3 => depository%get_field("tile_heat_flux")
+            fld_ptr4 => depository%get_field("tile_moisture_flux")
+
+            ! Concoct our heatflux value from various contributing fields.
+            call invoke(                                                       &
+            !
+            ! Extract LW up from tile field, subtract from LW down at surface
+            ! and increment our coupling field with the net (LW) contribution.
+            !
+                        multi_extract_kernel_type(cpl_field1, fld_ptr1,        &
+                        first_sea_tile, n_sea_tile),                           &
+                        X_minus_Y(cpl_field2, fld_ptr2, cpl_field1),           &
+                        inc_X_plus_bY(fld, dtime, cpl_field2),                 &
+            !
+            ! Extract heat flux from tile field
+            !
+                        multi_extract_kernel_type(cpl_field1, fld_ptr3,        &
+                        first_sea_tile, n_sea_tile),                           &
+            !
+            ! Extract moisture heat flux from tile field
+            !
+                        multi_extract_kernel_type(cpl_field2, fld_ptr4,        &
+                        first_sea_tile, n_sea_tile),                           &
+            !
+            ! Add heat flux + hlat*moisture heat flux and
+            ! increment coupling field with the net contribution
+            !
+                        aX_plus_bY(cpl_field3, 1._r_def, cpl_field1,           &
+                        latent_heat_h2o_condensation, cpl_field2),             &
+                        inc_X_minus_bY( fld, dtime, cpl_field3 ))
             fld_ptr1 => null()
             fld_ptr2 => null()
             fld_ptr3 => null()
             fld_ptr4 => null()
+         case ("lf_train")
+            !large scale rain
+            fld_ptr1 => depository%get_field("ls_rain")
+
+            if(l_param_conv) then
+               !convective rain
+               fld_ptr2 => depository%get_field("conv_rain")
+               !total
+               call invoke(X_plus_Y( cpl_field1, fld_ptr1, fld_ptr2),          &
+                           inc_X_plus_bY( fld, dtime, cpl_field1 ))
+               fld_ptr2 => null()
+            else
+               call invoke(inc_X_plus_bY( fld, dtime, fld_ptr1 ))
+            endif
+
+            fld_ptr1 => null()
+         case ("lf_tsnow")
+            !large scale snow
+            fld_ptr1 => depository%get_field("ls_snow")
+
+            if(l_param_conv) then
+               !convective snow
+               fld_ptr2 => depository%get_field("conv_snow")
+               !total
+               call invoke(X_plus_Y( cpl_field1, fld_ptr1, fld_ptr2),          &
+                           inc_X_plus_bY( fld, dtime, cpl_field1 ))
+               fld_ptr2 => null()
+            else
+               call invoke(inc_X_plus_bY( fld, dtime, fld_ptr1 ))
+            endif
+
+            fld_ptr1 => null()
+         case ("lf_w10")
+            !10m wind
+            fld_ptr1 => depository%get_field("wspd10m")
+            call invoke(inc_X_plus_bY( fld, dtime, fld_ptr1 ))
+            fld_ptr1 => null()
          case default
             lfail = .true.
-            write(log_scratch_space, '(3A)' )                                 &
-                                         "PROBLEM cpl_diagnostics variable ", &
+            write(log_scratch_space, '(3A)' )                                  &
+                                         "PROBLEM cpl_diagnostics variable ",  &
                                 trim(fld%get_name()), ": can not assign value"
             call log_event( log_scratch_space, LOG_LEVEL_INFO )
       end select
    else if(istep == 0) then
      !for now. It will be set by restart when available
       call cpl_reset_field(fld)
-      write(log_scratch_space, '(2A)' ) "cpl_diagnostics: variable ",  &
+      write(log_scratch_space, '(2A)' ) "cpl_diagnostics: variable ",          &
                                    trim(fld%get_name())//": set to 0"
       call log_event( log_scratch_space, LOG_LEVEL_INFO )
    endif
@@ -127,7 +195,7 @@ module coupler_diagnostics_mod
 
   end subroutine cpl_diagnostics
 
-  !> @brief sets value af fld to 0
+  !> @brief sets value of fld to 0
   !> @param[in, out] fld coupling field
   subroutine cpl_reset_field(fld)
    implicit none
@@ -136,5 +204,22 @@ module coupler_diagnostics_mod
    call invoke(setval_c(fld, 0.0_r_def))
 
   end subroutine cpl_reset_field
+
+  subroutine initialise_scratch_fields(fld_cpld_fs)
+  !> @brief initialises temporary coupling work fields
+  !> @param[in] fld_cpld_fs: function space
+
+    use function_space_mod,             only: function_space_type
+
+    implicit none
+
+    type(function_space_type), intent(in), pointer :: fld_cpld_fs
+
+    ! initialize scratch variables
+    call cpl_field1%initialise( vector_space=fld_cpld_fs, name="cpl_field1_W3" )
+    call cpl_field2%initialise( vector_space=fld_cpld_fs, name="cpl_field2_W3" )
+    call cpl_field3%initialise( vector_space=fld_cpld_fs, name="cpl_field3_W3" )
+
+  end subroutine initialise_scratch_fields
 
 end module coupler_diagnostics_mod

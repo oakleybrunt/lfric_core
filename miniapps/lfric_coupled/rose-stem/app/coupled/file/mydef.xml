@@ -222,6 +222,9 @@
         <field id="lf_tauy" name="lf_tauy" long_name="lf_tauy" unit="m" domain_ref="face" />
         <field id="lf_solar" name="lf_solar" long_name="lf_solar" unit="m" domain_ref="face" />
         <field id="lf_heatflux" name="lf_heatflux" long_name="lf_heatflux" unit="m" domain_ref="face" />
+        <field id="lf_train" name="lf_train" long_name="lf_train" unit="m" domain_ref="face" />
+        <field id="lf_tsnow" name="lf_tsnow" long_name="lf_tsnow" unit="" domain_ref="face" />
+        <field id="lf_w10" name="lf_w10" long_name="lf_w10" unit="" domain_ref="face" />
 	<field id="theta" name="theta" long_name="air_potential_temperature" standard_name="air_potential_temperature" unit="K" grid_ref="full_level_face_grid" />
 	<field id="m_v" name="m_v" long_name="m_v" unit="kg kg-1" grid_ref="full_level_face_grid" />
 	<field id="m_cl" name="m_cl" long_name="m_cl" unit="kg kg-1" grid_ref="full_level_face_grid" />

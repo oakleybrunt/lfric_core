@@ -22,7 +22,7 @@
 # NFIELDS : total number of fields being exchanged.
 #
  $NFIELDS
-         5
+          8
  $END
 #
 ###############################################################################
@@ -48,59 +48,76 @@ T
  $END
 #
  $STRINGS
+#######################################################
+# wind stress (lfric) X component => ocean(NEMO)
 #
+ lf_taux O_OTaux1 466 3600 1 atmos_restart.nc   EXPORTED
+ 13824 1 1442 1207 lfric uor1 SEQ=+2
+ P  0  P  2
 #
-# Test field atmos(lfric) => ocean(NEMO)
+ MAPPING
 #
-# s_lf_dummy_t R_OC_DUMMY_T 466 720 1 atmos_restart.nc   EXPOUT
-# 13824 1 1442 1207 atm3 tor1 SEQ=+2
-# P  0  P  2
+ rmp_lfric_to_uor1_nomask_BILINEAR.nc
+#######################################################
 #
-# MAPPING
-#
-# rmp_atm3_to_tor1_nomask_BILINEAR.nc
-#
-# Test TAUX and TAUY fields atmos(lfric) => ocean(NEMO)
-#
-# Test field atmos(lfric) X component => ocean(NEMO)
-#
-###lf_taux O_OTaux1 466 720 1 atmos_restart.nc   EXPORTED
-###13824 1 1442 1207 lfric uor1 SEQ=+2
-###P  0  P  2
-#
-###MAPPING
-#
-###rmp_lfric_to_uor1_nomask_BILINEAR.nc
-#
-# Test field atmos(lfric) Y component => ocean(NEMO)
+# wind stress (lfric) Y component => ocean(NEMO)
 # #
-###lf_tauy O_OTauy1 466 720 1 atmos_restart.nc   EXPORTED
-###13824 1 1442 1207 lfric vor1 SEQ=+2
-###P  0  P  2
+ lf_tauy O_OTauy1 466 3600 1 atmos_restart.nc   EXPORTED
+ 13824 1 1442 1207 lfric vor1 SEQ=+2
+ P  0  P  2
 #
-###MAPPING
+ MAPPING
 #
-###rmp_lfric_to_vor1_nomask_BILINEAR.nc
+ rmp_lfric_to_vor1_nomask_BILINEAR.nc
+#######################################################
+# wind 10m (lfric) => ocean(NEMO)
 #
-# Test field atmos(lfric) Y component => ocean(NEMO)
+ lf_w10 O_Wind10 466 3600 1 atmos_restart.nc   EXPORTED
+ 13824 1 1442 1207 lfric tor1 SEQ=+2
+ P  0  P  2
+#
+ MAPPING
+#
+ rmp_lfric_to_tor1_nomask_BILINEAR.nc
+#
+####################################################
+# Solar radiation (lfric) => ocean(NEMO)
 # #
-lf_solar O_QsrOce 466 720 1 atmos_restart.nc   EXPOUT
-13824 1 1442 1207 lfric tor1 SEQ=+2
-P  0  P  2
+ lf_solar O_QsrOce 466 3600 1 atmos_restart.nc   EXPORTED
+ 13824 1 1442 1207 lfric tor1 SEQ=+2
+ P  0  P  2
 #
-MAPPING
+ MAPPING
 #
  rmp_lfric_to_tor1_nomask_CONSERVE_DSTAREA.nc
 ######################################################
- lf_heatflux O_QnsOce 466 720 1 atmos_restart.nc   EXPOUT
+# Surface heat flux (lfric) => ocean(NEMO)
+ lf_heatflux O_QnsOce 466 3600 1 atmos_restart.nc   EXPORTED
  13824 1 1442 1207 lfric tor1 SEQ=+2
  P  0  P  2
 #
  MAPPING
 ##
  rmp_lfric_to_tor1_nomask_CONSERVE_DSTAREA.nc
+######################################################
+# Total rain (lfric) => ocean(NEMO)
+ lf_train OTotRain 466 3600 1 atmos_restart.nc   EXPORTED
+ 13824 1 1442 1207 lfric tor1 SEQ=+2
+ P  0  P  2
 #
+ MAPPING
+##
+ rmp_lfric_to_tor1_nomask_CONSERVE_DSTAREA.nc
+#######################################################
+# Total snow (lfric) => ocean(NEMO)
+ lf_tsnow OTotSnow 466 3600 1 atmos_restart.nc   EXPORTED
+ 13824 1 1442 1207 lfric tor1 SEQ=+2
+ P  0  P  2
 #
+ MAPPING
+##
+ rmp_lfric_to_tor1_nomask_CONSERVE_DSTAREA.nc
+#######################################################
 #
 # Test field ocean(NEMO) => atmos(lfric)
 #
@@ -111,56 +128,5 @@ MAPPING
  MAPPING
 #
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
-
-#############################################################################
-## TRANSDEF: OCNT ATMT 17 36  ######################################################  
-#OIceTck_cat01 lf_icetck_cat01 468 720 1 atmos_restart.nc   EXPORTED
-#1442 1207 13824 1 tor1 lfric SEQ=+1
-# P  2  P 0
-##
-# MAPPING
-##
-# rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
-##
-#############################################################################
-## TRANSDEF: OCNT ATMT 18 37  ######################################################  
-#OIceTck_cat02 lf_icetck_cat02 468 720 1 atmos_restart.nc   EXPORTED
-#1442 1207 13824 1 tor1 lfric SEQ=+1
-# P  2  P 0
-##
-# MAPPING
-##
-# rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
-##
-#############################################################################
-## TRANSDEF: OCNT ATMT 19 38  ######################################################  
-#OIceTck_cat03 lf_icetck_cat03 468 720 1 atmos_restart.nc   EXPORTED
-#1442 1207 13824 1 tor1 lfric SEQ=+1
-# P  2  P 0
-##
-# MAPPING
-##
-# rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
-##
-#############################################################################
-## TRANSDEF: OCNT ATMT 20 39  ######################################################  
-#OIceTck_cat04 lf_icetck_cat04 468 720 1 atmos_restart.nc   EXPORTED
-#1442 1207 13824 1 tor1 lfric SEQ=+1
-# P  2  P 0
-##
-# MAPPING
-##
-# rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
-##
-#############################################################################
-## TRANSDEF: OCNT ATMT 21 40 ######################################################  
-#OIceTck_cat05 lf_icetck_cat05 468 720 1 atmos_restart.nc   EXPORTED
-#1442 1207 13824 1 tor1 lfric SEQ=+1
-# P  2  P 0
-##
-# MAPPING
-##
-# rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
-##
-#
+#######################################################
 $END

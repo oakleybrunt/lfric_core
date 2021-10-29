@@ -994,7 +994,7 @@
             ROSE_LAUNCHER_PREOPTS_LFRIC = -n $TOTAL_RANKS
         [[[directives]]]
             -l select = {{LFRIC_NODES + OCEAN_NODES + (XIOS_NODES if XIOS_NODES is defined else 0) }}
-            -l walltime=00:15:00
+            -l walltime=00:45:00
             -q=normal
 {%-                 endif %} {# 'run_' + configuration_label_res #}
 
