@@ -3,7 +3,7 @@ f_lat_deg=45.0,
 filename='mesh_C24.nc',
 fplane=.false.,
 geometry='spherical',
-partitioner='cubedsphere',
+offline_partitioning=.false.,
 prime_mesh_name='dynamics',
 topology='fully_periodic',
 /
@@ -80,7 +80,8 @@ scaling_factor=125.0,
 /
 
 &partitioning
-  panel_decomposition = 'auto'
+partitioner='cubedsphere',
+panel_decomposition='auto'
 /
 
 &solver

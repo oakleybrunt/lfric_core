@@ -3,7 +3,7 @@ f_lat_deg=45.0,
 filename='mesh_C32.nc',
 fplane=.false.,
 geometry='spherical',
-partitioner='cubedsphere',
+offline_partitioning=.false.,
 prime_mesh_name='dynamics',
 topology='fully_periodic',
 /
@@ -130,7 +130,8 @@ runge_kutta_method='ssp3',
 spinup_period=0.0,
 /
 &partitioning
-panel_decomposition = 'auto',
+partitioner='cubedsphere',
+panel_decomposition='auto',
 /
 &domain_size
 planar_domain_max_x=1.0,

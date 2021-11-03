@@ -42,8 +42,7 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine setUp( this )
 
-    use base_mesh_config_mod,      only : geometry_planar,    &
-                                          partitioner_planar, &
+    use base_mesh_config_mod,      only : geometry_planar, &
                                           topology_fully_periodic
     use finite_element_config_mod, only : cellshape_quadrilateral, &
                                           coord_system_xyz
@@ -62,12 +61,12 @@ contains
     ! Store the MPI communicator for later use
     call store_comm(this%getMpiCommunicator())
 
-    call feign_base_mesh_config( filename='foo',                    &
-                                 prime_mesh_name='unit_test',       &
-                                 geometry=geometry_planar,          &
-                                 partitioner=partitioner_planar,    &
-                                 topology=topology_fully_periodic,  &
-                                 fplane=.true.,                     &
+    call feign_base_mesh_config( filename='foo',                   &
+                                 prime_mesh_name='unit_test',      &
+                                 geometry=geometry_planar,         &
+                                 offline_partitioning=.false.,     &
+                                 topology=topology_fully_periodic, &
+                                 fplane=.true.,                    &
                                  f_lat_deg=45.0_r_def )
 
     call feign_finite_element_config(           &

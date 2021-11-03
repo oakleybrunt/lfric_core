@@ -3,7 +3,7 @@ f_lat_deg=45.0,
 filename='mesh_C24.nc',
 fplane=.false.,
 geometry='spherical',
-partitioner='cubedsphere',
+offline_partitioning=.false.,
 prime_mesh_name='C24',
 topology='fully_periodic',
 /
@@ -88,6 +88,7 @@ smagorinsky=.false.
 /
 
 &partitioning
+partitioner='cubedsphere',
 panel_decomposition = 'auto',
 /
 

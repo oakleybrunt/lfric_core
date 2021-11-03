@@ -33,8 +33,7 @@ contains
     use feign_config_mod,     only : feign_base_mesh_config, &
                                      feign_planet_config,    &
                                      feign_transport_config
-    use base_mesh_config_mod, only : geometry_planar,    &
-                                     partitioner_planar, &
+    use base_mesh_config_mod, only : geometry_planar, &
                                      topology_fully_periodic
     use transport_config_mod, only : scheme_method_of_lines,     &
                                      operators_fv,               &
@@ -55,11 +54,11 @@ contains
     ! Store the MPI communicator for later use
     call store_comm(this%getMpiCommunicator())
 
-    call feign_base_mesh_config( filename='foo',                      &
-                                 prime_mesh_name='unit_test',         &
-                                 geometry=geometry_planar,            &
-                                 partitioner=partitioner_planar,      &
-                                 topology=topology_fully_periodic,    &
+    call feign_base_mesh_config( filename='foo',                   &
+                                 prime_mesh_name='unit_test',      &
+                                 geometry=geometry_planar,         &
+                                 offline_partitioning=.false.,     &
+                                 topology=topology_fully_periodic, &
                                  fplane=.false., f_lat_deg=0.0_r_def )
     call feign_transport_config( scheme = scheme_method_of_lines, &
                                  operators = operators_fv, &

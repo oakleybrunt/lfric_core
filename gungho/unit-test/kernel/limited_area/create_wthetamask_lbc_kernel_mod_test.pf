@@ -37,8 +37,7 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine setUp( this )
 
-    use base_mesh_config_mod, only: partitioner_planar,      &
-                                    geometry_planar,         &
+    use base_mesh_config_mod, only: geometry_planar, &
                                     topology_non_periodic
     use feign_config_mod,          only : feign_base_mesh_config,  &
                                           feign_finite_element_config
@@ -56,7 +55,7 @@ contains
     call feign_base_mesh_config( filename        = 'foo',                 &
                                  prime_mesh_name = 'unit_test',           &
                                  geometry        = geometry_planar,       &
-                                 partitioner     = partitioner_planar,    &
+                                 offline_partitioning = .false.,          &
                                  topology        = topology_non_periodic, &
                                  fplane          = .false.,               &
                                  f_lat_deg       = 0.0_r_def )

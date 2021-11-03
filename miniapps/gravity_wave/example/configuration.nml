@@ -1,7 +1,7 @@
 &base_mesh
 filename = 'mesh_C16_MG.nc'
 geometry = 'spherical'
-partitioner = 'cubedsphere'
+offline_partitioning = .false.
 prime_mesh_name = 'C16'
 topology = 'fully_periodic'
 fplane = .false.
@@ -177,6 +177,7 @@ tau_u = 0.0
 /
 
 &partitioning
+partitioner = 'cubedsphere'
 panel_decomposition = 'auto'
 panel_xproc = 1
 panel_yproc = 1

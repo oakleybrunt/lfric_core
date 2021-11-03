@@ -40,7 +40,6 @@ contains
   subroutine setUp( this )
 
     use base_mesh_config_mod,      only : geometry_spherical,      &
-                                          partitioner_cubedsphere, &
                                           topology_fully_periodic
     use extrusion_config_mod,      only : method_uniform,       &
                                           stretching_method_linear
@@ -63,7 +62,7 @@ contains
                          filename        = 'foo',                   &
                          prime_mesh_name = 'unit_test',             &
                          geometry        = geometry_spherical,      &
-                         partitioner     = partitioner_cubedsphere, &
+                         offline_partitioning = .false.,            &
                          topology        = topology_fully_periodic, &
                          fplane          = .false.,                 &
                          f_lat_deg       = 0.0_r_def )

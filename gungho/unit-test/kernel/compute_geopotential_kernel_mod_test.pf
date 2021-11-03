@@ -50,8 +50,7 @@ contains
                                           feign_base_mesh_config,   &
                                           feign_formulation_config, &
                                           feign_finite_element_config
-    use base_mesh_config_mod,      only : geometry_spherical,       &
-                                          partitioner_cubedsphere,  &
+    use base_mesh_config_mod,      only : geometry_spherical, &
                                           topology_fully_periodic
     use finite_element_config_mod, only : cellshape_quadrilateral,  &
                                           coord_system_xyz
@@ -67,11 +66,11 @@ contains
     call store_comm(this%getMpiCommunicator())
 
     ! Base mesh config is needed to ensure spherical geometry is used
-    call feign_base_mesh_config( filename='foo',                      &
-                                 prime_mesh_name='dynamics',          &
-                                 geometry=geometry_spherical,         &
-                                 partitioner=partitioner_cubedsphere, &
-                                 topology=topology_fully_periodic,    &
+    call feign_base_mesh_config( filename='foo',                   &
+                                 prime_mesh_name='dynamics',       &
+                                 geometry=geometry_spherical,      &
+                                 offline_partitioning=.false.,     &
+                                 topology=topology_fully_periodic, &
                                  fplane=.false., f_lat_deg=f_lat )
 
     call feign_finite_element_config( cellshape=cellshape_quadrilateral, &

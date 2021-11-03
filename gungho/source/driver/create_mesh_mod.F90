@@ -32,6 +32,7 @@ module create_mesh_mod
   use ugrid_file_mod,             only: ugrid_file_type
 
   use base_mesh_config_mod,       only: filename, prime_mesh_name, &
+                                        offline_partitioning,      &
                                         key_from_geometry,         &
                                         key_from_topology,         &
                                         geometry,                  &
@@ -198,27 +199,38 @@ subroutine init_mesh( local_rank, total_ranks,       &
     end if
   end if
 
-  ! 2.0 Set constants that will control partitioning.
-  !=================================================================
-  call log_event( "Setting up partition mesh(es)", LOG_LEVEL_INFO )
-  call set_partition_parameters( total_ranks,       &
-                                 xproc, yproc,      &
-                                 partitioner_ptr )
+  if (offline_partitioning) then
 
-  ! 3.0 Read in all global meshes and create local meshes from them.
-  !=================================================================
-  allocate( global_mesh_collection, source = global_mesh_collection_type() )
-  call create_all_base_meshes( local_rank, total_ranks,     &
-                               xproc, yproc,                &
-                               stencil_depth,               &
-                               partitioner_ptr,             &
-                               create_multigrid,            &
-                               multires_coupling_mesh_tags )
+    write (log_scratch_space,'(A)') &
+        'Use of offline partitioned mesh files is not yet supported'
+    call log_event(trim(log_scratch_space), LOG_LEVEL_ERROR )
 
-  ! 4.0 Read in the global intergrid mesh mappings, then create the
-  !     associated local mesh maps
-  !=================================================================
-  call create_mesh_maps()
+  else
+
+    call log_event( "Setting up partition mesh(es)", LOG_LEVEL_INFO )
+
+    ! 2.0 Set constants that will control partitioning.
+    !=================================================================
+    call set_partition_parameters( total_ranks,       &
+                                   xproc, yproc,      &
+                                   partitioner_ptr )
+
+    ! 3.0 Read in all global meshes and create local meshes from them.
+    !=================================================================
+    allocate( global_mesh_collection, source = global_mesh_collection_type() )
+    call create_all_base_meshes( local_rank, total_ranks,     &
+                                 xproc, yproc,                &
+                                 stencil_depth,               &
+                                 partitioner_ptr,             &
+                                 create_multigrid,            &
+                                 multires_coupling_mesh_tags )
+
+    ! 4.0 Read in the global intergrid mesh mappings, then create the
+    !     associated local mesh maps
+    !=================================================================
+    call create_mesh_maps()
+
+  end if
 
 
   ! 5.0 Extrude all neshes into 3D local meshes

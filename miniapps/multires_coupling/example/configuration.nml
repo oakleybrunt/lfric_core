@@ -4,7 +4,7 @@ filename='mesh_C24.nc',
 fplane=.false.,
 geometry='spherical',
 topology= 'fully_periodic',
-partitioner='cubedsphere',
+offline_partitioning=.false.
 prime_mesh_name='C24',
 /
 
@@ -107,6 +107,7 @@ wind_time_period=0.0
 /
 
 &partitioning
+partitioner='cubedsphere',
 panel_decomposition = 'auto',
 /
 

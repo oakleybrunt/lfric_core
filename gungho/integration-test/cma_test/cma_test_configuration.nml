@@ -1,7 +1,7 @@
 &base_mesh
   filename        = 'mesh_C12.nc'
   geometry        = 'spherical'
-  partitioner     = 'cubedsphere'
+  offline_partitioning = .false.
   prime_mesh_name = 'unit_test'
   topology        = 'fully_periodic'
   fplane          = .false.
@@ -38,6 +38,7 @@
 /
 
 &partitioning
+  partitioner         = 'cubedsphere'
   panel_decomposition = 'auto'
 /
 

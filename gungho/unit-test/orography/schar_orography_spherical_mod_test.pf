@@ -66,8 +66,7 @@ contains
 
     use schar_orography_spherical_mod, only : schar_spherical_type
     use finite_element_config_mod,     only : cellshape_quadrilateral
-    use base_mesh_config_mod,          only : geometry_spherical,      &
-                                              partitioner_cubedsphere, &
+    use base_mesh_config_mod,          only : geometry_spherical, &
                                               topology_fully_periodic
     use feign_config_mod,              only :                         &
                                        feign_base_mesh_config,        &
@@ -92,7 +91,7 @@ contains
                          filename        = filename,                &
                          prime_mesh_name = mesh_name,               &
                          geometry        = geometry_spherical,      &
-                         partitioner     = partitioner_cubedsphere, &
+                         offline_partitioning = .false.,            &
                          topology        = topology_fully_periodic, &
                          fplane          = .false.,                 &
                          f_lat_deg       = 0.0_r_def )

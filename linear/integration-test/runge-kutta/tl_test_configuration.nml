@@ -1,7 +1,7 @@
 &base_mesh
 filename='mesh_C6.nc',
 geometry='spherical',
-partitioner='cubedsphere',
+offline_partitioning=.false.,
 prime_mesh_name='dynamics',
 topology='fully_periodic',
 /
@@ -159,6 +159,7 @@ l_esm_couple_test=.false.,
 orog_init_option='none',
 /
 &partitioning
+partitioner='cubedsphere',
 panel_decomposition='auto',
 panel_xproc=1,
 panel_yproc=1,

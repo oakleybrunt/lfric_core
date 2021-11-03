@@ -2,7 +2,7 @@
   filename        = 'mesh_C24.nc'
   prime_mesh_name = 'dynamics'
   geometry        = 'spherical'
-  partitioner     = 'cubedsphere'
+  offline_partitioning = .false.
   topology        = 'fully_periodic'
   fplane          = .false.
   f_lat_deg       = 45.0
@@ -118,6 +118,7 @@
 /
 
 &partitioning
+  partitioner         = 'cubedsphere'
   panel_decomposition = 'auto'
 /
 

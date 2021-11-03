@@ -57,8 +57,7 @@ contains
 
     use schar_orography_cartesian_mod, only : schar_cartesian_type
     use finite_element_config_mod,     only : cellshape_quadrilateral
-    use base_mesh_config_mod,          only : geometry_planar,    &
-                                              partitioner_planar, &
+    use base_mesh_config_mod,          only : geometry_planar, &
                                               topology_fully_periodic
     use feign_config_mod,              only :                         &
                                        feign_base_mesh_config,        &
@@ -84,7 +83,7 @@ contains
                          filename        = filename,                &
                          prime_mesh_name = mesh_name,               &
                          geometry        = geometry_planar,         &
-                         partitioner     = partitioner_planar,      &
+                         offline_partitioning = .false.,            &
                          topology        = topology_fully_periodic, &
                          fplane          = .false.,                 &
                          f_lat_deg       = 0.0_r_def )

@@ -41,7 +41,6 @@ contains
   subroutine setUp( this )
 
     use base_mesh_config_mod,      only : geometry_planar,    &
-                                          partitioner_planar, &
                                           topology_fully_periodic
     use chi_transform_mod,         only : init_chi_transforms
     use finite_element_config_mod, only : cellshape_quadrilateral, &
@@ -68,7 +67,7 @@ contains
     call feign_base_mesh_config( filename='foo',                      &
                                  prime_mesh_name='unit_test',         &
                                  geometry=geometry_planar,            &
-                                 partitioner=partitioner_planar,      &
+                                 offline_partitioning=.false.,        &
                                  topology=topology_fully_periodic,    &
                                  fplane=.false., f_lat_deg=0.0_r_def )
 

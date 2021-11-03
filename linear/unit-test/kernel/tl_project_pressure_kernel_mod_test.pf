@@ -56,8 +56,8 @@ contains
   subroutine setUp( this )
 
     use base_mesh_config_mod,      only : geometry_planar,    &
-                                          partitioner_planar, &
                                           topology_fully_periodic
+!    use partitioning_config_mod,   only : partitioner_planar
     use finite_element_config_mod, only : cellshape_quadrilateral, &
                                           coord_system_xyz
     use feign_config_mod,          only : feign_base_mesh_config,           &
@@ -78,9 +78,15 @@ contains
     call feign_base_mesh_config( filename='foo',                      &
                                  prime_mesh_name='unit_test',         &
                                  geometry=geometry_planar,            &
-                                 partitioner=partitioner_planar,      &
+                                 offline_partitioning=.false.,        &
                                  topology=topology_fully_periodic,    &
                                  fplane=.false., f_lat_deg=0.0_r_def )
+
+ !   call feign_partitioning_config( partitioner=partitioner_planar, &
+  !                                  panel_decomposition='auto',     &
+  !                                  panel_xproc=1,                  &
+  !                                  panel_yproc=1 )
+
     call feign_finite_element_config( cellshape=cellshape_quadrilateral, &
                                       coord_order=0_i_def,               &
                                       coord_system=coord_system_xyz,     &
