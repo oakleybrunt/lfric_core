@@ -11,9 +11,8 @@ module io_dev_init_files_mod
   ! Infrastructure
   use clock_mod,                 only: clock_type
   use constants_mod,             only: i_def, str_def, str_max_filename
-  use lfric_xios_file_mod,       only: xios_file_type
-  use linked_list_mod,           only: linked_list_type, &
-                                       linked_list_item_type
+  use lfric_xios_file_mod,       only: xios_file_type, &
+                                       append_file_to_list
 
   ! Configuration
   use files_config_mod,              only: diag_stem_name,            &
@@ -44,8 +43,8 @@ module io_dev_init_files_mod
 
     implicit none
 
-    type(linked_list_type), intent(inout) :: files_list
-    class(clock_type),      intent(in)    :: clock
+    type(xios_file_type), allocatable, intent(out) :: files_list(:)
+    class(clock_type),                 intent(in) :: clock
 
     type(xios_file_type)            :: tmp_file
     character(len=str_max_filename) :: checkpoint_write_fname, &
@@ -56,7 +55,7 @@ module io_dev_init_files_mod
     ! Setup diagnostic output file
     if ( write_diag ) then
       call tmp_file%init_xios_file("io_dev_diag", freq=diagnostic_frequency)
-      call files_list%insert_item(tmp_file)
+      call append_file_to_list(tmp_file, files_list)
     end if
 
     ! Setup dump-writing context information
@@ -69,7 +68,7 @@ module io_dev_init_files_mod
       ! Setup dump file for end timestep
       call tmp_file%init_xios_file( "io_dev_dump_out", dump_fname, &
                                     clock%get_last_step() )
-      call files_list%insert_item(tmp_file)
+      call append_file_to_list(tmp_file, files_list)
     end if
 
     ! Setup dump-reading context information
@@ -80,7 +79,7 @@ module io_dev_init_files_mod
 
       ! Setup dump file
       call tmp_file%init_xios_file( "io_dev_dump_in", path=dump_fname )
-      call files_list%insert_item(tmp_file)
+      call append_file_to_list(tmp_file, files_list)
     end if
 
     ! Setup checkpoint writing context information
@@ -93,7 +92,7 @@ module io_dev_init_files_mod
                                     checkpoint_write_fname,    &
                                     clock%get_last_step() - clock%get_first_step(), &
                                     field_group_id="checkpoint_fields" )
-      call files_list%insert_item(tmp_file)
+      call append_file_to_list(tmp_file, files_list)
     end if
 
     ! Setup checkpoint reading context information
@@ -104,7 +103,7 @@ module io_dev_init_files_mod
 
       call tmp_file%init_xios_file( "io_dev_checkpoint_read", &
                                     checkpoint_read_fname, clock%get_first_step() - 1 )
-      call files_list%insert_item(tmp_file)
+      call append_file_to_list(tmp_file, files_list)
     end if
 
     ! Setup time-varying input files
@@ -113,13 +112,13 @@ module io_dev_init_files_mod
       write(input_fname,'(A)') trim(start_dump_directory)//'/'// &
                                trim(time_varying_input_path)
       call tmp_file%init_xios_file("io_dev_time_varying_input", path=input_fname)
-      call files_list%insert_item(tmp_file)
+      call append_file_to_list(tmp_file, files_list)
 
       ! Set time data input filename from namelist
       write(input_fname,'(A)') trim(start_dump_directory)//'/'// &
                                trim(time_data_path)
       call tmp_file%init_xios_file("io_dev_times", path=input_fname)
-      call files_list%insert_item(tmp_file)
+      call append_file_to_list(tmp_file, files_list)
 
     end if
 

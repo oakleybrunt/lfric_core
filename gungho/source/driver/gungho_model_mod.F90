@@ -44,9 +44,9 @@ module gungho_model_mod
                                          write_minmax_tseries
   use io_context_mod,             only : io_context_type
   use lfric_xios_clock_mod,       only : lfric_xios_clock_type
-  use lfric_xios_context_mod,     only : lfric_xios_context_type
-  use lfric_xios_io_mod,          only : initialise_xios, &
-                                         populate_filelist_if
+  use lfric_xios_context_mod,     only : lfric_xios_context_type, &
+                                         filelist_populator
+  use lfric_xios_io_mod,          only : initialise_xios
   use lfric_xios_write_mod,       only : write_state, &
                                          write_field_single_face
   use linked_list_mod,            only : linked_list_type
@@ -124,22 +124,6 @@ module gungho_model_mod
 
 contains
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> @brief Fills I/O system's list of files for Gung Ho.
-  !>
-  !> @param[inout] file_list  List of files the model wishes to access.
-  !> @param[in]    clock      Model time.
-  !>
-  subroutine populate_file_list( file_list, clock )
-
-    implicit none
-
-    class(linked_list_type), intent(inout) :: file_list
-    class(clock_type),       intent(in)    :: clock
-
-    call init_gungho_files( file_list, clock )
-
-  end subroutine populate_file_list
 
   !> @brief Initialises the infrastructure and sets up constants used by the
   !>        model.
@@ -189,7 +173,7 @@ contains
 
     character(len=*), parameter :: io_context_name = "gungho_atm"
 
-    procedure(populate_filelist_if), pointer :: populate_pointer
+    procedure(filelist_populator), pointer :: files_init_ptr
 
     integer(i_def)    :: total_ranks, local_rank, stencil_depth
     integer(i_native) :: log_level
@@ -332,19 +316,19 @@ contains
     call log_event("Initialising I/O context", LOG_LEVEL_INFO)
 
     if ( use_xios_io ) then
-      populate_pointer => populate_file_list
-      call initialise_xios( io_context,                    &
-                            io_context_name,               &
-                            communicator,                  &
-                            mesh_id,                       &
-                            twod_mesh_id,                  &
-                            chi,                           &
-                            panel_id,                      &
-                            timestep_start,                &
-                            timestep_end,                  &
-                            spinup_period,                 &
-                            dt,                            &
-                            populate_filelist=populate_pointer )
+      files_init_ptr => init_gungho_files
+      call initialise_xios( io_context,                       &
+                            io_context_name,                  &
+                            communicator,                     &
+                            mesh_id,                          &
+                            twod_mesh_id,                     &
+                            chi,                              &
+                            panel_id,                         &
+                            timestep_start,                   &
+                            timestep_end,                     &
+                            spinup_period,                    &
+                            dt,                               &
+                            populate_filelist=files_init_ptr )
     else
       call initialise_simple_io( &
                             io_context,                    &

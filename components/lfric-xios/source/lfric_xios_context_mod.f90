@@ -18,6 +18,7 @@ module lfric_xios_context_mod
   use log_mod,              only : log_event,       &
                                    log_level_error, &
                                    log_level_info
+  use lfric_xios_file_mod,  only : xios_file_type
   use xios,                 only : xios_close_context_definition, &
                                    xios_context,                  &
                                    xios_context_finalize,         &
@@ -27,6 +28,7 @@ module lfric_xios_context_mod
 
   implicit none
 
+  public :: filelist_populator
   private
 
   !> Manages interactions with XIOS.
@@ -36,12 +38,25 @@ module lfric_xios_context_mod
     character(:),                 allocatable :: id
     type(xios_context)                        :: handle
     class(lfric_xios_clock_type), allocatable :: clock
+    type(xios_file_type),         allocatable :: filelist(:)
+
   contains
     private
     procedure, public :: initialise
     procedure, public :: get_clock
+    procedure, public :: get_filelist
     final :: finalise
   end type lfric_xios_context_type
+
+abstract interface
+
+  subroutine filelist_populator(files_list, clock)
+    import xios_file_type, clock_type
+    type(xios_file_type), allocatable, intent(out) :: files_list(:)
+    class(clock_type),                 intent(in)  :: clock
+  end subroutine filelist_populator
+
+end interface
 
 contains
 
@@ -56,13 +71,15 @@ contains
   !> @param [in]     spinup_period     Number of seconds in spinup period.
   !> @param [in]     seconds_per_step  Number of seconds in a time step.
   !> @param [in]     timer_flag        Flag for use of subroutine timers.
+  !> @param [in]     populate_filelist Procedure use to populate list of files
   !>
   subroutine initialise( this, id, communicator,  &
                          callback,                &
                          start_time, finish_time, &
                          spinup_period,           &
                          seconds_per_step,        &
-                         timer_flag )
+                         timer_flag,              &
+                         populate_filelist )
 
     implicit none
 
@@ -75,6 +92,8 @@ contains
     real(r_second),                     intent(in)    :: spinup_period
     real(r_second),                     intent(in)    :: seconds_per_step
     logical(l_def), optional,           intent(in)    :: timer_flag
+    procedure(filelist_populator),  &
+                     pointer, optional, intent(in)    :: populate_filelist
 
     type(step_calendar_type), allocatable :: calendar
     integer(i_native)                     :: rc
@@ -95,6 +114,12 @@ contains
     call this%clock%initialise( calendar, start_time, finish_time, &
                                 seconds_per_step, spinup_period,   &
                                 timer_flag=timer_flag )
+
+    if (present(populate_filelist)) then
+      call populate_filelist(this%filelist, this%clock)
+    else
+      allocate(this%filelist(0))
+    end if
 
     !> @todo Rather than using this callback we might prefer to pass arrays
     !>       of objects which describe things to be set up. Alternatively we
@@ -135,5 +160,21 @@ contains
     clock => this%clock
 
   end function get_clock
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !> Gets the context's file list
+  !>
+  !> @return  The list of XIOS file type objects used by the model
+  !>
+  function get_filelist( this ) result( filelist )
+
+    implicit none
+
+    class(lfric_xios_context_type), intent(in) :: this
+    type(xios_file_type), allocatable :: filelist(:)
+
+    filelist = this%filelist
+
+  end function get_filelist
 
 end module lfric_xios_context_mod

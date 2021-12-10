@@ -8,16 +8,15 @@
 !>
 module lfric_xios_file_mod
 
-  use constants_mod,         only: i_def, str_def, str_max_filename
-  use linked_list_data_mod,  only: linked_list_data_type
+  use constants_mod,  only: i_def, str_def, str_max_filename
 
-implicit none
+  implicit none
 
 private
 
 !> @brief Container for file properties need by XIOS
 !>
-type, extends(linked_list_data_type), public :: xios_file_type
+type, public :: xios_file_type
   private
 
   !> Unique identifier for XIOS file handle
@@ -37,6 +36,8 @@ contains
   procedure, public :: get_field_group
 
 end type xios_file_type
+
+public :: append_file_to_list
 
 contains
 !-------------------------------------------------------------------------------
@@ -88,7 +89,7 @@ function get_xios_id(self) result(output_xios_id)
 
   implicit none
 
-  class(xios_file_type),   intent(inout) :: self
+  class(xios_file_type), intent(inout) :: self
 
   character(str_def) :: output_xios_id
 
@@ -103,7 +104,7 @@ function get_path(self) result(output_path)
 
   implicit none
 
-  class(xios_file_type),            intent(inout) :: self
+  class(xios_file_type), intent(inout) :: self
 
   character(str_max_filename) :: output_path
 
@@ -140,5 +141,31 @@ function get_field_group(self) result(field_group_id)
   field_group_id = self%field_group
 
 end function get_field_group
+
+!> @brief  Appends a file to the end of a list of files.
+!>
+!> @param[in]      file      An XIOS file object
+!> @param[in,out]  filelist  A list of XIOS file objects
+subroutine append_file_to_list(file, filelist)
+
+  implicit none
+
+  class(xios_file_type),             intent(in)    :: file
+  type(xios_file_type), allocatable, intent(inout) :: filelist(:)
+
+  type(xios_file_type), allocatable :: new_filelist(:)
+
+  if (.not. allocated(filelist)) then
+    allocate(new_filelist(1))
+    new_filelist(1) = file
+  else
+    allocate(new_filelist(size(filelist)+1))
+    new_filelist(1:size(filelist)) = filelist
+    new_filelist(size(filelist)+1) = file
+  end if
+
+  filelist = new_filelist
+
+end subroutine append_file_to_list
 
 end module lfric_xios_file_mod

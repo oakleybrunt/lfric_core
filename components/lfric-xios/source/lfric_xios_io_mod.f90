@@ -22,7 +22,8 @@ module lfric_xios_io_mod
   use field_mod,                     only: field_type, field_proxy_type
   use finite_element_config_mod,     only: element_order
   use lfric_xios_clock_mod,          only: lfric_xios_clock_type
-  use lfric_xios_context_mod,        only: lfric_xios_context_type
+  use lfric_xios_context_mod,        only: lfric_xios_context_type, &
+                                           filelist_populator
   use lfric_xios_file_mod,           only: xios_file_type
   use function_space_mod,            only: function_space_type, BASIS
   use function_space_collection_mod, only: function_space_collection
@@ -30,8 +31,6 @@ module lfric_xios_io_mod
                                            name_from_functionspace
   use io_context_mod,                only: io_context_type, &
                                            io_context_initialiser_type
-  use linked_list_mod,               only: linked_list_type, &
-                                           linked_list_item_type
   use log_mod,                       only: log_event,       &
                                            log_level_error, &
                                            log_level_info,  &
@@ -54,21 +53,7 @@ module lfric_xios_io_mod
 
   implicit none
   private
-  public :: initialise_xios, populate_filelist_if
-
-  interface
-    !> Callback for model to list the files it wants to access.
-    !>
-    !> @param[in,out] file_list  Collection of xios_file_type objects.
-    !> @param[in]     clock      Model's time object.
-    !>
-    subroutine populate_filelist_if( file_list, clock )
-      import clock_type, linked_list_type
-      implicit none
-      class(linked_list_type), intent(inout) :: file_list
-      class(clock_type),       intent(in)    :: clock
-    end subroutine populate_filelist_if
-  end interface
+  public :: initialise_xios
 
   !> Sets up context with XIOS specifics.
   !>
@@ -80,8 +65,6 @@ module lfric_xios_io_mod
       pointer         :: chi(:)            => null()
     class(field_type), &
       pointer         :: panel_id          => null()
-    procedure(populate_filelist_if), &
-      pointer, nopass :: populate_filelist => null()
     !
     ! An unused allocatable integer that prevents an intenal compiler error
     ! with the GNU Fortran compiler. Adding an allocatable forces the compiler
@@ -100,18 +83,6 @@ module lfric_xios_io_mod
 contains
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> Null file list populator. Used when population is not needed.
-  !>
-  !> @param[in,out] filelist  List to populate with xios_file_type objects.
-  !> @param[in]     clock     Model time.
-  !>
-  subroutine dummy_populate( filelist, clock )
-    implicit none
-    class(linked_list_type), intent(inout) :: filelist
-    class(clock_type),       intent(in)    :: clock
-  end subroutine dummy_populate
-
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Initialises a setup_xios object.
   !>
   !> @param[in] mesh_id            Identifier for the primary mesh.
@@ -124,8 +95,7 @@ contains
                                     mesh_id,      &
                                     twod_mesh_id, &
                                     chi,          &
-                                    panel_id,     &
-                                    populate_filelist )
+                                    panel_id )
 
     implicit none
 
@@ -134,14 +104,11 @@ contains
     integer(kind=i_def),    intent(in)          :: twod_mesh_id
     class(field_type),      intent(in), target  :: chi(:)
     class(field_type),      intent(in), target  :: panel_id
-    procedure(populate_filelist_if), &
-                            intent(in), pointer :: populate_filelist
 
     this%mesh_id           = mesh_id
     this%twod_mesh_id      = twod_mesh_id
     this%chi               => chi
     this%panel_id          => panel_id
-    this%populate_filelist => populate_filelist
 
   end subroutine initialise_setup_xios
 
@@ -157,13 +124,12 @@ contains
     class(setup_xios_type), intent(inout) :: this
     class(io_context_type), intent(in)    :: context
 
-    type(linked_list_type) :: file_list
+    type(xios_file_type), allocatable :: file_list(:)
 
-    file_list = linked_list_type()
     select type(context)
       class is (lfric_xios_context_type)
         call init_xios_dimensions(this%mesh_id, this%twod_mesh_id, this%chi, this%panel_id)
-        call this%populate_filelist( file_list, context%get_clock() )
+        file_list = context%get_filelist()
         call setup_xios_files( file_list, context%get_clock() )
 
       class default
@@ -191,18 +157,18 @@ contains
   !> @param[in]   timer_flag         Flag for use of subroutine timers
   !> @param[in]   populate_filelist  Optional procedure to build file list
   !>
-  subroutine initialise_xios( context,          &
-                              identifier,       &
-                              communicator,     &
-                              mesh_id,          &
-                              twod_mesh_id,     &
-                              chi,              &
-                              panel_id,         &
-                              start_step,       &
-                              end_step,         &
-                              spinup_period,    &
-                              seconds_per_step, &
-                              timer_flag,       &
+  subroutine initialise_xios( context,           &
+                              identifier,        &
+                              communicator,      &
+                              mesh_id,           &
+                              twod_mesh_id,      &
+                              chi,               &
+                              panel_id,          &
+                              start_step,        &
+                              end_step,          &
+                              spinup_period,     &
+                              seconds_per_step,  &
+                              timer_flag,        &
                               populate_filelist )
 
     implicit none
@@ -219,21 +185,14 @@ contains
     real(r_second),                intent(in)               :: spinup_period
     real(r_second),                intent(in)               :: seconds_per_step
     logical(kind=l_def), optional, intent(in)               :: timer_flag
-    procedure(populate_filelist_if), &
+    procedure(filelist_populator), &
                 optional, pointer, intent(in)               :: populate_filelist
-
-    procedure(populate_filelist_if), pointer :: dummy_pointer
 
     type(setup_xios_type) :: callback
 
     integer :: rc
 
-    if (present (populate_filelist)) then
-      call callback%initialise( mesh_id, twod_mesh_id, chi, panel_id, populate_filelist )
-    else
-      dummy_pointer => dummy_populate
-      call callback%initialise( mesh_id, twod_mesh_id, chi, panel_id, dummy_pointer )
-    end if
+    call callback%initialise( mesh_id, twod_mesh_id, chi, panel_id )
 
     allocate( lfric_xios_context_type::context, stat=rc )
     if (rc /= 0) then
@@ -241,14 +200,15 @@ contains
     end if
     select type(context)
       class is (lfric_xios_context_type)
-        call context%initialise( identifier,       &
-                                 communicator,     &
-                                 callback,         &
-                                 start_step,       &
-                                 end_step,         &
-                                 spinup_period,    &
-                                 seconds_per_step, &
-                                 timer_flag )
+        call context%initialise( identifier,        &
+                                 communicator,      &
+                                 callback,          &
+                                 start_step,        &
+                                 end_step,          &
+                                 spinup_period,     &
+                                 seconds_per_step,  &
+                                 timer_flag,        &
+                                 populate_filelist )
       ! No need to default the select as we allocated just above.
     end select
 
@@ -335,7 +295,7 @@ contains
      r2d = radians_to_degrees
     else
      r2d = 1.0_r_def
-    end if
+    endif
 
     ! Set up array to hold number of dofs for local domains
     allocate(local_undf(1))
@@ -459,66 +419,53 @@ contains
 
     implicit none
 
-    type(linked_list_type), intent(in) :: files_list
-    type(clock_type),       intent(in) :: clock
+    type(xios_file_type), allocatable, intent(in) :: files_list(:)
+    type(clock_type),                  intent(in) :: clock
 
     type(xios_file)        :: file_hdl
     type(xios_duration)    :: file_freq
     type(xios_fieldgroup)  :: field_group_hdl
-    character(len=str_def) :: field_group_id
-    character(len=str_def) :: file_mode
+    character(len=str_def) :: field_group_id, file_mode
+    integer(kind=i_def)    :: i
 
-    type(linked_list_item_type), pointer :: loop  => null()
-    type(xios_file_type),        pointer :: file  => null()
+    type(xios_file_type) :: file
 
-    ! Start at the head of the time_axis linked list
-    loop => files_list%get_head()
-    do
-      ! If list is empty or we're at the end of list, return a null pointer
-      if ( .not. associated(loop) ) then
-        nullify(file)
-        exit
+    if (size(files_list) == 0) then
+      return
+    end if
+
+    do i = 1, size(files_list)
+
+      file = files_list(i)
+
+      ! Get file handle from XIOS and set attributes
+      call xios_get_handle( file%get_xios_id(), file_hdl )
+      call xios_set_attr( file_hdl, name=file%get_path() )
+
+      ! Set XIOS duration object second value equal to file output frequency
+      if ( .not. file%get_output_freq() == -999 ) then
+        file_freq%second = file%get_output_freq() * clock%get_seconds_per_step()
+        call xios_set_attr( file_hdl, output_freq=file_freq )
       end if
 
-      ! tmp_ptr is a dummy pointer used to 'cast' to the xios_file_type so that
-      ! we can get at the information in the payload
-      select type( tmp_ptr => loop%payload )
-        type is (xios_file_type)
-          file => tmp_ptr
+      call xios_set_attr( file_hdl, enabled=.true. )
 
-          ! Get file handle from XIOS and set attributes
-          call xios_get_handle( file%get_xios_id(), file_hdl )
-          call xios_set_attr( file_hdl, name=file%get_path() )
+      ! If there is an associated field group, enable it
+      field_group_id = file%get_field_group()
 
-          ! Set XIOS duration object second value equal to file output frequency
-          if ( .not. file%get_output_freq() == -999 ) then
-            file_freq%second = file%get_output_freq() * clock%get_seconds_per_step()
-            call xios_set_attr( file_hdl, output_freq=file_freq )
-          end if
+      if ( .not. field_group_id == "unset" ) then
+        call xios_get_handle( field_group_id, field_group_hdl )
+        call xios_set_attr( field_group_hdl, enabled=.true. )
+      end if
 
-          call xios_set_attr( file_hdl, enabled=.true. )
+      ! If file is not in "read" mode switch time-counter to exclusive
+      call xios_get_attr( file_hdl, mode=file_mode )
+      if ( .not. file_mode == "read" ) then
+        call xios_set_attr( file_hdl, time_counter="exclusive", &
+                                      time_counter_name="time" )
+      end if
 
-          ! If there is an associated field group, enable it
-          field_group_id = file%get_field_group()
-
-          if ( .not. field_group_id == "unset" ) then
-            call xios_get_handle( field_group_id, field_group_hdl )
-            call xios_set_attr( field_group_hdl, enabled=.true. )
-          end if
-
-          ! If file is not in "read" mode switch time-counter to exclusive
-          call xios_get_attr( file_hdl, mode=file_mode )
-          if ( .not. file_mode == "read" ) then
-            call xios_set_attr( file_hdl, time_counter="exclusive", &
-                                          time_counter_name="time" )
-          end if
-
-      end select
-      loop => loop%next
     end do
-
-    nullify(loop)
-    nullify(file)
 
   end subroutine setup_xios_files
 

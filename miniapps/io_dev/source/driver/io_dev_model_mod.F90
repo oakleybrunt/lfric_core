@@ -18,10 +18,10 @@ module io_dev_model_mod
   use field_mod,                  only : field_type
   use io_context_mod,             only : io_context_type, &
                                          io_context_initialiser_type
+  use lfric_xios_context_mod,     only : filelist_populator
   use lfric_xios_clock_mod,       only : lfric_xios_clock_type
-  use lfric_xios_io_mod,          only : initialise_xios, &
-                                         populate_filelist_if
-  use linked_list_mod,            only : linked_list_type
+  use lfric_xios_file_mod,        only : xios_file_type
+  use lfric_xios_io_mod,          only : initialise_xios
   use local_mesh_collection_mod,  only : local_mesh_collection, &
                                          local_mesh_collection_type
   use log_mod,                    only : log_event,          &
@@ -69,7 +69,7 @@ contains
   !>
   subroutine initialise_context( file_list, clock )
     implicit none
-    class(linked_list_type), intent(inout) :: file_list
+    type(xios_file_type), allocatable, intent(out) :: file_list(:)
     class(clock_type),       intent(in)    :: clock
     call init_io_dev_files( file_list, clock )
   end subroutine initialise_context
@@ -120,7 +120,7 @@ contains
     ! Local variables
     character(*), parameter :: xios_context_id = 'io_dev'
 
-    procedure(populate_filelist_if), pointer :: init_context_ptr
+    procedure( filelist_populator ), pointer :: files_init_ptr
 
     integer(i_def)    :: total_ranks, local_rank, stencil_depth
     integer(i_native) :: log_level
@@ -188,21 +188,21 @@ contains
     call init_fem( mesh_id, chi, panel_id )
 
     ! Set up XIOS domain and context
-    init_context_ptr => initialise_context
+    files_init_ptr => init_io_dev_files
     if ( subroutine_timers ) call timer('initialise_xios')
-    call initialise_xios( io_context,                        &
-                          xios_context_id,                   &
-                          communicator,                      &
-                          mesh_id,                           &
-                          twod_mesh_id,                      &
-                          chi,                               &
-                          panel_id,                          &
-                          timestep_start,                    &
-                          timestep_end,                      &
-                          spinup_period,                     &
-                          dt,                                &
-                          timer_flag=subroutine_timers,      &
-                          populate_filelist=init_context_ptr )
+    call initialise_xios( io_context,                       &
+                          xios_context_id,                  &
+                          communicator,                     &
+                          mesh_id,                          &
+                          twod_mesh_id,                     &
+                          chi,                              &
+                          panel_id,                         &
+                          timestep_start,                   &
+                          timestep_end,                     &
+                          spinup_period,                    &
+                          dt,                               &
+                          timer_flag=subroutine_timers,     &
+                          populate_filelist=files_init_ptr )
     if ( subroutine_timers ) call timer('initialise_xios')
 
   end subroutine initialise_infrastructure

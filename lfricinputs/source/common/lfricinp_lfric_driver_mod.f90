@@ -21,8 +21,7 @@ USE field_collection_mod,       ONLY: field_collection_type
 USE field_mod,                  ONLY: field_type
 USE io_context_mod,             ONLY: io_context_type
 USE mod_wait,                   ONLY: init_wait
-USE linked_list_mod,            ONLY: linked_list_type
-USE lfric_xios_io_mod,          ONLY: populate_filelist_if
+USE lfric_xios_context_mod,     ONLY: filelist_populator
 USE lfricinp_setup_io_mod,      ONLY: init_lfricinp_files
 USE lfricinp_iodef_updates_mod, ONLY: lfricinp_iodef_set_calendar
 USE local_mesh_collection_mod,  ONLY: local_mesh_collection,                   &
@@ -72,20 +71,6 @@ CLASS(io_context_type), ALLOCATABLE :: io_context
 
 CONTAINS
 
-SUBROUTINE populate_file_list( file_list, clock )
-  ! Description:
-  !   Populates I/O context's list of interesting files.
-
-  IMPLICIT NONE
-
-  CLASS(linked_list_type), INTENT(INOUT) :: file_list
-  CLASS(clock_type),       INTENT(IN)    :: clock
-
-  CALL init_lfricinp_files( file_list, clock )
-
-END SUBROUTINE populate_file_list
-
-
 SUBROUTINE lfricinp_initialise_lfric(program_name_arg,                         &
                                      lfric_nl_fname,                           &
                                      required_lfric_namelists,                 &
@@ -106,7 +91,7 @@ INTEGER(KIND=i_def), INTENT(IN) :: first_step, last_step
 REAL(r_second),      INTENT(IN) :: spinup_period
 REAL(r_second),      INTENT(IN) :: seconds_per_step
 
-PROCEDURE(populate_filelist_if), POINTER :: populate_pointer
+PROCEDURE(filelist_populator), POINTER :: populate_pointer
 
 CHARACTER(LEN=10) :: char_first_step, char_last_step
 
@@ -163,7 +148,7 @@ CALL init_fem(mesh_id, chi, panel_id)
 ! XIOS domain initialisation
 WRITE(char_first_step,'(I8)') first_step
 WRITE(char_last_step,'(I8)') last_step
-populate_pointer => populate_file_list
+populate_pointer => init_lfricinp_files
 CALL initialise_xios( io_context,                                              &
                       xios_ctx,                                                &
                       comm,                                                    &
