@@ -1153,20 +1153,11 @@ subroutine check_err(ierr, routine, cmess, log_level)
 
     if (present(log_level)) local_log_level = log_level
 
-    select case ( local_log_level )
-    case( log_level_error )
-      write(log_scratch_space,*)                   &
-          'Error in ncdf_quad ['//routine//']: '// &
-          trim(cmess) // ' ' // trim(nf90_strerror(ierr))
+    write(log_scratch_space,*)                      &
+        'Reported in ncdf_quad ['//routine//']: '// &
+        trim(cmess) // ' ' // trim(nf90_strerror(ierr))
 
-    case( log_level_warning )
-      write(log_scratch_space,*) &
-          'Warning: Error reported in ncdf_quad [' &
-          //routine//']: '// trim(cmess) // ' ' // &
-          trim(nf90_strerror(ierr))
-    end select
-
-    call log_event(log_scratch_space, log_level)
+    call log_event(log_scratch_space, local_log_level)
 
   end if
 
@@ -1566,24 +1557,30 @@ subroutine read_mesh( self, mesh_name, geometry, topology, coord_sys, &
                        face_face_connectivity(:,:))
   call check_err(ierr, routine, cmess)
 
-  attname = 'north_pole'
-  cmess = 'Getting North Pole for mesh "'//trim(mesh_name)//'"'
-  ierr = nf90_inquire_attribute(self%ncid, self%mesh_id, trim(attname), len=arr_len)
-  call check_err(ierr, routine, cmess, log_level=log_level_warning)
-  if (ierr == NF90_NOERR) then
-    allocate(north_pole_ncdf(arr_len))
-    ierr = nf90_get_att(self%ncid, self%mesh_id, trim(attname), north_pole_ncdf)
-    north_pole(1:2) = real(north_pole_ncdf(1:2), kind=r_def)
-  end if
+  ! Only present for spherical lon-lat domains (geometry=spherical, coord_sys=ll)
+  if ( trim(coord_sys) == 'll' .and. &
+       trim(geometry)  == 'spherical' ) then
 
-  attname = 'null_island'
-  cmess = 'Getting Null Island for mesh "'//trim(mesh_name)//'"'
-  ierr = nf90_inquire_attribute(self%ncid, self%mesh_id, trim(attname), len=arr_len)
-  call check_err(ierr, routine, cmess, log_level=log_level_warning)
-  if (ierr == NF90_NOERR) then
-    allocate(null_island_ncdf(arr_len))
-    ierr = nf90_get_att(self%ncid, self%mesh_id, trim(attname), null_island_ncdf)
-    null_island(1:2) = real(null_island_ncdf(1:2), kind=r_def)
+    attname = 'north_pole'
+    cmess = 'Getting North Pole for mesh "'//trim(mesh_name)//'"'
+    ierr = nf90_inquire_attribute(self%ncid, self%mesh_id, trim(attname), len=arr_len)
+    call check_err(ierr, routine, cmess, log_level=log_level_warning)
+    if (ierr == NF90_NOERR) then
+      allocate(north_pole_ncdf(arr_len))
+      ierr = nf90_get_att(self%ncid, self%mesh_id, trim(attname), north_pole_ncdf)
+      north_pole(1:2) = real(north_pole_ncdf(1:2), kind=r_def)
+    end if
+
+    attname = 'null_island'
+    cmess = 'Getting Null Island for mesh "'//trim(mesh_name)//'"'
+    ierr = nf90_inquire_attribute(self%ncid, self%mesh_id, trim(attname), len=arr_len)
+    call check_err(ierr, routine, cmess, log_level=log_level_warning)
+    if (ierr == NF90_NOERR) then
+      allocate(null_island_ncdf(arr_len))
+      ierr = nf90_get_att(self%ncid, self%mesh_id, trim(attname), null_island_ncdf)
+      null_island(1:2) = real(null_island_ncdf(1:2), kind=r_def)
+    end if
+
   end if
 
   ! Pass back to r_def arrays and deallocate

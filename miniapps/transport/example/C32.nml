@@ -25,15 +25,14 @@
 !     respectively
 !===================================================================
 &mesh
-  mesh_filename  = 'mesh.nc'
+  mesh_filename  = 'mesh_C32.nc'
   geometry       = 'spherical'
   topology       = 'periodic'
-  n_meshes       = 2
-  mesh_names     = 'mesh_A','mesh_B'
-  mesh_maps      = 'mesh_A:mesh_B'
+  n_meshes       = 1
+  mesh_names     = 'dynamics'
   n_partitions   = 0
   coord_sys      = 'll'
-  rotate_mesh    = .true.
+  rotate_mesh    = .false.
 /
 
 !==================================================================
@@ -48,47 +47,7 @@
 ! intergrid mesh maps) is advised to be left as 0 for general use.
 
 &cubedsphere_mesh
-  edge_cells     = 16, 8
+  edge_cells     = 32
   smooth_passes  = 0
   stretch_factor = 1.0
-/
-
-
-!==================================================================
-! Planar Meshes: Only used by the planar mesh generator
-!==================================================================
-! Each planar mesh is specified by the corresponding number of
-! cells on a panel edge in the x/y axes. These are listed in the
-! variables <edge_cells_x>/<edge_cells_y> and correspond to the
-! order of mesh topologies given by <mesh_names>.
-!
-! All lised meshes will occupy the same domain and periodicity.
-!
-! Note: When requesting a integrid mesh map, for a given pair of
-!       of source/target meshes, one meshes edge cell value must
-!       be a factor of the other.
-
-&planar_mesh
-  edge_cells_x  = 48
-  edge_cells_y  = 24
-  domain_x      = 48.0
-  domain_y      = 24.0
-  periodic_x    = .false.
-  periodic_y    = .false.
-  create_lbc_mesh = .false.
-  lbc_rim_depth   = 1
-  lbc_parent_mesh = '<lam mesh name>'
-/
-
-&partitioning
-  panel_decomposition='auto'
-  panel_xproc=1
-  panel_yproc=1
-  max_stencil_depth=1
-/
-
-&rotation
-  rotation_target = "null_island"
-  target_null_island = 0.0, 45.0
-  target_north_pole  = 0.0, 45.0
 /
