@@ -48,11 +48,10 @@ contains
     ! Diagnostic fields
     type( field_type ), pointer :: tau_ssi_w2          => null()
 
+    ! Prognostic fields
     type( field_type ), pointer :: tile_fraction       => null()
     type( field_type ), pointer :: leaf_area_index     => null()
     type( field_type ), pointer :: canopy_height       => null()
-
-    ! Progostic fields
     type( field_type ), pointer :: tile_temperature    => null()
     type( field_type ), pointer :: screen_temperature  => null()
     type( field_type ), pointer :: time_since_transition => null()
@@ -68,7 +67,6 @@ contains
     sea_ice_thickness   => surface_fields%get_field('sea_ice_thickness')
     sea_ice_temperature => surface_fields%get_field('sea_ice_temperature')
     tau_ssi_w2          => surface_fields%get_field('tau_ssi_w2')
-
     tile_fraction       => surface_fields%get_field('tile_fraction')
     leaf_area_index     => surface_fields%get_field('leaf_area_index')
     canopy_height       => surface_fields%get_field('canopy_height')
@@ -79,23 +77,24 @@ contains
     surface_conductance => surface_fields%get_field('surface_conductance')
     canopy_water        => surface_fields%get_field('canopy_water')
 
-    ! Set sea surface prognostics to fixed values for use in SCM testing
-    ! or when no values are provided by the um2lfric dump
-    call invoke( setval_c(z0msea,              1.5e-4_r_def),                 &
-                 ! Roughness length, friction velocity, 10m wind and
-                 ! stomatal conductance for use in SCM (UKCA)
+    call invoke(                                                              & 
+                 ! Set sea/land surface prognostics for use in SCM testing
+                 ! or when no values are provided by the um2lfric dump
                  setval_c(z0m,                 1.5e-4_r_def),                 &
                  setval_c(ustar,               0.5_r_def),                    &
                  setval_c(wspd10m,             10.0_r_def),                   &
-                 setval_c(gc_tile,             0.0_r_def),                    &
+                 ! Set sea surface prognostics for use in SCM testing
+                 ! or when no values are provided by the um2lfric dump
+                 setval_c(z0msea,              1.5e-4_r_def),                 &
                  ! Ancillary fields for use in SCM or if no ancil read
                  setval_c(chloro_sea,          5.0e-7_r_def),                 &
                  setval_c(sea_ice_thickness,   1.0_r_def),                    &
                  setval_c(sea_ice_temperature, 260.0_r_def),                  &
                  ! Diagnostics
                  setval_c(tau_ssi_w2,          0.0_r_def),                    &
-                 ! Set land prognostics to fixed values for use in SCM
-                 ! testing or when no values are provided by um2lfric
+                 ! Set land prognostics for use in SCM testing or when no
+                 ! values are provided by um2lfric
+                 setval_c(gc_tile,             0.0_r_def),                    &
                  setval_c(surface_conductance, 1.0_r_def),                    &
                  setval_c(canopy_water,        0.0_r_def),                    &
                  ! These need initialising to rmdi as code checks against this

@@ -16,14 +16,16 @@ module semi_implicit_timestep_alg_mod
   use reference_element_mod, only : T
 
   ! Configuration options
-  use section_choice_config_mod, only: cloud,              &
-                                       cloud_um
+  use section_choice_config_mod, only: cloud, cloud_um,                &
+                                       aerosol, aerosol_um
   use physics_config_mod,        only: blayer_placement,               &
                                        blayer_placement_fast,          &
                                        convection_placement,           &
                                        convection_placement_fast,      &
                                        stochastic_physics_placement,   &
                                        stochastic_physics_placement_fast
+
+  use aerosol_config_mod,        only: glomap_mode, glomap_mode_ukca
 
   use formulation_config_mod,    only: use_moisture, use_physics, dlayer_on, &
                                        use_wavedynamics,                     &
@@ -113,6 +115,7 @@ module semi_implicit_timestep_alg_mod
   ! Physics routines called
 #ifdef UM_PHYSICS
   use cld_alg_mod,                only: cld_alg
+  use aerosol_ukca_alg_mod,       only: aerosol_ukca_alg
 #endif
 
   use timer_mod,                  only: timer
@@ -343,9 +346,10 @@ contains
     type( field_type ) :: rho_guess
     logical(kind=l_def) :: write_moisture_diag
 
-    ! Cloud fields after slow physics to be advected
+    ! Fields after slow physics to be advected
     type( field_collection_type ) :: cloud_fields_after_slow
-
+    type( field_collection_type ) :: chemistry_fields_after_slow
+    type( field_collection_type ) :: aerosol_fields_after_slow
 
     if ( subroutine_timers ) call timer('semi_implicit_timestep_alg')
 
@@ -415,8 +419,7 @@ contains
                         microphysics_fields, orography_fields,                 &
                         turbulence_fields, convection_fields, cloud_fields,    &
                         surface_fields, soil_fields, snow_fields,              &
-                        chemistry_fields, aerosol_fields, clock, dt, mesh_id,  &
-                        twod_mesh_id )
+                        aerosol_fields, clock, dt, mesh_id, twod_mesh_id )
       call invoke(name="update_from_slow_physics",                             &
                   inc_X_plus_Y(state_after_slow(igh_t), dtheta),               &
                   inc_X_plus_Y(state_after_slow(igh_u), du)                    &
@@ -440,16 +443,24 @@ contains
     ! Start the Outer (advection) loop
     !==========================================================================
     call pre_advection_generic_field(cloud_fields_after_slow, cloud_fields)
+    call pre_advection_generic_field(chemistry_fields_after_slow,              &
+                                     chemistry_fields)
+    call pre_advection_generic_field(aerosol_fields_after_slow, aerosol_fields)
 
     outer_dynamics_loop: do outer = 1,outer_iterations
 
-      call advection_control(rhs_adv, state_after_slow, &
-                             state_n(igh_u), state(igh_u), advected_u, &
-                             mr_inc, mr_after_slow, &
-                             clock%get_step(), outer, &
-                             moist_dyn, mr, &
-                             cloud_fields, cloud_fields_after_slow, &
-                             rho_guess, dt)
+      call advection_control( &
+             rhs_adv, state_after_slow, &
+             state_n(igh_u), state(igh_u), advected_u, &
+             mr_inc, mr_after_slow, &
+             clock%get_step(), outer, &
+             moist_dyn, mr, &
+             cloud_fields, cloud_fields_after_slow, &
+             rho_guess, dt, &
+             chemistry_fields=chemistry_fields, &
+             chemistry_fields_after_slow=chemistry_fields_after_slow, &
+             aerosol_fields=aerosol_fields, &
+             aerosol_fields_after_slow=aerosol_fields_after_slow )
 
       if (use_physics) then
         !--------------------------------------------------------------------
@@ -620,6 +631,18 @@ contains
                     state_n(igh_t), mr_n,                           &
                     clock%get_step(), dt )
       call invoke(inc_X_plus_Y(state(igh_t), dtheta))
+    end if
+
+    !--------------------------------------------------------------------
+    ! Call UKCA for GLOMAP-mode prognostic aerosol updates
+    !--------------------------------------------------------------------
+    if (aerosol == aerosol_um .and. glomap_mode == glomap_mode_ukca) then
+      call aerosol_ukca_alg ( chemistry_fields, aerosol_fields,          &
+                              radiation_fields,                          &
+                              microphysics_fields, turbulence_fields,    &
+                              convection_fields, cloud_fields,           &
+                              surface_fields, soil_fields,               &
+                              state, mr, clock%get_step() )
     end if
 #endif
 

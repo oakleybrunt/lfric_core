@@ -59,7 +59,8 @@ contains
     secondary_organic => chemistry_fields%get_field('secondary_organic')
 
     ! Set UKCA chemistry fields to fixed values for use in SCM testing
-    ! or when no values are provided by the um2lfric dump
+    ! or when no values are provided by the initial dump (or by ancil files
+    ! in the case of offline oxidants fields o3, no3, oh, ho2 and h2o2_limit).
     call invoke( setval_c( o3,                1.0e-15_r_def ),                 &
                  setval_c( no3,               1.0e-15_r_def ),                 &
                  setval_c( oh,                1.0e-15_r_def ),                 &

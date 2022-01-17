@@ -13,8 +13,9 @@ module um_physics_init_mod
                                         activation_scheme_jones,               &
                                         glomap_mode,                           &
                                         glomap_mode_climatology,               &
-                                        glomap_mode_off,                       &
                                         glomap_mode_ukca,                      &
+                                        glomap_mode_radaer_test,               &
+                                        glomap_mode_off,                       &
                                         aclw_file,                             &
                                         acsw_file,                             &
                                         anlw_file,                             &
@@ -250,7 +251,6 @@ contains
     use turb_diff_mod, only: l_subfilter_horiz, l_subfilter_vert,        &
          mix_factor, turb_startlev_vert, turb_endlev_vert
     use ukca_mode_setup, only: ukca_mode_sussbcocdu_7mode
-    use ukca_option_mod, only: i_mode_setup
 
     implicit none
 
@@ -285,17 +285,18 @@ contains
           l_glomap_clim_aie2 = .true.
           ! Set up the correct mode and components for GLOMAP-mode:
           ! 5 mode with SU SS OM BC components
-          i_mode_setup = i_gc_sussocbcdu_7mode
           i_glomap_clim_setup = i_gc_sussocbcdu_7mode
           call ukca_mode_sussbcocdu_7mode
 
         case(glomap_mode_ukca)
-          ! Set up the correct mode and components for GLOMAP-mode:
-          ! 7 mode with SU SS OM BC DU components
-          i_glomap_clim_setup = i_gc_sussocbcdu_7mode  !!!! Is this used?
           ! UKCA initialisation (via a call to um_ukca_init) is deferred
           ! until after that for JULES since JULES settings are required
           ! for configuring dry deposition.
+
+        case(glomap_mode_radaer_test)
+          ! Set up the correct mode and components for RADAER:
+          ! 7 mode with SU SS OM BC DU components
+          call ukca_mode_sussbcocdu_7mode()
 
         case(glomap_mode_off)
           ! Do Nothing
@@ -675,26 +676,16 @@ contains
     ! Hence its inputs and options need setting according to the
     ! scheme being either off or running in diagnostic mode to calculate
     ! dust emissions only if these are potentially required by UKCA.
+    ! Dust parameter values are taken from GA7.
 
-    ! NOTE RE CURRENT VALUES:
-    ! Parameter values used for emissions are as GA7 except where modified
-    ! to ensure that non-zero dust emissions are produced for UKCA SCM test.
-    ! Increase in 'us_am' effectively increases friction velocity and 
-    ! reduction in 'sm_corr' effectively reduces soil moisture.
-    ! It is also necessary to raise the orography threshold for dust
-    ! production above the default that is used in GA7. These changes
-    ! compensate for initial values that cannot be altered without
-    ! affecting other SCM test configurations.
- 
     if (aerosol == aerosol_um .and. glomap_mode == glomap_mode_ukca) THEN
       i_dust = i_dust_flux
       dust_veg_emiss = 1
-      us_am = 5                 !!!! for UKCA SCM test (1.45 in GA7)
-      sm_corr = 0.05            !!!! for UKCA SCM test (0.5 in GA7)
+      us_am = 1.45              ! Increases friction velocity
+      sm_corr = 0.5             ! Reduces soil moisture
       horiz_d = 2.25
       l_fix_size_dist = .false.
       l_twobin_dust = .false.
-      h_orog_limit = 250.0      !!!! Up from default (150.0) for UKCA SCM test
     else
       i_dust = i_dust_off
     end if

@@ -1413,7 +1413,11 @@ subroutine aerosol_ukca_code( nlayers,                                         &
       environ_flat_real(i) = real( wspd10m(map_2d(1)), r_um )
     case(fldname_dms_sea_conc)
       ! Sea surface DMS concentration
-      environ_flat_real(i) = real( dms_conc_ocean(map_2d(1)), r_um )
+      ! (Replace fill value with zeros to avoid potential unsafe multiplication
+      ! of fill values by zero over land in UKCA DMS flux calculation and/or
+      ! use of fill values if present at coastal grid points)
+      environ_flat_real(i) = max( real( dms_conc_ocean(map_2d(1)), r_um ),     &
+                                  0.0_r_um )
     case(fldname_dust_flux_div1)
       ! Dust emission flux in division 1
       environ_flat_real(i) = real( dust_flux(map_dust(1) + 0), r_um )
@@ -1606,7 +1610,7 @@ subroutine aerosol_ukca_code( nlayers,                                         &
   do i = 1, n_fields
     select case(env_names_fullht0_real(i))
     case(fldname_interf_z)
-      environ_fullht0_real( 0, i ) = 0.0
+      environ_fullht0_real( 0, i ) = 0.0_r_um
       do k = 1, nlayers - 1
         environ_fullht0_real( k, i ) =                                         &
           r_rho_levels( 1, 1, k + 1 ) - r_theta_levels( 1, 1, 0 )

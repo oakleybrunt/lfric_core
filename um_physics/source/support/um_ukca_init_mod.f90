@@ -248,7 +248,6 @@ contains
            i_soil=i_soil,                                                      &
            i_ice=i_ice,                                                        &
            dzsoil_layer1=dzsoil_layer1,                                        &
-           l_cal360=.true.,                                                    &
            timestep=timestep,                                                  &
            ! General UKCA configuration options
            i_ukca_chem=ukca_chem_offline,                                      &

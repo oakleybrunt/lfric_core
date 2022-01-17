@@ -22,9 +22,8 @@ export shumlib_rev=um12.1
 export shumlib_sources=
 export socrates_rev=1146
 export socrates_sources=
-export um_rev=105011
+export um_rev=105526
 export um_sources=
-
 
 #### Do not edit the definitions below this line without
 #### consulting the owners of this build system

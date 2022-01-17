@@ -175,24 +175,31 @@ contains
   !> @param[in]     wind_n Wind field at timestep n
   !> @param[in]     wind_np1 Latest estimate of wind field at timestep n+1
   !> @param[in]     advected_wind predictor for the wind to be advected
-  !> @param[in]     mr_inc Increments to the moisture fields
+  !> @param[in,out] mr_inc Increments to the moisture fields
   !> @param[in]     mr_after_slow Current moisture fields with
   !>                slow physics forcings added
   !> @param[in]     t_step The current model timestep
   !> @param[in]     outer Outer (advection) iteration number
-  !> @param[in]     moist_dyn Factors for moist dynamics
-  !> @param[in]     mr latest state of mixing ratios
+  !> @param[in,out] moist_dyn Factors for moist dynamics
+  !> @param[in,out] mr latest state of mixing ratios
   !> @param[in]     cloud_fields Fields for cloud scheme
-  !> @param[in]     cloud_fields_after_slow Fields for cloud scheme with slow
+  !> @param[in]     cloud_fields_after_slow Fields for cloud scheme with slow physics forcings added
   !>                physics forcings added
   !> @param[in]     rho_guess Estimate to new timestep density
-  subroutine advection_control(rhs, state_after_slow,                   &
-                               wind_n, wind_np1, advected_wind,         &
-                               mr_inc, mr_after_slow,                   &
-                               t_step, outer,                           &
-                               moist_dyn, mr,                           &
-                               cloud_fields, cloud_fields_after_slow,   &
-                               rho_guess, dt )
+  !> @param[in]     chemistry_fields Fields for chemistry scheme
+  !> @param[in]     chemistry_fields_after_slow Fields for chemistry scheme with slow physics forcings added
+  !> @param[in]     aerosol_fields Fields for aerosol scheme
+  !> @param[in]     aerosol_fields_after_slow Fields for aerosol scheme with slow physics forcings added
+  subroutine advection_control(rhs, state_after_slow,                          &
+                               wind_n, wind_np1, advected_wind,                &
+                               mr_inc, mr_after_slow,                          &
+                               t_step, outer,                                  &
+                               moist_dyn, mr,                                  &
+                               cloud_fields, cloud_fields_after_slow,          &
+                               rho_guess, dt,                                  &
+                               chemistry_fields,                               &
+                               chemistry_fields_after_slow,                    &
+                               aerosol_fields, aerosol_fields_after_slow )
 
   use formulation_config_mod,         only: use_moisture, &
                                             use_wavedynamics
@@ -215,9 +222,9 @@ contains
     type(field_type), dimension(bundle_size),       intent(inout) :: rhs
     type(field_type), dimension(nummr),             intent(inout) :: mr_inc, mr
     type(field_type), dimension(num_moist_factors), intent(inout) :: moist_dyn
-    type(field_collection_type),                    intent(inout) :: cloud_fields
-    type(field_collection_type),                    intent(inout) :: cloud_fields_after_slow
-    type(field_type),                               intent(inout) :: rho_guess
+    type(field_collection_type), intent(in) :: cloud_fields
+    type(field_collection_type), intent(in) :: cloud_fields_after_slow
+    type(field_type),            intent(inout) :: rho_guess
 
     type(field_type), dimension(bundle_size), intent(in) :: state_after_slow
     type(field_type),                         intent(in) :: wind_n, wind_np1, advected_wind
@@ -225,6 +232,13 @@ contains
 
     integer(i_def), intent(in) :: t_step, outer
     real(r_def),    intent(in) :: dt
+
+    type(field_collection_type), intent(in), optional :: chemistry_fields
+    type(field_collection_type), intent(in), optional :: &
+      chemistry_fields_after_slow
+    type(field_collection_type), intent(in), optional :: aerosol_fields
+    type(field_collection_type), intent(in), optional :: &
+      aerosol_fields_after_slow
 
     logical(l_def)                     :: do_moisture_diagnostics
     integer(i_def)                     :: imr
@@ -337,6 +351,22 @@ contains
                                           wind_n, wind_np1,               &
                                           dt, n_control_substeps )
 #endif
+
+        ! On final iteration, advect chemistry and aerosol fields as required
+        if (outer == outer_iterations) then
+          if (present(chemistry_fields)) then
+            call advection_generic_field_alg( chemistry_fields,                &
+                                              chemistry_fields_after_slow,     &
+                                              wind_n, wind_np1,                &
+                                              dt, n_control_substeps )
+          end if
+          if (present(aerosol_fields)) then
+            call advection_generic_field_alg( aerosol_fields,                  &
+                                              aerosol_fields_after_slow,       &
+                                              wind_n, wind_np1,                &
+                                              dt, n_control_substeps )
+          end if
+        end if
 
       end if
       if (do_moisture_diagnostics) then
@@ -811,12 +841,12 @@ end subroutine advection_alg
 
   !===========================================================================!
   !> @details A wrapper algorithm for advection a generic prognostic.
-  !> @param[in]     generic_fields            collection which gets updated
-  !> @param[in,out] generic_fields_after_slow collection to advect
-  !> @param[in]     wind_n                    Time level n winds
-  !> @param[in]     wind_np1                  Time level n+1 winds
-  !> @param[in]     dt_step                   timestep length of step
-  !> @param[in]     n_substep                 number of steps
+  !> @param[in] generic_fields            collection which gets updated
+  !> @param[in] generic_fields_after_slow collection to advect
+  !> @param[in] wind_n                    Time level n winds
+  !> @param[in] wind_np1                  Time level n+1 winds
+  !> @param[in] dt_step                   timestep length of step
+  !> @param[in] n_substep                 number of steps
   subroutine advection_generic_field_alg( generic_fields,                    &
                                           generic_fields_after_slow,         &
                                           wind_n, wind_np1,                  &
@@ -827,9 +857,9 @@ end subroutine advection_alg
 
     implicit none
 
-    type(field_collection_type), intent(in)    :: generic_fields
-    type(field_collection_type), intent(inout) :: generic_fields_after_slow
-    type(field_type),            intent(in)    :: wind_n, wind_np1
+    type(field_collection_type), intent(in) :: generic_fields
+    type(field_collection_type), intent(in) :: generic_fields_after_slow
+    type(field_type),            intent(in) :: wind_n, wind_np1
     real(r_def), intent(in)         :: dt_step
     integer(i_def), intent(in)      :: n_substeps
 

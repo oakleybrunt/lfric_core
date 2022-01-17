@@ -98,8 +98,8 @@ contains
     call z0m%write_field('surface__z0m')
     call net_prim_prod%write_field('surface__net_prim_prod')
     call gc_tile%write_field('surface__gc_tile') 
-    call ustar%write_field('surface__ustar') 
-
+    call ustar%write_field('surface__ustar')
+ 
     call dust_flux%write_field('aerosol__dust_flux') 
 
     ! Diagnostics computed in the kernel
