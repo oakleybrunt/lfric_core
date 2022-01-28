@@ -593,9 +593,13 @@ contains
       allocate(src_offsets( size(src_indices) ))
       allocate(tgt_offsets( size(tgt_indices) ))
 
-      src_offsets = (/(i, i = 0, size(src_indices) - 1)/)
-      tgt_offsets = (/(i, i = size(src_indices) , &
-                              size(src_indices) + size(tgt_indices) - 1 )/)
+      do i = 1, size(src_indices)
+        src_offsets(i) = i - 1
+      end do
+
+      do i = 1, size(tgt_indices)
+        tgt_offsets(i) = i + size(src_indices) - 1
+      end do
 
       redist = xt_redist_p2p_off_new(xmap, src_offsets,tgt_offsets, datatype)
 
