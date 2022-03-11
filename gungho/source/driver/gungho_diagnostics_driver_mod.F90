@@ -231,20 +231,19 @@ contains
       w_physics => derived_fields%get_field('w_physics')
       call calc_wbig_diagnostic_alg( w_physics, mesh )
 
+#ifdef UM_PHYSICS
+      ! Call PMSL algorithm
+      exner => prognostic_fields%get_field('exner')
+      theta => prognostic_fields%get_field('theta')
+      call pmsl_alg(exner, derived_fields, theta, twod_mesh)
+#endif
+
     end if
 
     ! Other derived diagnostics with special pre-processing
     call write_divergence_diagnostic( u, clock, mesh )
     call write_hydbal_diagnostic( theta, moist_dyn, exner, mesh )
     call column_total_diagnostics_alg( rho, mr, mesh, twod_mesh )
-
-#ifdef UM_PHYSICS
-    ! Call PMSL algorithm
-    exner => prognostic_fields%get_field('exner')
-    theta => prognostic_fields%get_field('theta')
-    call pmsl_alg(exner, derived_fields, theta, twod_mesh)
-#endif
-
 
   end subroutine gungho_diagnostics_driver
 
