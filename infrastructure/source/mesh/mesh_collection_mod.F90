@@ -444,6 +444,8 @@ function get_mesh_variant( self, mesh, extrusion_id )  result( variant_mesh )
           if (local_mesh_id == variant_local_mesh_id .and. &
               extrusion_id == variant_mesh%get_extrusion_id()) then
             exit
+          else
+            nullify(variant_mesh)
           end if
       end select
 
