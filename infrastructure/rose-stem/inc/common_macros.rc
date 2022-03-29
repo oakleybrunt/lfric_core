@@ -1,3 +1,42 @@
+{# HANDLE THE SCRIPTING ASPECT OF A SUITE #}
+{#---------------------------------------------------------------------------#}
+{# This nasty mess of traps is needed because cylc will try and run its
+ # messaging tool in the users environment. Therefore the environment must be
+ # returned on an error. Or not on an error of course.
+ #}
+{%- macro scripting( target, setup, teardown,
+                     prescript='', script='', finalscript='',
+                     postscript='', errorscript='' ) %}
+{%- set setup_commands = [] %}
+{%- for item in setup %}
+{%-   if item.startswith('compiler.') %}
+{%-     set compiler=item.split('.')[1] %}
+{%-     do setup_commands.extend(get_target_property(target, 'setup.compiler', compiler=compiler)) %}
+{%-   else %}
+{%-     do setup_commands.extend(get_target_property(target, 'setup.'+item)) %}
+{%- endif %}
+{%- endfor %}
+{%- do setup_commands.extend(get_target_property(target, 'setup.reveal')) %}
+{%- set teardown_commands = [] %}
+{%- for item in teardown %}
+{%-   do teardown_commands.extend(get_target_property(target, 'teardown.'+item)) %}
+{%- endfor %}
+pre-script = """
+             {{ prescript }}
+             """
+script = """
+wrapper '{{setup_commands|join("\n")}}; {{script}}; {{teardown_commands|join("\n")}}'
+         """
+post-script = """
+              {{finalscript}}
+              {{postscript}}
+              """
+err-script = """
+             {{finalscript}}
+             {{errorscript}}
+             """
+{%- endmacro %}
+
 {# CHECK STYLE MACROS #}
 {#---------------------------------------------------------------------------#}
 {%- macro check_style_graph() %}
@@ -7,17 +46,17 @@
 {%-   endif %}
 {%- endmacro %}
 
-{%- macro check_style_task( family, setup ) %}
+{%- macro check_style_task( family, target ) %}
 {%-   if 'check_style' in scheduledTasks %}
   [[check_style]]
     inherit = {{family}}
-    pre-script = """
-                 {{ '\n'
-                    | command_list( setup['base'],
-                                    setup['tech'],
-                                    setup['reveal'] ) }}
-                 """
-    script = stylist -verbose $SOURCE_DIRECTORY
+
+    {{scripting(
+          target,
+          ['base', 'tech'],
+          ['base'],
+          script='stylist -verbose $SOURCE_DIRECTORY'
+      )}}
 
     [[[environment]]]
       PYTHONPATH = $CYLC_SUITE_SHARE_DIR/source/infrastructure/tools/lib-python:${PYTHONPATH:-}
@@ -35,19 +74,17 @@
 {%-   endif %}
 {%- endmacro %}
 
-{%- macro check_config_dump_task( family, setup ) %}
+{%- macro check_config_dump_task( family, target ) %}
 {%-   if 'check_config_dump' in scheduledTasks %}
   [[check_config_dump]]
     inherit = {{family}}
-    pre-script = """
-                 {{ '\n'
-                    | command_list( setup['base'],
-                                    setup['tech'],
-                                    setup['reveal'] ) }}
-                 """
 
-    script = rose task-run --app-key=check_config_dump
-
+    {{scripting(
+          target,
+          ['base', 'tech'],
+          ['base'],
+          script="rose task-run --app-key=check_config_dump"
+      )}}
 {%-   endif %}
 {%- endmacro %}
 
@@ -86,8 +123,7 @@
 {%-   endif %}
 {%- endmacro %}
 
-{%- macro validate_rose_meta_task( projectName, family, setup,
-                                   appName=None ) %}
+{%- macro validate_rose_meta_task( projectName, family, appName=None ) %}
 
 {%-   if appName %}
 {%-     set taskName=appName %}
@@ -125,27 +161,25 @@
  #
  #  TODO: There may be a better way to handle this.
  #}
-{%- macro design_documentation_task(doc_family, pub_family, setup) %}
+{%- macro design_documentation_task(doc_family, doc_target, pub_family, pub_target) %}
 {%-   if 'design_documentation' in scheduledTasks %}
   [[design_documentation]]
     inherit = {{doc_family}}
 
     # The sleep is to help mitigate problems with
     # overloaded Lustre filesystems.
-    pre-script = """
-                 {{ '\n'
-                    | command_list( setup['base'],
-                                    setup['tech'],
-                                    setup['reveal'],
-                                    'mkdir -p $DOCUMENT_DIR',
-                                    'sleep 30' ) }}
-                 """
-    script = make -C $SOURCE_DIRECTORY document-latex {{verboseMake()}}
 
-    post-script = """
-                  RELATIVE_LOG_ROOT=$(echo $CYLC_TASK_LOG_ROOT | sed "s|$HOME/||")
-                  echo $RELATIVE_LOG_ROOT > $DOCUMENT_DIR/design.log.path
-                  """
+    {{scripting(
+          doc_target,
+          ['base', 'tech'],
+          ['base'],
+          prescript='mkdir -p $DOCUMENT_DIR; sleep 30',
+          script='make -C $SOURCE_DIRECTORY document-latex '+verboseMake(),
+          finalscript="""
+RELATIVE_LOG_ROOT=$(echo $CYLC_TASK_LOG_ROOT | sed 's|$HOME/||')
+echo $RELATIVE_LOG_ROOT > $DOCUMENT_DIR/design.log.path
+                      """
+      )}}
 
     [[[environment]]]
       DOCUMENT_DIR = $OUTPUT_ROOT/documents/design
@@ -160,7 +194,6 @@
                  {{ensureDestination()}}
                  sleep 5
                  """
-
     script = rose task-run --app-key=publish --command-key=directory
 
     [[[environment]]]
@@ -195,23 +228,23 @@
  #
  #  TODO: There may be a better way to handle this.
  #}
-{%- macro api_documentation_task(doc_family, pub_family, doc_setup, pub_target) %}
+{%- macro api_documentation_task(doc_family, doc_target, pub_family, pub_target) %}
 {%-   if 'api_documentation' in scheduledTasks %}
   [[api_documentation]]
     inherit = {{doc_family}}
-    pre-script = """
-                 {{ '\n'
-                    | command_list( doc_setup['base'],
-                                    doc_setup['tech'],
-                                    doc_setup['reveal'],
-                                    'mkdir -p $DOCUMENT_DIR' ) }}
-                 """
-    script = make -C $SOURCE_DIRECTORY document-api VERBOSE=1
-    post-script = """
-                  # Future publisher stages need this information
-                  RELATIVE_LOG_ROOT=$(echo $CYLC_TASK_LOG_ROOT | sed "s|$HOME/||")
-                  echo $RELATIVE_LOG_ROOT > $DOCUMENT_DIR/api.log.path
-                  """
+
+    {{scripting(
+          doc_target,
+          ['base', 'tech'],
+          ['base'],
+          prescript='mkdir -p $DOCUMENT_DIR',
+          script='make -C $SOURCE_DIRECTORY document-api',
+          finalscript="""
+# Future publisher stages need this information
+RELATIVE_LOG_ROOT=$(echo $CYLC_TASK_LOG_ROOT | sed 's|$HOME/||')
+echo $RELATIVE_LOG_ROOT > $DOCUMENT_DIR/api.log.path
+                       """
+      )}}
 
     [[[environment]]]
       DOCUMENT_DIR = $OUTPUT_ROOT/documents/api
@@ -219,6 +252,7 @@
 
 
 {%-   if 'publish_api_log' in scheduledTasks %}
+{%-     set pub_hostname = get_target_property(pub_target, 'hostname') %}
   [[publish_api_log]]
     inherit = {{pub_family}}
     pre-script = """
@@ -226,10 +260,10 @@
                  mkdir -p $OUTPUT_DIRECTORY/api
                  cd $OUTPUT_DIRECTORY/api
                  RELATIVE_DESTINATION_DIRECTORY=`echo $DOCUMENT_DIR | sed "s|$HOME/||"`
-                 scp {{pub_target['hostname']}}:$RELATIVE_DESTINATION_DIRECTORY/api.log.path .
-                 scp {{pub_target['hostname']}}:$(cat api.log.path).status .
-                 scp {{pub_target['hostname']}}:$(cat api.log.path).out .
-                 scp {{pub_target['hostname']}}:$(cat api.log.path).err .
+                 scp {{pub_hostname}}:$RELATIVE_DESTINATION_DIRECTORY/api.log.path .
+                 scp {{pub_hostname}}:$(cat api.log.path).status .
+                 scp {{pub_hostname}}:$(cat api.log.path).out .
+                 scp {{pub_hostname}}:$(cat api.log.path).err .
                  """
     script = rose task-run --app-key=publish_doxygen
 
@@ -237,7 +271,7 @@
       DOCUMENT_DIR     = $OUTPUT_ROOT/documents/api
       LOG_STATUS       = $DESTINATION_DIRECTORY/api/job.status
       LOG_ERR          = $DESTINATION_DIRECTORY/api/job.err
-      OUTPUT_DIRECTORY = $OUTPUT_ROOT/{{SECONDARY_TARGET['compiler']}}_fast-debug
+      OUTPUT_DIRECTORY = $OUTPUT_ROOT/{{pub_target['compiler']}}_fast-debug
 {%-   endif %}
 
 
@@ -275,18 +309,18 @@
  #
  #  TODO: There may be a better way to handle this.
  #}
-{%- macro uml_documentation_task(doc_family, pub_family, setup) %}
+{%- macro uml_documentation_task(doc_family, doc_target, pub_family, pub_target) %}
 {%-   if 'uml_documentation' in scheduledTasks %}
   [[uml_documentation]]
     inherit = {{doc_family}}
-    pre-script = """
-                 {{ '\n'
-                    | command_list( setup['base'],
-                                    setup['tech'],
-                                    setup['reveal'],
-                                    'mkdir -p $DOCUMENT_DIR' ) }}
-                 """
-    script = make -C $SOURCE_DIRECTORY document-uml VERBOSE=1
+
+    {{scripting(
+          doc_target,
+          ['base', 'tech'],
+          ['base'],
+          prescript='mkdir -p $DOCUMENT_DIR',
+          script='make -C $SOURCE_DIRECTORY document-uml'
+      )}}
 
     [[[environment]]]
       DOCUMENT_DIR = $OUTPUT_ROOT/documents/uml
@@ -307,6 +341,24 @@
 {%-   endif %}
 {%- endmacro %}
 
+{#- UNIT TEST MACROS #}
+{#---------------------------------------------------------------------------#}
+{%- macro unit_test_graph(componentName, build='fast-debug', precisions=[rdef_default], publish=False) %}
+[[[R1]]]
+  graph = """
+{%-   for compiler in compilers %}
+{%-     for precision in precisions %}
+{%-       if precision not in rdef_build_precisions %}
+{%-          do rdef_build_precisions.append(precision) -%}
+{%-       endif %}
+{%-       set label = compiler | lower + '_' + precision + '-bit_'+ build | lower%}
+{%-       if compiler in UNIT_TEST_WITH %}
+    export_source => {{componentName}}_unit_test_with_{{label}}
+{%-       endif %}
+{%-     endfor %} {# precisions #}
+{%-   endfor %} {# compiler #}
+          """
+{%- endmacro %}
 
 {# SCRIPT MACROS #}
 {#---------------------------------------------------------------------------#}

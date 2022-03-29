@@ -191,16 +191,14 @@
 {%- if 'mirror_results_local' in scheduledTasks %}
   [[mirror_results_local]]
     inherit = PUBLISH, LOCAL
-    pre-script = """
-                 {{ '\n'
-                    | command_list( get_target_property(SECONDARY_TARGET,
-                                                         'setup.base'),
-                                    get_target_property(SECONDARY_TARGET,
-                                                         'setup.tech'),
-                                    get_target_property(SECONDARY_TARGET,
-                                                         'setup.reveal') ) }}
-                 """
-    script = rose task-run --app-key=publish_mirror
+
+    {{scripting(
+          SECONDARY_TARGET,
+          ['base', 'tech'],
+          ['base'],
+          script='rose task-run --app-key=publish_mirror',
+      )}}
+
     [[[environment]]]
       REWRITE = ''
       SOURCE  = {{publish_destination}}
@@ -211,16 +209,14 @@
 {%- if 'mirror_results_remote' in scheduledTasks %}
   [[mirror_results_remote]]
     inherit = PUBLISH
-    pre-script = """
-                 {{ '\n'
-                    | command_list( get_target_property(SECONDARY_TARGET,
-                                                         'setup.base'),
-                                    get_target_property(SECONDARY_TARGET,
-                                                         'setup.tech'),
-                                    get_target_property(SECONDARY_TARGET,
-                                                         'setup.reveal') ) }}
-                 """
-    script = rose task-run --app-key=publish_mirror
+
+    {{scripting(
+          SECONDARY_TARGET,
+          ['base', 'tech'],
+          ['base'],
+          script='rose task-run --app-key=publish_mirror'
+      )}}
+
     [[[environment]]]
       REWRITE = {{MIRROR_REWRITE}}
       SOURCE  = {{publish_destination}}
@@ -238,28 +234,20 @@
       inherit = TECHNICAL
 {%- endif %}
 
-{{ api_documentation_task('DOCUMENTATION', 'PUBLISH',
-                          get_target_property(SECONDARY_TARGET, 'setup'),
-                          get_target_property(SECONDARY_TARGET)) }}
-{{ uml_documentation_task('DOCUMENTATION', 'PUBLISH',
-                          get_target_property(SECONDARY_TARGET, 'setup')) }}
-{{ design_documentation_task('DOCUMENTATION', 'PUBLISH',
-                             get_target_property(SECONDARY_TARGET, 'setup')) }}
+{{ api_documentation_task('DOCUMENTATION', SECONDARY_TARGET, 'PUBLISH', SECONDARY_TARGET) }}
+{{ uml_documentation_task('DOCUMENTATION', SECONDARY_TARGET, 'PUBLISH', SECONDARY_TARGET) }}
+{{ design_documentation_task('DOCUMENTATION', SECONDARY_TARGET, 'PUBLISH', SECONDARY_TARGET) }}
 
 #############################################################################
 # TECHNICAL
 
 {%- for app in projectApps %}
-{{ validate_rose_meta_task( projectName, 'TECHNICAL',
-                            get_target_property(SECONDARY_TARGET,'setup'),
-                            appName=app ) }}
+{{ validate_rose_meta_task( projectName, 'TECHNICAL', appName=app ) }}
 {%- endfor %}
 
-{{ check_config_dump_task('TECHNICAL',
-                    get_target_property(SECONDARY_TARGET, 'setup')) }}
+{{ check_config_dump_task('TECHNICAL', SECONDARY_TARGET) }}
 
-{{ check_style_task('TECHNICAL',
-                    get_target_property(SECONDARY_TARGET, 'setup')) }}
+{{ check_style_task('TECHNICAL', SECONDARY_TARGET) }}
 
 {%- if 'unit_test_build_tools' in scheduledTasks %}
     # The build tools have to be unit tested on the build target. Not much
@@ -267,17 +255,15 @@
     #
     [[unit_test_build_tools]]
       inherit = TARGET  # Should be BUILD target
-      pre-script = """
-                   {{ '\n'
-                      | command_list( get_target_property(PRIMARY_TARGET,
-                                                          'setup.base'),
-                                      get_target_property(PRIMARY_TARGET,
-                                                          'setup.compiler'),
-                                      get_target_property(PRIMARY_TARGET,
-                                                          'setup.reveal') ) }}
-                   """
-      script = rose task-run --app-key=unit_test_build_tools
-{{ directives(PRIMARY_TARGET, 'build') }}
+
+      {{scripting(
+            PRIMARY_TARGET,
+            ['base', 'compiler'],
+            ['base'],
+            script='rose task-run --app-key=unit_test_build_tools'
+        )}}
+
+      {{ directives(PRIMARY_TARGET, 'build') }}
 {%- endif %}
 
 ##############################################################################
@@ -306,34 +292,22 @@
 {%-       if 'unit_test_with_' + label in scheduledTasks %}
   [[unit_test_with_{{label}}]]
     inherit = {{family}}, TARGET
-    pre-script  = """
-                  {{ '\n'
-                     | command_list( get_target_property(PRIMARY_TARGET,
-                                                         'setup.base'),
-                                     get_target_property(PRIMARY_TARGET,
-                                                         'setup.compiler',
-                                                         compiler=compiler),
-                                     get_target_property(PRIMARY_TARGET,
-                                                         'setup.build'),
-                                     get_target_property(PRIMARY_TARGET,
-                                                         'setup.tech'),
-                                     get_target_property(PRIMARY_TARGET,
-                                                         'setup.reveal') ) }}
-                  """
-    script      = """
-                  UNIT_TESTS=''
-                  if [[ -d $SOURCE_DIRECTORY/unit-test ]] ; then
-                    UNIT_TESTS=`find $SOURCE_DIRECTORY/unit-test -name *test.pf`
-                  fi
-                  if [[ "${UNIT_TESTS}" != "" ]] ; then
-                    rose task-run --app-key=compile
-                  else
-                    echo 'No unit-tests to process'
-                  fi
-                  """
-    post-script = """
-                  {{ deleteDirectory('$WORKING_DIR') }}
-                  """
+
+    {{scripting(
+          PRIMARY_TARGET,
+          ['base', 'compiler.'+compiler, 'build', 'tech'],
+          ['base'],
+          script="""UNIT_TESTS=\"\"
+if [[ -d \$SOURCE_DIRECTORY/unit-test ]] ; then
+    UNIT_TESTS=$(find \$SOURCE_DIRECTORY/unit-test -name \"*test.pf\")
+fi
+if [[ \"${UNIT_TESTS}\" != \"\" ]] ; then
+    rose task-run --app-key=compile
+else
+    echo \"No unit-tests to process\"
+fi"""
+      )}}
+
     [[[environment]]]
       SOURCE_DIRECTORY = $SOURCE_ROOT/{{appPathFragment}}{{projectName}}
       WORKING_DIR      = {{get_target_property(PRIMARY_TARGET, 'build_root')}}/{{label}}/unit-test
@@ -353,34 +327,22 @@
 {%-       if 'integration_test_with_' + label in scheduledTasks %}
   [[integration_test_with_{{label}}]]
     inherit = {{family}}, TARGET
-    pre-script  = """
-                  {{ '\n'
-                     | command_list( get_target_property(PRIMARY_TARGET,
-                                                         'setup.base'),
-                                     get_target_property(PRIMARY_TARGET,
-                                                         'setup.compiler',
-                                                         compiler=compiler),
-                                     get_target_property(PRIMARY_TARGET,
-                                                         'setup.build'),
-                                     get_target_property(PRIMARY_TARGET,
-                                                         'setup.tech'),
-                                     get_target_property(PRIMARY_TARGET,
-                                                         'setup.reveal') ) }}
-                  """
-    script      = """
-                  INTEGRATION_TESTS=''
-                  if [[ -d $SOURCE_DIRECTORY/integration-test ]] ; then
-                    INTEGRATION_TESTS=`find $SOURCE_DIRECTORY/integration-test -name '*.[Ff]90' -exec egrep -l '^\s*program' {} \;`
-                  fi
-                  if [[ "${INTEGRATION_TESTS}" != "" ]] ; then
-                    make -C $SOURCE_DIRECTORY integration-tests
-                  else
-                    echo 'No integration-tests to process'
-                  fi
-                  """
-    post-script = """
-                  {{ deleteDirectory('$WORKING_DIR') }}
-                  """
+
+    {{scripting(
+          PRIMARY_TARGET,
+          ['base', 'compiler.'+compiler, 'build', 'tech'],
+          ['base'],
+          script="""INTEGRATION_TESTS=\"\"
+if [[ -d \$SOURCE_DIRECTORY/integration-test ]] ; then
+    INTEGRATION_TESTS=$(find \$SOURCE_DIRECTORY/integration-test -name \"*.[Ff]90\" -exec egrep -l \"^\s*program\" {} \;)
+fi
+if [[ \"${INTEGRATION_TESTS}\" != \"\" ]] ; then
+    make -C \$SOURCE_DIRECTORY integration-tests
+else
+    echo \"No integration-tests to process\"
+fi"""
+      )}}
+
     [[[environment]]]
       SOURCE_DIRECTORY = $SOURCE_ROOT/{{appPathFragment}}{{projectName}}
       WORKING_DIR      = {{get_target_property(PRIMARY_TARGET, 'build_root')}}/{{label}}/integration-test

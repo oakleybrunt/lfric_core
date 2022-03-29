@@ -5,8 +5,6 @@
 ##############################################################################
 from __future__ import absolute_import, print_function
 
-import sys
-
 from jinja2 import contextfunction
 
 @contextfunction

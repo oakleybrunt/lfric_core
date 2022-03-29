@@ -3,9 +3,6 @@
 {%- set miniappFlag = False %}
 {%- set fix_enums   = False %}
 
-{%- set projectApps = [ None ] %}
-
-
 {# Set the  compiler debug profile for runs in this suite #}
 {# Options are ['fast-debug'|'full-debug'|'production'], omission defaults to 'fast-debug' #}
 {%- set run_application_profile = '' %}

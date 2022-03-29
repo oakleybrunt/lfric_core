@@ -16,8 +16,10 @@
 #       revert it. 
 
 SOURCE=$1
+echo "Checking $SOURCE"
 cd ${SOURCE}
-result=$(rose config-dump -C ${SOURCE})
+result=$(rose config-dump -C $SOURCE)
+
 
 if [[ -f ${SOURCE}/config_dump_check_fail ]] ; then
   echo \'rose config-dump\' has not been applied to source.

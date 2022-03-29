@@ -3,7 +3,7 @@
 {%- set miniappFlag = False %}
 {%- set fix_enums   = False %}
 
-{%- set projectApps = [ 'lfric-xios' ] %}
+{%- set projectName = 'lfric-xios' %}
 
 
 {# Set the  compiler debug profile for runs in this suite #}
@@ -16,10 +16,10 @@
 {%- set mesh_compiler = "intel" %}
 {%- set MAXRUNAHEAD     = 1 %}
 
-{%- set groups = {'developer': ['api_documentation_graph("lfric-xios", publish=True)',
-                                'uml_documentation_graph("lfric-xios", publish=True)',
-                                'check_style_graph("lfric-xios")',
-                                'unit_tests("lfric-xios")'],
+{%- set groups = {'developer': ['api_documentation_graph(publish=True)',
+                                'uml_documentation_graph(publish=True)',
+                                'check_style_graph()',
+                                'unit_test_graph("'+projectName+'")'],
                   'nightly'  : ['null_task_graph()']
                  }
 %}

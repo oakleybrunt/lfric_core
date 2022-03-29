@@ -189,7 +189,7 @@
 
 
 {#- #########################################################################}
-{%- macro setTaskEnv(scheduledTasksDict) %}
+{%- macro setTaskEnv(scheduledTasksDict, compilers) %}
 
 {%-   for group in groupsToRun %}
 {%-     if group in groups.keys() %}
@@ -206,7 +206,7 @@
               for this `run_application` #}
 {%-           set key, resPrecisions = mission | get_precision_macro() %}
 {%-           set run_application_profile = (run_application_profile | default('fast-debug', true)) %}
-{%-           for compiler in compiler_setup.keys() %}
+{%-           for compiler in compilers %}
 {%-             for precision in resPrecisions %}
 {%-               set appKey = key + '_' + compiler + '_' +
                                precision + '-bit_' + run_application_profile %}
@@ -317,7 +317,7 @@
 {# meto-spice), the call is ignored. This allows suite_control.rc to encode  #}
 {# for different task sets in meto-spice and meto-xc40.                      #}
 {#- ##########################################################################}
-{%- macro check_compilers( appName, configuration, compiler, build, 
+{%- macro check_compilers( appName, configuration, compiler, build, compilers,
                            resolution=(''), precisions=[rdef_default],
                            publish=False ) %}
       [[[R1]]]
@@ -327,7 +327,7 @@
 {%-   set science_key = appName + '_' + configuration + '_' + science_label %}
 {%-   set environment = scheduledTasksDict[science_key] %}
 
-{%-   if compiler in compiler_setup.keys() %} {# for valid single compilier #}
+{%-   if compiler in compilers %} {# for valid single compilier #}
 {%-     do compilers.append( compiler ) %}
 {%-     for precision in precisions %}
 {%-       set application_key = appName + '_' + configuration + '_'
@@ -336,7 +336,7 @@
 {%-       do scheduledTasksDict.update({application_key: environment}) %}
 {%-     endfor %} {# rdef_precision #}
 {%-   elif compiler =='all' %} {# otherwise, do all #}
-{%-     for compiler in compiler_setup.keys() %}
+{%-     for compiler in compilers %}
 {%-       do compilers.append( compiler ) %}
 {%-       for precision in precisions %}
 {%-         set application_key = appName + '_' + configuration + '_'

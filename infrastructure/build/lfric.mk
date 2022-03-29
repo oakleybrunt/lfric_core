@@ -346,7 +346,6 @@ do-integration-test/none:
 do-integration-test/run/%: export PYTHONPATH := $(PYTHONPATH):$(LFRIC_BUILD)
 do-integration-test/run/%: do-integration-test/build
 	$(call MESSAGE,Running,$*)
-	$Qrsync -a $(TEST_DIR)/ $(TEST_RUN_DIR)
 	$Qcd $(TEST_RUN_DIR)/$(dir $*); \
 	    ./$(notdir $(addsuffix .py,$*)) $(addprefix $(BIN_DIR)/,$(notdir $*))
 
@@ -354,6 +353,7 @@ do-integration-test/build: do-integration-test/generate \
                            $(addsuffix /extract, $(TEST_DIR))
 	$Q$(MAKE) $(QUIET_ARG) -C $(WORKING_DIR) -f $(LFRIC_BUILD)/analyse.mk
 	$Q$(MAKE) $(QUIET_ARG) -C $(WORKING_DIR) -f $(LFRIC_BUILD)/compile.mk
+	$Qrsync -a $(TEST_DIR)/ $(TEST_RUN_DIR)
 
 # Ensure all extraction is performed before PSyclone otherwise kernel files may
 # not have arrived when they are needed.

@@ -7,7 +7,6 @@
 
 {# SETUP SOME JINJA2 VARIABLES #}
 {%- set plot_config = {} %}
-{%- set compiler_setup = {} %}
 {%- set appConfigsCompilerRuns = {} %}
 {%- set appPrecisionRuns = {} %}
 {%- set appPrecisionBuilds = {} %}
@@ -18,9 +17,7 @@
                       + rdef_default + '-bit_'
                       + run_application_profile|default('fast-debug', true) %}
 
-{%- for compiler, setup in TARGET_COMPILER_SETUP|batch(2) -%}
-{%-   do compiler_setup.update({compiler : [setup]}) -%}
-{%- endfor -%}
+{%- set compilers = target[PRIMARY_TARGET['platform']]['setup']['compiler'].keys() %}
 
 {%- if RUN_NAMES is defined %}
 {%-   if RUN_NAMES is string %}
@@ -161,9 +158,9 @@
     [[TARGET]]
         inherit = {{TARGET_OPT|upper}}
         [[[remote]]]
-            host = {{TARGET_HOST}}
+            host = {{target[PRIMARY_TARGET['platform']]['hostname']}}
         [[[job]]]
-            batch system = {{TARGET_BATCHER}}
+            batch system = {{target[PRIMARY_TARGET['platform']]['batcher']}}
 
 
     [[TECHNICAL]]
@@ -193,7 +190,7 @@
                  mkdir -p `dirname $SOURCE_ROOT`
                  svn export --force {{SOURCE_LFRIC}} $SOURCE_ROOT
 
-                 HOST={{TARGET_HOST}}
+                 HOST={{target[PRIMARY_TARGET['platform']]['hostname']}}
                  RELATIVE_SOURCE_DIRECTORY=`echo $SOURCE_DIRECTORY | sed "s|$HOME/||"`
                  ssh $HOST mkdir -p $RELATIVE_SOURCE_DIRECTORY
                  rsync -avz $SOURCE_DIRECTORY/ $HOST:$RELATIVE_SOURCE_DIRECTORY/
@@ -229,16 +226,13 @@
 {%- if 'publish_index' in scheduledTasks %}
     [[publish_index]]
         inherit = PUBLISH
-        pre-script = """
-                     {{'\n                     '|
-                       command_list( get_target_property(SECONDARY_TARGET,
-                                                         'setup.base'),
-                                     get_target_property(SECONDARY_TARGET,
-                                                         'setup.tech'),
-                                     get_target_property(SECONDARY_TARGET,
-                                                         'setup.reveal') )}}
-                     """
-        script = rose task-run --app-key=publish --command-key=index
+        {{scripting(
+              SECONDARY_TARGET,
+              ['base', 'tech'],
+              ['base'],
+              script='rose task-run --app-key=publish --command-key=index'
+          )}}
+
         [[[environment]]]
             DESTINATION = {{publish_destination}}
 {%-   if ROSE_BUSH_URL %}
@@ -250,16 +244,14 @@
 {%- if 'mirror_results_local' in scheduledTasks %}
     [[mirror_results_local]]
         inherit = PUBLISH
-        pre-script = """
-                     {{'\n'
-                       | command_list( get_target_property(SECONDARY_TARGET,
-                                                           'setup.base'),
-                                       get_target_property(SECONDARY_TARGET,
-                                                           'setup.tech'),
-                                       get_target_property(SECONDARY_TARGET,
-                                                           'setup.reveal') )}}
-                     """
-        script = rose task-run --app-key=publish_mirror
+
+        {{scripting(
+              SECONDARY_TARGET,
+              ['base', 'tech'],
+              ['base'],
+              script='rose task-run --app-key=publish_mirror'
+          )}}
+
         [[[environment]]]
             SOURCE  = {{publish_destination}}
             TARGET  = file://$HOME/public_html/lfric-{{projectName}}-{{TARGET_OPT}}-{{publishGroup}}
@@ -269,16 +261,14 @@
 {%- if 'mirror_results_remote' in scheduledTasks %}
     [[mirror_results_remote]]
         inherit = PUBLISH
-        pre-script = """
-                     {{'\n'
-                       | command_list( get_target_property(SECONDARY_TARGET,
-                                                           'setup.base'),
-                                       get_target_property(SECONDARY_TARGET,
-                                                           'setup.tech'),
-                                       get_target_property(SECONDARY_TARGET,
-                                                           'setup.reveal') )}}
-                     """
-        script = rose task-run --app-key=publish_mirror
+
+        {{scripting(
+              SECONDARY_TARGET,
+              ['base', 'tech'],
+              ['base'],
+              script='rose task-run --app-key=publish_mirror'
+          )}}
+
         [[[environment]]]
             REWRITE = {{MIRROR_REWRITE}}
             SOURCE  = {{publish_destination}}
@@ -291,29 +281,21 @@
 ##############################################################################
 
 {%- for app in projectApps %}
-{{validate_rose_meta_task( projectName, 'TECHNICAL',
-                           get_target_property(SECONDARY_TARGET, 'setup'),
-                           appName=app )}}
+{{validate_rose_meta_task( projectName, 'TECHNICAL', appName=app )}}
 {%- endfor %}
 
-{{ check_config_dump_task('TECHNICAL',
-                    get_target_property(SECONDARY_TARGET, 'setup')) }}
+{{ check_config_dump_task('TECHNICAL', SECONDARY_TARGET) }}
 
-{{check_style_task('TECHNICAL',
-                   get_target_property(SECONDARY_TARGET, 'setup') )}}
+{{check_style_task('TECHNICAL', SECONDARY_TARGET)}}
 
-{{api_documentation_task('DOCUMENTATION', 'PUBLISH',
-                         get_target_property(SECONDARY_TARGET, 'setup'),
-                         get_target_property(SECONDARY_TARGET) )}}
-{{uml_documentation_task('DOCUMENTATION', 'PUBLISH',
-                         get_target_property(SECONDARY_TARGET, 'setup') )}}
-{{design_documentation_task('DOCUMENTATION', 'PUBLISH',
-                            get_target_property(SECONDARY_TARGET, 'setup') )}}
+{{api_documentation_task('DOCUMENTATION', SECONDARY_TARGET, 'PUBLISH', SECONDARY_TARGET)}}
+{{uml_documentation_task('DOCUMENTATION', SECONDARY_TARGET, 'PUBLISH', SECONDARY_TARGET)}}
+{{design_documentation_task('DOCUMENTATION', SECONDARY_TARGET, 'PUBLISH', SECONDARY_TARGET)}}
 
 ##############################################################################
 # COMPILE {{projectName|upper}} PROJECT
 ##############################################################################
-{%- for compiler in compiler_setup.keys() -%}
+{%- for compiler in compilers -%}
 {%-   for build in build_profiles %}
 {%-     for precision in rdef_build_precisions %}
 
@@ -339,23 +321,21 @@
 
     [[compile_{{projectName}}_with_{{label}}]]
         inherit = {{family}}, TARGET
-        pre-script = """
-                     {{'\n                     '|
-                       command_list( TARGET_BASE_SETUP,
-                                     compiler_setup[compiler],
-                                     TARGET_BUILD_SETUP,
-                                     TARGET_REVEAL_SETUP,
-                                     deleteDirectory('$WORKING_DIR') )}}
-                     """
-        script      = rose task-run --app-key=compile
-        post-script = """
-                      {{deleteDirectory('$WORKING_DIR')}}
-                      # Future publisher stages need this information
-                      RELATIVE_LOG_ROOT=$(echo $CYLC_TASK_LOG_ROOT | sed "s|$HOME/||")
-                      echo $RELATIVE_LOG_ROOT > $DESTINATION_DIRECTORY/compile.log.path
-                      """
+
+        {{scripting(
+              PRIMARY_TARGET,
+              ['base', 'compiler.'+compiler, 'build'],
+              ['base'],
+              prescript=deleteDirectory('$WORKING_DIR'),
+              script='rose task-run --app-key=compile',
+              finalscript="""# Future publisher stages need this information
+RELATIVE_LOG_ROOT=$(echo $CYLC_TASK_LOG_ROOT | sed \"s|$HOME/||\")
+echo $RELATIVE_LOG_ROOT > $DESTINATION_DIRECTORY/compile.log.path
+""" + deleteDirectory('$WORKING_DIR')
+          )}}
+
         [[[environment]]]
-            WORKING_DIR           = {{TARGET_BUILD_ROOT}}/{{label}}
+            WORKING_DIR           = {{get_target_property(PRIMARY_TARGET, 'build_root')}}/{{label}}
             TARGET                = build
             PROFILE               = {{build}}
             LFRIC_TARGET_PLATFORM = {{TARGET_OPT}}
@@ -365,10 +345,7 @@
             FIX_ENUMS             = 1
 {%-         endif %}
 
-        [[[directives]]]
-{%-         for DIRECTIVE in TARGET_BUILD_BATCHER_DIRECTIVES %}
-            {{DIRECTIVE}}
-{%-         endfor %}
+{{          directives(PRIMARY_TARGET, 'build') }}
 {%-       endif %}
 
 {%-       if 'publish_' + label + '_compile' in scheduledTasks %}
@@ -385,7 +362,7 @@
                      """
         script = rose task-run --app-key=publish_compile
         [[[environment]]]
-            HOST     = {{TARGET_HOST}}
+            HOST     = {{target[PRIMARY_TARGET['platform']]['hostname']}}
             CONTEXT  = {{build}}
             DIR_FILE = compile.log.path
 
@@ -419,24 +396,22 @@
 {%- if 'compile_mesh_tools_with_' + mesh_label in scheduledTasks %}
     [[compile_mesh_tools_with_{{mesh_label}}]]
         inherit = {{mesh_family}}, TARGET
-        pre-script = """
-                     {{'\n                     '|
-                       command_list( TARGET_BASE_SETUP,
-                                     compiler_setup[TARGET_MESH_COMPILER],
-                                     TARGET_BUILD_SETUP,
-                                     TARGET_REVEAL_SETUP,
-                                     deleteDirectory('$WORKING_DIR') )}}
-                     """
-        script      = rose task-run --app-key=compile
-        post-script = """
-                      {{deleteDirectory('$WORKING_DIR')}}
-                      """
+
+        {{scripting(
+              PRIMARY_TARGET,
+              ['base', 'compiler.'+TARGET_MESH_COMPILER, 'build'],
+              ['base'],
+              prescript=deleteDirectory('$WORKING_DIR'),
+              script='rose task-run --app-key=compile',
+              finalscript=deleteDirectory('$WORKING_DIR')
+          )}}
+
         [[[environment]]]
             SOURCE_DIRECTORY      = $SOURCE_ROOT/mesh_tools
             DESTINATION_DIRECTORY = $OUTPUT_ROOT/{{mesh_label}}
             MESH_DIR              = $OUTPUT_ROOT/{{mesh_label}}/meshes
             BIN_DIR               = $OUTPUT_ROOT/{{mesh_label}}/bin
-            WORKING_DIR           = {{TARGET_BUILD_ROOT}}/{{mesh_label}}
+            WORKING_DIR           = {{get_target_property(PRIMARY_TARGET, 'build_root')}}/{{mesh_label}}
             TARGET                = build
             PROFILE               = {{mesh_build}}
             LFRIC_TARGET_PLATFORM = {{TARGET_OPT}}
@@ -446,17 +421,13 @@
             FIX_ENUMS             = 1
 {%-   endif %}
 
-        [[[directives]]]
-{%-   for DIRECTIVE in TARGET_BUILD_BATCHER_DIRECTIVES %}
-            {{DIRECTIVE}}
-{%-   endfor %}
-
+{{    directives(PRIMARY_TARGET, 'build') }}
 {%- endif %}   {# Compile mesh tools #}
 
 ##############################################################################
 # UNIT, INTEGRATION & CANNED TESTS
 ##############################################################################
-{%- for compiler in compiler_setup.keys() %}
+{%- for compiler in compilers %}
 {%-   for build in build_profiles %}
 {%-     for precision in rdef_build_precisions %}
 
@@ -467,31 +438,27 @@
 {%-       if 'unit_test_with_' + label in scheduledTasks %}
     [[unit_test_with_{{label}}]]
         inherit = {{family}}, TARGET
-        pre-script  = """
-                      {{'\n                     '|
-                        command_list( TARGET_BASE_SETUP,
-                                      compiler_setup[compiler],
-                                      TARGET_BUILD_SETUP,
-                                      TARGET_REVEAL_SETUP,
-                                      deleteDirectory('$WORKING_DIR') )}}
-                      """
-        script      = """
-                      UNIT_TESTS=''
-                      if [[ -d $SOURCE_DIRECTORY/unit-test ]] ; then
-                        UNIT_TESTS=`find $SOURCE_DIRECTORY/unit-test -name *test.pf`
-                      fi
-                      if [[ "${UNIT_TESTS}" != "" ]] ; then
-                        rose task-run --app-key=compile
-                      else
-                        echo 'No unit-tests to process'
-                      fi
-                      """
-        post-script = """
-                      {{deleteDirectory('$WORKING_DIR')}}
-                      """
+
+        {{scripting(
+              PRIMARY_TARGET,
+              ['base', 'compiler.'+compiler, 'build', 'tech'],
+              ['base'],
+              prescript=deleteDirectory('$WORKING_DIR'),
+              script="""UNIT_TESTS=\"\"
+if [[ -d $SOURCE_DIRECTORY/unit-test ]] ; then
+    UNIT_TESTS=$(find $SOURCE_DIRECTORY/unit-test -name \"*test.pf\")
+fi
+if [[ \"${UNIT_TESTS}\" != \"\" ]] ; then
+    rose task-run --app-key=compile
+else
+    echo \"No unit-tests to process\"
+fi""",
+              postscript=deleteDirectory('$WORKING_DIR')
+          )}}
+
         [[[environment]]]
             BIN_DIR               = $DESTINATION_DIRECTORY/bin
-            WORKING_DIR           = {{TARGET_BUILD_ROOT}}/{{label}}
+            WORKING_DIR           = {{get_target_property(PRIMARY_TARGET, 'build_root')}}/{{label}}
             TARGET                = unit-tests
             PROFILE               = {{build}}
             LFRIC_TARGET_PLATFORM = {{TARGET_OPT}}
@@ -501,10 +468,7 @@
             FIX_ENUMS             = 1
 {%-         endif %}
 
-        [[[directives]]]
-{%-         for DIRECTIVE in TARGET_BUILD_BATCHER_DIRECTIVES %}
-            {{DIRECTIVE}}
-{%-         endfor %}
+{{          directives(PRIMARY_TARGET, 'build') }}
 {%-       endif %}
 
 {# #############################################################################}
@@ -512,43 +476,31 @@
 {%-       if 'integration_test_with_' + label in scheduledTasks %}
     [[integration_test_with_{{label}}]]
         inherit = {{family}}, TARGET
-        pre-script  = """
-                      {{'\n                     '|
-                        command_list( TARGET_BASE_SETUP,
-                                      compiler_setup[compiler],
-                                      TARGET_BUILD_SETUP,
-                                      TARGET_REVEAL_SETUP )}}
-                      """
 
-        script      = """
-                      INTEGRATION_TESTS=''
-                      if [[ -d $SOURCE_DIRECTORY/integration-test ]] ; then
-                        INTEGRATION_TESTS=`find $SOURCE_DIRECTORY/integration-test -name '*.[Ff]90' -exec egrep -l '^\s*program' {} \;`
-                      fi
-                      if [[ "${INTEGRATION_TESTS}" != "" ]] ; then
-                        make -C $SOURCE_DIRECTORY integration-tests
-                      else
-                        echo 'No integration-tests to process'
-                      fi
-                      """
-
-        post-script = """
-                      {{deleteDirectory('$WORKING_DIR')}}
-                      """
+        {{scripting(
+              PRIMARY_TARGET,
+              ['base', 'compiler.'+compiler, 'build', 'tech'],
+              ['base'],
+              script="""INTEGRATION_TESTS=\"\"
+if [[ -d $SOURCE_DIRECTORY/integration-test ]] ; then
+    INTEGRATION_TESTS=$(find $SOURCE_DIRECTORY/integration-test -name \"*.[Ff]90\" -exec egrep -l \"^\s*program\" {} \;)
+fi
+if [[ \"${INTEGRATION_TESTS}\" != \"\" ]] ; then
+    make -C $SOURCE_DIRECTORY integration-tests
+else
+    echo \"No integration-tests to process\"
+fi""",
+              postscript=deleteDirectory('$WORKING_DIR')
+          )}}
 
         [[[environment]]]
-            WORKING_DIR    = {{TARGET_BUILD_ROOT}}/integration_{{label}}
+            WORKING_DIR    = {{get_target_property(PRIMARY_TARGET, 'build_root')}}/integration_{{label}}
             RDEF_PRECISION = {{precision}}
 {%-         if fix_enums %}
             FIX_ENUMS      = 1
 {%-         endif %}
 
-        [[[directives]]]
-{%-         for DIRECTIVE in TARGET_BUILD_BATCHER_DIRECTIVES %}
-            {{DIRECTIVE}}
-{%-         endfor %}
-        [[[job]]]
-            execution retry delays = 2*PT5S
+{{          directives(PRIMARY_TARGET, 'build') }}
 {%-       endif %}
 
 {# #############################################################################}
@@ -563,26 +515,20 @@
 
     [[run_{{appName}}_canned_test_{{label}}]]
         inherit = CANNED_TASKS_{{label|upper}}
-        pre-script = """
-                     {{'\n                     '|
-                       command_list( TARGET_BASE_SETUP,
-                                     compiler_setup[compiler],
-                                     TARGET_RUN_SETUP,
-                                     TARGET_REVEAL_SETUP )}}
-                       ulimit -s unlimited
-                     """
 
-        script = rose task-run --app-key=canned_test --command-key={{TARGET_RUN_METHOD}}
+        {{scripting(
+              PRIMARY_TARGET,
+              ['base', 'compiler.'+compiler, 'run'],
+              ['base'],
+              script='rose task-run --app-key=canned_test --command-key='+get_target_property(PRIMARY_TARGET, 'queue.run.launcher')
+          )}}
 
         [[[environment]]]
             APP_NAME         = {{appName}}
             BIN_DIR          = $DESTINATION_DIRECTORY/bin
             OMP_NUM_THREADS  = 1
 
-        [[[directives]]]
-{%-           for DIRECTIVE in TARGET_RUN_BATCHER_DIRECTIVES %}
-            {{DIRECTIVE}}
-{%-           endfor %}
+{{            directives(PRIMARY_TARGET, 'run') }}
 {%-         endif %}
 {%-       endfor %} {# canned configs #}
 
@@ -672,7 +618,7 @@
 {%-                 set configuration_label_res = appLabel|lower + res_label + dt_labels[i] + '_' + label %}
 
 {%-                 if 'run_' + configuration_label_res in scheduledTasks %}
-{%-                   set command_key = TARGET_RUN_METHOD %}
+{%-                   set command_key = get_target_property(PRIMARY_TARGET, 'queue.run.launcher') %}
 
 {%-                   set wallclock = "00:15:00" %}
 {%-                   set threads   = 1 %}
@@ -724,83 +670,69 @@
 # {{projectName|upper}} RUN TASKS
 ##############################################################################
 
-    [[run_{{configuration_label_res}}]]
-        inherit = {{appLabel|upper}}_{{label|upper}}, TARGET
-        pre-script = """
-                     {{'\n                     '|
-                       command_list( TARGET_BASE_SETUP,
-                                     compiler_setup[compiler],
-                                     TARGET_RUN_SETUP,
-                                     TARGET_REVEAL_SETUP )}}
-                       ulimit -s unlimited
+{%-                   set lines = [] %}
 {%-                   for config, extra_meshes in mesh_choices.items() %}
 {%-                     for mesh_name in extra_meshes %}
 {%-                       if mesh_name != '' %}
-                       if [ ! -e $CYLC_TASK_WORK_DIR/mesh_{{mesh_name}}.nc ] ; then
-                         ln -fs $OUTPUT_ROOT/{{mesh_label}}/meshes/mesh_{{mesh_name}}.nc $CYLC_TASK_WORK_DIR/
-                       fi
+{%-                         do lines.append("if [ ! -e $CYLC_TASK_WORK_DIR/mesh_"+mesh_name+".nc ] ; then") %}
+{%-                         do lines.append("  ln -fs $OUTPUT_ROOT/"+mesh_label+"/meshes/mesh_"+mesh_name+".nc $CYLC_TASK_WORK_DIR/") %}
+{%-                         do lines.append("fi") %}
 {%-                       endif %}
 {%-                     endfor %}
 {%-                   endfor %}
-                     """
 
-        script = rose task-run --app-key={{appName}} --command-key={{command_key}} {{config_opt}} {{res_opt}} {{xios_server_opt}} --opt-conf-key=suite_controlled
+    [[run_{{configuration_label_res}}]]
+        inherit = {{appLabel|upper}}_{{label|upper}}, TARGET
 
-        err-script = """
-                     # Copied from the post-script. This has to happen
-                     # regardless of error so that the publish task can work.
-                     mkdir -p $DESTINATION_DIRECTORY/{{pathFragment}}
+        {{scripting(
+              PRIMARY_TARGET,
+              ['base', 'compiler.'+compiler, 'run'],
+              ['base'],
+              prescript=lines|join('\n'),
+              script="rose task-run --app-key="+appName+" --command-key="+command_key+" "+config_opt+" "+res_opt+" "+xios_server_opt+" --opt-conf-key=suite_controlled",
+              finalscript="""mkdir -p $DESTINATION_DIRECTORY/"+pathFragment+"/results
 
-                     # Future publisher stages need this information
-                     RELATIVE_LOG_ROOT=$(echo $CYLC_TASK_LOG_ROOT | sed "s|$HOME/||")
-                     echo $RELATIVE_LOG_ROOT > $DESTINATION_DIRECTORY/{{pathFragment}}/run.log.path
-                     """
+# Future publisher stages need this information
+RELATIVE_LOG_ROOT=$(echo $CYLC_TASK_LOG_ROOT | sed \"s|$HOME/||\")
+echo $RELATIVE_LOG_ROOT > $DESTINATION_DIRECTORY/"+pathFragment+"/run.log.path""",
+              postscript="""find . -regex \".*PET0+\..+\.Log\" -exec cp {} $ROSE_TASK_LOG_DIR \;
+find . -regex \".*PET0+\..+\.Log\" -exec cat {} \;
 
-        post-script = """
-                      mkdir -p $DESTINATION_DIRECTORY/{{pathFragment}}/results
+test -f gungho-checksums.txt && \
+cp gungho-checksums.txt $DESTINATION_DIRECTORY/"+pathFragment+"/"+compiler+".checksums
 
-                      # Future publisher stages need this information
-                      RELATIVE_LOG_ROOT=$(echo $CYLC_TASK_LOG_ROOT | sed "s|$HOME/||")
-                      echo $RELATIVE_LOG_ROOT > $DESTINATION_DIRECTORY/{{pathFragment}}/run.log.path
+# Move nodal .m output
+touch $CYLC_TASK_WORK_DIR/tmp.m
+mv $CYLC_TASK_WORK_DIR/*.m $DESTINATION_DIRECTORY/"+pathFragment+"/results/
 
-                      find . -regex '.*PET0+\..+\.Log' -exec cp {} $ROSE_TASK_LOG_DIR \;
-                      find . -regex '.*PET0+\..+\.Log' -exec cat {} \;
+# Move XIOS netCDF files if they exist.
+#
+# In the case where the file does not exist the return
+# code of a line of the form \"test ... && mv\" will be
+# \"failure\", which is what the test returned. The move
+# was not executed so it does not affect the return code.
+#
+# If the last test fails this return code becomes the
+# value of this whole script and as such causes Cylc to
+# believe the script has failed.
+#
+# By executing \"true\" if the file does not exist then
+# the return code is \"success\" even if the file was not
+# present. This should ensure the suite behaves the way
+# we would expect.
+#
+test -f $CYLC_TASK_WORK_DIR/lfric_diag.nc && \
+cp $CYLC_TASK_WORK_DIR/lfric_diag.nc \
+   $DESTINATION_DIRECTORY/"+pathFragment+"/results/ || true
 
-                      test -f gungho-checksums.txt && \
-                      cp gungho-checksums.txt $DESTINATION_DIRECTORY/{{pathFragment}}/{{compiler}}.checksums
+test -f $CYLC_TASK_WORK_DIR/lfric_initial.nc && \
+mv $CYLC_TASK_WORK_DIR/lfric_initial.nc \
+   $DESTINATION_DIRECTORY/"+pathFragment+"/results/ || true
 
-                      # Move nodal .m output
-                      touch $CYLC_TASK_WORK_DIR/tmp.m
-                      mv $CYLC_TASK_WORK_DIR/*.m $DESTINATION_DIRECTORY/{{pathFragment}}/results/
-
-                      # Move XIOS netCDF files if they exist.
-                      #
-                      # In the case where the file does not exist the return
-                      # code of a line of the form "test ... && mv" will be
-                      # "failure", which is what the test returned. The move
-                      # was not executed so it does not affect the return code.
-                      #
-                      # If the last test fails this return code becomes the
-                      # value of this whole script and as such causes Cylc to
-                      # believe the script has failed.
-                      #
-                      # By executing "true" if the file does not exist then
-                      # the return code is "success" even if the file was not
-                      # present. This should ensure the suite behaves the way
-                      # we would expect.
-                      #
-                      test -f $CYLC_TASK_WORK_DIR/lfric_diag.nc && \
-                      cp $CYLC_TASK_WORK_DIR/lfric_diag.nc \
-                         $DESTINATION_DIRECTORY/{{pathFragment}}/results/ || true
-
-                      test -f $CYLC_TASK_WORK_DIR/lfric_initial.nc && \
-                      mv $CYLC_TASK_WORK_DIR/lfric_initial.nc \
-                         $DESTINATION_DIRECTORY/{{pathFragment}}/results/ || true
-
-                      test -f $CYLC_TASK_WORK_DIR/lfric_averages.nc && \
-                      mv $CYLC_TASK_WORK_DIR/lfric_averages.nc \
-                         $DESTINATION_DIRECTORY/{{pathFragment}}/results/ || true
-                      """
+test -f $CYLC_TASK_WORK_DIR/lfric_averages.nc && \
+mv $CYLC_TASK_WORK_DIR/lfric_averages.nc \
+   $DESTINATION_DIRECTORY/"+pathFragment+"/results/ || true"""
+          )}}
 
         [[[environment]]]
 {%-                   if configuration_label in scheduledTasksDict.keys() %}
@@ -829,7 +761,7 @@
             MESH_DIR          = $OUTPUT_ROOT/{{mesh_label}}/meshes
             BIN_DIR           = $DESTINATION_DIRECTORY/bin
             APP_NAME          = {{appName}}
-            RUN_METHOD        = {{TARGET_RUN_METHOD}}
+            RUN_METHOD        = {{get_target_property(PRIMARY_TARGET, 'queue.run.launcher')}}
             TARGET_PLATFORM   = {{TARGET_OPT}}
             OMP_NUM_THREADS   = $(echo ${threads:-1})
             TOTAL_RANKS       = $(echo ${mpi_parts:-1})
@@ -874,11 +806,7 @@
             RESTART_WRITE = $(if [ $CRUN_LENGTH -gt $CYLC_TASK_CYCLE_POINT ]; then echo ".true."; else echo ".false."; fi)
             RESOLUTION    = {{res_value|replace("_MG","")}}
 
-        [[[directives]]]
-{%-                   for DIRECTIVE in run_batcher %}
-            {{DIRECTIVE}}
-{%-                   endfor %}
-
+{{                    directives(PRIMARY_TARGET, 'run') }}
 {%-                 endif %} {# 'run_' + configuration_label_res #}
 
 {#- ######################################################################## #}
@@ -904,10 +832,7 @@
             RES        = {{res_value}}{{dt_labels[i]}}
             RES_LABEL  = {{res_label}}{{dt_labels[i]}}
 
-        [[[directives]]]
-{%-                   for DIRECTIVE in TARGET_TECHNICAL_BATCHER_DIRECTIVES %}
-            {{DIRECTIVE}}
-{%-                   endfor %}
+{{                    directives(PRIMARY_TARGET, 'tech') }}
 {%-                 endif %}
 
 {#- ######################################################################## #}
@@ -926,10 +851,7 @@
             RES        = {{res_value}}{{dt_labels[i]}}
             RES_LABEL  = {{res_label}}{{dt_labels[i]}}
 
-        [[[directives]]]
-{%-                   for DIRECTIVE in TARGET_TECHNICAL_BATCHER_DIRECTIVES %}
-            {{DIRECTIVE}}
-{%-                   endfor %}
+{{                    directives( PRIMARY_TARGET, 'tech' ) }}
 {%-                 endif %}
 
 {#- ######################################################################## #}
@@ -953,10 +875,7 @@
             PLOT_DIR = $DESTINATION_DIRECTORY/{{pathFragment}}/plots
             PLOT_CONFIG = {{plot_config[plot_label]}}
 
-        [[[directives]]]
-{%-                   for DIRECTIVE in TARGET_TECHNICAL_BATCHER_DIRECTIVES %}
-            {{DIRECTIVE}}
-{%-                   endfor %}
+{{                    directives( PRIMARY_TARGET, 'tech' ) }}
 {%-                 endif %}
 
 {# #############################################################################}
@@ -969,7 +888,7 @@
                      """
         script = rose task-run --app-key=publish_run
         [[[environment]]]
-            HOST          = {{TARGET_HOST}}
+            HOST          = {{target[PRIMARY_TARGET['platform']]['hostname']}}
             DIR_FILE      = {{pathFragment}}/run.log.path
             APP_NAME      = {{appName}}
             CONTEXT       = {{build}}
@@ -987,8 +906,8 @@
         inherit = {{appLabel|upper}}_{{label|upper}}, PUBLISH
         script = """
                  mkdir -p $DESTINATION/{{compiler}}/{{build}}/{{pathFragment}}
-                 RELATIVE_DESTINATION_DIRECTORY=`echo $DESTINATION_DIRECTORY | sed "s|$HOME/||"`
-                 rsync -avz {{TARGET_HOST}}:$RELATIVE_DESTINATION_DIRECTORY/{{pathFragment}}/plots/ \
+                 RELATIVE_DESTINATION_DIRECTORY=$(echo $DESTINATION_DIRECTORY | sed \"s|$HOME/||\")
+                 rsync -avz {{target[PRIMARY_HOST['platform']]['hostname']}}:$RELATIVE_DESTINATION_DIRECTORY/{{pathFragment}}/plots/ \
                             $DESTINATION/{{compiler}}/{{build}}/{{pathFragment}}/
                  """
         [[[job]]]
@@ -1019,10 +938,7 @@
 
         inherit = {{mesh_family}}, TARGET
 
-        [[[directives]]]
-{%-   for DIRECTIVE in TARGET_TECHNICAL_BATCHER_DIRECTIVES %}
-            {{DIRECTIVE}}
-{%-   endfor %}
+{{    directives( PRIMARY_TARGET, 'tech' ) }}
 {%- endif %}
 
 {%- for mesh_name in mesh_names|sort %}
@@ -1030,16 +946,15 @@
 
     [[generate_mesh_{{mesh_name}}_{{mesh_label}}]]
         inherit = GENERATE_MESHES_{{mesh_family}}
-        pre-script = """
-                     mkdir -p $MESH_DIR
-                     {{'\n                     '|
-                       command_list( TARGET_BASE_SETUP,
-                                     compiler_setup[TARGET_MESH_COMPILER],
-                                     TARGET_RUN_SETUP,
-                                     TARGET_REVEAL_SETUP )}}
-                     """
 
-        script = "rose task-run --app-key=mesh --opt-conf-key={{mesh_name}}"
+        {{scripting(
+              PRIMARY_TARGET,
+              ['base', 'compiler.'+TARGET_MESH_COMPILER, 'tech'],
+              ['base'],
+              prescript='mkdir -p $MESH_DIR',
+              script='rose task-run --app-key=mesh --opt-conf-key='+mesh_name
+          )}}
+
 
         [[[environment]]]
             SOURCE_DIRECTORY      = $SOURCE_ROOT/mesh_tools

@@ -5,8 +5,7 @@
 {%- macro check_compilers( build, precisions=[rdef_default], publish=False ) %}
 [[[R1]]]
   graph = """
-{%-   for compiler in get_target_property(PRIMARY_TARGET,
-                                          'setup')['compiler'].keys() %}
+{%-   for compiler in target[PRIMARY_TARGET['platform']]['setup']['compiler'].keys() %}
 {%-     for precision in precisions %}
 {%-       if precision not in rdef_build_precisions %}
 {%-          do rdef_build_precisions.append(precision) -%}

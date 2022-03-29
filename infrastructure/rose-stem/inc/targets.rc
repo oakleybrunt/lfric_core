@@ -10,6 +10,14 @@
  # The goal is that the suites themselves should be complete platform agnostic
  # and all specifics be defined here.
  #}
+{#-
+ #
+ # Due to the prslurmoduction model illadvisedly depending on the
+ # "fortran/opt/gfortran" collection it cannot be taken out of the default
+ # shell profile. Thus it must be unloaded manually. We also unload the legacy
+ # LFRic collection in case it is floating around in people's shell profile or
+ # *.rc files.
+ #}
 {%- set target = {
     'meto-spice' : {
         'hostname' : ROSE_ORIG_HOST,
@@ -19,28 +27,37 @@
         'setup' : {
             'base' : [
                 'umask 0022',
-                'module use /data/users/lfric/modules/modulefiles.rhel7'
+                'module unuse /data/users/lfric/modules/modulefiles.rhel7',
+                'module unuse /project/ukmo/rhel7/fortran/opt/gfortran/modulefiles',
+                'module use /project/extrasoftware/modulefiles.rhel7',
+                'module use /data/users/lfric/software/modulefiles.rhel7'
             ],
             'build' : [
             ],
             'compiler' : {
                 'intel' : [
-                    'module load environment/lfric/intel/17.0.1/2'
+                    'module load environment/lfric/ifort/17.0_64/3'
                 ],
                 'gnu' : [
                     'module use /project/ukmo/rhel7/fortran/opt/gfortran/modulefiles',
-                    'module load environment/lfric/gnu/6.1.0/2'
+                    'module load environment/lfric/gcc/6.1.0/3'
                 ]
             },
             'plot' : ['module load scitools/production-os43-2'],
             'reveal' : ['module list 2>&1', 'export'],
-            'tech' : ['module load common-environment/lfric']
+            'tech' : ['module load environment/lfric/common/8'],
+            'run'  : ['ulimit -s unlimited'],
+        },
+        'teardown' : {
+            'base' : [
+                'module unload environment/lfric'
+            ]
         },
         'queue' : {
             'build' : {
                 'launcher' : 'mpiexec',
                 'directives' : [
-                    '--partition=rhel7', '--time=00:10:00',
+                    '--partition=rhel7', '--time=00:30:00',
                     '--ntasks=6', '--mem-per-cpu=1G', '--gres=tmp:1024',
                     '--export=NONE'
                 ]
@@ -48,14 +65,14 @@
             'run' : {
                 'launcher' : 'mpiexec',
                 'directives' : [
-                    '--partition=rhel7', '--time=00:05:00',
+                    '--partition=rhel7', '--time=00:10:00',
                     '--ntasks=6', '--mem-per-cpu=1G', '--export=NONE'
                 ]
             },
             'tech' : {
                 'launcher' : 'mpiexec',
                 'directives' : [
-                    '--partition=rhel7', '--time=00:05:00', '--ntasks=1',
+                    '--partition=rhel7', '--time=00:15:00', '--ntasks=1',
                     '--mem-per-cpu=1G', '--export=NONE'
                 ]
             }
@@ -82,32 +99,39 @@
                 ]
             },
             'reveal' : ['module list 2>&1', 'export'],
-            'tech' : ['module load cray-snplauncher/$CRAY_MPICH2_VER']
+            'run' : [],
+            'tech' : ['module load meto-common/lfric/13',
+                      'module load cray-snplauncher/$CRAY_MPICH2_VER']
+        },
+        'teardown' : {
+            'base' : [
+                'module unload meto-environment/lfric',
+            ],
         },
         'queue' : {
             'build' : {
                 'launcher' : 'mpiexec',
                 'directives' : [
-                    '-l select=1:ncpus=6:mem=6GB:tmpsize=1GB',
-                    '-l walltime=00:10:00',
+                    '-l select=1:ncpus=6:mem=6GB:tmpsize=2GB',
+                    '-l walltime=00:45:00',
                     '-q=shared'
                 ]
             },
             'run' : {
                 'launcher': 'aprun',
                 'directives' : [
-                    '-l select=1:ncpus=6:mem=6GB',
+                    '-l select=1',
                     '-l walltime=00:10:00',
-                    '-q=parallel'
+                    '-q=normal'
                 ]
             },
             'tech' : {
                 'launcher' : 'mpiexec',
                 'directives' : [
-                    '-l select=1:ncpus=1:mem=1GB',
-                    '-l walltime=00:05:00',
+                    '-l select=1:ncpus=1:mem=1GB:tmpsize=1GB',
+                    '-l walltime=00:15:00',
                     '-q=shared'
-                ]
+                ],
             }
         }
     },
@@ -132,30 +156,37 @@
                 ]
             },
             'reveal' : ['module list 2>&1', 'export'],
-            'tech' : ['module load cray-snplauncher/$CRAY_MPICH2_VER']
+            'run' : [],
+            'tech' : ['module load meto-common-environment/lfric/13',
+                      'module load cray-snplauncher/$CRAY_MPICH2_VER']
+        },
+        'teardown' : {
+            'base' : [
+                'module unload meto-environment/lfric',
+            ],
         },
         'queue' : {
             'build' : {
                 'launcher' : 'mpiexec',
                 'directives' : [
-                    '-l select=1:ncpus=6:mem=6GB:tmpsize=1GB',
-                    '-l walltime=00:10:00',
+                    '-l select=1:ncpus=6:mem=6GB:tmpsize=2GB',
+                    '-l walltime=00:45:00',
                     '-q=shared'
                 ]
             },
             'run' : {
                 'launcher': 'aprun',
                 'directives' : [
-                    '-l select=1:ncpus=6:mem=6GB',
+                    '-l select=1',
                     '-l walltime=00:10:00',
-                    '-q=parallel'
+                    '-q=normal'
                 ]
             },
             'tech' : {
                 'launcher' : 'mpiexec',
                 'directives' : [
                     '-l select=1:ncpus=1:mem=1GB',
-                    '-l walltime=00:05:00',
+                    '-l walltime=00:15:00',
                     '-q=shared'
                 ]
             }
@@ -184,28 +215,33 @@
             'reveal' : ['module list 2>&1', 'export'],
             'tech' : ['module load cray-snplauncher/$CRAY_MPICH2_VER']
         },
+        'teardown' : {
+            'base' : [
+                'module unload meto-environment/lfric',
+            ],
+        },
         'queue' : {
             'build' : {
                 'launcher' : 'mpiexec',
                 'directives' : [
-                    '-l select=1:ncpus=6:mem=6GB:tmpsize=1GB',
-                    '-l walltime=00:10:00',
+                    '-l select=1:ncpus=6:mem=6GB:tmpsize=2GB',
+                    '-l walltime=00:45:00',
                     '-q=shared'
                 ]
             },
             'run' : {
                 'launcher': 'aprun',
                 'directives' : [
-                    '-l select=1:ncpus=6:mem=6GB',
+                    '-l select=1',
                     '-l walltime=00:10:00',
-                    '-q=parallel'
+                    '-q=normal'
                 ]
             },
             'tech' : {
                 'launcher' : 'mpiexec',
                 'directives' : [
                     '-l select=1:ncpus=1:mem=1GB',
-                    '-l walltime=00:05:00',
+                    '-l walltime=00:15:00',
                     '-q=shared'
                 ]
             }
@@ -249,6 +285,10 @@
             ],
             'reveal' : ['module list 2>&1', 'export'],
             'tech' : ['']
+        },
+        'teardown' : {
+            'base' : [
+            ],
         },
         'queue' : {
             'build' : {
@@ -302,6 +342,10 @@
             'plot' : [''],
             'reveal' : ['module list 2>&1', 'export'],
             'tech' : ['']
+        },
+        'teardown' : {
+            'base' : [
+            ],
         },
         'queue' : {
             'build' : {
