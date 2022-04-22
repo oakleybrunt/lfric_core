@@ -28,13 +28,15 @@ project_src_dir[1]="${BASE_SRC_DIR}lfric/lfricinputs/source/scintelapi/generator
 
 # Declare project kernel directories
 declare -a kernel_src_flag
-kernel_src_flag[0]="-d ${BASE_SRC_DIR}lfric/gungho/source/kernel -d ${BASE_SRC_DIR}lfric/components/science/source/kernel"
+kernel_src_flag[0]="-d ${BASE_SRC_DIR}lfric/components/science/source/kernel"
 kernel_src_flag[1]=
 
 # Declare project algorithm directories
 declare -a alg_src_dir
-alg_src_dir[0]="${BASE_SRC_DIR}lfric/infrastructure/source/field ${BASE_SRC_DIR}lfric/components/science/source/algorithm ${BASE_SRC_DIR}lfric/components/lfric-xios/source"
+alg_src_dir[0]="${BASE_SRC_DIR}lfric/infrastructure/source/field  ${BASE_SRC_DIR}lfric/components/lfric-xios/source"
 alg_src_dir[1]="${BASE_SRC_DIR}lfric/lfricinputs/source/scintelapi/generators/toolset ${BASE_SRC_DIR}lfric/lfricinputs/source/scintelapi/generators/analytic"
+
+PRE_PROCESS_MACROS="RDEF_PRECISION=64"
 
 # Psyclone input files are labelled ".x90"; for each algorithm file we find
 # which matches that naming convention, Psyclone will generate two output files,
@@ -46,7 +48,21 @@ for i in "${!project[@]}"; do
   echo 'Running psyclone on '"${project[$i]}"' source'
   echo
 
+  # First preprocess the .x90 files to remove ifdef's etc.
+  processed_source="${BASE_SRC_DIR}../preprocess-${project[$i]}-x90"
+  mkdir -p $processed_source
+
   DIR_LIST="${alg_src_dir[$i]}"
+  for x90file in $(find $DIR_LIST -name '*.x90'); do
+
+    basename=`basename $x90file`
+    processed_name="${processed_source}/$basename"
+    cpp -traditional-cpp -P -D ${PRE_PROCESS_MACROS} $x90file $processed_name
+
+  done
+
+  # Now setup and invoke psyclone for each processed source file
+  DIR_LIST="${processed_source}"
   for x90file in $(find $DIR_LIST -name '*.x90'); do
 
     basename=`basename $x90file`

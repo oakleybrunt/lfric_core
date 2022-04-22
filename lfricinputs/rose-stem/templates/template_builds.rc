@@ -2,6 +2,9 @@
 
     [[fcm_make-{{util_name}}-{{build}}]]
         inherit = {{build_family}}, METO_{{platform_fam}}_2_TASKS, {{platform_fam}}
+         script = """
+                 rose task-run --verbose --define='args=--archive'
+                 """
         [[[job]]]
             execution retry delays = 2*PT1M
         [[[environment]]]
@@ -27,7 +30,7 @@
     [[fcm_make2-{{util_name}}-{{build}}]]
          inherit = {{build_family}}, METO_{{platform_fam}}_2_TASKS, {{platform_fam}}
          script = """
-                 rose task-run --verbose --define=fast-dest-root-cont=$FASTMEM --define='args=--archive'
+                 rose task-run --verbose --define=fast-dest-root-cont=$FASTMEM
                  """
         [[[environment]]]
             CONFIG= {{build_family}}
