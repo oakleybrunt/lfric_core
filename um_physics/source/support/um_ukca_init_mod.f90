@@ -413,8 +413,9 @@ contains
                                 i_urban, i_lake, i_soil, i_ice,                &
                                 dzsoil_layer1, timestep, l_param_conv )
 
-    ! UM module used
+    ! UM modules used
     use dms_flux_mod_4a, only: i_liss_merlivat
+    use atmos_ukca_callback_mod, only: bl_tracer_mix
 
     ! UM modules containing things that needs setting and setup routines
     use mphys_diags_mod, only: l_praut_diag, l_pracw_diag, l_piacw_diag,       &
@@ -550,6 +551,8 @@ contains
            l_ukca_tune_bc=.true.,                                              &
            i_ukca_activation_scheme=ukca_activation_arg,                       &
            i_ukca_nwbins=20,                                                   &
+           ! Callback procedures
+           proc_bl_tracer_mix = bl_tracer_mix,                                 &
            ! Return status information
            error_message=ukca_errmsg,                                          &
            error_routine=ukca_errproc)
