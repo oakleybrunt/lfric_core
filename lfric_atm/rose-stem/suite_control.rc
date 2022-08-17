@@ -248,7 +248,7 @@
  		     env={"crun":2, "nrun":18,
  		     "directives":{"default":{"mpi_parts":4,
  		                              "threads":1,
- 		                              "wallclock":"0:10:00"} } },
+ 		                              "wallclock":"0:15:00"} } },
  		     plotstr="plot_map.py -ral $NODAL_DATA_DIR/lfric_diag.nc  $PLOT_DIR")',
     'check_compilers("lfric_atm", "nwp_gal9_copy", "full-debug",
                      resolution=("C12",1800.0))',

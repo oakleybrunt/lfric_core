@@ -43,7 +43,7 @@ module interp_bl_kernel_mod
          arg_type(GH_FIELD, GH_REAL, GH_INC,  ANY_SPACE_1),               &! surf_interp_w2
          arg_type(GH_FIELD, GH_REAL, GH_INC,  W2),                        &! ngstress_w2
          arg_type(GH_FIELD, GH_REAL, GH_INC,  W2),                        &! wetrho_in_w2
-         arg_type(GH_FIELD, GH_REAL, GH_INC,  W2)                         &! w2_rmultiplicity
+         arg_type(GH_FIELD, GH_REAL, GH_READ, W2)                         &! w2_rmultiplicity
          /)
     integer :: operates_on = CELL_COLUMN
   contains
