@@ -27,7 +27,6 @@ from read_data import read_ugrid_data
 from six.moves import range
 
 
-
 # --------------------------------------------------------------------------- #
 # Rounding functions for neatly determining contour levels
 # --------------------------------------------------------------------------- #
@@ -93,7 +92,7 @@ def make_figures(filein, plotpath, field_list, slice_list,
             zmax = 10000.0  # A 10 km lid
         elif testname in ['sbr', 'dcmip101', 'vert_def']:
             zmin = 0.0
-            zmax = 12000.0 # A 12 km lid
+            zmax = 12000.0  # A 12 km lid
         elif spherical:
             zmin = 0.0
             zmax = 30000.   # Assume 30 km lid
@@ -132,11 +131,24 @@ def make_figures(filein, plotpath, field_list, slice_list,
     try:
         cube = read_ugrid_data(filein, 'u_in_w2h')
     except iris.exceptions.ConstraintMismatchError:
-        # if u_in_w2h is not in cube, then try wind1 (e.g. for transport miniapp)
+        # If u_in_w2h is not in cube, then try wind1
+        # (e.g. for transport miniapp)
         cube = read_ugrid_data(filein, 'wind1')
 
-    lon_data = np.around(cube.coord('longitude').points, decimals=5)
-    lat_data = np.around(cube.coord('latitude').points, decimals=5)
+    x_coord_name = "longitude"
+    y_coord_name = "latitude"
+    try:
+        lon_data = np.around(cube.coord(x_coord_name).points, decimals=5)
+        lat_data = np.around(cube.coord(y_coord_name).points, decimals=5)
+    except iris.exceptions.CoordinateNotFoundError:
+        x_coord_name = 'projection_x_coordinate'
+        y_coord_name = 'projection_y_coordinate'
+        lon_data = np.around(cube.coord(x_coord_name).points, decimals=5)
+        lat_data = np.around(cube.coord(y_coord_name).points, decimals=5)
+    except Exception as err:
+        msg = "error extracting planar mesh: " + str(err)
+        print(msg)
+        exit(1)
 
     plot_lonmax = np.amax(np.abs(lon_data))
     plot_latmax = np.amax(np.abs(lat_data))
@@ -188,9 +200,26 @@ def make_figures(filein, plotpath, field_list, slice_list,
 # --------------------------------------------------------------------------- #
 
         # Compute the horizontal grid
+        x_coord_name = "longitude"
+        y_coord_name = "latitude"
         if spherical:
-            lon_data = np.around(cube.coord('longitude').points, decimals=5)
-            lat_data = np.around(cube.coord('latitude').points, decimals=5)
+            try:
+                lon_data = np.around(
+                    cube.coord(x_coord_name).points, decimals=5)
+                lat_data = np.around(
+                    cube.coord(y_coord_name).points, decimals=5)
+            except iris.exceptions.CoordinateNotFoundError:
+                x_coord_name = 'projection_x_coordinate'
+                y_coord_name = 'projection_y_coordinate'
+                lon_data = np.around(
+                    cube.coord(x_coord_name).points, decimals=5)
+                lat_data = np.around(
+                    cube.coord(y_coord_name).points, decimals=5)
+            except Exception as err:
+                msg = "error extracting planar mesh: " + str(err)
+                print(msg)
+                exit(1)
+
             # Make a latitude-longitude grid with spacing of 0.5 degrees
             nlat, nlon = 360, 720
             if plot_lon is None:
@@ -210,8 +239,23 @@ def make_figures(filein, plotpath, field_list, slice_list,
                 plot_lonmax = 180.
 
         else:
-            lon_data = np.around(cube.coord('longitude').points, decimals=5)
-            lat_data = np.around(cube.coord('latitude').points, decimals=5)
+            try:
+                lon_data = np.around(
+                    cube.coord(x_coord_name).points, decimals=5)
+                lat_data = np.around(
+                    cube.coord(y_coord_name).points, decimals=5)
+            except iris.exceptions.CoordinateNotFoundError:
+                x_coord_name = 'projection_x_coordinate'
+                y_coord_name = 'projection_y_coordinate'
+                lon_data = np.around(
+                    cube.coord(x_coord_name).points, decimals=5)
+                lat_data = np.around(
+                    cube.coord(y_coord_name).points, decimals=5)
+            except Exception as err:
+                msg = "error extracting planar mesh: " + str(err)
+                print(msg)
+                exit(1)
+
             nlat, nlon = len(np.unique(lat_data)), len(np.unique(lon_data))
             if plot_lon is None:
                 plot_lon = 0
@@ -349,11 +393,12 @@ def make_figures(filein, plotpath, field_list, slice_list,
 
                 # Special contours for our known tests
                 if ((testname in ['cylinder', 'div_free',
-                                 'eternal_fountain', 'rotational',
-                                 'translational', 'sbr',
-                                 'dcmip101', 'vert_def']
+                                  'eternal_fountain', 'rotational',
+                                  'translational', 'sbr',
+                                  'dcmip101', 'vert_def']
                     and field in ['theta', 'density', 'rho', 'm_v', 'tracer'])
-                    or (testname == 'curl_free' and field in ['theta', 'm_v'])):
+                        or (testname == 'curl_free' and
+                            field in ['theta', 'm_v'])):
 
                     # Hardwire contour details
                     # 2.0 is the background value (usually the minimum)
@@ -372,7 +417,8 @@ def make_figures(filein, plotpath, field_list, slice_list,
                     for contour in contour_colours:
                         if abs(contour - tracer_background) > epsilon:
                             contour_lines.append(contour)
-                elif (testname == 'curl_free' and field in ['density', 'rho', 'tracer']):
+                elif (testname == 'curl_free' and
+                      field in ['density', 'rho', 'tracer']):
                     step = 0.5
                     min_field = 0.0
                     max_field = 6.0
