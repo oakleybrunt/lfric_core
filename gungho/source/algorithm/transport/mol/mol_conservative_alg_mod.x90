@@ -273,6 +273,21 @@ module mol_conservative_alg_mod
         old_flux_inc => transport_runtime%get_flux_inc(mesh_id, step)
         call invoke( inc_X_plus_Y(field_np1, old_flux_inc) )
       end do
+
+      ! ---------------------------------------------------------------------- !
+      ! Blending zone update
+      ! ---------------------------------------------------------------------- !
+      if ( limited_area .and. topology == topology_non_periodic ) then
+        ! This code is required while LAMs loop over cells right up to
+        ! the edge of a limited area domain.  It can be removed if
+        ! we only loop over columns in the interior domain.
+
+        ! Don't update the field near the edge of the domain. A configurable depth of using
+        ! the transport_boundary_depth is chosen here.  This will depend
+        ! on the number of RK stages and spatial reconstruction order.
+        ! Ticket #3112 will investigate further options.
+        call overwrite_blending_zone(field_np1, field_start, depth=transport_boundary_depth)
+      end if
     end if
 
     ! ------------------------------------------------------------------------ !

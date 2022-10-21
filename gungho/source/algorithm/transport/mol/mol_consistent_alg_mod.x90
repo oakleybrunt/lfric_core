@@ -288,6 +288,21 @@ module mol_consistent_alg_mod
       ! Turn back to Wtheta -- separate invoke as on different mesh
       call invoke( inject_sh_w3_to_wt_kernel_type(mr_wt_np1, mr_sh_w3_np1) )
 
+      ! ---------------------------------------------------------------------- !
+      ! Blending zone update
+      ! ---------------------------------------------------------------------- !
+      if ( limited_area .and. topology == topology_non_periodic ) then
+        ! This code is required while LAMs loop over cells right up to
+        ! the edge of a limited area domain.  It can be removed if
+        ! we only loop over columns in the interior domain.
+
+        ! Don't update the field near the edge of the domain. A configurable depth of using
+        ! the transport_boundary_depth is chosen here.  This will depend
+        ! on the number of RK stages and spatial reconstruction order.
+        ! Ticket #3112 will investigate further options.
+        call overwrite_blending_zone(mr_wt_np1, mr_wt_n, depth=transport_boundary_depth)
+      end if
+
     else
       dt_substep = -1.0_r_def*dt_substep
       ! Compute div(flux_X)
@@ -313,31 +328,32 @@ module mol_consistent_alg_mod
           old_flux_inc => transport_runtime%get_flux_inc(shifted_mesh_id, s)
           call invoke( inc_X_plus_Y(rho_X_np1, old_flux_inc) )
         end do
-      ! Turn density back into mixing ratio
-      call invoke( X_divideby_Y(mr_sh_w3_np1, rho_X_np1, rho_d_np1) )
-      ! Turn back to Wtheta -- separate invoke as on different mesh
-      call invoke( inject_sh_w3_to_wt_kernel_type(mr_wt_np1, mr_sh_w3_np1) )
+        ! Turn density back into mixing ratio
+        call invoke( X_divideby_Y(mr_sh_w3_np1, rho_X_np1, rho_d_np1) )
+        ! Turn back to Wtheta -- separate invoke as on different mesh
+        call invoke( inject_sh_w3_to_wt_kernel_type(mr_wt_np1, mr_sh_w3_np1) )
+
+        ! ------------------------------------------------------------------- !
+        ! Blending zone update
+        ! --------------------------------------------------------------------!
+        if ( limited_area .and. topology == topology_non_periodic ) then
+          ! This code is required while LAMs loop over cells right up to
+          ! the edge of a limited area domain.  It can be removed if
+          ! we only loop over columns in the interior domain.
+
+          ! Don't update the field near the edge of the domain. A configurable depth of using
+          ! the transport_boundary_depth is chosen here.  This will depend
+          ! on the number of RK stages and spatial reconstruction order.
+          ! Ticket #3112 will investigate further options.
+          call overwrite_blending_zone(mr_wt_np1, mr_wt_start, &
+                                       depth=transport_boundary_depth)
+        end if
 
       end if
       ! Do nothing if not 3D MoL or not last split step
       ! Mix. ratio transported with adv inc (this has already been done above)
       ! Just need to store flux increment that has been computed
 
-    end if
-
-    ! ------------------------------------------------------------------------ !
-    ! Blending zone update
-    ! ------------------------------------------------------------------------ !
-    if ( limited_area .and. topology == topology_non_periodic ) then
-      ! This code is required while LAMs loop over cells right up to
-      ! the edge of a limited area domain.  It can be removed if
-      ! we only loop over columns in the interior domain.
-
-      ! Don't update the field near the edge of the domain. A configurable depth of using
-      ! the transport_boundary_depth is chosen here.  This will depend
-      ! on the number of RK stages and spatial reconstruction order.
-      ! Ticket #3112 will investigate further options.
-      call overwrite_blending_zone(mr_wt_np1, mr_wt_n, depth=transport_boundary_depth)
     end if
 
     ! ------------------------------------------------------------------------ !
