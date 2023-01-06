@@ -160,6 +160,7 @@ subroutine tl_project_eos_pressure_code(cell, nlayers,                          
   real(kind=r_def), dimension(3,3,nqp_h,nqp_v) :: jac
 
   real(kind=r_def) :: exner_at_quad, rho_at_quad, theta_vd_at_quad
+  real(kind=r_def) :: exner_eos
   real(kind=r_def) :: ls_rho_at_quad, ls_theta_vd_at_quad
 
   ipanel = int(panel_id(map_pid(1)), i_def)
@@ -218,9 +219,9 @@ subroutine tl_project_eos_pressure_code(cell, nlayers,                          
         end do
 
         ! Calculation
-        exner_at_quad = wqp_h(qp1)*wqp_v(qp2)*dj(qp1,qp2)                          &
-                      *tl_calc_exner_pointwise(rho_at_quad, theta_vd_at_quad,      &
-                                               ls_rho_at_quad, ls_theta_vd_at_quad)
+        call tl_calc_exner_pointwise( exner_eos, rho_at_quad, theta_vd_at_quad, &
+                                      ls_rho_at_quad, ls_theta_vd_at_quad )
+        exner_at_quad = wqp_h(qp1) * wqp_v(qp2) * dj(qp1,qp2) * exner_eos
 
         do df = 1, ndf_w3
           r_exner(df) = r_exner(df) + w3_basis(1,df,qp1,qp2)*exner_at_quad

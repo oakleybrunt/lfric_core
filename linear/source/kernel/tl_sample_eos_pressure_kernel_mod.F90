@@ -111,6 +111,7 @@ subroutine tl_sample_eos_pressure_code(nlayers,                                &
   real(kind=r_def), dimension(ndf_wt)          :: ls_theta_vd_e
 
   real(kind=r_def) :: rho_cell, theta_vd_cell
+  real(kind=r_def) :: exner_eos
   real(kind=r_def) :: ls_rho_cell, ls_theta_vd_cell
 
   do k = 0, nlayers-1
@@ -156,8 +157,9 @@ subroutine tl_sample_eos_pressure_code(nlayers,                                &
       end do
 
       ! Calculation
-      exner(map_w3(df)+k) = tl_calc_exner_pointwise(rho_cell, theta_vd_cell,     &
-                                                    ls_rho_cell, ls_theta_vd_cell)
+      call tl_calc_exner_pointwise( exner_eos, rho_cell, theta_vd_cell, &
+                                    ls_rho_cell, ls_theta_vd_cell )
+      exner(map_w3(df)+k) = exner_eos
 
     end do
   end do
