@@ -381,7 +381,7 @@
 {%- for compiler in compiler_setup.keys() -%}
  {%- if 'intel' in compiler -%}
  {{'\n'}}
-    [[fcm_make_ocean]] 
+    [[fcm_make_ocean]]
         [[[job]]]
             batch system = slurm
             execution time limit = PT10M
@@ -457,7 +457,8 @@
             WORKING_DIR           = {{TARGET_BUILD_ROOT}}/{{label}}
             TARGET                = build
             PROFILE               = {{build}}
-            LFRIC_TARGET_PLATFORM = {{TARGET_OPT}}
+            PSYCLONE_TRANSFORMATION = {{TARGET_OPT}}
+            UM_FCM_TARGET_PLATFORM  = {{TARGET_OPT}}
             MAKE_THREADS          = 4
             RDEF_PRECISION        = {{precision}}
             VERBOSE               = 2
@@ -537,7 +538,7 @@
             WORKING_DIR           = {{TARGET_BUILD_ROOT}}/{{mesh_label}}
             TARGET                = build
             PROFILE               = {{mesh_build}}
-            LFRIC_TARGET_PLATFORM = {{TARGET_OPT}}
+            PSYCLONE_TRANSFORMATION = {{TARGET_OPT}}
             MAKE_THREADS          = 4
             RDEF_PRECISION        = {{mesh_rdef}}
 

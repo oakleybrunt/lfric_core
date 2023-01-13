@@ -31,6 +31,9 @@
 PROJECT_NAME = mesh_tools
 PROFILE ?= fast-debug
 
+# Select option for PSyclone transformation. Select "none" for no transformation
+export MESH_PSYCLONE_TRANSFORMATION ?= none
+
 # This top level makefile is very order sensitive. Source code extraction and
 # generation must happen in a certain order. Due to this we turn off
 # multithreading for this file only. Any called recursively (i.e. with $(MAKE))
@@ -48,6 +51,14 @@ export SUITE_GROUP_NAME ?= $(notdir $(realpath $(shell pwd)/$(ROOT_DIR)))-$(PROJ
 
 META_VN       ?= HEAD
 META_FILE_DIR  = $(PROJECT_DIR)/rose-meta/lfric-$(PROJECT_NAME)/$(META_VN)
+
+# Check PSyclone transformation option is valid
+ifneq ("$(MESH_PSYCLONE_TRANSFORMATION)","none")
+  export OPTIMISATION_PATH ?= $(wildcard optimisation/$(MESH_PSYCLONE_TRANSFORMATION))
+  ifeq ("$(wildcard $(OPTIMISATION_PATH)/global.py)","")
+    $(error PSyclone transformation dir "$(MESH_PSYCLONE_TRANSFORMATION)" does not have a global.py script)
+  endif
+endif
 
 .PHONY: default
 default: build unit-tests

@@ -15,7 +15,8 @@ export PROJECT_NAME = coupling
 export PROJECT_DIR_NAME = components/coupler-oasis
 PROFILE ?= fast-debug
 
-LFRIC_TARGET_PLATFORM ?= generic-x86
+# Select option for PSyclone transformation. Select "none" for no transformation
+export PSYCLONE_TRANSFORMATION ?= none
 
 export PROJECT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 export ROOT_DIR    ?= ../..
@@ -27,6 +28,14 @@ export SUITE_GROUP_NAME ?= $(notdir $(realpath $(shell pwd)/$(ROOT_DIR)))-$(PROJ
 
 META_VN       ?= HEAD
 META_FILE_DIR  = $(PROJECT_DIR)/rose-meta/$(PROJECT_NAME)/$(META_VN)
+
+# Check PSyclone transformation option is valid
+ifneq ("$(PSYCLONE_TRANSFORMATION)","none")
+  export OPTIMISATION_PATH ?= $(wildcard optimisation/$(PSYCLONE_TRANSFORMATION))
+  ifeq ("$(wildcard $(OPTIMISATION_PATH)/global.py)","")
+    $(error PSyclone transformation dir "$(PSYCLONE_TRANSFORMATION)" does not have a global.py script)
+  endif
+endif
 
 .PHONY: default
 default: unit-tests

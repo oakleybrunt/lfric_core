@@ -7,7 +7,7 @@
 # Run this file to extract source code from the UM repository.
 #
 # The following environment variables are used for input:
-#   LFRIC_TARGET_PLATFORM : Target identifier used to get the correct source.
+#   UM_FCM_TARGET_PLATFORM : Target identifier used to get the correct source.
 #   PROFILE : Build profile used to determine optimisation level.
 #   PROJECT_DIR : Full path to the current project's root directory.
 #   SCRATCH_DIR : Temporary space for extracted source.
@@ -22,12 +22,12 @@ include $(LFRIC_BUILD)/lfric.mk
 include $(LFRIC_BUILD)/cxx.mk
 include $(PROJECT_DIR)/build/fortran.mk
 
-export platform_config_dir=$(strip $(shell grep -E "$(LFRIC_TARGET_PLATFORM)\s*:\s*$(FORTRAN_COMPILER)\s*:" $(PROJECT_DIR)/fcm-make/target-map.txt | cut -d : -f 3))
+export platform_config_dir=$(strip $(shell grep -E "$(UM_FCM_TARGET_PLATFORM)\s*:\s*$(FORTRAN_COMPILER)\s*:" $(PROJECT_DIR)/fcm-make/target-map.txt | cut -d : -f 3))
 export optimisation_level=$(strip $(shell grep -E "$(PROFILE)\s*:\s*" $(PROJECT_DIR)/fcm-make/optimisation-map.txt | cut -d : -f 2))
 
 .PHONY: extract
 extract:
-	$Qif [ x$(platform_config_dir) = x ] ; then echo Unable to convert $(LFRIC_TARGET_PLATFORM):$(FORTRAN_COMPILER) to a UM target; false; fi
+	$Qif [ x$(platform_config_dir) = x ] ; then echo Unable to convert $(UM_FCM_TARGET_PLATFORM):$(FORTRAN_COMPILER) to a UM target; false; fi
 	$(info Using UM target $(platform_config_dir))
 	# Retrieve and preprocess the UM, Jules and Socrates code
 	# The UM_ENV file contains the appropriate locations and UM side

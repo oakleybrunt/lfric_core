@@ -282,7 +282,7 @@ echo $CYLC_TASK_LOG_ROOT > $DESTINATION_DIRECTORY/lfric.mesher."+compiler+".log
     [[[environment]]]
       WORKING_DIR           = {{ get_target_property(PRIMARY_TARGET, 'build_root') }}/{{label}}/mesh_tools
       BUILD_TARGET          = {{build}}
-      LFRIC_TARGET_PLATFORM = {{PRIMARY_TARGET['platform']}}
+      MESH_PSYCLONE_TRANSFORMATION = none
       PROFILE               = {{build}}
       TARGET                = build
       MAKE_THREADS          = 4

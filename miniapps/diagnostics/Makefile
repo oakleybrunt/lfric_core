@@ -8,6 +8,9 @@ export PROJECT_NAME = diagnostics
 export PROJECT_DIR_NAME = diagnostics
 PROFILE ?= fast-debug
 
+# Select option for PSyclone transformation. Select "none" for no transformation
+export PSYCLONE_TRANSFORMATION ?= meto-spice
+
 export PROJECT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 export ROOT_DIR    ?= ../..
 
@@ -17,14 +20,19 @@ export INTERNAL_DEPENDENCIES = $(ROOT_DIR)/infrastructure \
                                $(ROOT_DIR)/components/lfric-xios \
                                $(ROOT_DIR)/components/driver
 
-LFRIC_TARGET_PLATFORM ?= generic-x86
-export OPTIMISATION_PATH ?= $(wildcard optimisation/$(LFRIC_TARGET_PLATFORM))
-
 export SUITE_GROUP ?= developer
 export SUITE_GROUP_NAME ?= $(notdir $(realpath $(shell pwd)/$(ROOT_DIR)))-$(PROJECT_NAME)-.*
 
 META_VN       ?= HEAD
 META_FILE_DIR  = $(PROJECT_DIR)/rose-meta/lfric-$(PROJECT_NAME)/$(META_VN)
+
+# Check PSyclone transformation option is valid
+ifneq ("$(PSYCLONE_TRANSFORMATION)","none")
+  export OPTIMISATION_PATH ?= $(wildcard optimisation/$(PSYCLONE_TRANSFORMATION))
+  ifeq ("$(wildcard $(OPTIMISATION_PATH)/global.py)","")
+    $(error PSyclone transformation dir "$(PSYCLONE_TRANSFORMATION)" does not have a global.py script)
+  endif
+endif
 
 .PHONY: default
 default: build unit-tests integration-tests

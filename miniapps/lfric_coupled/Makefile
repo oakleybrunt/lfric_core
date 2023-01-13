@@ -15,6 +15,12 @@ export PROJECT_NAME = lfric_coupled
 export PROJECT_DIR_NAME = lfric_coupled
 PROFILE ?= fast-debug
 
+# Option defined in fcm_make/target-map.txt which in turn references options
+# from fcm:um.xm_tr/fcm-make
+export UM_FCM_TARGET_PLATFORM ?= generic-x86
+# Select option for PSyclone transformation. Select "none" for no transformation
+export PSYCLONE_TRANSFORMATION ?= minimum
+
 export PROJECT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 export ROOT_DIR    ?= ../..
 
@@ -30,14 +36,20 @@ export INTERNAL_DEPENDENCIES = $(ROOT_DIR)/infrastructure \
 export UMPHYSICS_TARGETS = extract-um-physics
 export UMPHYSICS_CLEAN   = clean-um-physics
 export UM_FCM=$(UM_PHYS_DIR)/
-export LFRIC_TARGET_PLATFORM ?= generic-x86
-export OPTIMISATION_PATH ?= $(wildcard optimisation/$(LFRIC_TARGET_PLATFORM))
 
 export SUITE_GROUP ?= developer
 export SUITE_GROUP_NAME ?= $(notdir $(realpath $(shell pwd)/$(ROOT_DIR)))-$(PROJECT_NAME)-.*
 
 META_VN       ?= HEAD
 META_FILE_DIR  = $(PROJECT_DIR)/rose-meta/lfric-$(PROJECT_NAME)/$(META_VN)
+
+# Check PSyclone transformation option is valid
+ifneq ("$(PSYCLONE_TRANSFORMATION)","none")
+  export OPTIMISATION_PATH ?= $(wildcard optimisation/$(PSYCLONE_TRANSFORMATION))
+  ifeq ("$(wildcard $(OPTIMISATION_PATH)/global.py)","")
+    $(error PSyclone transformation dir "$(PSYCLONE_TRANSFORMATION)" does not have a global.py script)
+  endif
+endif
 
 .PHONY: default
 default: build test-suite
