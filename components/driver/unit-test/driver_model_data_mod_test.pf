@@ -30,6 +30,7 @@ module driver_model_data_mod_test
 
   private
   public :: test_assignment
+  public :: test_copy_model_data
 
   @TestCase
   type, extends(TestCase), public :: driver_model_data_test_type
@@ -41,6 +42,7 @@ module driver_model_data_mod_test
     procedure tearDown
     procedure get_local_mesh_ptr
     procedure test_assignment
+    procedure test_copy_model_data
   end type driver_model_data_test_type
 
   integer(i_def), parameter    :: element_order = 0
@@ -175,5 +177,86 @@ contains
     @assertFalse(model_data%field_collection_exists("absent_collection"))
 
   end subroutine test_assignment
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  !> Test for copy_model_data
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  @Test
+  subroutine test_copy_model_data( this )
+
+    implicit none
+
+    class(driver_model_data_test_type), intent(inout) :: this
+    type(model_data_type)                             :: model_data
+    type(model_data_type)                             :: model_data_copy
+
+    type(field_type), target                          :: test_field
+    type(field_proxy_type)                            :: field_proxy
+    type(field_proxy_type)                            :: returned_field_proxy
+
+    class(pure_abstract_field_type), pointer :: field_ptr => null()
+    type(field_type), pointer                :: test_field_ptr => null()
+    type(field_type), pointer                :: returned_field => null()
+    type(field_collection_type), pointer     :: returned_collection => null()
+
+    ! Initialise test field and get proxy
+    call test_field%initialise( this%w3_fs, name='test_field' )
+    field_proxy = test_field%get_proxy()
+
+    ! Set first dof to nominal value
+    field_proxy%data(1) = 1.0_r_def
+
+    ! Initialise depository
+    call model_data%depository%initialise(name = "depository", table_len=100)
+
+    ! Add 2 field collections to model data
+    call model_data%add_empty_field_collection("collection_1")
+    call model_data%add_empty_field_collection("collection_2")
+
+    ! Add test_field to depository and a pointer to it to collection_1
+    call model_data%depository%add_field(test_field)
+    call model_data%depository%get_field("test_field", test_field_ptr)
+    returned_collection => model_data%get_field_collection("collection_1")
+    field_ptr => test_field_ptr
+    call returned_collection%add_reference_to_field(field_ptr)
+    nullify(returned_collection)
+
+    ! Perform the copy
+    call model_data%copy_model_data(model_data_copy)
+    @assertEqual(model_data_copy%depository%get_name(), "depository")
+
+    ! Test name and first dof of test_field
+    returned_collection => model_data_copy%get_field_collection("collection_1")
+    @assertEqual(1, returned_collection%get_length())
+    call returned_collection%get_field("test_field", returned_field)
+    @assertEqual("test_field", returned_field%get_name())
+    returned_field_proxy = returned_field%get_proxy()
+    @assertEqual(1.0_r_def, returned_field_proxy%data(1))
+
+    ! Test field is in depository
+    @assertEqual(1, model_data_copy%depository%get_length())
+    @assertTrue(model_data_copy%depository%field_exists("test_field"))
+
+    @assertTrue(model_data_copy%field_collection_exists("collection_2"))
+    @assertFalse(model_data_copy%field_collection_exists("absent_collection"))
+
+    ! Change first dof, check it doesn't alter copy
+    field_proxy%data(1) = 2.0_r_def
+    @assertEqual(2.0_r_def, field_proxy%data(1))
+
+    ! Now if we nullify the original field pointer, we should still be able to use the
+    ! pointer from the copied collection, and we should be pointing at the same data.
+    nullify(test_field_ptr)
+    returned_field_proxy = returned_field%get_proxy()
+    @assertEqual(1.0_r_def, returned_field_proxy%data(1))
+
+    ! Add collection to original model_data, check it doesn't alter copy
+    call model_data%add_empty_field_collection("collection_3")
+    @assertFalse(model_data_copy%field_collection_exists("collection_3"))
+
+  end subroutine test_copy_model_data
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 end module driver_model_data_mod_test

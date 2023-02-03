@@ -419,7 +419,7 @@ subroutine clear(self)
 
   do
     ! if it isn't pointing at anything just exit
-    if ( .not. associated(self%head) )exit
+    if ( .not. associated(self%head) ) exit
     ! point tmp at head of list
     tmp=>self%head
     ! point head at next

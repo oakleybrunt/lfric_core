@@ -14,7 +14,7 @@ module driver_model_data_mod
 
   use field_mod,            only : field_type
   use field_collection_mod, only : field_collection_type
-  use constants_mod,        only : l_def
+  use constants_mod,        only : l_def, str_def
   use log_mod,              only : log_event,       &
                                    LOG_LEVEL_ERROR, &
                                    log_scratch_space
@@ -44,6 +44,7 @@ module driver_model_data_mod
     procedure, public  :: field_collection_exists
     procedure, public  :: add_empty_field_collection
     procedure, public  :: get_field_collection
+    procedure, public  :: copy_model_data
 
   end type model_data_type
 
@@ -80,7 +81,7 @@ contains
       write(log_scratch_space, '(3A)') &
         'Field collection [', trim(field_collection%get_name()), &
         '] already exists in model data'
-      call log_event( log_scratch_space, LOG_LEVEL_ERROR)
+      call log_event(log_scratch_space, LOG_LEVEL_ERROR)
     end if
 
     ! Finished checking - so the field collection must be good to add
@@ -206,5 +207,45 @@ contains
     nullify(loop)
 
   end function get_field_collection
+
+  !> @brief Creates a copy of the model data
+  !> @param [in] copy The model_data_type object to copy data into
+  subroutine copy_model_data(self, copy)
+
+    implicit none
+
+    class(model_data_type), intent(inout) :: self
+    type(model_data_type), intent(inout)  :: copy
+    character(str_def)                    :: field_collection_name
+    type(field_collection_type), pointer  :: field_collection_pointer
+
+    ! Pointer to linked list - used for looping through the field_collection_list
+    type(linked_list_item_type), pointer  :: loop => null()
+
+    ! Copy the depository
+    call self%depository%copy_collection(copy%depository)
+
+    ! Copy the field_collection_list
+    ! Start at the head of the field collection linked list
+    loop => self%field_collection_list%get_head()
+
+    do
+      ! Loop through field_collection_list and copy
+      if ( .not. associated(loop) ) then
+        exit
+      end if
+
+      select type(listfieldcollection => loop%payload)
+        type is (field_collection_type)
+          field_collection_name = listfieldcollection%get_name()
+          call copy%add_empty_field_collection(field_collection_name)
+          field_collection_pointer => copy%get_field_collection(field_collection_name)
+          call listfieldcollection%copy_collection(field_collection_pointer)
+      end select
+
+      loop => loop%next
+    end do
+
+  end subroutine copy_model_data
 
 end module driver_model_data_mod

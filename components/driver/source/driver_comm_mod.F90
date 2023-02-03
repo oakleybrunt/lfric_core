@@ -34,8 +34,8 @@ contains
   !>
   !> @param[in]  program_name       The model name
   !> @param[out] model_communicator The ID for the model communicator
-  !> @param[in] world_communicator_input The ID for the world communicator that is optionally 
-  !>                                     passed in if mpi has already been initialised.  
+  !> @param[in] world_communicator_input The ID for the world communicator that is optionally
+  !>                                     passed in if mpi has already been initialised.
   subroutine init_comm( program_name, model_communicator, world_communicator_input )
 
     implicit none
