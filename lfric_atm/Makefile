@@ -81,7 +81,6 @@ test-suite: launch-suite-gscan launch-test-suite
 #
 .PHONY: build
 build: export BIN_DIR     ?= $(PROJECT_DIR)/bin
-build: export COMPILE_OPTIONS = $(PWD)/build/compiler_options.mk
 build: export CXX_LINK     = YES
 build: export PROGRAMS    := $(basename $(notdir $(shell find source -maxdepth 1 -name '*.[Ff]90' -exec egrep -l "^\s*program" {} \;)))
 build: export PROJECT      = lfric_atm

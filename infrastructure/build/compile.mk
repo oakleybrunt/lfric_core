@@ -55,8 +55,6 @@ PROGRAMS ?= $(basename $(notdir $(PROG_OBJS)))
 #
 ALL_OBJECTS = $(foreach proj, $(shell echo $(PROGRAMS) | tr a-z A-Z), $($(proj)_OBJS))
 
--include $(COMPILE_OPTIONS)
-
 .PHONY: applications
 applications: FFLAGS_BASE = $(FFLAGS) $(foreach group, $(FFLAG_GROUPS), $(FFLAGS_$(group)))
 applications: $(addprefix $(BIN_DIR)/, $(PROGRAMS))
