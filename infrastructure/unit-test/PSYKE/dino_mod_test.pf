@@ -53,6 +53,11 @@ contains
     implicit none
 
     class(dino_test_type), intent(inout) :: this
+    integer(kind=i_def) :: stat
+
+    ! delete the dinodump file now the tests are complete
+    open(unit=1234, iostat=stat, file='dinodump.dat', status='old')
+    if (stat == 0) close(1234, status='delete')
 
   end subroutine tearDown
 
@@ -66,7 +71,6 @@ contains
     class(dino_test_type), intent(inout) :: this
     type(dino_type) :: dino_out, dino_in
     integer(kind=i_def) :: d1_in, d1_out
-    real(kind=r_def) :: rin, rout
     integer(kind=i_def) :: i,j,k,ctr
     real(kind=r_def),allocatable, dimension(:) :: ar1_in, ar1_out
     real(kind=r_def),allocatable, dimension(:,:,:) :: ar3_in, ar3_out
@@ -80,7 +84,7 @@ contains
     ! output first.
 
     ! make the writer
-    dino_out = dino_type()
+    call dino_out%initialise()
     d1_out = 3
     ! make 1d array for output for integers and reals
     allocate(ar1_out(d1_out),ai1_out(d1_out))
@@ -112,11 +116,11 @@ contains
     call dino_out%output_array(ar1_out,d1_out)
     call dino_out%output_array(ar3_out,ai1_out(1),ai1_out(2),ai1_out(3))
     ! close the file
-   call dino_out%io_close()
+    call dino_out%io_close()
 
     ! now do the i in the same order as the o
     !open the reader
-    dino_in = dino_type()
+    call dino_in%initialise()
     ! read a scalar integer
     call dino_in%input_scalar(d1_in)
     ! allocate the 1d input arrays to be the size of the scalar just read in

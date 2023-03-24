@@ -33,6 +33,7 @@ module dino_mod
                                   output_3d_real_array, output_1d_integer_array
      generic   :: input_array => input_2d_integer_array, input_1d_real_array, &
                                  input_3d_real_array, input_1d_integer_array
+     procedure :: initialise
      procedure :: output_integer
      procedure :: output_real
      procedure :: input_integer
@@ -50,16 +51,14 @@ module dino_mod
 
   end type dino_type
 
-  interface dino_type
-     module procedure output_constructor
-  end interface
 contains
 
-  !> Construct a <code>dino_type</code> object
+  !> Initialise a <code>dino_type</code> object
   !> opens a file, and sets the field_is_open to true
   !> @return self the dino object
-  type(dino_type)  function output_constructor() result(self)
+  subroutine initialise(self)
     implicit none
+    class(dino_type) :: self
     ! open a file
     integer(kind=i_def) :: ierr
     character(str_max_filename) :: fname
@@ -75,7 +74,7 @@ contains
     end if
     self%file_is_open = .true.
     allocate(self%gnu_dummy)
-  end function output_constructor
+  end subroutine initialise
 
   !> subroutine to write out a 3d real array
   !> @param array real 3d array
@@ -109,7 +108,6 @@ contains
     integer(kind=i_def),                         intent(in)  :: dim2
     integer(kind=i_def),                         intent(in)  :: dim3
     real(kind=r_def), dimension(dim1,dim2,dim3), intent(out) :: array
-    integer :: i,j,k
     if(.not.self%file_is_open) then
        write(*,'(A)') "output_integer:Shriek, file not open"
        stop 1
@@ -295,10 +293,7 @@ contains
   subroutine dino_destructor(self)
     implicit none
     type(dino_type), intent(inout) :: self
-    if(self%file_is_open) then
-       close(self%file_handle)
-       self%file_is_open=.false.
-    end if
+    call self%io_close()
     if( allocated(self%gnu_dummy) ) then
        deallocate(self%gnu_dummy)
     end if
