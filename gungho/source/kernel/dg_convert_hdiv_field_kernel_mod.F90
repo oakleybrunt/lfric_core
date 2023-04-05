@@ -3,7 +3,7 @@
 ! For further details please refer to the file LICENCE.original which you
 ! should have received as part of this distribution.
 !-----------------------------------------------------------------------------
-!> @brief Kernel to compute the apply the div conforming Piola transform to a
+!> @brief Kernel to apply the div conforming Piola transform to a
 !! computational vector field and return the 3 components of the physical field
 !! as separate fields in the target space
 !! This version differs from "convert_hdiv_field" in that the target field

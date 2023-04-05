@@ -23,9 +23,11 @@ module get_unit_test_w2nodal_basis_mod
   private
 
   public :: get_w2_w2nodal_basis,      &
-            get_w0_w2nodal_basis, &
+            get_w0_w2nodal_basis,      &
             get_w0_w2nodal_diff_basis, &
-            get_w3_w2nodal_basis
+            get_w3_w2nodal_basis,      &
+            get_wchi_w2nodal_basis,    &
+            get_wchi_w2nodal_diff_basis
 
   contains
 
@@ -148,4 +150,91 @@ module get_unit_test_w2nodal_basis_mod
   end subroutine get_w3_w2nodal_basis
 
 !---------------------------------------------------------------------
+
+!---------------------------------------------------------------------
+
+  subroutine get_wchi_w2nodal_basis(basis_wchi)
+    ! Return the basis function for a field on a Wchi function space
+    ! evaluated on w2 nodal points
+    implicit none
+    real(r_def), allocatable, intent(out) :: basis_wchi(:,:,:)
+
+    allocate(basis_wchi(1,8,6))
+    basis_wchi = reshape( [ &
+       0.25_r_def,  0.00_r_def,  0.25_r_def,  0.00_r_def, &
+       0.25_r_def,  0.00_r_def,  0.25_r_def,  0.00_r_def, &
+       0.25_r_def,  0.25_r_def,  0.00_r_def,  0.00_r_def, &
+       0.25_r_def,  0.25_r_def,  0.00_r_def,  0.00_r_def, &
+       0.00_r_def,  0.25_r_def,  0.00_r_def,  0.25_r_def, &
+       0.00_r_def,  0.25_r_def,  0.00_r_def,  0.25_r_def, &
+       0.00_r_def,  0.00_r_def,  0.25_r_def,  0.25_r_def, &
+       0.00_r_def,  0.00_r_def,  0.25_r_def,  0.25_r_def, &
+       0.25_r_def,  0.25_r_def,  0.25_r_def,  0.25_r_def, &
+       0.00_r_def,  0.00_r_def,  0.00_r_def,  0.00_r_def, &
+       0.00_r_def,  0.00_r_def,  0.00_r_def,  0.00_r_def, &
+       0.25_r_def,  0.25_r_def,  0.25_r_def,  0.25_r_def], [1,8,6] )
+
+  end subroutine get_wchi_w2nodal_basis
+
+!---------------------------------------------------------------------
+
+  subroutine get_wchi_w2nodal_diff_basis(diff_basis_wchi)
+    ! Return the diff basis function for a field on a w0 function space
+    ! evaluated on w2 nodal points
+    implicit none
+    real(r_def), allocatable, intent(out) :: diff_basis_wchi(:,:,:)
+
+    allocate(diff_basis_wchi(3,8,6))
+    diff_basis_wchi = reshape( [ &
+       -0.25_r_def, -0.50_r_def, -0.50_r_def,  &
+        0.25_r_def,  0.00_r_def,  0.00_r_def,  &
+       -0.25_r_def,  0.50_r_def, -0.50_r_def,  &
+        0.25_r_def,  0.00_r_def,  0.00_r_def,  &
+       -0.25_r_def, -0.50_r_def,  0.50_r_def,  &
+        0.25_r_def,  0.00_r_def,  0.00_r_def,  &
+       -0.25_r_def,  0.50_r_def,  0.50_r_def,  &
+        0.25_r_def,  0.00_r_def,  0.00_r_def,  &
+       -0.50_r_def, -0.25_r_def, -0.50_r_def,  &
+        0.50_r_def, -0.25_r_def, -0.50_r_def,  &
+        0.00_r_def,  0.25_r_def,  0.00_r_def,  &
+        0.00_r_def,  0.25_r_def,  0.00_r_def,  &
+       -0.50_r_def, -0.25_r_def,  0.50_r_def,  &
+        0.50_r_def, -0.25_r_def,  0.50_r_def,  &
+        0.00_r_def,  0.25_r_def,  0.00_r_def,  &
+        0.00_r_def,  0.25_r_def,  0.00_r_def,  &
+       -0.25_r_def,  0.00_r_def,  0.00_r_def,  &
+        0.25_r_def, -0.50_r_def, -0.50_r_def,  &
+       -0.25_r_def,  0.00_r_def,  0.00_r_def,  &
+        0.25_r_def,  0.50_r_def, -0.50_r_def,  &
+       -0.25_r_def,  0.00_r_def,  0.00_r_def,  &
+        0.25_r_def, -0.50_r_def,  0.50_r_def,  &
+       -0.25_r_def,  0.00_r_def,  0.00_r_def,  &
+        0.25_r_def,  0.50_r_def,  0.50_r_def,  &
+        0.00_r_def, -0.25_r_def,  0.00_r_def,  &
+        0.00_r_def, -0.25_r_def,  0.00_r_def,  &
+       -0.50_r_def,  0.25_r_def, -0.50_r_def,  &
+        0.50_r_def,  0.25_r_def, -0.50_r_def,  &
+        0.00_r_def, -0.25_r_def,  0.00_r_def,  &
+        0.00_r_def, -0.25_r_def,  0.00_r_def,  &
+       -0.50_r_def,  0.25_r_def,  0.50_r_def,  &
+        0.50_r_def,  0.25_r_def,  0.50_r_def,  &
+       -0.50_r_def, -0.50_r_def, -0.25_r_def,  &
+        0.50_r_def, -0.50_r_def, -0.25_r_def,  &
+       -0.50_r_def,  0.50_r_def, -0.25_r_def,  &
+        0.50_r_def,  0.50_r_def, -0.25_r_def,  &
+        0.00_r_def,  0.00_r_def,  0.25_r_def,  &
+        0.00_r_def,  0.00_r_def,  0.25_r_def,  &
+        0.00_r_def,  0.00_r_def,  0.25_r_def,  &
+        0.00_r_def,  0.00_r_def,  0.25_r_def,  &
+        0.00_r_def,  0.00_r_def, -0.25_r_def,  &
+        0.00_r_def,  0.00_r_def, -0.25_r_def,  &
+        0.00_r_def,  0.00_r_def, -0.25_r_def,  &
+        0.00_r_def,  0.00_r_def, -0.25_r_def,  &
+       -0.50_r_def, -0.50_r_def,  0.25_r_def,  &
+        0.50_r_def, -0.50_r_def,  0.25_r_def,  &
+       -0.50_r_def,  0.50_r_def,  0.25_r_def,  &
+        0.50_r_def,  0.50_r_def,  0.25_r_def], [3,8,6] )
+
+  end subroutine get_wchi_w2nodal_diff_basis
+
 end module get_unit_test_w2nodal_basis_mod

@@ -251,7 +251,6 @@ partitioner='planar',
 /
 &physics
 blayer_placement='fast',
-broken_w2_projection=.true.
 lowest_level='gradient',
 sample_physics_scalars=.true.,
 sample_physics_winds=.true.,

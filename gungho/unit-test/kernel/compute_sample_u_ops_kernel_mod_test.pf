@@ -1,0 +1,358 @@
+!-----------------------------------------------------------------------------
+! (C) Crown copyright 2023 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-----------------------------------------------------------------------------
+
+module compute_sample_u_ops_kernel_mod_test
+
+  use constants_mod,                 only : i_def, r_def
+  use reference_element_mod,         only : W, S, E, N, B, T
+  use pFUnit_Mod
+
+  implicit none
+
+  private
+  public :: compute_sample_u_ops_test_type, test_all
+
+  @TestCase
+  type, extends(TestCase) :: compute_sample_u_ops_test_type
+    private
+  contains
+    procedure setUp
+    procedure tearDown
+    procedure test_all
+  end type compute_sample_u_ops_test_type
+
+  real(r_def), parameter :: gravity  = 10.0_r_def
+  real(r_def), parameter :: radius   = 6000000_r_def
+  real(r_def), parameter :: omega    = 8.0E-5_r_def
+  real(r_def), parameter :: p_zero   = 100000.0_r_def
+  real(r_def), parameter :: rd       = 300.0_r_def
+  real(r_def), parameter :: cp       = 1000.0_r_def
+  real(r_def), parameter :: scaling  = 1.0_r_def
+
+contains
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  subroutine setUp( this )
+
+    use base_mesh_config_mod,      only : geometry_spherical, &
+                                          topology_fully_periodic
+    use chi_transform_mod,         only : init_chi_transforms
+    use finite_element_config_mod, only : cellshape_quadrilateral, &
+                                          coord_system_lonlatz
+    use feign_config_mod,          only : feign_finite_element_config, &
+                                          feign_base_mesh_config,      &
+                                          feign_planet_config
+
+    implicit none
+
+    class(compute_sample_u_ops_test_type), intent(inout) :: this
+
+    call feign_base_mesh_config( file_prefix='foo',                &
+                                 prime_mesh_name='unit_test',      &
+                                 geometry=geometry_spherical,      &
+                                 offline_partitioning=.false.,     &
+                                 topology=topology_fully_periodic, &
+                                 fplane=.false., f_lat_deg=0.0_r_def )
+
+    call feign_finite_element_config(           &
+             cellshape=cellshape_quadrilateral, &
+             element_order=0_i_def,             &
+             rehabilitate=.true.,               &
+             coord_order = 0_i_def,             &
+             coord_system=coord_system_lonlatz, &
+             vorticity_in_w1=.false. )
+
+    call feign_planet_config( gravity=gravity, radius=radius, omega=omega, &
+                              rd=rd, cp=cp, p_zero=p_zero,                 &
+                              scaling_factor=scaling )
+
+    call init_chi_transforms()
+
+  end subroutine setUp
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  subroutine tearDown( this )
+
+    use configuration_mod,        only: final_configuration
+    use chi_transform_mod,        only: final_chi_transforms
+
+    implicit none
+
+    class(compute_sample_u_ops_test_type), intent(inout) :: this
+
+    call final_configuration()
+    call final_chi_transforms()
+
+  end subroutine tearDown
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  @Test
+  subroutine test_all( this )
+
+    use matrix_vector_kernel_mod,            only : matrix_vector_code
+    use average_w2b_to_w2_kernel_mod,        only : average_w2b_to_w2_code
+    use compute_sample_u_ops_kernel_mod,     only : compute_sample_u_ops_code
+
+    use get_unit_test_w2nodal_basis_mod,     only : get_wchi_w2nodal_basis, &
+                                                    get_wchi_w2nodal_diff_basis
+
+    use get_unit_test_m3x3_dofmap_mod,       only : get_wchi_m3x3_dofmap,   &
+                                                    get_w2_m3x3_dofmap,     &
+                                                    get_w3_m3x3_dofmap,     &
+                                                    get_wtheta_m3x3_dofmap, &
+                                                    get_w2broken_m3x3_dofmap
+
+    use get_unit_test_3x3x3_chi_mod,         only : get_wchi_3x3x3_field
+
+    implicit none
+
+    class(compute_sample_u_ops_test_type), intent(inout) :: this
+
+    real(r_def), parameter :: tol = 1.0e-2_r_def
+    real(r_def), parameter :: dlon = 2.0_r_def/radius
+    real(r_def), parameter :: dlat = 3.0_r_def/radius
+    real(r_def), parameter :: dz = 10.0_r_def
+
+    real(r_def), parameter :: u_lon0 = -12.0_r_def
+    real(r_def), parameter :: u_lat0 = 5.0_r_def
+    real(r_def), parameter :: u_up0 = 0.1_r_def
+    real(r_def), parameter :: du_lon0_dx = -2.0_r_def
+    real(r_def), parameter :: du_lat0_dx = -0.5_r_def
+    real(r_def), parameter :: du_up0_dx = 0.001_r_def
+    real(r_def), parameter :: du_lon0_dz = 0.2_r_def
+    real(r_def), parameter :: du_lat0_dz = -0.5_r_def
+    real(r_def), parameter :: du_up0_dz = 0.001_r_def
+
+    integer(i_def) :: cell, ncols_x, ncols_y, ncols_2d, ncells_3d
+
+    integer(i_def) :: nlayers, k, nfaces
+    integer(i_def) :: ndf_wchi, ndf_w2, ndf_w3, ndf_wt, ndf_w2b
+    integer(i_def) :: undf_wchi, undf_w2, undf_w3, undf_wt, undf_w2b
+
+    integer(i_def), allocatable :: map_wchi(:,:)
+    integer(i_def), allocatable :: map_w2(:,:)
+    integer(i_def), allocatable :: map_w2b(:,:)
+    integer(i_def), allocatable :: map_w3(:,:)
+    integer(i_def), allocatable :: map_wt(:,:)
+
+    real(r_def), allocatable :: basis_wchi(:,:,:), diff_basis_wchi(:,:,:)
+
+    ! Test field data
+    real(r_def), allocatable :: chi_data(:,:)
+    real(r_def), allocatable :: u_w2_data(:)
+    real(r_def), allocatable :: u_w2b_data(:)
+    real(r_def), allocatable :: answer_w2_data(:)
+    real(r_def), allocatable :: rmultiplicity_w2_data(:)
+    real(r_def), allocatable :: u_lon_w3_data(:)
+    real(r_def), allocatable :: u_lat_w3_data(:)
+    real(r_def), allocatable :: u_up_wt_data(:)
+    real(r_def), allocatable :: panel_id_data(:)
+    real(r_def), allocatable :: face_normals(:,:)
+
+    real(r_def), allocatable :: u_lon_op(:,:,:)
+    real(r_def), allocatable :: u_lat_op(:,:,:)
+    real(r_def), allocatable :: u_up_op(:,:,:)
+
+    ! ------------------------------------------------------------------------ !
+    ! Make mesh and function space details
+    ! ------------------------------------------------------------------------ !
+    ! Specify details for 3x3x3 grid -- biperiodic to make use of canned data
+    nlayers = 3
+    ncols_x = 3
+    ncols_y = 3
+    ncols_2d = ncols_x*ncols_y
+    ncells_3d = ncols_x*ncols_y*nlayers
+    ndf_w3 = 1
+    ndf_wt = 2
+    ndf_w2 = 6
+    ndf_w2b = ndf_w2
+    ndf_wchi = 8
+    undf_w3 = nlayers*ncols_x*ncols_y
+    undf_wt = (nlayers+1)*ncols_x*ncols_y
+    undf_w2 = undf_wt + 2*nlayers*ncols_x*ncols_y
+    undf_w2b = ncells_3d*ndf_w2b
+    undf_wchi = ncells_3d*ndf_wchi
+    nfaces = 6
+
+    ! Get canned dofmaps for this configuration
+    call get_wchi_m3x3_dofmap(map_wchi)
+    call get_w3_m3x3_dofmap(map_w3)
+    call get_w2_m3x3_dofmap(map_w2)
+    call get_w2broken_m3x3_dofmap(map_w2b)
+    call get_wtheta_m3x3_dofmap(map_wt)
+
+    ! Get canned basis functions at W2 nodal points
+    call get_wchi_w2nodal_basis(basis_wchi)
+    call get_wchi_w2nodal_diff_basis(diff_basis_wchi)
+
+    allocate(face_normals(3,nfaces))
+    face_normals(:,W) = (/ 1.0_r_def,  0.0_r_def,  0.0_r_def /)
+    face_normals(:,S) = (/ 0.0_r_def, -1.0_r_def,  0.0_r_def /)
+    face_normals(:,E) = (/ 1.0_r_def,  0.0_r_def,  0.0_r_def /)
+    face_normals(:,N) = (/ 0.0_r_def, -1.0_r_def,  0.0_r_def /)
+    face_normals(:,B) = (/ 0.0_r_def,  0.0_r_def,  1.0_r_def /)
+    face_normals(:,T) = (/ 0.0_r_def,  0.0_r_def,  1.0_r_def /)
+
+    ! ------------------------------------------------------------------------ !
+    ! Allocate data for fields and operators
+    ! ------------------------------------------------------------------------ !
+    ! Create the data arrays
+    allocate(chi_data(undf_wchi,3))
+    allocate(u_w2_data(undf_w2))
+    allocate(u_w2b_data(undf_w2b))
+    allocate(answer_w2_data(undf_w2))
+    allocate(rmultiplicity_w2_data(undf_w2))
+    allocate(u_lon_w3_data(undf_w3))
+    allocate(u_lat_w3_data(undf_w3))
+    allocate(u_up_wt_data(undf_wt))
+    allocate(panel_id_data(undf_w3))
+    allocate(u_lon_op(ndf_w2b,ndf_w3,ncells_3d))
+    allocate(u_lat_op(ndf_w2b,ndf_w3,ncells_3d))
+    allocate(u_up_op(ndf_w2b,ndf_wt,ncells_3d))
+
+    ! ------------------------------------------------------------------------ !
+    ! Set initial conditions for fields
+    ! ------------------------------------------------------------------------ !
+    ! Set chi in lon-lat-z coords using canned routine
+    call get_wchi_3x3x3_field(chi_data(:,1), chi_data(:,2), chi_data(:,3), &
+                              dlon, dlat, dz, 0.0_r_def, map_wchi, nlayers)
+
+    panel_id_data(:) =  1.0_r_def
+    rmultiplicity_w2_data(:) = 0.5_r_def
+    u_lon_op(:,:,:) = 0.0_r_def
+    u_lat_op(:,:,:) = 0.0_r_def
+    u_up_op(:,:,:)  = 0.0_r_def
+    u_w2_data(:) = 0.0_r_def
+    u_w2b_data(:) = 0.0_r_def
+
+    ! Set values for components, that vary with column and layer
+    do k = 0, nlayers - 1
+      do cell = 1, ncols_2d
+        u_lon_w3_data(map_w3(1,cell)+k) = u_lon0 + real(cell,r_def)*du_lon0_dx + real(k,r_def)*du_lon0_dz
+        u_lat_w3_data(map_w3(1,cell)+k) = u_lat0 + real(cell,r_def)*du_lat0_dx + real(k,r_def)*du_lat0_dz
+        u_up_wt_data(map_wt(1,cell)+k) = u_up0 + real(cell,r_def)*du_up0_dx + real(k,r_def)*du_up0_dz
+        ! Vertical component of resulting velocity
+        answer_w2_data(map_w2(B,cell)+k) = radius**2*dlon*dlat*u_up_wt_data(map_wt(1,cell)+k)
+        ! Work out values for interior horizontal W2 DoFs -- exterior values will be overwritten below
+        answer_w2_data(map_w2(W,cell)+k) = radius*dlat*dz*&
+          (u_lon0 + (real(cell,r_def)-0.5_r_def)*du_lon0_dx + real(k,r_def)*du_lon0_dz)
+        answer_w2_data(map_w2(S,cell)+k) = -radius*dlon*dz*&
+          (u_lat0 + 0.5_r_def*real(2*cell-ncols_x,r_def)*du_lat0_dx + real(k,r_def)*du_lat0_dz)
+      end do
+    end do
+
+    ! Top of mesh values for vertical velocity
+    k = nlayers
+    do cell = 1, ncols_2d
+      u_up_wt_data(map_wt(1,cell)+k) = u_up0 + real(cell,r_def)*du_up0_dx + real(k,r_def)*du_up0_dz
+      ! Vertical component of resulting velocity
+      answer_w2_data(map_w2(B,cell)+k) = radius**2*dlon*dlat*u_up_wt_data(map_wt(1,cell)+k)
+    end do
+
+    ! Set values for outer horizontal W2 DoFs
+    do k = 0, nlayers - 1
+      ! Western edge
+      answer_w2_data(map_w2(W,1)+k) = radius*dlat*dz*0.5_r_def*(u_lon_w3_data(map_w3(1,1)+k)+u_lon_w3_data(map_w3(1,3)+k))
+      answer_w2_data(map_w2(W,4)+k) = radius*dlat*dz*0.5_r_def*(u_lon_w3_data(map_w3(1,4)+k)+u_lon_w3_data(map_w3(1,6)+k))
+      answer_w2_data(map_w2(W,7)+k) = radius*dlat*dz*0.5_r_def*(u_lon_w3_data(map_w3(1,7)+k)+u_lon_w3_data(map_w3(1,9)+k))
+      ! Southern edge
+      answer_w2_data(map_w2(S,1)+k) = -radius*dlon*dz*0.5_r_def*(u_lat_w3_data(map_w3(1,7)+k)+u_lat_w3_data(map_w3(1,1)+k))
+      answer_w2_data(map_w2(S,2)+k) = -radius*dlon*dz*0.5_r_def*(u_lat_w3_data(map_w3(1,8)+k)+u_lat_w3_data(map_w3(1,2)+k))
+      answer_w2_data(map_w2(S,3)+k) = -radius*dlon*dz*0.5_r_def*(u_lat_w3_data(map_w3(1,9)+k)+u_lat_w3_data(map_w3(1,3)+k))
+    end do
+
+    ! rmultiplicity values at top and bottom of mesh
+    do cell = 1, ncols_2d
+      rmultiplicity_w2_data(map_w2(B,cell)) = 1.0_r_def
+      rmultiplicity_w2_data(map_w2(T,cell)+nlayers-1) = 1.0_r_def
+      answer_w2_data(map_w2(B,cell)) = 0.0_r_def
+      answer_w2_data(map_w2(T,cell)+nlayers-1) = 0.0_r_def
+    end do
+
+    ! ------------------------------------------------------------------------ !
+    ! Run kernel to build operators
+    ! ------------------------------------------------------------------------ !
+    do cell = 1, ncols_2d
+      call compute_sample_u_ops_code( cell, nlayers,                           &
+                                      ncells_3d, u_lon_op,                     &
+                                      ncells_3d, u_lat_op,                     &
+                                      ncells_3d, u_up_op,                      &
+                                      chi_data(:,1),                           &
+                                      chi_data(:,2),                           &
+                                      chi_data(:,3),                           &
+                                      panel_id_data,                           &
+                                      ndf_w2b, ndf_w3, ndf_wt,                 &
+                                      ndf_wchi, undf_wchi, map_wchi(:,cell),   &
+                                      basis_wchi, diff_basis_wchi,             &
+                                      ndf_w3, undf_w3, map_w3(:,cell),         &
+                                      nfaces, face_normals                     &
+                                    )
+    end do
+
+    ! ------------------------------------------------------------------------ !
+    ! Apply operators
+    ! ------------------------------------------------------------------------ !
+    ! To test operators, apply the operators to input fields
+    do cell = 1, ncols_2d
+      call matrix_vector_code(cell, nlayers,                      &
+                              u_w2b_data, u_lon_w3_data,          &
+                              ncells_3d, u_lon_op,                &
+                              ndf_w2b, undf_w2b, map_w2b(:,cell), &
+                              ndf_w3, undf_w3, map_w3(:,cell))
+
+      call matrix_vector_code(cell, nlayers,                      &
+                              u_w2b_data, u_lat_w3_data,          &
+                              ncells_3d, u_lat_op,                &
+                              ndf_w2b, undf_w2b, map_w2b(:,cell), &
+                              ndf_w3, undf_w3, map_w3(:,cell))
+
+      call matrix_vector_code(cell, nlayers,                      &
+                              u_w2b_data, u_up_wt_data,           &
+                              ncells_3d, u_up_op,                 &
+                              ndf_w2b, undf_w2b, map_w2b(:,cell), &
+                              ndf_wt, undf_wt, map_wt(:,cell))
+    end do
+
+    do cell = 1, ncols_2d
+      call average_w2b_to_w2_code(nlayers, u_w2_data, u_w2b_data,   &
+                                  rmultiplicity_w2_data,            &
+                                  ndf_w2, undf_w2, map_w2(:,cell),  &
+                                  ndf_w2b, undf_w2b, map_w2b(:,cell))
+    end do
+
+    ! ------------------------------------------------------------------------ !
+    ! Check values
+    ! ------------------------------------------------------------------------ !
+
+    @assertEqual(answer_w2_data, u_w2_data, tol)
+
+    ! ------------------------------------------------------------------------ !
+    ! Deallocate arrays
+    ! ------------------------------------------------------------------------ !
+    deallocate(u_lon_op)
+    deallocate(u_lat_op)
+    deallocate(u_up_op)
+    deallocate(map_wchi)
+    deallocate(map_w2)
+    deallocate(map_w2b)
+    deallocate(map_w3)
+    deallocate(map_wt)
+    deallocate(diff_basis_wchi)
+    deallocate(basis_wchi)
+    deallocate(chi_data)
+    deallocate(rmultiplicity_w2_data)
+    deallocate(answer_w2_data)
+    deallocate(u_w2_data)
+    deallocate(u_w2b_data)
+    deallocate(u_lon_w3_data)
+    deallocate(u_lat_w3_data)
+    deallocate(u_up_wt_data)
+    deallocate(panel_id_data)
+    deallocate(face_normals)
+
+  end subroutine test_all
+
+end module compute_sample_u_ops_kernel_mod_test

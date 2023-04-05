@@ -136,7 +136,6 @@ stretching_method='linear',
 
 &physics
   blayer_placement = 'fast'
-  broken_w2_projection = .true.
   convection_placement = 'fast'
   microphysics_placement = 'slow'
   radiation_placement = 'slow'

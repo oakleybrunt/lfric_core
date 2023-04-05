@@ -61,8 +61,7 @@ module physical_op_constants_mod
   use compute_coriolis_matrix_kernel_mod, only: compute_coriolis_matrix_kernel_type
   use compute_geopotential_kernel_mod,    only: compute_geopotential_kernel_type
   use compute_map_u_operators_kernel_mod, only: compute_map_u_operators_kernel_type
-  use compute_map_u_broken_ops_kernel_mod, &
-                                          only: compute_map_u_broken_ops_kernel_type
+  use compute_sample_u_ops_kernel_mod,    only: compute_sample_u_ops_kernel_type
 
 #ifdef UM_PHYSICS
   use get_Pnm_star_kernel_mod,            only: get_Pnm_star_kernel_type
@@ -96,9 +95,9 @@ module physical_op_constants_mod
   type(operator_type), allocatable, target :: u_lon_map_collection(:)
   type(operator_type), allocatable, target :: u_lat_map_collection(:)
   type(operator_type), allocatable, target :: u_up_map_collection(:)
-  type(operator_type), allocatable, target :: u_lon_broken_map_collection(:)
-  type(operator_type), allocatable, target :: u_lat_broken_map_collection(:)
-  type(operator_type), allocatable, target :: u_up_broken_map_collection(:)
+  type(operator_type), allocatable, target :: u_lon_sample_collection(:)
+  type(operator_type), allocatable, target :: u_lat_sample_collection(:)
+  type(operator_type), allocatable, target :: u_up_sample_collection(:)
 
   ! Public functions to create and access the module contents
 
@@ -117,9 +116,9 @@ module physical_op_constants_mod
   public :: get_u_lon_map
   public :: get_u_lat_map
   public :: get_u_up_map
-  public :: get_u_lon_broken_map
-  public :: get_u_lat_broken_map
-  public :: get_u_up_broken_map
+  public :: get_u_lon_sample
+  public :: get_u_lat_sample
+  public :: get_u_up_sample
   public :: get_dA_msl_proj
 #ifdef UM_PHYSICS
   public :: get_Pnm_star
@@ -222,9 +221,9 @@ contains
     allocate(u_lon_map_collection(num_meshes))
     allocate(u_lat_map_collection(num_meshes))
     allocate(u_up_map_collection(num_meshes))
-    allocate(u_lon_broken_map_collection(num_meshes))
-    allocate(u_lat_broken_map_collection(num_meshes))
-    allocate(u_up_broken_map_collection(num_meshes))
+    allocate(u_lon_sample_collection(num_meshes))
+    allocate(u_lat_sample_collection(num_meshes))
+    allocate(u_up_sample_collection(num_meshes))
 
     !=========== Start loop and initialisation of function_spaces =============!
 
@@ -296,7 +295,6 @@ contains
 
         if ( use_physics ) then
 
-
           ! Operators needed to map finite difference physics winds to W2
           ! finite element winds
           call u_lon_map_collection(i)%initialise( w2_fs, w3_fs )
@@ -310,16 +308,16 @@ contains
                                                            chi_list(:,i),           &
                                                            panel_id_list(i), qr)    )
 
-          call u_lon_broken_map_collection(i)%initialise( w2b_fs, w3_fs )
-          call u_lat_broken_map_collection(i)%initialise( w2b_fs, w3_fs )
-          call u_up_broken_map_collection(i)%initialise( w2b_fs, wtheta_fs )
+          call u_lon_sample_collection(i)%initialise( w2b_fs, w3_fs )
+          call u_lat_sample_collection(i)%initialise( w2b_fs, w3_fs )
+          call u_up_sample_collection(i)%initialise( w2b_fs, wtheta_fs )
 
-          call invoke( name="compute_lonlatr_broken_w2_operators",                          &
-                       compute_map_u_broken_ops_kernel_type(u_lon_broken_map_collection(i), &
-                                                            u_lat_broken_map_collection(i), &
-                                                            u_up_broken_map_collection(i),  &
-                                                            chi_list(:,i),                  &
-                                                            panel_id_list(i), qr)    )
+          call invoke( name="compute_lonlatr_sample_operators",                     &
+                       compute_sample_u_ops_kernel_type(u_lon_sample_collection(i), &
+                                                        u_lat_sample_collection(i), &
+                                                        u_up_sample_collection(i),  &
+                                                        chi_list(:,i),              &
+                                                        panel_id_list(i)) )
 
           ! Quantities needed by all UM physics schemes
           call r_squared_w2%initialise( vector_space = w2_k0_fs )
@@ -462,6 +460,7 @@ contains
     nullify( w1_k0_fs  )
     nullify( w2_k0_fs  )
     nullify( w2_fs  )
+    nullify( w2b_fs )
     nullify( w3_fs  )
     nullify( wtheta_k0_fs )
     nullify( qr )
@@ -713,50 +712,50 @@ contains
 
     end function get_u_up_map
 
-  !> @brief Returns a pointer to the u_lon broken mapping operator
+  !> @brief Returns a pointer to the u_lon sampling operator
   !> @param[in] mesh_id The ID of the mesh to get the object for
-  !> @return The mapping operator for u_lon to W2 broken
-  function get_u_lon_broken_map(mesh_id) result(u_lon_map_op)
+  !> @return The sampling operator for u_lon to W2
+  function get_u_lon_sample(mesh_id) result(u_lon_sample_op)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
     integer(kind=i_def)             :: mesh_index
-    type(operator_type),    pointer :: u_lon_map_op
+    type(operator_type),    pointer :: u_lon_sample_op
 
     mesh_index = find_mesh_index(mesh_id)
 
-    u_lon_map_op => u_lon_broken_map_collection(mesh_index)
+    u_lon_sample_op => u_lon_sample_collection(mesh_index)
 
-  end function get_u_lon_broken_map
+  end function get_u_lon_sample
 
-  !> @brief Returns a pointer to the u_lat broken mapping operator
+  !> @brief Returns a pointer to the u_lat sampling operator
   !> @param[in] mesh_id The ID of the mesh to get the object for
-  !> @return The mapping operator for u_lat to W2 broken
-  function get_u_lat_broken_map(mesh_id) result(u_lat_map_op)
+  !> @return The sampling operator for u_lat to W2
+  function get_u_lat_sample(mesh_id) result(u_lat_sample_op)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
     integer(kind=i_def)             :: mesh_index
-    type(operator_type),    pointer :: u_lat_map_op
+    type(operator_type),    pointer :: u_lat_sample_op
 
     mesh_index = find_mesh_index(mesh_id)
 
-    u_lat_map_op => u_lat_broken_map_collection(mesh_index)
+    u_lat_sample_op => u_lat_sample_collection(mesh_index)
 
-  end function get_u_lat_broken_map
+  end function get_u_lat_sample
 
-  !> @brief Returns a pointer to the u_up broken mapping operator
-  !> @param[in] mesh_id The ID of the mesh to get the object for
-  !> @return The mapping operator for u_up to W2 broken
-  function get_u_up_broken_map(mesh_id) result(u_up_map_op)
-    implicit none
-    integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
-    type(operator_type),    pointer :: u_up_map_op
+    !> @brief Returns a pointer to the u_up sampling operator
+    !> @param[in] mesh_id The ID of the mesh to get the object for
+    !> @return The sampling operator for u_up to W2
+    function get_u_up_sample(mesh_id) result(u_up_sample_op)
+      implicit none
+      integer(kind=i_def), intent(in) :: mesh_id
+      integer(kind=i_def)             :: mesh_index
+      type(operator_type),    pointer :: u_up_sample_op
 
-    mesh_index = find_mesh_index(mesh_id)
+      mesh_index = find_mesh_index(mesh_id)
 
-    u_up_map_op => u_up_broken_map_collection(mesh_index)
+      u_up_sample_op => u_up_sample_collection(mesh_index)
 
-  end function get_u_up_broken_map
+    end function get_u_up_sample
 
   !> @brief Explicitly reclaim memory from module scope variables
   !
@@ -780,9 +779,9 @@ contains
     if (allocated(u_lon_map_collection)) deallocate(u_lon_map_collection)
     if (allocated(u_lat_map_collection)) deallocate(u_lat_map_collection)
     if (allocated(u_up_map_collection)) deallocate(u_up_map_collection)
-    if (allocated(u_lon_broken_map_collection)) deallocate(u_lon_broken_map_collection)
-    if (allocated(u_lat_broken_map_collection)) deallocate(u_lat_broken_map_collection)
-    if (allocated(u_up_broken_map_collection)) deallocate(u_up_broken_map_collection)
+    if (allocated(u_lon_sample_collection)) deallocate(u_lon_sample_collection)
+    if (allocated(u_lat_sample_collection)) deallocate(u_lat_sample_collection)
+    if (allocated(u_up_sample_collection)) deallocate(u_up_sample_collection)
 
   end subroutine final_physical_op_constants
 
