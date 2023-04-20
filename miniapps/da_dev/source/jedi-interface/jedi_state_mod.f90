@@ -17,6 +17,7 @@ module jedi_state_mod
   use, intrinsic :: iso_fortran_env, only : real64
   use atlas_field_emulator_mod,      only : atlas_field_emulator_type
   use atlas_field_interface_mod,     only : atlas_field_interface_type
+  use jedi_datetime_mod,             only : jedi_datetime_type
   use jedi_geometry_mod,             only : jedi_geometry_type
   use driver_model_data_mod,         only : model_data_type
   use jedi_state_config_mod,         only : jedi_state_config_type
@@ -24,6 +25,7 @@ module jedi_state_mod
   use field_collection_mod,          only : field_collection_type
   use log_mod,                       only : log_event,          &
                                             log_scratch_space,  &
+                                            LOG_LEVEL_INFO,     &
                                             LOG_LEVEL_ERROR
   use constants_mod,                 only : i_def, l_def
 
@@ -54,14 +56,10 @@ type, public :: jedi_state_type
   !> Field collection to perform IO
   type( field_collection_type ), public           :: io_collection
 
-  ! Here we have date_time as an integer. It will actually be an object or
-  ! string that stores time to be read. Initially stored in the configuration
-  ! file:
-  !
   ! date: '2018-04-14T21:00:00Z'
   ! mpas define the formatting for this as:
   ! dateTimeString = '$Y-$M-$D_$h:$m:$s'
-  integer                                         :: date_time
+  type( jedi_datetime_type ), public              :: datetime
 
   !> The jedi_geometry object
   type( jedi_geometry_type ), pointer             :: geometry
@@ -93,10 +91,7 @@ contains
   !> @todo Write model fields to file from the fields
   !> procedure, public :: write_file
 
-  !> Get the curent time
-  procedure, public :: valid_time
-
-  !> Update the curent time
+  !> Update the curent datetime
   procedure, public :: update_time
 
   !> Print field
@@ -132,20 +127,20 @@ subroutine state_initialiser_read( self, geometry, config )
 
   class( jedi_state_type ), intent(inout)        :: self
   type( jedi_geometry_type ), target, intent(in) :: geometry
-  type( jedi_state_config_type ), intent(in)     :: config
+  type( jedi_state_config_type ), intent(inout)  :: config
 
   call self%state_initialiser( geometry, config )
 
   ! Initialise the Atlas field emulators via the model_data or the
   ! io_collection
-  if (config%use_nl_model) then
+  if ( config%use_nl_model ) then
     ! This calls the models initialise method that populates model_data and
     ! does a copy from model_data to the fields
     call self%initialise_model_data()
   else
     ! We are not running the non-linear model so read the file directly and
     ! do a copy from io_collection to the fields
-    call self%read_file( config%date_time, config%read_file_prefix )
+    call self%read_file( config%datetime, config%read_file_prefix )
   end if
 
 end subroutine state_initialiser_read
@@ -166,20 +161,20 @@ subroutine state_initialiser( self, geometry, config )
 
   class( jedi_state_type ), intent(inout)        :: self
   type( jedi_geometry_type ), target, intent(in) :: geometry
-  type(jedi_state_config_type), intent(in)       :: config
+  type( jedi_state_config_type ), intent(inout)  :: config
 
   ! Local
-  integer( kind=i_def ) :: n_horizontal
-  integer( kind=i_def ) :: n_levels
-  integer( kind=i_def ) :: n_layers
-  integer( kind=i_def ) :: ivar
-  integer( kind=i_def ) :: n_variables
-  integer( kind=i_def ) :: fs_id
-  logical( kind=l_def ) :: twod_field
+  integer(i_def) :: n_horizontal
+  integer(i_def) :: n_levels
+  integer(i_def) :: n_layers
+  integer(i_def) :: ivar
+  integer(i_def) :: n_variables
+  integer(i_def) :: fs_id
+  logical(l_def) :: twod_field
 
   ! Setup
   self%field_meta_data = config%field_meta_data
-  self%date_time=config%date_time
+  call self%datetime%init( config%datetime )
   self%geometry => geometry
   n_variables = self%field_meta_data%get_n_variables()
 
@@ -220,38 +215,17 @@ subroutine state_initialiser( self, geometry, config )
   call self%io_collection%initialise(name = 'io_collection', table_len=100)
 
   ! If running the model, create model data and link to fields .
-  if (config%use_nl_model) then
-    call create_da_model_data(mesh, twod_mesh, self%model_data)
+  if ( config%use_nl_model ) then
+    call create_da_model_data( mesh, twod_mesh, self%model_data )
     call self%setup_interface_to_model_data()
   end if
 
 end subroutine state_initialiser
 
-!> @brief    Method that returns the curent time
-!>
-function valid_time(self) result(date_time)
-
-  implicit none
-
-  class( jedi_state_type ), intent(inout) :: self
-  integer( kind=i_def )                   :: date_time
-
-  ! Here we have date_time as an integer. It will actually be an object or
-  ! string that stores time to be read. Initially stored in the configuration
-  ! file:
-  !
-  ! date: '2018-04-14T21:00:00Z'
-  ! mpas define the formating for this as:
-  ! dateTimeString = '$Y-$M-$D_$h:$m:$s'
-
-  date_time = self%date_time
-
-end function valid_time
-
 !> @brief    A method to initialise the model_data and copy into the Atlas
 !>           field emulators
 !>
-subroutine initialise_model_data(self)
+subroutine initialise_model_data( self )
 
   use da_dev_model_init_mod, only : initialise_da_model_data
 
@@ -270,22 +244,22 @@ end subroutine initialise_model_data
 
 !> @brief    A method to update the internal Atlas field emulators
 !>
-!> @param [in] date_time   The data date_time to be read
+!> @param [in] datetime    The data datetime to be read
 !> @param [in] file_prefix Character array that specifies the file to read from
-subroutine read_file(self, date_time, file_prefix)
+subroutine read_file( self, datetime, file_prefix )
 
   use da_dev_io_update_mod, only : update_io_field_collection
-  use da_dev_driver_mod,   only : mesh, twod_mesh
-  use lfric_xios_read_mod, only : read_state
+  use da_dev_driver_mod,    only : mesh, twod_mesh
+  use lfric_xios_read_mod,  only : read_state
 
   implicit none
 
-  class( jedi_state_type ), intent(inout) :: self
-  integer( kind=i_def ),  intent(in)      :: date_time
-  character(len=*), intent(in)            :: file_prefix
+  class( jedi_state_type ),   intent(inout) :: self
+  type( jedi_datetime_type ), intent(in)    :: datetime
+  character(len=*),           intent(in)    :: file_prefix
 
   ! Set the clock to the desired read time
-  call set_clock(self, date_time)
+  call set_clock(self, datetime)
 
   ! Ensure the io_collection contains the variables defined in the list
   ! stored in the type
@@ -312,7 +286,7 @@ end subroutine read_file
 !> @brief    Setup fields_to_model_data variable that enables copying between
 !>           Atlas field emulators and the LFRic fields in the model_data
 !>
-subroutine setup_interface_to_model_data(self)
+subroutine setup_interface_to_model_data( self )
 
   use da_dev_utils_mod,      only: get_model_field
   use field_mod,             only: field_type
@@ -324,8 +298,8 @@ subroutine setup_interface_to_model_data(self)
   ! Local
   integer(i_def)            :: ivar
   type(field_type), pointer :: lfric_field_ptr
-  real(real64), pointer     :: atlas_data_ptr(:,:)
-  integer(i_def), pointer   :: horizontal_map_ptr(:)
+  real(real64),     pointer :: atlas_data_ptr(:,:)
+  integer(i_def),   pointer :: horizontal_map_ptr(:)
   integer(i_def)            :: n_variables
 
   n_variables = self%field_meta_data%get_n_variables()
@@ -358,7 +332,7 @@ end subroutine setup_interface_to_model_data
 
 !> @brief    Copy from model_data to the Atlas field emulators
 !>
-subroutine from_model_data(self)
+subroutine from_model_data( self )
 
   implicit none
 
@@ -373,7 +347,7 @@ subroutine from_model_data(self)
   !>       call transform_winds(model_data)
 
   ! copy to the Atlas emulator fields
-  do ivar=1,size(self%fields_to_model_data)
+  do ivar = 1, size(self%fields_to_model_data)
     call self%fields_to_model_data(ivar)%copy_from_lfric()
   end do
 
@@ -383,7 +357,7 @@ end subroutine from_model_data
 !>           between Atlas field emulators and the LFRic fields in
 !>           io_collection
 !>
-subroutine setup_interface_to_io_collection(self)
+subroutine setup_interface_to_io_collection( self )
 
   use da_dev_utils_mod,      only: get_model_field
   use field_mod,             only: field_type
@@ -395,35 +369,35 @@ subroutine setup_interface_to_io_collection(self)
   ! Local
   integer(i_def)            :: ivar
   type(field_type), pointer :: lfric_field_ptr
-  real(real64), pointer     :: atlas_data_ptr(:,:)
-  integer(i_def), pointer   :: horizontal_map_ptr(:)
+  real(real64),     pointer :: atlas_data_ptr(:,:)
+  integer(i_def),   pointer :: horizontal_map_ptr(:)
   integer(i_def)            :: n_variables
 
   n_variables=self%field_meta_data%get_n_variables()
 
   ! Allocate space for the interface fields
-  if (allocated(self%fields_to_io_collection)) then
+  if ( allocated(self%fields_to_io_collection) ) then
     deallocate(self%fields_to_io_collection)
   end if
-  allocate(self%fields_to_io_collection(n_variables))
+  allocate( self%fields_to_io_collection(n_variables) )
 
   ! Link the Atlas emulator fields with lfric fields
-  do ivar=1,n_variables
+  do ivar = 1, n_variables
     ! Get the required data
     call get_model_field(self%field_meta_data%get_variable_name(ivar), &
                          self%io_collection, lfric_field_ptr)
-    atlas_data_ptr => self%fields (ivar)%get_data()
+    atlas_data_ptr => self%fields(ivar)%get_data()
     call self%geometry%get_horizontal_map(horizontal_map_ptr)
-    call self%fields_to_io_collection(ivar)%initialise(atlas_data_ptr,     &
-                                                       horizontal_map_ptr, &
-                                                       lfric_field_ptr)
+    call self%fields_to_io_collection(ivar)%initialise( atlas_data_ptr,     &
+                                                        horizontal_map_ptr, &
+                                                        lfric_field_ptr )
   end do
 
 end subroutine setup_interface_to_io_collection
 
 !> @brief    Copy from model_data to the Atlas field emulators
 !>
-subroutine from_lfric_io_collection(self)
+subroutine from_lfric_io_collection( self )
 
   implicit none
 
@@ -436,92 +410,86 @@ subroutine from_lfric_io_collection(self)
   call self%setup_interface_to_io_collection()
 
   ! Copy the LFRic fields in the io_collection to the Atlas field emulators
-  do ivar=1,size(self%fields_to_io_collection)
+  do ivar = 1, size(self%fields_to_io_collection)
     call self%fields_to_io_collection(ivar)%copy_from_lfric()
   end do
 
 end subroutine from_lfric_io_collection
 
-!> @brief    Update the date_time by a single time-step
+!> @brief    Update the datetime by a single time-step
 !>
-!> @param [in] date_time_duration_dt  Update the date_time by the specified
-!>                                    duration
-subroutine update_time(self, date_time_duration_dt)
+!> @param [in] date_time_duration_dt  Update the datetime by the specified
+!>                                    duration in seconds
+subroutine update_time( self, date_time_duration_dt )
 
   implicit none
 
   class( jedi_state_type ), intent(inout) :: self
-  integer( kind=i_def ), intent(in)       :: date_time_duration_dt
+  integer(i_def),           intent(in)    :: date_time_duration_dt
 
-  ! Here we have date_time as an integer. It will actually be an object or
-  ! string that stores time to be read. Initially stored in the configuration
-  ! file:
-  !
-  ! date: '2018-04-14T21:00:00Z'
-  ! mpas define the formating for this as:
-  ! dateTimeString = '$Y-$M-$D_$h:$m:$s'
-
-  self%date_time = self%date_time + date_time_duration_dt
+  call self%datetime%add_seconds( date_time_duration_dt )
 
 end subroutine update_time
 
-!> @brief    Set the LFRic clock to the time specified by the input date_time
+!> @brief    Set the LFRic clock to the time specified by the input datetime
 !>
-!> @param [in] date_time  The date_time to be used to update the LFRic clock
-subroutine set_clock(self, date_time)
+!> @param [in] new_datetime  The datetime to be used to update the LFRic clock
+subroutine set_clock( self, new_datetime )
 
   use da_dev_driver_mod, only : model_clock
 
   implicit none
 
-  class( jedi_state_type ), intent(inout) :: self
-  integer( kind=i_def )                   :: date_time
+  class( jedi_state_type ),   intent(inout) :: self
+  type( jedi_datetime_type ), intent(in)    :: new_datetime
 
-  ! Local
-  integer :: iclock
-  logical :: clock_stopped
+  integer(i_def) :: seconds_between
+  integer(i_def) :: iclock
+  logical(l_def) :: clock_stopped
 
-  ! date_time stored as an integer. But we will have:
-  ! date: '2018-04-14T21:00:00Z'
-  ! mpas define the formating for this as:
-  ! dateTimeString = '$Y-$M-$D_$h:$m:$s'
+  call self%datetime%seconds_between( new_datetime, seconds_between )
 
-  if (self%date_time > date_time) then
-    write(log_scratch_space, '(A)') "The xios clock can not go backwards."
+  if ( seconds_between == 0_i_def ) then
+    write ( log_scratch_space, '(A)' ) &
+      "New datetime is the same as the current datetime"
+    call log_event( log_scratch_space, LOG_LEVEL_INFO )
+  else if ( seconds_between < 0_i_def ) then
+    write ( log_scratch_space, '(A)' ) &
+      "The xios clock can not go backwards."
     call log_event( log_scratch_space, LOG_LEVEL_ERROR )
   end if
 
   ! Tick the clock to the required time but first check that the clock is
-  ! running in the case its not being ticked (i.e. date_time==self%date_time).
+  ! running in the case its not being ticked (i.e. datetime==self%datetime).
   ! clock_stopped=.not.clock%is_running() didnt work when I tried it - set to
   ! false initially for now.
-  clock_stopped=.false.
-  do iclock=1,date_time-self%date_time
-    clock_stopped=.not.model_clock%tick()
+  clock_stopped = .false.
+  do iclock = 1, seconds_between
+    clock_stopped = .not. model_clock%tick()
   end do
 
   ! Check the clock is still running
-  if (clock_stopped) then
-    write(log_scratch_space, '(A)') &
+  if ( clock_stopped ) then
+    write ( log_scratch_space, '(A)' ) &
       "State::set_clock::The LFRic clock has stopped."
     call log_event( log_scratch_space, LOG_LEVEL_ERROR )
   end if
 
-  self%date_time=date_time
+  call self%datetime%add_seconds( seconds_between )
 
 end subroutine set_clock
 
 !> @brief    The jedi_state_type finalizer
 !>
-subroutine jedi_state_destructor(self)
+subroutine jedi_state_destructor( self )
 
   implicit none
 
-  type(jedi_state_type), intent(inout) :: self
+  type( jedi_state_type ), intent(inout) :: self
 
-  self % geometry => null()
-  if ( allocated(self % fields ) ) then
-    deallocate(self % fields )
+  self%geometry => null()
+  if ( allocated(self%fields ) ) then
+    deallocate(self%fields )
   end if
 
 end subroutine jedi_state_destructor
@@ -529,7 +497,7 @@ end subroutine jedi_state_destructor
 !! For testing
 
 !> Print the 1st point in each field
-subroutine print_field(self)
+subroutine print_field( self )
 
   implicit none
 
@@ -537,10 +505,10 @@ subroutine print_field(self)
 
   ! Local
   real(real64), pointer :: atlas_data_ptr(:,:)
-  integer               :: ivar
+  integer(i_def)        :: ivar
 
   ! Printing data
-  do ivar=1,self%field_meta_data%get_n_variables()
+  do ivar = 1, self%field_meta_data%get_n_variables()
     atlas_data_ptr => self%fields (ivar)%get_data()
     print*, "print_field. ivar = ", ivar, &
             "atlas_data_ptr(1,1) = ", atlas_data_ptr(1,1)

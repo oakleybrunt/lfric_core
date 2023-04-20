@@ -2,10 +2,7 @@
 
 @section da_dev_miniapp Da_Dev Miniapp
 
-This miniapp forms part of the LFRic and Gungho project. It provides an example of how to write a fully working application that uses the LFRic infrastructure,
-but is scientifically straightforward so is easier to understand than a full model.
-
-It creates a field, sets all values of the field to a constant and calculates the divergence of that constant field. Finally, it checks that the divergence of the constant field comes out as zero.
+This miniapp tests data assimilation functionality and emulates the <a href="https://github.com/JCSDA-internal/lfric-jedi">JEDI-LFRic interface</a>.
 
 @section lfric_gungho_sec LFRic and GungHo
 
@@ -27,5 +24,3 @@ directly by the infrastructure.
 
 For more up-to-date information about the <b>LFRic-specific Built-ins</b> functionality (e.g. names, argument order) please refer to the 
 <a href="https://github.com/stfc/PSyclone/blob/master/doc/dynamo0p3.rst#built-ins">dynamo 0.3 API Built-ins documentation</a>.
-
-

@@ -15,8 +15,9 @@
 module jedi_state_config_mod
 
   use constants_mod,         only : i_def, str_def, l_def
-  use fs_continuity_mod,     only : W3, Wtheta
   use da_dev_field_meta_mod, only : da_dev_field_meta_type
+  use fs_continuity_mod,     only : W3, Wtheta
+  use jedi_datetime_mod,     only : jedi_datetime_type
 
   implicit none
 
@@ -25,18 +26,14 @@ module jedi_state_config_mod
 type, public :: jedi_state_config_type
 
   !> The field meta data
-  type( da_dev_field_meta_type )        :: field_meta_data
+  type( da_dev_field_meta_type )     :: field_meta_data
 
-  ! Here we have date_time as an integer. It will actually be an object or
-  ! string that stores time to be read. Initially stored in the configuration
-  ! file:
-  !
   ! date: '2018-04-14T21:00:00Z'
   ! mpas define the formating for this as:
   ! dateTimeString = '$Y-$M-$D_$h:$m:$s'
-  integer( kind=i_def )              :: date_time
+  type( jedi_datetime_type )         :: datetime
   !> File prefix for read
-  character(len=str_def)             :: read_file_prefix
+  character( len=str_def )           :: read_file_prefix
   !> A logical that if true indicates that the state should include a
   !> model_data instance because it will be used with the non-linear model
   logical( kind=l_def )              :: use_nl_model
@@ -65,16 +62,17 @@ subroutine initialise( self, use_nl_model )
   implicit none
 
   class( jedi_state_config_type ), intent(inout) :: self
-  logical( kind=l_def ), intent(in)              :: use_nl_model
+  logical( kind=l_def ),           intent(in)    :: use_nl_model
+
   ! Local
-  integer, parameter       :: nvars=3
+  integer( kind=i_def ), parameter :: nvars = 3
   character( len=str_def ) :: variable_names(nvars)
   integer( kind=i_def )    :: variable_function_spaces(nvars)
   logical( kind=l_def )    :: variable_is_2d(nvars)
 
   ! Configuration inputs
-  self%read_file_prefix="read_"
-  self%date_time = 0
+  call self%datetime%init_lfric_calendar_start()
+  self%read_file_prefix = "read_"
   self%use_nl_model = use_nl_model
 
   ! Setup arrays required for field_meta_data
@@ -99,11 +97,11 @@ end subroutine initialise
 
 !> @brief    Finalizer for jedi_state_config_type
 !>
-subroutine jedi_state_config_destructor(self)
+subroutine jedi_state_config_destructor( self )
 
   implicit none
 
-  type(jedi_state_config_type), intent(inout)    :: self
+  type( jedi_state_config_type ), intent(inout)    :: self
 
 end subroutine jedi_state_config_destructor
 

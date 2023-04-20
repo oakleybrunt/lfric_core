@@ -14,7 +14,8 @@
 !>
 module jedi_pseudo_model_config_mod
 
-  use constants_mod,      only : i_def, str_def
+  use constants_mod,     only : i_def, str_def
+  use jedi_datetime_mod, only : jedi_datetime_type
 
   implicit none
 
@@ -22,16 +23,8 @@ module jedi_pseudo_model_config_mod
 
 type, public :: jedi_pseudo_model_config_type
 
-  ! Here we have date_time as an integer. It will actually be an object or
-  ! string that stores time to be read. Initially stored in the configuration
-  ! file:
-  !
-  ! date: '2018-04-14T21:00:00Z'
-  ! mpas define the formating for this as:
-  ! dateTimeString = '$Y-$M-$D_$h:$m:$s'
-
   !> List of the dates to be read
-  integer( kind=i_def ), allocatable :: date_time_states(:)
+  type( jedi_datetime_type ), allocatable :: datetime_states(:)
 
   !> File prefix for read
   character(len=str_def)             :: read_file_prefix
@@ -58,13 +51,22 @@ subroutine initialise( self )
   implicit none
 
   class( jedi_pseudo_model_config_type ), intent(inout) :: self
-  ! Local
-  integer( kind=i_def ) :: date_time_entries
 
-  date_time_entries = 9
-  allocate(self%date_time_states(date_time_entries))
-  self%date_time_states = (/1,2,3,4,5,6,7,8,9/)
-  !self%date_time_states = (/1,5,9/)
+  ! Local
+  integer( kind=i_def )      :: i, datetime_entries
+  type( jedi_datetime_type ) :: next_datetime
+
+  call next_datetime%init_lfric_calendar_start()
+
+  datetime_entries = 9_i_def
+  allocate(self%datetime_states(datetime_entries))
+
+  ! initialise datetime states 1-9 seconds after
+  ! lfric calendar_start namelist variable time
+  do i = 1, datetime_entries
+    call next_datetime%add_seconds( 1_i_def )
+    self%datetime_states(i) = next_datetime
+  end do
 
   self%read_file_prefix="read_"
 
@@ -78,7 +80,7 @@ subroutine jedi_pseudo_model_config_destructor(self)!
 
   type(jedi_pseudo_model_config_type), intent(inout) :: self
 
-  if ( allocated(self%date_time_states) ) deallocate(self%date_time_states)
+  if ( allocated(self%datetime_states) ) deallocate(self%datetime_states)
 
 end subroutine jedi_pseudo_model_config_destructor
 

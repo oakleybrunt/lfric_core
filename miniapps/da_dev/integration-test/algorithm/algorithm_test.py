@@ -26,7 +26,7 @@ class DaDevTest(LFRicLoggingTest):
         if 'MPIEXEC_BROKEN' in os.environ:
             DaDevTest.set_mpiexec_broken()
         super().__init__([sys.argv[1],
-                          'algorithms_test_configuration.nml',
+                          'algorithm_test_configuration.nml',
                           'test_' + self._flag],
                          processes=1,
                          name='DaDevTest.Log')

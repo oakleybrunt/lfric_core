@@ -41,24 +41,24 @@ program jedi_forecast
   integer( kind=i_def )          :: date_time_duration_dt
   character(:), allocatable      :: filename
 
-  character(*), parameter      :: program_name = "jedi_forecast"
+  character(*), parameter        :: program_name = "jedi_forecast"
 
   ! Infrastructure config
   call get_initial_filename( filename )
+
+  ! Run object
+  ! Handles initialization and finalization of required infrastructure
+  call jedi_run%initialise( program_name, filename )
 
   ! Configs for for the jedi emulator objects
   ! State config
   call jedi_state_config%initialise( use_nl_model = .true. )
 
   ! Model config
-  date_time_duration_dt = 1
+  date_time_duration_dt = 1_i_def
 
   ! Forecast config
-  date_time_duration = 5
-
-  ! Run object
-  ! Handles initialization and finalization of required infrastructure
-  call jedi_run%initialise( program_name, filename )
+  date_time_duration = 5_i_def
 
   ! Geometry
   call jedi_geometry%initialise()

@@ -49,6 +49,10 @@ program jedi_forecast_pseudo
   ! Infrastructure config
   call get_initial_filename( filename )
 
+  ! Run object
+  ! Handles initialization and finalization of required infrastructure
+  call jedi_run%initialise( program_name, filename )
+
   ! Config for the jedi emulator objects
   ! State config
   call jedi_state_config%initialise( use_nl_model = .false. )
@@ -56,12 +60,8 @@ program jedi_forecast_pseudo
   ! Model config
   call jedi_pseudo_model_config%initialise()
 
-  ! Forecast config
-  date_time_duration = 5
-
-  ! Run object
-  ! Handles initialization and finalization of required infrastructure
-  call jedi_run%initialise( program_name, filename )
+  ! Forecast config - duration of forecast / seconds
+  date_time_duration = 5_i_def
 
   ! Geometry
   call jedi_geometry%initialise()

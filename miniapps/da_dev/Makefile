@@ -176,14 +176,20 @@ build: ALWAYS
 ##############################################################################
 # Unit tests
 #
-unit-tests/%: export ADDITIONAL_EXTRACTION            \
-                  = $(ROOT_DIR)/infrastructure/source \
-                    $(ROOT_DIR)/components/science/source/kernel
+unit-tests/%: export ADDITIONAL_EXTRACTION                          \
+	                = $(ROOT_DIR)/infrastructure/source               \
+	                  $(ROOT_DIR)/components/driver/source            \
+	                  $(ROOT_DIR)/components/science/source/kernel    \
+	                  $(ROOT_DIR)/components/science/source/algorithm \
+	                  $(ROOT_DIR)/components/science/source/psy       \
+	                  $(ROOT_DIR)/components/lfric-da/source          \
+	                  $(ROOT_DIR)/components/lfric-xios/source
 unit-tests/%: export BIN_DIR ?= $(PROJECT_DIR)/test
+unit-tests/%: export FFLAGS += -DUNIT_TEST
 unit-tests/%: export META_FILE_DIR = rose-meta/lfric-da_dev/HEAD
 unit-tests/%: export PROGRAMS = $(PROJECT_NAME)_unit_tests
 unit-tests/%: export PROJECT = $(PROJECT_NAME)
-unit-tests/%: export SOURCE_DIR = source/kernel
+unit-tests/%: export SOURCE_DIR = source
 unit-tests/%: export TEST_DIR = unit-test
 unit-tests/%: export WORKING_DIR := $(WORKING_DIR)/unit-test
 unit-tests: unit-tests/run
@@ -199,6 +205,7 @@ integration-tests/%: export ADDITIONAL_EXTRACTION                  \
                           $(ROOT_DIR)/components/lfric-da/source   \
                           $(ROOT_DIR)/components/lfric-xios/source
 integration-tests/%: export BIN_DIR      ?= $(PROJECT_DIR)/test
+integration-tests/%: export FFLAGS       += -DINT_TEST
 integration-tests/%: export META_FILE_DIR = rose-meta/lfric-da_dev/HEAD
 integration-tests/%: export PROJECT       = $(PROJECT_NAME)
 integration-tests/%: export SOURCE_DIR    = source

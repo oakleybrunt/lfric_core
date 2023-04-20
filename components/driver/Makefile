@@ -79,7 +79,6 @@ document-api: api-documentation
 unit-tests/%: export ADDITIONAL_EXTRACTION = "$(ROOT_DIR)/infrastructure/source"
 unit-tests/%: export BIN_DIR ?= $(PROJECT_DIR)/test
 unit-tests/%: export FFLAGS += -DUNIT_TEST
-unit-tests/%: export CXX_LINK = TRUE
 unit-tests/%: export META_FILE_DIR = rose-meta/lfric-driver/HEAD
 unit-tests/%: export PROGRAMS = driver_unit_tests
 unit-tests/%: export PROJECT = driver

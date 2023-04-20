@@ -12,11 +12,12 @@
 !>
 module jedi_model_mod
 
+  use constants_mod,                 only : i_def
+  use jedi_datetime_mod,             only : jedi_datetime_type
   use jedi_state_mod,                only : jedi_state_type
   use log_mod,                       only : log_event,          &
                                             log_scratch_space,  &
                                             LOG_LEVEL_ERROR
-  use constants_mod,                 only : i_def
 
   implicit none
 
@@ -31,7 +32,7 @@ type, public :: jedi_model_type
 contains
 
   !> Model initialiser.
-  procedure, public :: initialise
+  procedure, public  :: initialise
 
   !> Methods
   procedure, private :: model_init
@@ -39,10 +40,10 @@ contains
   procedure, private :: model_final
 
   !> Run a forecast
-  procedure, public :: forecast
+  procedure, public  :: forecast
 
   !> Finalizer
-  final             :: jedi_model_destructor
+  final              :: jedi_model_destructor
 
 end type jedi_model_type
 
@@ -98,19 +99,19 @@ subroutine model_step(self, state)
   clock_stopped=.not.model_clock%tick()
   ! If the clock has finished then it will just get the
   ! data at the end of the file - this prevents that
-  if (clock_stopped) then
-    write(log_scratch_space, &
-      '(A)') "Model::model_step::The LFRic clock has stopped."
+  if ( clock_stopped ) then
+    write ( log_scratch_space, '(A)' ) &
+            "Model::model_step::The LFRic clock has stopped."
     call log_event( log_scratch_space, LOG_LEVEL_ERROR )
   endif
 
-  call step_lfric(state%model_data)
+  call step_lfric( state%model_data )
 
   ! Copy fields from model data
   call state%from_model_data()
 
   ! update the state time
-  call state%update_time(self%date_time_duration_dt)
+  call state%update_time( self%date_time_duration_dt )
 
 end subroutine model_step
 
@@ -154,12 +155,13 @@ subroutine forecast(self, state, date_time_duration)
   integer, intent(in)                          :: date_time_duration
 
   ! Local
-  integer :: date_time_end
+  type( jedi_datetime_type ) :: datetime_end
 
   ! End time
-  date_time_end = state%valid_time() + date_time_duration
+  call datetime_end%init( state%datetime )
+  call datetime_end%add_seconds( date_time_duration )
 
-  call self%model_init(state)
+  call self%model_init( state )
   ! initialize the post processor
   ! post.initialize(state, ...);
   ! In a H(X) the following call would be used to do spatial interpolations
@@ -167,13 +169,13 @@ subroutine forecast(self, state, date_time_duration)
   ! post%process(state)
 
   ! loop until date_time_end
-  do while (state%valid_time() < date_time_end)
-    call self%model_step(state)
+  do while ( datetime_end%is_ahead( state%datetime ) )
+    call self%model_step( state )
     ! post%process(state)
-  enddo
+  end do
 
   ! post.finalize(state);
-  call self%model_final(state)
+  call self%model_final( state )
 
 end subroutine forecast
 
