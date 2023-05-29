@@ -1,5 +1,5 @@
 !-----------------------------------------------------------------------------
-! (c) Crown copyright 2022 Met Office. All rights reserved.
+! (c) Crown copyright 2023 Met Office. All rights reserved.
 ! The file LICENCE, distributed with this code, contains details of the terms
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
@@ -16,6 +16,7 @@ use argument_mod,      only: arg_type,                  &
                              CELL_COLUMN
 use fs_continuity_mod, only: WTHETA, W3
 use kernel_mod,        only: kernel_type
+use empty_data_mod,    only: empty_real_data
 
 implicit none
 
@@ -29,7 +30,7 @@ private
 
 type, public, extends(kernel_type) :: casim_kernel_type
   private
-  type(arg_type) :: meta_args(31) = (/                                      &
+  type(arg_type) :: meta_args(33) = (/                                      &
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                       & ! mv_wth
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                       & ! ml_wth
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                       & ! mi_wth
@@ -60,7 +61,9 @@ type, public, extends(kernel_type) :: casim_kernel_type
        arg_type(GH_FIELD, GH_REAL, GH_WRITE, ANY_DISCONTINUOUS_SPACE_1),    & ! ls_snow_2d
        arg_type(GH_FIELD, GH_REAL, GH_READWRITE, WTHETA),                   & ! theta_inc
        arg_type(GH_FIELD, GH_REAL, GH_READWRITE, WTHETA),                   & ! dcfl_wth
-       arg_type(GH_FIELD, GH_REAL, GH_READWRITE, WTHETA)                    & ! dcff_wth
+       arg_type(GH_FIELD, GH_REAL, GH_READWRITE, WTHETA),                   & ! dcff_wth
+       arg_type(GH_FIELD, GH_REAL, GH_WRITE, WTHETA),                       & ! refl_tot
+       arg_type(GH_FIELD, GH_REAL, GH_WRITE, ANY_DISCONTINUOUS_SPACE_1)     & ! refl_1km
        /)
    integer :: operates_on = CELL_COLUMN
 contains
@@ -111,6 +114,10 @@ contains
 !> @param[in,out] theta_inc           Increment to theta
 !> @param[in,out] dcfl_wth            Increment to liquid cloud fraction
 !> @param[in,out] dcff_wth            Increment to ice cloud fraction
+!> @param[in,out] refl_tot            Total radar reflectivity for diagnostic
+!!                                     on all levels (dBZ)
+!> @param[in,out] refl_1km            Radar reflectivity (dBZ) at 1km above the
+!!                                     surface
 !> @param[in]     ndf_wth             Number of degrees of freedom per cell for
 !!                                     potential temperature space
 !> @param[in]     undf_wth            Number unique of degrees of freedom for
@@ -146,6 +153,7 @@ subroutine casim_code( nlayers,                     &
                        ls_rain_2d, ls_snow_2d,      &
                        theta_inc,                   &
                        dcfl_wth, dcff_wth,          &
+                       refl_tot, refl_1km,          &
                        ndf_wth, undf_wth, map_wth,  &
                        ndf_w3,  undf_w3,  map_w3,   &
                        ndf_2d,  undf_2d,  map_2d    )
@@ -170,6 +178,7 @@ subroutine casim_code( nlayers,                     &
                                         deallocate_diagnostic_space,           &
                                         casdiags
     use mphys_air_density_mod, ONLY: mphys_air_density
+    use mphys_radar_mod,       only: ref_lim
     use variable_precision,    only: wp
 
     implicit none
@@ -211,6 +220,9 @@ subroutine casim_code( nlayers,                     &
     real(kind=r_def), intent(inout), dimension(undf_wth) :: theta_inc
     real(kind=r_def), intent(inout), dimension(undf_wth) :: dcfl_wth
     real(kind=r_def), intent(inout), dimension(undf_wth) :: dcff_wth
+
+    real(kind=r_def), pointer, intent(inout) :: refl_tot(:)
+    real(kind=r_def), pointer, intent(inout) :: refl_1km(:)
 
     integer(kind=i_def), intent(in), dimension(ndf_wth) :: map_wth
     integer(kind=i_def), intent(in), dimension(ndf_w3)  :: map_w3
@@ -259,7 +271,11 @@ subroutine casim_code( nlayers,                     &
     real(r_um), dimension(:,:,:), allocatable :: qrain_work, qcf2_work,        &
                                                  qgraup_work
 
+    real(r_um), parameter :: alt_1km = 1000.0 ! metres
+
     integer(i_um) :: i,j,k
+
+    logical :: l_refl_tot, l_refl_1km
 
     !-----------------------------------------------------------------------
     ! Initialisation of non-prognostic variables and arrays
@@ -427,6 +443,12 @@ subroutine casim_code( nlayers,                     &
       end do
     end do
 
+    ! Set up diagnostic flags for CASIM
+    l_refl_tot = .not. associated(refl_tot, empty_real_data)
+    l_refl_1km = .not. associated(refl_1km, empty_real_data)
+
+    if (l_refl_tot .or. l_refl_1km) casdiags % l_radar = .true.
+
     call allocate_diagnostic_space(its, ite, jts, jte, kts, kte)
 
     ! --------------------------------------------------------------------------
@@ -518,8 +540,26 @@ subroutine casim_code( nlayers,                     &
     ls_rain_2d(map_2d(1))  = casdiags % SurfaceRainR(1,1)
     ls_snow_2d(map_2d(1))  = casdiags % SurfaceSnowR(1,1)
 
+    if (l_refl_1km) then
+      do k = 1, nlayers
+        ! Select the first altitude above 1km (following what the UM does).
+        if (height_wth(map_wth(1) + k) >= alt_1km ) then
+          refl_1km(map_2d(1)) = casdiags % dbz_tot(i,j,k)
+          exit
+        end if
+      end do
+    end if
+
+    if (l_refl_tot) then
+      refl_tot(map_wth(1)) = ref_lim ! Set 0 level to -35 dBZ.
+      do k = 1, nlayers
+        refl_tot(map_wth(1) + k) = casdiags % dbz_tot(i,j,k)
+      end do
+    end if
+
     ! CASIM deallocate diagnostics
     call deallocate_diagnostic_space()
+    ! (The above subroutine call sets casdiags % l_radar = .false.)
     deallocate( qgraup_work )
     deallocate( qrain_work  )
     deallocate( qcf2_work   )

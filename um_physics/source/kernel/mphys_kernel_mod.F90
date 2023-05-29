@@ -1,5 +1,5 @@
 !-----------------------------------------------------------------------------
-! (c) Crown copyright 2017 Met Office. All rights reserved.
+! (c) Crown copyright 2023 Met Office. All rights reserved.
 ! The file LICENCE, distributed with this code, contains details of the terms
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
@@ -30,7 +30,7 @@ private
 
 type, public, extends(kernel_type) :: mphys_kernel_type
   private
-  type(arg_type) :: meta_args(41) = (/                                      &
+  type(arg_type) :: meta_args(43) = (/                                      &
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                       & ! mv_wth
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                       & ! ml_wth
        arg_type(GH_FIELD, GH_REAL, GH_READ,  WTHETA),                       & ! mi_wth
@@ -71,7 +71,9 @@ type, public, extends(kernel_type) :: mphys_kernel_type
        arg_type(GH_FIELD, GH_REAL, GH_WRITE, WTHETA),                       & ! superc_liq_wth
        arg_type(GH_FIELD, GH_REAL, GH_WRITE, WTHETA),                       & ! sfwater
        arg_type(GH_FIELD, GH_REAL, GH_WRITE, WTHETA),                       & ! sfrain
-       arg_type(GH_FIELD, GH_REAL, GH_WRITE, WTHETA)                        & ! sfsnow
+       arg_type(GH_FIELD, GH_REAL, GH_WRITE, WTHETA),                       & ! sfsnow
+       arg_type(GH_FIELD, GH_REAL, GH_WRITE, WTHETA),                       & ! refl_tot
+       arg_type(GH_FIELD, GH_REAL, GH_WRITE, ANY_DISCONTINUOUS_SPACE_1)     & ! refl_1km
        /)
    integer :: operates_on = DOMAIN
 contains
@@ -128,6 +130,8 @@ contains
 !> @param[in,out] sfwater             Sub-grid orographic water produced by Seeder Feeder scheme
 !> @param[in,out] sfrain              Extra rain produced by Seeder Feeder scheme
 !> @param[in,out] sfsnow              Extra snow produced by Seeder Feeder scheme
+!> @param[in,out] refl_tot            Total (3d) radar reflectivity (dBZ)
+!> @param[in,out] refl_1km            Radar reflectivity at 1km above the surface
 !> @param[in]     ndf_wth             Number of degrees of freedom per cell for
 !!                                     potential temperature space
 !> @param[in]     undf_wth            Number unique of degrees of freedom in segment for
@@ -170,6 +174,7 @@ subroutine mphys_code( nlayers, seg_len,            &
                        f_arr_wth,                   &
                        superc_liq_wth,              &
                        sfwater, sfrain, sfsnow,     &
+                       refl_tot, refl_1km,          &
                        ndf_wth, undf_wth, map_wth,  &
                        ndf_w3,  undf_w3,  map_w3,   &
                        ndf_2d,  undf_2d,  map_2d,   &
@@ -186,6 +191,8 @@ subroutine mphys_code( nlayers, seg_len,            &
                                           l_mcr_qgraup, l_mcr_precfrac,        &
                                           l_subgrid_graupel_frac
     use mphys_constants_mod,        only: mprog_min
+    use mphys_bypass_mod,           only: l_ref_diag
+    use mphys_radar_mod,            only: ref_lim
 
     use cloud_inputs_mod,           only: i_cld_vn, rhcrit
     use pc2_constants_mod,          only: i_cld_off, i_cld_pc2
@@ -199,11 +206,14 @@ subroutine mphys_code( nlayers, seg_len,            &
 
 
     use mphys_diags_mod,            only: praut, pracw, piacw, psacw,          &
+                                          dbz_tot, dbz_g, dbz_i, dbz_i2,       &
+                                          dbz_r, dbz_l,                        &
                                           sfwater_um => sfwater,               &
                                           sfrain_um => sfrain,                 &
                                           sfsnow_um => sfsnow,                 &
                                           l_praut_diag, l_pracw_diag,          &
                                           l_piacw_diag, l_psacw_diag,          &
+                                          l_refl_tot, l_refl_1km,              &
                                           l_sfwater_diag, l_sfrain_diag,       &
                                           l_sfsnow_diag
 
@@ -267,6 +277,8 @@ subroutine mphys_code( nlayers, seg_len,            &
     real(kind=r_def), pointer, intent(inout) :: sfwater(:)
     real(kind=r_def), pointer, intent(inout) :: sfrain(:)
     real(kind=r_def), pointer, intent(inout) :: sfsnow(:)
+    real(kind=r_def), pointer, intent(inout) :: refl_tot(:)
+    real(kind=r_def), pointer, intent(inout) :: refl_1km(:)
 
     integer(kind=i_def), intent(in), dimension(ndf_wth, seg_len) :: map_wth
     integer(kind=i_def), intent(in), dimension(ndf_w3, seg_len)  :: map_w3
@@ -300,6 +312,8 @@ subroutine mphys_code( nlayers, seg_len,            &
     real(r_um), dimension(3, seg_len, 1, nlayers) :: f_arr
 
     real(r_um), dimension(1,1,1) :: sea_salt_film, sea_salt_jet
+
+    real(r_um), parameter :: alt_1km = 1000.0 ! metres
 
     logical, dimension(seg_len,1) :: land_sea_mask
 
@@ -577,6 +591,9 @@ subroutine mphys_code( nlayers, seg_len,            &
     l_sfrain_diag = .not. associated(sfrain, empty_real_data)
     l_sfsnow_diag = .not. associated(sfsnow, empty_real_data)
 
+    l_refl_tot = .not. associated(refl_tot, empty_real_data)
+    l_refl_1km = .not. associated(refl_1km, empty_real_data)
+
     ! Calculate low-level blocking for the  Seeder Feeder scheme
     if (orog_rain) then
 
@@ -636,6 +653,33 @@ subroutine mphys_code( nlayers, seg_len,            &
       allocate(sfsnow_um( seg_len, 1, nlayers ))
       sfsnow_um = 0.0_r_um
     endif
+
+    if (l_refl_tot .or. l_refl_1km) then
+
+      ! Allocate space for radar reflectivity fields. All radar fields
+      ! currently need to be allocated in order for the UM routines to not
+      ! produce segmentation faults.
+      allocate(dbz_tot( seg_len, 1, nlayers ))
+      allocate(dbz_g(   seg_len, 1, nlayers ))
+      allocate(dbz_r(   seg_len, 1, nlayers ))
+      allocate(dbz_i(   seg_len, 1, nlayers ))
+      allocate(dbz_i2(  seg_len, 1, nlayers ))
+      allocate(dbz_l(   seg_len, 1, nlayers ))
+
+      ! Initialise fields to radar reflectivity limit (not zero as these
+      ! fields are in log space and can go negative).
+      dbz_tot = ref_lim
+      dbz_g = ref_lim
+      dbz_r = ref_lim
+      dbz_i = ref_lim
+      dbz_i2 = ref_lim
+      dbz_l = ref_lim
+
+      ! The following flag tells the UM microphysics to call the radar
+      ! reflectivity generating routine.
+      l_ref_diag = .true.
+
+    end if ! l_refl_tot or l_refl_1km
 
     ! CALL to ls_ppn
     call ls_ppn(                                                               &
@@ -740,13 +784,27 @@ subroutine mphys_code( nlayers, seg_len,            &
       ls_snow_3d(map_wth(1,i) + k) = ls_snow3d(i,j,k)
     end do ! model levels
 
-    ! Copy diagnostics if selected: autoconversion, accretion & riming rates
+    ! Copy diagnostics if selected: autoconversion, accretion, riming rates &
+    ! radar reflectivity.
+    if (l_refl_tot) refl_tot(map_wth(1,i)) = ref_lim ! 0 level
+
     do k = 1, nlayers
       if (l_praut_diag) autoconv(map_wth(1,i) + k) = praut(i,j,k)
       if (l_pracw_diag) accretion(map_wth(1,i) + k) = pracw(i,j,k)
       if (l_piacw_diag) rim_cry(map_wth(1,i) + k) = piacw(i,j,k)
       if (l_psacw_diag) rim_agg(map_wth(1,i) + k) = psacw(i,j,k)
+      if (l_refl_tot)   refl_tot(map_wth(1,i) + k) = dbz_tot(i,j,k)
     end do
+
+    if (l_refl_1km) then
+      do k = 1, nlayers
+        ! Select the first altitude above 1km (following what the UM does).
+        if (height_wth(map_wth(1,i) + k) >= alt_1km ) then
+          refl_1km(map_2d(1,i)) = dbz_tot(i,j,k)
+          exit
+        end if
+      end do
+    end if
 
   end do ! seg_len
 
@@ -794,11 +852,22 @@ subroutine mphys_code( nlayers, seg_len,            &
   if (allocated(sfwater_um)) deallocate (sfwater_um)
   if (allocated(sfrain_um)) deallocate (sfrain_um)
   if (allocated(sfsnow_um)) deallocate (sfsnow_um)
+  if (allocated(dbz_tot)) deallocate(dbz_tot)
+  if (allocated(dbz_g)) deallocate(dbz_g)
+  if (allocated(dbz_r)) deallocate(dbz_r)
+  if (allocated(dbz_i)) deallocate(dbz_i)
+  if (allocated(dbz_i2)) deallocate(dbz_i2)
+  if (allocated(dbz_l)) deallocate(dbz_l)
+
   deallocate( precfrac_work )
   deallocate( qgraup_work )
   deallocate( qrain_work  )
   deallocate( qcf2_work   )
   deallocate( easyaerosol_cdnc % cdnc )
+
+  ! Reset the radar reflectivity call flag so the fields are
+  ! only generated when needed.
+  l_ref_diag = .false.
 
   ! N.B. Calls to aerosol code (rainout, mass_calc) etc have been omitted
   ! as it is expected these will be retired for LFRic/GHASP.

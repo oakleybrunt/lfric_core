@@ -26,6 +26,8 @@
     <field field_ref="electric__tiwp" />
     <field field_ref="electric__total_flash_rate" />
     <field field_ref="electric__num_lightning_flashes" />
+    <field field_ref="microphysics__refl_1km" />
+    <field field_ref="microphysics__refl_comp" />
     <field field_ref="surface__tile_fraction" />
     <field field_ref="surface__grid_surface_temperature" />
     <field field_ref="surface__t1p5m" />

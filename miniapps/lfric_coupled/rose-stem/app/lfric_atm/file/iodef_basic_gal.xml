@@ -533,6 +533,8 @@
         <field id="microphysics__sfwater" name="sfwater" long_name="water due to subgrid hills" unit="kg kg-1" grid_ref="full_level_face_grid" />
         <field id="microphysics__sfrain" name="sfrain" long_name="Seeder Feeder rain over subgrid hills" unit="kg kg-1" grid_ref="full_level_face_grid" />
         <field id="microphysics__sfsnow" name="sfsnow" long_name="Seeder Feeder snow over subgrid hills" unit="kg kg-1" grid_ref="full_level_face_grid" />
+        <field id="microphysics__refl_tot" name="refl_tot" long_name="total_radar_reflectivity_due_to_all_hydrometeors" unit="dBZ" grid_ref="full_level_face_grid" />
+        <field id="microphysics__refl_1km" name="refl_1km" long_name="radar_reflectivity_at_1km_above_the_surface" unit="dBZ" domain_ref="face" />
         <!-- CASIM microphysics fields -->
         <field id="casim__nl_mphys" name="nl_mphys" long_name="number_concentration_of_cloud_droplets_after_microphysics" unit="kg-1" grid_ref="full_level_face_grid" />
         <field id="casim__nr_mphys" name="nr_mphys" long_name="number_concentration_of_rain_after_microphysics" unit="kg-1" grid_ref="full_level_face_grid" />
