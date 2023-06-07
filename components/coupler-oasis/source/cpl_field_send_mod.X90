@@ -254,7 +254,14 @@ module cpl_field_send_mod
 
   type( field_type ), intent(in), pointer :: sea_ice_fraction_ptr
 
-  call invoke(set_reciprocal_type(r_sea_ice_frac_raw, sea_ice_fraction_ptr))
+  type(function_space_type), pointer :: multidata_fs => null()
+  integer(kind=i_def)                :: ndata
+
+  multidata_fs => sea_ice_fraction_ptr%get_function_space()
+  ndata = multidata_fs%get_ndata()
+  call invoke(set_reciprocal_type(r_sea_ice_frac_raw, sea_ice_fraction_ptr, ndata))
+
+  nullify(multidata_fs)
 
   end subroutine set_r_sea_ice_frac_raw
 
