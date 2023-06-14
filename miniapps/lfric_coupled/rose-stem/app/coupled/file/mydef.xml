@@ -51,8 +51,8 @@
       </grid>
       <grid id="pft_monthly_grid">
 	<domain domain_ref="face"/>
-	<axis axis_ref="monthly_axis"/>
 	<axis axis_ref="plant_func_types"/>
+	<axis axis_ref="monthly_axis"/>
       </grid>
       <grid id="aero_mode_grid">
 	<domain domain_ref="face"/>
@@ -1412,8 +1412,8 @@
       </file>
 
       <file id="hydtop_ancil" name="hydtop_ancil" mode="read" output_freq="1ts" convention="UGRID" cyclic="false" enabled=".FALSE.">
-	<field id="mean_topog_index" name="m01s00i274" long_name="mean_topographic_index" unit="1" operation="once" domain_ref="face" />
-	<field id="stdev_topog_index" name="m01s00i275" long_name="standard_deviation_in_topographic_index" unit="1" operation="once" domain_ref="face" />
+	<field id="mean_topog_index" name="topidx" long_name="mean_topographic_index" unit="1" operation="once" domain_ref="face" />
+	<field id="stdev_topog_index" name="standard_deviation_topographic_index" long_name="standard_deviation_in_topographic_index" unit="1" operation="once" domain_ref="face" />
       </file>
 
       <file id="soil_ancil" name="soil_ancil" mode="read" output_freq="1ts" convention="UGRID" cyclic="false" enabled=".FALSE.">
@@ -1429,11 +1429,11 @@
       </file>
 
       <file id="surface_frac_ancil" name="surface_frac_ancil" mode="read" output_freq="1ts" convention="UGRID" cyclic="false" enabled=".FALSE.">
-	<field id="land_tile_fraction" name="m01s00i216" long_name="fractions_of_vegetation_types" unit="1" operation="once" domain_ref="face" axis_ref="land_tiles"/>
+	<field id="land_tile_fraction" name="vegetation_area_fraction" long_name="fractions_of_vegetation_types" unit="1" operation="once" domain_ref="face" axis_ref="land_tiles"/>
       </file>
 
       <file id="plant_func_ancil" name="plant_func_ancil" mode="read" output_freq="1mo" convention="UGRID" cyclic="true" enabled=".FALSE.">
-	<field id="plant_func_time" name="month_number" unit="months" operation="once" axis_ref="monthly_axis"/>
+	<field id="plant_func_time" name="time" unit="hours" operation="once" axis_ref="monthly_axis"/>
 	<field id="canopy_height_data" name="canopy_height" long_name="canopy_height" unit="1" operation="once" grid_ref="pft_monthly_grid"/>
 	<field id="leaf_area_index_data" name="leaf_area_index" long_name="leaf_area_index" unit="1" operation="once" grid_ref="pft_monthly_grid"/>
       </file>
@@ -1514,7 +1514,7 @@
 
       <file id="emiss_so2_low_ancil" name="emiss_so2_low_ancil" mode="read" output_freq="1mo" convention="UGRID" cyclic="true" enabled=".FALSE.">
        <field id="em_so2_lo_time" name="time" unit="hours" operation="once" axis_ref="monthly_axis"/>
-       <field id="emiss_so2_low_data" name="emissions_SO2_low" long_name="SO2 low level emissions expressed as sulfur" unit="kg(S) m-2 s-1" operation="instant" domain_ref="face" axis_ref="monthly_axis"/>
+       <field id="emiss_so2_low_data" name="emissions_SO2_low_kgSO2" long_name="SO2 low level emissions expressed as sulfur" unit="kg(S) m-2 s-1" operation="instant" domain_ref="face" axis_ref="monthly_axis"/>
        </file>
 
       <file id="emiss_so2_high_ancil" name="emiss_so2_high_ancil" mode="read" output_freq="1mo" convention="UGRID" cyclic="true" enabled=".FALSE.">
