@@ -28,8 +28,13 @@ FFLAGS_NO_OPTIMISATION    = -O0
 FFLAGS_SAFE_OPTIMISATION  = -O2 -fp-model strict
 FFLAGS_RISKY_OPTIMISATION = -O3 -xhost
 FFLAGS_DEBUG              = -g -traceback
-FFLAGS_WARNINGS           = -warn all -warn errors
-FFLAGS_UNIT_WARNINGS      = -warn all
+#
+# By default turning interface warnings on causes "genmod" files to be
+# created. This adds unecessary files to the build so we disable that
+# behaviour.
+#
+FFLAGS_WARNINGS           = -warn all -warn errors -gen-interfaces nosource
+FFLAGS_UNIT_WARNINGS      = -warn all -gen-interfaces nosource
 FFLAGS_INIT               = -ftrapuv
 
 ifeq ($(shell test $(IFORT_VERSION) -ge 0190000 -a $(IFORT_VERSION) -lt 0190100; echo $$?), 0)
