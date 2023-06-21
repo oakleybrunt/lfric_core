@@ -8,20 +8,20 @@
 !>
 !> @details This module emulates the date time object used in the
 !!          LFRic-JEDI interface
-module jedi_datetime_mod
+module lfric_da_datetime_mod
 
-  use constants_mod,               only : i_def, r_def, str_def, l_def
-  use jedi_datetime_functions_mod, only : YYYYMMDD_to_JDN,   &
-                                          JDN_to_YYYYMMDD,   &
-                                          hhmmss_to_seconds, &
-                                          seconds_to_hhmmss, &
-                                          is_valid_datetime
-  use jedi_duration_mod,           only : jedi_duration_type
-  use log_mod,                     only : log_event,         &
-                                          log_scratch_space, &
-                                          LOG_LEVEL_INFO,    &
-                                          LOG_LEVEL_ERROR
-  use time_config_mod,             only : calendar_start
+  use constants_mod,                   only : i_def, r_def, str_def, l_def
+  use lfric_da_datetime_functions_mod, only : YYYYMMDD_to_JDN,   &
+                                              JDN_to_YYYYMMDD,   &
+                                              hhmmss_to_seconds, &
+                                              seconds_to_hhmmss, &
+                                              is_valid_datetime
+  use lfric_da_duration_mod,           only : jedi_duration_type
+  use log_mod,                         only : log_event,         &
+                                              log_scratch_space, &
+                                              LOG_LEVEL_INFO,    &
+                                              LOG_LEVEL_ERROR
+  use time_config_mod,                 only : calendar_start
 
   implicit none
   private
@@ -462,4 +462,4 @@ contains
 
   end function seconds_between
 
-end module jedi_datetime_mod
+end module lfric_da_datetime_mod

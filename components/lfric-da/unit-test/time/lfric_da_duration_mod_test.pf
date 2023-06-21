@@ -11,36 +11,36 @@
 !> component.
 !>
 !-------------------------------------------------------------------------------
-module jedi_duration_mod_test
+module lfric_da_duration_mod_test
 
   ! Global use statements go here
 
-  use constants_mod,     only : i_def, str_def, l_def
-  use jedi_duration_mod, only : jedi_duration_type
+  use constants_mod,         only : i_def, str_def, l_def
+  use lfric_da_duration_mod, only : jedi_duration_type
 
   use pFUnit_Mod
 
   implicit none
 
   private
-  public :: jedi_duration_init_test
-  public :: jedi_duration_operators_test
-  public :: jedi_duration_comparators_test
+  public :: lfric_da_duration_init_test
+  public :: lfric_da_duration_operators_test
+  public :: lfric_da_duration_comparators_test
 
   ! The test case type, containing procedures to setup, run
   ! and clean up after a test.
   ! It can also contain data.
 
   @TestCase
-  type, extends(TestCase), public :: jedi_duration_test_type
+  type, extends(TestCase), public :: lfric_da_duration_test_type
     private
   contains
     procedure setUp
     procedure tearDown
-    procedure jedi_duration_init_test
-    procedure jedi_duration_operators_test
-    procedure jedi_duration_comparators_test
-  end type jedi_duration_test_type
+    procedure lfric_da_duration_init_test
+    procedure lfric_da_duration_operators_test
+    procedure lfric_da_duration_comparators_test
+  end type lfric_da_duration_test_type
 
 
 contains
@@ -53,7 +53,7 @@ contains
 
     implicit none
 
-    class(jedi_duration_test_type), intent(inout) :: this
+    class(lfric_da_duration_test_type), intent(inout) :: this
 
     ! This section should create and initialise anything needed for the test
 
@@ -67,7 +67,7 @@ contains
 
     implicit none
 
-    class(jedi_duration_test_type), intent(inout) :: this
+    class(lfric_da_duration_test_type), intent(inout) :: this
 
     ! This section should destroy any previously created types / data
 
@@ -77,11 +77,11 @@ contains
   ! pfUnit will run each subroutine preceded by the @test line
   @test
   !> Test initialising the emulated jedi_duration type
-  subroutine jedi_duration_init_test( this )
+  subroutine lfric_da_duration_init_test( this )
 
     implicit none
 
-    class(jedi_duration_test_type), intent(inout) :: this
+    class(lfric_da_duration_test_type), intent(inout) :: this
 
     type(jedi_duration_type) :: jedi_duration
 
@@ -169,17 +169,17 @@ contains
     call jedi_duration%get_duration( returned_second )
     @assertEqual( -50_i_def, returned_second )
 
-  end subroutine jedi_duration_init_test
+  end subroutine lfric_da_duration_init_test
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! pfUnit will run each subroutine preceded by the @test line
   @test
   !> Test operators for the emulated jedi_duration type
-  subroutine jedi_duration_operators_test( this )
+  subroutine lfric_da_duration_operators_test( this )
 
     implicit none
 
-    class(jedi_duration_test_type), intent(inout) :: this
+    class(lfric_da_duration_test_type), intent(inout) :: this
 
     type(jedi_duration_type) :: jedi_duration
     type(jedi_duration_type) :: jedi_duration_2
@@ -254,17 +254,17 @@ contains
     call test_duration%get_duration( returned_second )
     @assertEqual( -5_i_def, returned_second )
 
-  end subroutine jedi_duration_operators_test
+  end subroutine lfric_da_duration_operators_test
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! pfUnit will run each subroutine preceded by the @test line
   @test
   !> Test comparators for the emulated jedi_duration type
-  subroutine jedi_duration_comparators_test( this )
+  subroutine lfric_da_duration_comparators_test( this )
 
     implicit none
 
-    class(jedi_duration_test_type), intent(inout) :: this
+    class(lfric_da_duration_test_type), intent(inout) :: this
 
     type(jedi_duration_type) :: jedi_duration
     type(jedi_duration_type) :: jedi_duration_2
@@ -336,6 +336,6 @@ contains
     test = ( jedi_duration_3 >= jedi_duration_4 )
     @assertEqual( .true., test )
 
-  end subroutine jedi_duration_comparators_test
+  end subroutine lfric_da_duration_comparators_test
 
-end module jedi_duration_mod_test
+end module lfric_da_duration_mod_test

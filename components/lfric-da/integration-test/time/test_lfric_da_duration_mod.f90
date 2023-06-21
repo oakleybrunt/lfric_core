@@ -4,11 +4,11 @@
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
 
-!>@brief Tests for jedi_duration_mod
-module test_jedi_duration_mod
+!>@brief Tests for lfric_da_duration_mod
+module test_lfric_da_duration_mod
 
-  use constants_mod,     only : i_def
-  use jedi_duration_mod, only : jedi_duration_type
+  use constants_mod,         only : i_def
+  use lfric_da_duration_mod, only : jedi_duration_type
 
   implicit none
 
@@ -99,4 +99,4 @@ contains
 
   end subroutine test_duration_divide_int_remainder_err
 
-end module test_jedi_duration_mod
+end module test_lfric_da_duration_mod

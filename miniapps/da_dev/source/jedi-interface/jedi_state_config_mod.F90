@@ -17,7 +17,7 @@ module jedi_state_config_mod
   use constants_mod,         only : i_def, str_def, l_def
   use da_dev_field_meta_mod, only : da_dev_field_meta_type
   use fs_continuity_mod,     only : W3, Wtheta
-  use jedi_datetime_mod,     only : jedi_datetime_type
+  use lfric_da_datetime_mod, only : jedi_datetime_type
 
   implicit none
 

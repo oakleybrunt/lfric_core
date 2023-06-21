@@ -5,20 +5,20 @@
 !-----------------------------------------------------------------------------
 
 !>@brief Drives the execution of the jedi interface tests
-module test_jedi_interface_driver_mod
+module test_lfric_da_time_driver_mod
 
-  use test_jedi_datetime_functions_mod, only : test_YYYYMMDD_to_JDN,         &
+  use test_lfric_da_datetime_functions_mod, only : test_YYYYMMDD_to_JDN,         &
                                                test_JDN_to_YYYYMMDD_invalid, &
                                                test_hhmmss_to_seconds,       &
                                                test_seconds_to_hhmmss_large, &
                                                test_seconds_to_hhmmss_neg
-  use test_jedi_datetime_mod,           only : test_init_lfric_calendar_start,     &
+  use test_lfric_da_datetime_mod,           only : test_init_lfric_calendar_start,     &
                                                test_init_lfric_calendar_start_err, &
                                                test_init_string_err,               &
                                                test_copy_from_jedi_datetime_err,   &
                                                test_add_duration_to_datetime,      &
                                                test_duration_from_datetimes
-  use test_jedi_duration_mod,           only : test_duration_init_bad_string_err,     &
+  use test_lfric_da_duration_mod,           only : test_duration_init_bad_string_err,     &
                                                test_duration_divide_zero_err,         &
                                                test_duration_divide_remainder_err,    &
                                                test_duration_divide_int_zero_err,     &
@@ -217,4 +217,4 @@ contains
 
   end subroutine run_duration_divide_int_remainder_err
 
-end module test_jedi_interface_driver_mod
+end module test_lfric_da_time_driver_mod

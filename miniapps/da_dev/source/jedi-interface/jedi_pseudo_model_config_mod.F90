@@ -14,8 +14,8 @@
 !>
 module jedi_pseudo_model_config_mod
 
-  use constants_mod,     only : i_def, str_def
-  use jedi_datetime_mod, only : jedi_datetime_type
+  use constants_mod,         only : i_def, str_def
+  use lfric_da_datetime_mod, only : jedi_datetime_type
 
   implicit none
 

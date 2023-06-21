@@ -11,7 +11,7 @@
 !> component.
 !>
 !-------------------------------------------------------------------------------
-module jedi_datetime_functions_mod_test
+module lfric_da_datetime_functions_mod_test
 
   ! Global use statements go here
 
@@ -22,20 +22,20 @@ module jedi_datetime_functions_mod_test
   implicit none
 
   private
-  public :: jedi_datetime_functions_test
+  public :: lfric_da_datetime_functions_test
 
   ! The test case type, containing procedures to setup, run
   ! and clean up after a test.
   ! It can also contain data.
 
   @TestCase
-  type, extends(TestCase), public :: jedi_datetime_functions_test_type
+  type, extends(TestCase), public :: lfric_da_datetime_functions_test_type
     private
   contains
     procedure setUp
     procedure tearDown
-    procedure jedi_datetime_functions_test
-  end type jedi_datetime_functions_test_type
+    procedure lfric_da_datetime_functions_test
+  end type lfric_da_datetime_functions_test_type
 
 
 contains
@@ -48,7 +48,7 @@ contains
 
     implicit none
 
-    class(jedi_datetime_functions_test_type), intent(inout) :: this
+    class(lfric_da_datetime_functions_test_type), intent(inout) :: this
 
     ! This section should create and initialise anything needed for the test
 
@@ -62,7 +62,7 @@ contains
 
     implicit none
 
-    class(jedi_datetime_functions_test_type), intent(inout) :: this
+    class(lfric_da_datetime_functions_test_type), intent(inout) :: this
 
     ! This section should destroy any previously created types / data
 
@@ -72,21 +72,21 @@ contains
   ! pfUnit will run each subroutine preceded by the @test line
   @test
   !> Test the emulated jedi_datetime_functions mod
-  subroutine jedi_datetime_functions_test( this )
+  subroutine lfric_da_datetime_functions_test( this )
 
 
-    use jedi_datetime_functions_mod, only : YYYYMMDD_to_JDN,   &
-                                            JDN_to_YYYYMMDD,   &
-                                            hhmmss_to_seconds, &
-                                            seconds_to_hhmmss, &
-                                            is_valid_YYYYMMDD, &
-                                            is_leap_year,      &
-                                            is_valid_hhmmss,   &
-                                            is_valid_datetime
+    use lfric_da_datetime_functions_mod, only : YYYYMMDD_to_JDN,   &
+                                                JDN_to_YYYYMMDD,   &
+                                                hhmmss_to_seconds, &
+                                                seconds_to_hhmmss, &
+                                                is_valid_YYYYMMDD, &
+                                                is_leap_year,      &
+                                                is_valid_hhmmss,   &
+                                                is_valid_datetime
 
     implicit none
 
-    class(jedi_datetime_functions_test_type), intent(inout) :: this
+    class(lfric_da_datetime_functions_test_type), intent(inout) :: this
 
     integer(i_def) :: year, returned_year
     integer(i_def) :: month, returned_month
@@ -192,6 +192,6 @@ contains
     valid = is_valid_datetime( 2460040_i_def, 58770_i_def )
     @assertEqual( .true., valid )
 
-  end subroutine jedi_datetime_functions_test
+  end subroutine lfric_da_datetime_functions_test
 
-end module jedi_datetime_functions_mod_test
+end module lfric_da_datetime_functions_mod_test

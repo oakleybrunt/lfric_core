@@ -25,7 +25,7 @@ program jedi_forecast_pseudo
   use cli_mod,                      only : get_initial_filename
 
   ! Jedi emulator objects
-  use jedi_duration_mod,     only : jedi_duration_type
+  use lfric_da_duration_mod, only : jedi_duration_type
   use jedi_run_mod,          only : jedi_run_type
   use jedi_geometry_mod,     only : jedi_geometry_type
   use jedi_state_mod,        only : jedi_state_type

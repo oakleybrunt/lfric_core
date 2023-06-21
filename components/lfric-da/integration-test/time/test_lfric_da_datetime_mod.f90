@@ -5,10 +5,10 @@
 !-----------------------------------------------------------------------------
 
 !>@brief Tests the jedi_datetime type init_lfric_calendar_start routine
-module test_jedi_datetime_mod
+module test_lfric_da_datetime_mod
 
   use constants_mod,                 only : i_def, l_def
-  use jedi_datetime_mod,             only : jedi_datetime_type
+  use lfric_da_datetime_mod,         only : jedi_datetime_type
   use log_mod,                       only : log_event, &
                                             LOG_LEVEL_INFO
 
@@ -84,7 +84,7 @@ contains
   !!        a datetime with another uninitialised datetime
   subroutine test_copy_from_jedi_datetime_err()
 
-    use jedi_duration_mod, only : jedi_duration_type
+    use lfric_da_duration_mod, only : jedi_duration_type
 
     implicit none
 
@@ -99,7 +99,7 @@ contains
   !!        jedi_datetime instance
   subroutine test_add_duration_to_datetime()
 
-    use jedi_duration_mod, only : jedi_duration_type
+    use lfric_da_duration_mod, only : jedi_duration_type
 
     implicit none
 
@@ -129,7 +129,7 @@ contains
   !!        one jedi datetime from another
   subroutine test_duration_from_datetimes()
 
-    use jedi_duration_mod, only : jedi_duration_type
+    use lfric_da_duration_mod, only : jedi_duration_type
 
     implicit none
 
@@ -169,4 +169,4 @@ contains
 
   end subroutine test_duration_from_datetimes
 
-end module test_jedi_datetime_mod
+end module test_lfric_da_datetime_mod

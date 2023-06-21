@@ -6,7 +6,7 @@
 # under which the code may be used.
 ##############################################################################
 '''
-Run the jedi-interface integration tests
+Run the lfric-da integration tests for datetime, duration, and clock code
 '''
 
 import datetime
@@ -17,22 +17,22 @@ import sys
 from testframework import LFRicLoggingTest, MpiTest, TestEngine, TestFailed
 
 
-class InterfaceTest(LFRicLoggingTest):
+class LFRicTimeTest(LFRicLoggingTest):
     '''
-    Run the jedi-interface integration tests
+    Run the integration tests
     '''
 
     def __init__(self, flag: str, optional_arg='None') -> None:
         self._flag = flag
         self._optional_arg = optional_arg
         if 'MPIEXEC_BROKEN' in os.environ:
-            InterfaceTest.set_mpiexec_broken()
+            LFRicTimeTest.set_mpiexec_broken()
         super().__init__([sys.argv[1],
-                          'jedi_interface_test_configuration.nml',
+                          'lfric_da_time_test_configuration.nml',
                           'test_' + self._flag,
                           self._optional_arg],
                          processes=1,
-                         name='InterfaceTest.Log')
+                         name='TimeTest.Log')
 
     def test(self, return_code: int, out: str, err: str) -> str:
         '''
@@ -53,7 +53,7 @@ class InterfaceTest(LFRicLoggingTest):
                              stdout=out, stderr=err,
                              log=self.getLFRicLoggingLog())
 
-        return 'jedi-interface test : '+self._flag
+        return 'lfric-da test : '+self._flag
 
     @staticmethod
     def test_passed(out: str) -> bool:
@@ -79,7 +79,7 @@ class ErrorSerialTest(MpiTest):  # pylint: disable=too-few-public-methods
         self._optional_arg = optional_arg
 
         super().__init__([sys.argv[1],
-                          'jedi_interface_test_configuration.nml',
+                          'lfric_da_time_test_configuration.nml',
                           'test_' + self._flag,
                           self._optional_arg],
                          processes=1)
@@ -130,9 +130,9 @@ class ErrorSerialTest(MpiTest):  # pylint: disable=too-few-public-methods
         return success
 
 
-class init_lfric_calendar_start(InterfaceTest):
+class init_lfric_calendar_start(LFRicTimeTest):
     '''
-    Test initialising a jedi_datetime with the lfric
+    Test initialising a datetime with the lfric
     calendar_start namelist variable
     '''
 
@@ -174,7 +174,7 @@ class copy_from_jedi_datetime_err(ErrorSerialTest):
         super().__init__(flag)
 
 
-class add_duration_to_datetime(InterfaceTest):
+class add_duration_to_datetime(LFRicTimeTest):
     '''
     Test adding a jedi duration instance to a
     jedi datetime instance
@@ -185,7 +185,7 @@ class add_duration_to_datetime(InterfaceTest):
         super().__init__(flag)
 
 
-class duration_from_datetimes(InterfaceTest):
+class duration_from_datetimes(LFRicTimeTest):
     '''
     Test getting a jedi duration by subtracting
     one datetime from another

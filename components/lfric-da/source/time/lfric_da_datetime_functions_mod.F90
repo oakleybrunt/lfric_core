@@ -8,7 +8,7 @@
 !>
 !> @details This module emulates the datetime functions used in the
 !!          LFRic-JEDI interface and JEDI's OOPS
-module jedi_datetime_functions_mod
+module lfric_da_datetime_functions_mod
 
   use constants_mod,           only : i_def, r_def, str_def, l_def
   use log_mod,                 only : log_event,         &
@@ -305,4 +305,4 @@ contains
 
   end function is_valid_datetime
 
-end module jedi_datetime_functions_mod
+end module lfric_da_datetime_functions_mod

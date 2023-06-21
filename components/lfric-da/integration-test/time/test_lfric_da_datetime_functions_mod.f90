@@ -5,7 +5,7 @@
 !-----------------------------------------------------------------------------
 
 !>@brief Tests the jedi_datetime_functions_mod routines that log an ERROR
-module test_jedi_datetime_functions_mod
+module test_lfric_da_datetime_functions_mod
 
   use constants_mod,                 only : i_def
 
@@ -23,7 +23,7 @@ contains
   !> @brief Test logging an ERROR when an invalid date is passed
   subroutine test_YYYYMMDD_to_JDN()
 
-    use jedi_datetime_functions_mod, only : YYYYMMDD_to_JDN
+    use lfric_da_datetime_functions_mod, only : YYYYMMDD_to_JDN
 
     implicit none
 
@@ -40,7 +40,7 @@ contains
   !> @brief Test logging an ERROR when an invalid JDN is passed
   subroutine test_JDN_to_YYYYMMDD_invalid()
 
-    use jedi_datetime_functions_mod, only : JDN_to_YYYYMMDD
+    use lfric_da_datetime_functions_mod, only : JDN_to_YYYYMMDD
 
     implicit none
 
@@ -57,7 +57,7 @@ contains
   !> @brief Test logging an ERROR when an invalid time is passed
   subroutine test_hhmmss_to_seconds()
 
-    use jedi_datetime_functions_mod, only : hhmmss_to_seconds
+    use lfric_da_datetime_functions_mod, only : hhmmss_to_seconds
 
     implicit none
 
@@ -75,7 +75,7 @@ contains
   !!        passed is too large
   subroutine test_seconds_to_hhmmss_large()
 
-    use jedi_datetime_functions_mod, only : seconds_to_hhmmss
+    use lfric_da_datetime_functions_mod, only : seconds_to_hhmmss
 
     implicit none
 
@@ -93,7 +93,7 @@ contains
   !!        passed is negative
   subroutine test_seconds_to_hhmmss_neg()
 
-    use jedi_datetime_functions_mod, only : seconds_to_hhmmss
+    use lfric_da_datetime_functions_mod, only : seconds_to_hhmmss
 
     implicit none
 
@@ -107,4 +107,4 @@ contains
 
   end subroutine test_seconds_to_hhmmss_neg
 
-end module test_jedi_datetime_functions_mod
+end module test_lfric_da_datetime_functions_mod

@@ -5,3 +5,11 @@
 {%-         endif %}
 {%-     endfor %}
 {%- endmacro %}
+
+{%- macro check_integration_tests() %}
+{%-     for compiler in INTEGRATION_TEST_WITH %}
+{%-         if compiler != 'none' %}
+{{              integration_tests_graph( compiler, "64") }}
+{%-         endif %}
+{%-     endfor %}
+{%- endmacro %}

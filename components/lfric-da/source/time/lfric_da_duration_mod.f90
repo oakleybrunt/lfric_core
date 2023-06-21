@@ -9,7 +9,7 @@
 !> @details This module emulates the duration object used in the
 !!          LFRic-JEDI interface, see:
 !!          https://github.com/JCSDA-internal/oops/blob/develop/src/oops/util/Duration.h
-module jedi_duration_mod
+module lfric_da_duration_mod
 
   use constants_mod,               only : i_def, str_def, l_def
   use log_mod,                     only : log_event,         &
@@ -737,4 +737,4 @@ contains
 
   end function le_int
 
-end module jedi_duration_mod
+end module lfric_da_duration_mod

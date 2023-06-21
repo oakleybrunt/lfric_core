@@ -13,8 +13,8 @@
 module jedi_model_mod
 
   use constants_mod,                 only : i_def
-  use jedi_datetime_mod,             only : jedi_datetime_type
-  use jedi_duration_mod,             only : jedi_duration_type
+  use lfric_da_datetime_mod,         only : jedi_datetime_type
+  use lfric_da_duration_mod,         only : jedi_duration_type
   use jedi_state_mod,                only : jedi_state_type
   use log_mod,                       only : log_event,          &
                                             log_scratch_space,  &

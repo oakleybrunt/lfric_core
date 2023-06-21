@@ -7,15 +7,15 @@
 !>@brief   The top level program for the da dev, jedi interface
 !!         integrationf tests.
 !>@details Sets up and runs the integration tests specified in
-!!         jedi_interface_test.py.
-program jedi_interface_test
+!!         lfric_da_time_test.py.
+program lfric_da_time_test
 
   use configuration_mod,              only : final_configuration, &
                                              read_configuration
   use constants_mod,                  only : i_def, r_def, l_def
   use halo_comms_mod,                 only : initialise_halo_comms, &
                                              finalise_halo_comms
-  use test_jedi_interface_driver_mod, only : test_jedi_interface_init,             &
+  use test_lfric_da_time_driver_mod,  only : test_jedi_interface_init,             &
                                              test_jedi_interface_final,            &
                                              run_init_lfric_calendar_start,        &
                                              run_init_lfric_calendar_start_err,    &
@@ -265,4 +265,4 @@ program jedi_interface_test
 
   call destroy_comm()
 
-end program jedi_interface_test
+end program lfric_da_time_test

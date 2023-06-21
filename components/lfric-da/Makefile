@@ -47,7 +47,7 @@ META_VN       ?= HEAD
 META_FILE_DIR  = $(PROJECT_DIR)/rose-meta/$(PROJECT_NAME)/$(META_VN)
 
 .PHONY: default
-default: unit-tests
+default: unit-tests integration-tests
 	$(Q)echo > /dev/null
 
 .PHONY: documentation doc docs
@@ -83,8 +83,8 @@ document-api: api-documentation
 #
 unit-tests/%: export ADDITIONAL_EXTRACTION = $(ROOT_DIR)/infrastructure/source \
                                              $(ROOT_DIR)/components/science/source \
-											 $(ROOT_DIR)/components/driver/source \
-											 $(ROOT_DIR)/gungho/unit-test
+											                       $(ROOT_DIR)/components/driver/source \
+											                       $(ROOT_DIR)/gungho/unit-test
 unit-tests/%: export BIN_DIR ?= $(PROJECT_DIR)/test
 unit-tests/%: export FFLAGS += -D UNIT_TEST
 unit-tests/%: export META_FILE_DIR = rose-meta/lfric-da/HEAD
@@ -94,6 +94,25 @@ unit-tests/%: export SOURCE_DIR = source
 unit-tests/%: export TEST_DIR = unit-test
 unit-tests/%: export WORKING_DIR := $(WORKING_DIR)/unit-tests
 unit-tests: unit-tests/run
+
+
+##############################################################################
+# Integration tests
+#
+integration-tests/%: export ADDITIONAL_EXTRACTION = $(ROOT_DIR)/infrastructure/source \
+                                             $(ROOT_DIR)/components/science/source \
+											                       $(ROOT_DIR)/components/driver/source \
+											                       $(ROOT_DIR)/gungho/unit-test
+
+integration-tests/%: export BIN_DIR      ?= $(PROJECT_DIR)/test
+integration-tests/%: export FFLAGS       += -DINT_TEST
+integration-tests/%: export META_FILE_DIR = rose-meta/lfric-da/HEAD
+integration-tests/%: export PROGRAMS = lfric_da_integration_tests
+integration-tests/%: export PROJECT       = $(PROJECT_NAME)
+integration-tests/%: export SOURCE_DIR    = source
+integration-tests/%: export TEST_DIR      = integration-test
+integration-tests/%: export WORKING_DIR  := $(WORKING_DIR)/integration-tests
+integration-tests: integration-tests/run
 
 
 ##############################################################################

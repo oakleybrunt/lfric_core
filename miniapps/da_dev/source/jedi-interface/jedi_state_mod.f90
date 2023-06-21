@@ -17,8 +17,8 @@ module jedi_state_mod
   use, intrinsic :: iso_fortran_env, only : real64
   use atlas_field_emulator_mod,      only : atlas_field_emulator_type
   use atlas_field_interface_mod,     only : atlas_field_interface_type
-  use jedi_datetime_mod,             only : jedi_datetime_type
-  use jedi_duration_mod,             only : jedi_duration_type
+  use lfric_da_datetime_mod,         only : jedi_datetime_type
+  use lfric_da_duration_mod,         only : jedi_duration_type
   use jedi_geometry_mod,             only : jedi_geometry_type
   use driver_model_data_mod,         only : model_data_type
   use jedi_state_config_mod,         only : jedi_state_config_type
