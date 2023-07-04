@@ -44,8 +44,8 @@ contains
 !> @param [out] out_communicator The communicator to be used by the application
 subroutine initialise( self, program_name, out_communicator )
 
-  use mpi_mod,                  only : create_comm
-  use lfric_da_comm_mod,        only : init_external_comm
+  use mpi_mod,                only: create_comm
+  use lfric_da_comm_mod,      only: init_external_comm
 
   implicit none
 
@@ -74,11 +74,12 @@ end subroutine initialise
 !> @param [in] model_communicator The communicator used by the model.
 subroutine initialise_infrastructure( self, filename, model_communicator )
 
-  use mpi_mod,                      only : global_mpi
-  use lfric_da_comm_mod,            only : init_internal_comm
-  use lfric_da_fake_nl_driver_mod,  only : initialise_toy_model => initialise
-  use driver_config_mod,            only : init_config
-  use da_dev_mod,                   only : da_dev_required_namelists
+  use mpi_mod,                     only: global_mpi
+  use lfric_da_comm_mod,           only: init_internal_comm
+  use lfric_da_fake_nl_driver_mod, only: initialise_toy_model => initialise
+  use driver_collections_mod,      only: init_collections
+  use driver_config_mod,           only: init_config
+  use da_dev_mod,                  only: da_dev_required_namelists
 
   implicit none
 
@@ -92,6 +93,7 @@ subroutine initialise_infrastructure( self, filename, model_communicator )
   ! The global_mpi is initialized in the previous step via init_internal_comm
   ! That is required for the following
   call init_config( filename, da_dev_required_namelists )
+  call init_collections()
   call initialise_toy_model( self%jedi_run_name, global_mpi )
 
 end subroutine initialise_infrastructure
@@ -100,15 +102,19 @@ end subroutine initialise_infrastructure
 !>
 subroutine jedi_run_destructor(self)
 
-  use lfric_da_comm_mod,        only : final_external_comm, &
-                                       final_internal_comm
-  use driver_config_mod,        only : final_config
-  use mpi_mod,                  only : destroy_comm
+  use lfric_da_comm_mod,      only: final_external_comm, &
+                                    final_internal_comm
+  use driver_collections_mod, only: final_collections
+  use driver_config_mod,      only: final_config
+  use mpi_mod,                only: destroy_comm
 
 
   implicit none
 
   type(jedi_run_type), intent(inout) :: self
+
+  ! Finalise collections
+  call final_collections()
 
   ! Finalise the config
   call final_config()

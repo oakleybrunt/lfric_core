@@ -14,14 +14,15 @@
 
 program linear_model
 
-  use cli_mod,               only : get_initial_filename
-  use driver_comm_mod,       only : init_comm, final_comm
-  use driver_config_mod,     only : init_config, final_config
-  use driver_log_mod,        only : init_logger, final_logger
-  use gungho_mod,            only : gungho_required_namelists
-  use gungho_modeldb_mod,    only : modeldb_type
-  use linear_driver_mod,     only : initialise, run, finalise
-  use mpi_mod,               only : global_mpi
+  use cli_mod,                only: get_initial_filename
+  use driver_collections_mod, only: init_collections, final_collections
+  use driver_comm_mod,        only: init_comm, final_comm
+  use driver_config_mod,      only: init_config, final_config
+  use driver_log_mod,         only: init_logger, final_logger
+  use gungho_mod,             only: gungho_required_namelists
+  use gungho_modeldb_mod,     only: modeldb_type
+  use linear_driver_mod,      only: initialise, run, finalise
+  use mpi_mod,                only: global_mpi
 
   implicit none
 
@@ -37,8 +38,9 @@ program linear_model
   call init_comm( application_name )
   call get_initial_filename( filename )
   call init_config( filename, gungho_required_namelists )
+  call init_logger( modeldb%mpi%get_comm(), application_name )
+  call init_collections()
   deallocate( filename )
-  call init_logger( modeldb%mpi%get_comm(), application_name)
 
   ! Create the depository, prognostics and diagnostics field collections
   call modeldb%model_data%depository%initialise(name='depository', table_len=100)
@@ -49,6 +51,7 @@ program linear_model
   call run( application_name, modeldb )
   call finalise( application_name, modeldb )
 
+  call final_collections()
   call final_logger( application_name )
   call final_config()
   call final_comm()

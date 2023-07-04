@@ -10,15 +10,15 @@
 !!         corresponding nonlinear code.
 program runge_kutta
 
-  use configuration_mod,     only : read_configuration, final_configuration
-  use gungho_model_data_mod, only : model_data_type
-  use gungho_modeldb_mod,    only : modeldb_type
-  use halo_comms_mod,        only : initialise_halo_comms, finalise_halo_comms
-  use log_mod,               only : log_event,       &
+  use configuration_mod,      only: read_configuration, final_configuration
+  use driver_collections_mod, only: init_collections, final_collections
+  use gungho_modeldb_mod,     only: modeldb_type
+  use halo_comms_mod,         only: initialise_halo_comms, finalise_halo_comms
+  use log_mod,                only: log_event,       &
                                     LOG_LEVEL_ERROR, &
                                     LOG_LEVEL_INFO
-  use mpi_mod,               only : create_comm, destroy_comm, global_mpi
-  use tl_test_driver_mod,    only : initialise,                  &
+  use mpi_mod,                only: create_comm, destroy_comm, global_mpi
+  use tl_test_driver_mod,     only: initialise,                  &
                                     finalise,                    &
                                     run_timesteps,               &
                                     run_kinetic_energy_gradient, &
@@ -132,6 +132,7 @@ program runge_kutta
   call read_configuration( filename )
   deallocate( filename )
 
+  call init_collections()
   call initialise( application_name, modeldb )
 
   if (do_test_timesteps) then
@@ -163,6 +164,7 @@ program runge_kutta
   endif
 
   call finalise( application_name, modeldb )
+  call final_collections()
   call final_configuration()
   call finalise_halo_comms()
   call destroy_comm()

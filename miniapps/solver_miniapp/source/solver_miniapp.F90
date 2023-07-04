@@ -11,32 +11,33 @@
 
 program solver_miniapp
 
-  use base_mesh_config_mod,             only : prime_mesh_name
-  use constants_mod,                    only : i_def, PRECISION_REAL, str_def
-  use convert_to_upper_mod,             only : convert_to_upper
-  use cli_mod,                          only : get_initial_filename
-  use driver_config_mod,                only : init_config, final_config
-  use driver_mesh_mod,                  only : init_mesh
-  use driver_fem_mod,                   only : init_fem
-  use driver_log_mod,                   only : init_logger, final_logger
-  use halo_comms_mod,                   only : initialise_halo_comms, &
-                                               finalise_halo_comms
-  use init_solver_miniapp_mod,          only : init_solver_miniapp
-  use inventory_by_mesh_mod,            only : inventory_by_mesh_type
-  use mpi_mod,                          only : global_mpi, &
-                                               create_comm, destroy_comm
-  use field_mod,                        only : field_type
-  use field_vector_mod,                 only : field_vector_type
-  use solver_miniapp_alg_mod,           only : solver_miniapp_alg
-  use configuration_mod,                only : final_configuration
-  use solver_miniapp_mod,               only : solver_required_namelists
-  use log_mod,                          only : log_event,            &
-                                               log_scratch_space,    &
-                                               LOG_LEVEL_ALWAYS,     &
-                                               LOG_LEVEL_INFO
-  use mesh_mod,                         only : mesh_type
-  use mesh_collection_mod,              only : mesh_collection
-  use checksum_alg_mod,                 only : checksum_alg
+  use base_mesh_config_mod,          only: prime_mesh_name
+  use constants_mod,                 only: i_def, PRECISION_REAL, str_def
+  use convert_to_upper_mod,          only: convert_to_upper
+  use cli_mod,                       only: get_initial_filename
+  use driver_collections_mod,        only: init_collections, final_collections
+  use driver_config_mod,             only: init_config, final_config
+  use driver_mesh_mod,               only: init_mesh
+  use driver_fem_mod,                only: init_fem
+  use driver_log_mod,                only: init_logger, final_logger
+  use halo_comms_mod,                only: initialise_halo_comms, &
+                                           finalise_halo_comms
+  use init_solver_miniapp_mod,       only: init_solver_miniapp
+  use inventory_by_mesh_mod,         only: inventory_by_mesh_type
+  use mpi_mod,                       only: global_mpi, &
+                                           create_comm, destroy_comm
+  use field_mod,                     only: field_type
+  use field_vector_mod,              only: field_vector_type
+  use solver_miniapp_alg_mod,        only: solver_miniapp_alg
+  use configuration_mod,             only: final_configuration
+  use solver_miniapp_mod,            only: solver_required_namelists
+  use log_mod,                       only: log_event,            &
+                                           log_scratch_space,    &
+                                           LOG_LEVEL_ALWAYS,     &
+                                           LOG_LEVEL_INFO
+  use mesh_mod,                      only: mesh_type
+  use mesh_collection_mod,           only: mesh_collection
+  use checksum_alg_mod,              only: checksum_alg
 
   implicit none
 
@@ -78,9 +79,10 @@ program solver_miniapp
 
   call get_initial_filename( filename )
   call init_config( filename, solver_required_namelists )
-  deallocate( filename )
-
   call init_logger( comm, program_name )
+  call init_collections()
+
+  deallocate( filename )
 
   write(log_scratch_space,'(A)')                        &
       'Application built with '//trim(PRECISION_REAL)// &
@@ -128,6 +130,9 @@ program solver_miniapp
   !-----------------------------------------------------------------------------
 
   nullify(chi, panel_id, mesh)
+
+  ! Finalise global collections
+  call final_collections()
 
   ! Finalise namelist configurations
   call final_configuration()

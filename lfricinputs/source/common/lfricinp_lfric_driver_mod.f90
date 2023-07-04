@@ -12,6 +12,7 @@ USE log_mod,                    ONLY: log_event, log_scratch_space,            &
 
 ! LFRic Modules
 USE base_mesh_config_mod,       ONLY: prime_mesh_name
+USE driver_collections_mod,     ONLY: init_collections, final_collections
 USE driver_mesh_mod,            ONLY: init_mesh
 USE driver_fem_mod,             ONLY: init_fem
 USE driver_log_mod,             ONLY: init_logger, final_logger
@@ -122,6 +123,8 @@ CALL load_configuration(lfric_nl_fname, required_lfric_namelists)
 
 ! Initialise logging system
 CALL init_logger( comm, program_name )
+
+CALL init_collections()
 
 WRITE(log_scratch_space, '(2(A,I0))') 'total ranks = ', total_ranks,           &
                             ', local_rank = ', local_rank
@@ -237,6 +240,8 @@ CALL log_event( 'Calling lfric finalise routines', LOG_LEVEL_INFO )
 CALL finalise_halo_comms()
 deallocate( io_context )
 CALL lfric_xios_finalise()
+
+CALL final_collections()
 
 ! Finalise the logging system. This has to be done before finallising MPI
 ! as logging is an MPI process.

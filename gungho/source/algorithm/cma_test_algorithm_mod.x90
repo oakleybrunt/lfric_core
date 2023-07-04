@@ -43,10 +43,7 @@ module cma_test_algorithm_mod
   use constants_mod,                  only : i_def, l_def, r_solver
   use columnwise_operator_mod,        only : columnwise_operator_type
   use function_space_mod,             only : function_space_type
-  use function_space_collection_mod,  only : function_space_collection, &
-                                             function_space_collection_type
-  use halo_routing_collection_mod,    only : halo_routing_collection_type, &
-                                             halo_routing_collection
+  use function_space_collection_mod,  only : function_space_collection
   use field_mod,                      only : field_type
   use r_solver_field_mod,             only : r_solver_field_type
   use mesh_mod,                       only : mesh_type
@@ -174,6 +171,7 @@ contains
   !>
   !> @param[in] mesh Mesh to be used
   subroutine cma_test_init(mesh_in)
+
     implicit none
 
     type(mesh_type), intent(in), pointer :: mesh_in
@@ -183,10 +181,6 @@ contains
 
     ! Return if module has already been initialised
     if (is_initialised) return
-
-    ! Create a collection for holding FEM info that is specific to a field
-    allocate( halo_routing_collection, &
-              source = halo_routing_collection_type() )
 
     mesh => mesh_in
 
@@ -200,9 +194,6 @@ contains
        call log_event( "cma test: Computing Wchi coordinate fields", &
                        LOG_LEVEL_INFO )
     end if
-
-    allocate( function_space_collection, &
-              source = function_space_collection_type() )
 
     fs_coord => function_space_collection%get_fs(mesh,        &
                                                  coord_order, &

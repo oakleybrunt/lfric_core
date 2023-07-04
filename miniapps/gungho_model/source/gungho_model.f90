@@ -15,18 +15,19 @@
 
 program gungho_model
 
-  use cli_mod,               only : get_initial_filename
-  use driver_comm_mod,       only : init_comm, final_comm
-  use driver_config_mod,     only : init_config, final_config
-  use driver_log_mod,        only : init_logger, final_logger
-  use driver_timer_mod,      only : init_timers, final_timers
-  use gungho_mod,            only : gungho_required_namelists
-  use gungho_driver_mod,     only : initialise, run, finalise
-  use gungho_modeldb_mod,    only : modeldb_type
-  use log_mod,               only : log_event,       &
+  use cli_mod,                only: get_initial_filename
+  use driver_collections_mod, only: init_collections, final_collections
+  use driver_comm_mod,        only: init_comm, final_comm
+  use driver_config_mod,      only: init_config, final_config
+  use driver_log_mod,         only: init_logger, final_logger
+  use driver_timer_mod,       only: init_timers, final_timers
+  use gungho_mod,             only: gungho_required_namelists
+  use gungho_driver_mod,      only: initialise, run, finalise
+  use gungho_modeldb_mod,     only: modeldb_type
+  use log_mod,                only: log_event,       &
                                     log_level_trace, &
                                     log_scratch_space
-  use mpi_mod,               only : global_mpi
+  use mpi_mod,                only: global_mpi
 
   implicit none
 
@@ -44,6 +45,9 @@ program gungho_model
   call init_config( filename, gungho_required_namelists )
   call init_logger( modeldb%mpi%get_comm(), application_name )
   call init_timers( application_name )
+  call init_collections()
+  deallocate( filename )
+
 
   ! Create the depository, prognostics and diagnostics field collections
   call modeldb%model_data%depository%initialise(name='depository', table_len=100)
@@ -56,6 +60,7 @@ program gungho_model
   call run( application_name, modeldb )
   call finalise( application_name, modeldb )
 
+  call final_collections()
   call final_timers( application_name )
   call final_logger( application_name )
   call final_config()

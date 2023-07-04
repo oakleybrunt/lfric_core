@@ -39,11 +39,11 @@ program cma_test
   use finite_element_config_mod,      only : element_order
   use fs_continuity_mod,              only : W0,W1,W2,W3
   use function_space_mod,             only : function_space_type
-  use function_space_collection_mod,  only : function_space_collection
   use halo_comms_mod,                 only : initialise_halo_comms, &
                                              finalise_halo_comms
   use configuration_mod,              only : read_configuration, &
                                              ensure_configuration
+  use driver_collections_mod,         only : init_collections, final_collections
   use driver_mesh_mod,                only : init_mesh
   use log_mod,                        only : log_event,         &
                                              log_scratch_space, &
@@ -54,6 +54,9 @@ program cma_test
   use mesh_mod,                       only : mesh_type
   use mesh_collection_mod,            only : mesh_collection
   use planet_config_mod,              only : radius
+
+
+
 
   implicit none
 
@@ -226,6 +229,8 @@ program cma_test
 
   call set_derived_config(.false.)
 
+  call init_collections()
+
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! Initialise
 
@@ -287,6 +292,8 @@ program cma_test
   ! Finalise and close down
   !
   call log_event( ' CMA functional testing completed ...', LOG_LEVEL_INFO )
+
+  call final_collections ()
 
   ! Finalise halo functionality
   call finalise_halo_comms()

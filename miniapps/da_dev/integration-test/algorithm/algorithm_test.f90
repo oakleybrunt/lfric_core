@@ -12,23 +12,24 @@
 !!         takes a real field and adds one to its value.
 program algorithm_test
 
-  use base_mesh_config_mod,          only : prime_mesh_name
-  use configuration_mod,             only : final_configuration, &
-                                            read_configuration
-  use constants_mod,                 only : i_def, r_def, str_def
-  use test_algorithm_mod,            only : test_algorithm_finalise,   &
-                                            test_algorithm_initialise, &
-                                            test_da_dev_increment_alg
-  use driver_mesh_mod,               only : init_mesh, final_mesh
-  use halo_comms_mod,                only : initialise_halo_comms, &
-                                            finalise_halo_comms
-  use log_mod,                       only : log_event,          &
-                                            initialise_logging, &
-                                            finalise_logging,   &
-                                            LOG_LEVEL_ERROR,    &
-                                            LOG_LEVEL_INFO
-  use mpi_mod,                       only : global_mpi, &
-                                            create_comm, destroy_comm
+  use base_mesh_config_mod,   only: prime_mesh_name
+  use configuration_mod,      only: final_configuration, &
+                                    read_configuration
+  use constants_mod,          only: i_def, r_def, str_def
+  use test_algorithm_mod,     only: test_algorithm_finalise,   &
+                                    test_algorithm_initialise, &
+                                    test_da_dev_increment_alg
+  use driver_collections_mod, only: init_collections, final_collections
+  use driver_mesh_mod,        only: init_mesh, final_mesh
+  use halo_comms_mod,         only: initialise_halo_comms, &
+                                    finalise_halo_comms
+  use log_mod,                only: log_event,          &
+                                    initialise_logging, &
+                                    finalise_logging,   &
+                                    LOG_LEVEL_ERROR,    &
+                                    LOG_LEVEL_INFO
+  use mpi_mod,                only: global_mpi, &
+                                    create_comm, destroy_comm
 
   implicit none
 
@@ -111,6 +112,8 @@ program algorithm_test
   ! Setup configuration, mesh, and fem
   call read_configuration( filename )
   base_mesh_names(1) = prime_mesh_name
+
+  call init_collections()
   call init_mesh( local_rank, total_ranks, base_mesh_names )
   call test_algorithm_initialise(prime_mesh_name) ! fem
 
@@ -136,6 +139,8 @@ program algorithm_test
   ! Finalise MPI communications
   call global_mpi%finalise()
   call destroy_comm()
+
+  call final_collections()
 
   ! Finalise the logging system
   call finalise_logging()

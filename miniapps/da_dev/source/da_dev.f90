@@ -14,21 +14,20 @@
 
 program da_dev
 
-  use cli_mod,               only : get_initial_filename
-  use gungho_mod,            only : gungho_required_namelists
+  use cli_mod,                only: get_initial_filename
+  use gungho_mod,             only: gungho_required_namelists
   use lfric_da_linear_driver_mod,                     &
-                             only : initialise, &
-                                    step,       &
-                                    finalise
-  use driver_comm_mod,       only : init_comm, final_comm
-  use driver_config_mod,     only : init_config, final_config
-  use driver_log_mod,        only : init_logger, final_logger
-  use gungho_modeldb_mod,    only : modeldb_type
-  use driver_time_mod,       only : init_time
-  use constants_mod,         only : i_native
-  use log_mod,               only : log_event, log_level_trace
-  use model_clock_mod,       only : model_clock_type
-  use mpi_mod,               only : global_mpi
+                              only: initialise, step, finalise
+  use driver_collections_mod, only: init_collections, final_collections
+  use driver_comm_mod,        only: init_comm, final_comm
+  use driver_config_mod,      only: init_config, final_config
+  use driver_log_mod,         only: init_logger, final_logger
+  use gungho_modeldb_mod,     only: modeldb_type
+  use driver_time_mod,        only: init_time
+  use constants_mod,          only: i_native
+  use log_mod,                only: log_event, log_level_trace
+  use model_clock_mod,        only: model_clock_type
+  use mpi_mod,                only: global_mpi
 
   implicit none
 
@@ -44,8 +43,9 @@ program da_dev
   call init_comm( program_name )
   call get_initial_filename( filename )
   call init_config( filename, gungho_required_namelists )
-  deallocate( filename )
   call init_logger( global_mpi%get_comm(), program_name )
+  call init_collections()
+  deallocate( filename )
 
   ! Create the depository, prognostics and diagnostics field collections
   call modeldb%model_data%depository%initialise(name='depository', table_len=100)
@@ -65,6 +65,7 @@ program da_dev
   call finalise( program_name, modeldb, model_clock )
   deallocate( model_clock )
 
+  call final_collections()
   call final_logger( program_name )
   call final_config()
   call final_comm()

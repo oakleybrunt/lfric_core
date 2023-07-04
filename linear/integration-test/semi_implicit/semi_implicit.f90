@@ -10,15 +10,16 @@
 !!         corresponding nonlinear code.
 program semi_implicit
 
-  use configuration_mod,     only : read_configuration, final_configuration
-  use gungho_modeldb_mod,    only : modeldb_type
-  use halo_comms_mod,        only : initialise_halo_comms, finalise_halo_comms
-  use log_mod,               only : log_event,       &
+  use configuration_mod,      only: read_configuration, final_configuration
+  use driver_collections_mod, only: init_collections, final_collections
+  use gungho_modeldb_mod,     only: modeldb_type
+  use halo_comms_mod,         only: initialise_halo_comms, finalise_halo_comms
+  use log_mod,                only: log_event,       &
                                     LOG_LEVEL_ERROR, &
                                     LOG_LEVEL_INFO
-  use mpi_mod,               only : mpi_type, global_mpi, &
+  use mpi_mod,                only: mpi_type, global_mpi, &
                                     create_comm, destroy_comm
-  use tl_test_driver_mod,    only : initialise,                  &
+  use tl_test_driver_mod,     only: initialise,                  &
                                     finalise,                    &
                                     run_timesteps,               &
                                     run_transport_control,       &
@@ -118,6 +119,7 @@ program semi_implicit
   call read_configuration( filename )
   deallocate( filename )
 
+  call init_collections()
   call initialise( application_name, modeldb )
 
   if (do_test_timesteps) then
@@ -140,6 +142,7 @@ program semi_implicit
   endif
 
   call finalise( application_name, modeldb )
+  call final_collections()
   call final_configuration()
   call finalise_halo_comms()
   call destroy_comm()

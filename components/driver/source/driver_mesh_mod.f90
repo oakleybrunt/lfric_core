@@ -138,10 +138,6 @@ subroutine init_mesh( local_rank, total_ranks,        &
   type(mesh_type),       pointer :: mesh => null()
   type(local_mesh_type), pointer :: local_mesh => null()
 
-  ! Allocate mesh collections
-  allocate( local_mesh_collection, source=local_mesh_collection_type() )
-  allocate( mesh_collection, source=mesh_collection_type() )
-
   ! Set up stencil depth
   if (present(required_stencil_depth)) then
     stencil_depth = required_stencil_depth
@@ -211,7 +207,7 @@ subroutine init_mesh( local_rank, total_ranks,        &
 
     ! 2.2 Check loaded local meshes have the required stencil depth.
     !=================================================================
-    call check_stencil_depths( local_mesh_collection, stencil_depth )
+    call check_stencil_depths( stencil_depth )
 
 
     ! 2.3 Assign load mesh maps.
@@ -244,7 +240,6 @@ subroutine init_mesh( local_rank, total_ranks,        &
 
     ! 3.2 Read in all global meshes and create local meshes from them.
     !=================================================================
-    allocate( global_mesh_collection, source = global_mesh_collection_type() )
     call create_all_base_meshes( input_mesh_file,                 &
                                  local_rank, total_ranks,         &
                                  xproc, yproc,                    &
@@ -254,7 +249,7 @@ subroutine init_mesh( local_rank, total_ranks,        &
 
     ! 3.3 Check loaded local meshes have the required stencil depth.
     !=================================================================
-    call check_stencil_depths( local_mesh_collection, stencil_depth )
+    call check_stencil_depths( stencil_depth )
 
     ! 3.4 Read in the global intergrid mesh mappings, then create the
     !     associated local mesh maps
@@ -1185,30 +1180,27 @@ end subroutine load_local_mesh_maps
 
 !> @brief  Checks that the local meshes generated meet the stencil depth
 !>         requirements.
-!> @param[in]  mesh_bank      Collection of local meshes to check.
 !> @param[in]  stencil_depth  The required stencil depth that the local
 !>                            meshes should support.
 !==========================================================================
-subroutine check_stencil_depths( mesh_bank, stencil_depth )
+subroutine check_stencil_depths( stencil_depth )
 
   implicit none
-
-  type( local_mesh_collection_type ), intent(in) :: mesh_bank
 
   integer(i_def), intent(in) :: stencil_depth
 
   character(str_def), allocatable :: mesh_names(:)
-  type(local_mesh_type), pointer  :: mesh_ptr => null()
+  type(local_mesh_type), pointer  :: local_mesh_ptr => null()
 
   integer(i_def) :: max_stencil_depth
   integer(i_def) :: i
 
-  mesh_names = mesh_bank%get_mesh_names()
+  mesh_names = local_mesh_collection%get_mesh_names()
 
   do i=1, size(mesh_names)
 
-    mesh_ptr => mesh_bank%get_local_mesh(mesh_names(i))
-    max_stencil_depth = mesh_ptr%get_max_stencil_depth()
+    local_mesh_ptr => local_mesh_collection%get_local_mesh(mesh_names(i))
+    max_stencil_depth = local_mesh_ptr%get_max_stencil_depth()
 
     if ( max_stencil_depth < stencil_depth ) then
 
@@ -1221,7 +1213,7 @@ subroutine check_stencil_depths( mesh_bank, stencil_depth )
 
   end do
 
-  mesh_ptr => null()
+  local_mesh_ptr => null()
   if ( allocated(mesh_names) ) deallocate(mesh_names)
 
 end subroutine check_stencil_depths

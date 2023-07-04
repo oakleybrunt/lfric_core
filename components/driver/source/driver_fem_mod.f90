@@ -5,8 +5,11 @@
 !-----------------------------------------------------------------------------
 
 !> @brief    Initialisation and finalisation for FEM-specific choices for model.
-!> @details  Create and destroy a collection of function spaces and the coordinate
-!!           field (chi).
+!> @details  Contains routines related to FEM choices:
+!>           * Populates the global function space collection with function spaces
+!>             required by the model. Corresponding coordinate (chi) and panel_id
+!>             inventories are also captured.
+!>           * Initialises function space chains for use by the model.
 module driver_fem_mod
 
   use chi_transform_mod,              only: init_chi_transforms, &
@@ -18,13 +21,10 @@ module driver_fem_mod
                                             coord_order,      &
                                             coord_system,     &
                                             coord_system_xyz
-  use halo_routing_collection_mod,    only: halo_routing_collection_type, &
-                                            halo_routing_collection
   use field_mod,                      only: field_type
   use fs_continuity_mod,              only: W0, W2, W3, Wtheta, Wchi, W2v, W2h
   use function_space_mod,             only: function_space_type
-  use function_space_collection_mod,  only: function_space_collection_type, &
-                                            function_space_collection
+  use function_space_collection_mod,  only: function_space_collection
   use function_space_chain_mod,       only: function_space_chain_type,          &
                                             single_layer_function_space_chain,  &
                                             multigrid_function_space_chain,     &
@@ -75,15 +75,8 @@ contains
     call log_event( 'FEM specifics: creating function spaces...', LOG_LEVEL_INFO )
 
     ! ======================================================================== !
-    ! Initialise / allocate spaces for coordinates and function spaces
+    ! Initialise coordinates
     ! ======================================================================== !
-
-    ! Create a collection for holding FEM info that is specific to a field
-    allocate( halo_routing_collection, &
-              source = halo_routing_collection_type() )
-
-    allocate( function_space_collection, &
-              source = function_space_collection_type() )
 
     ! Initialise coordinate transformations
     call init_chi_transforms()
@@ -215,11 +208,6 @@ contains
   subroutine final_fem()
 
     implicit none
-
-    if (allocated(function_space_collection)) then
-      call function_space_collection%clear()
-      deallocate(function_space_collection)
-    end if
 
     call final_chi_transforms()
 
