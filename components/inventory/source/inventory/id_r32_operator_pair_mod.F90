@@ -8,6 +8,7 @@
 module id_r32_operator_pair_mod
 
   use constants_mod,         only: i_def
+  use function_space_mod,    only: function_space_type
   use operator_r32_mod,      only: operator_r32_type
   use id_abstract_pair_mod,  only: id_abstract_pair_type
 
@@ -19,7 +20,7 @@ module id_r32_operator_pair_mod
   ! ID-Operator Pair
   ! ========================================================================== !
 
-  !> @brief An object pairing a field with a unique identifier
+  !> @brief An object pairing an operator with a unique identifier
   !>
   type, public, extends(id_abstract_pair_type) :: id_r32_operator_pair_type
 
@@ -30,16 +31,35 @@ module id_r32_operator_pair_mod
   contains
 
     procedure, public :: initialise
+    procedure, public :: copy_initialise
     procedure, public :: get_operator
 
   end type id_r32_operator_pair_type
 
 contains
 
-  !> @brief Initialises the id_r32_operator_pair object
+  !> @brief Initialises the id_r32_operator_pair object with a new operator
+  !> @param[in] fs_target The function space of the target field of the operator
+  !> @param[in] fs_source The function space of the source field of the operator
+  !> @param[in] id        The integer ID to pair with the operator
+  subroutine initialise(self, fs_target, fs_source, id)
+
+    implicit none
+
+    class(id_r32_operator_pair_type),   intent(inout) :: self
+    type(function_space_type), pointer, intent(in)    :: fs_target
+    type(function_space_type), pointer, intent(in)    :: fs_source
+    integer(kind=i_def),                intent(in)    :: id
+
+    call self%operator_%initialise(fs_target, fs_source)
+    call self%set_id(id)
+
+  end subroutine initialise
+
+  !> @brief Initialises the id_r32_operator_pair object by copying in an operator
   !> @param[in] operator_in  The operator that will be stored in the paired object
   !> @param[in] id           The integer ID to pair with the operator
-  subroutine initialise( self, operator_in, id )
+  subroutine copy_initialise(self, operator_in, id)
 
     implicit none
 
@@ -50,7 +70,7 @@ contains
     self%operator_ = operator_in%deep_copy()
     call self%set_id(id)
 
-  end subroutine initialise
+  end subroutine copy_initialise
 
   !> @brief Get the operator corresponding to the paired object
   !> @param[in] self     The paired object

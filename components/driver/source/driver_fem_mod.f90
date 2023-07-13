@@ -16,7 +16,7 @@ module driver_fem_mod
                                             final_chi_transforms
   use constants_mod,                  only: i_def, i_native, l_def, str_def
   use base_mesh_config_mod,           only: geometry, geometry_planar
-  use extrusion_mod,                  only: TWOD
+  use extrusion_mod,                  only: TWOD, PRIME_EXTRUSION
   use finite_element_config_mod,      only: element_order,    &
                                             coord_order,      &
                                             coord_system,     &
@@ -67,6 +67,7 @@ contains
 
     character(str_def),    allocatable :: all_mesh_names(:)
     type(mesh_type),           pointer :: mesh => null()
+    type(mesh_type),           pointer :: twod_mesh => null()
     type(field_type)                   :: chi(3)
     type(field_type)                   :: panel_id
     type(function_space_type), pointer :: fs => null()
@@ -81,24 +82,26 @@ contains
     ! Initialise coordinate transformations
     call init_chi_transforms()
 
-    call chi_inventory%initialise(name="chi", table_len=25)
-    call panel_id_inventory%initialise(name="panel_id", table_len=25)
-
-    ! ======================================================================== !
-    ! Loop through all 3D meshes
-    ! ======================================================================== !
     ! To loop through mesh collection, get all mesh names
     ! Then get mesh from collection using these names
     all_mesh_names = mesh_collection%get_mesh_names()
 
+    call chi_inventory%initialise(name="chi", table_len=SIZE(all_mesh_names))
+    call panel_id_inventory%initialise(name="panel_id", table_len=SIZE(all_mesh_names))
+
+    ! ======================================================================== !
+    ! Loop through all 3D meshes
+    ! ======================================================================== !
+
     do i = 1, SIZE(all_mesh_names)
       mesh => mesh_collection%get_mesh(all_mesh_names(i))
 
-      ! Don't set up coordinate fields for the "2D" mesh
-      if ( mesh%get_extrusion_id() /= TWOD ) then
+      ! Only create coordinates for 3D meshes
+      if (mesh%get_extrusion_id() /= TWOD) then
 
         ! Initialise panel ID field object ---------------------------------------
-        fs => function_space_collection%get_fs(mesh, 0, W3)
+        twod_mesh => mesh_collection%get_mesh(mesh, TWOD)
+        fs => function_space_collection%get_fs(twod_mesh, 0, W3)
         call panel_id%initialise( vector_space = fs )
 
         ! Initialise chi field object --------------------------------------------
@@ -125,11 +128,11 @@ contains
         call assign_coordinate_field(chi, panel_id, mesh)
 
         ! Add fields to inventory
-        call chi_inventory%add_field_array(chi, mesh)
-        call panel_id_inventory%add_field(panel_id, mesh)
+        call chi_inventory%copy_field_array(chi, mesh)
+        call panel_id_inventory%copy_field(panel_id, mesh)
 
+        nullify(mesh, fs)
       end if
-      nullify(mesh, fs)
     end do
 
     call log_event( 'FEM specifics created', LOG_LEVEL_INFO )

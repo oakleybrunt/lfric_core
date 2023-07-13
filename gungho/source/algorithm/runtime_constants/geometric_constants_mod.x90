@@ -16,6 +16,7 @@ module geometric_constants_mod
 
   ! Infrastructure
   use constants_mod,                      only: i_def, r_def, l_def, str_def
+  use extrusion_mod,                      only: TWOD, PRIME_EXTRUSION
   use field_mod,                          only: field_type
   use fs_continuity_mod,                  only: W0, W1, W2, W3, Wtheta, Wchi
   use function_space_collection_mod,      only: function_space_collection
@@ -29,10 +30,7 @@ module geometric_constants_mod
   use timer_mod,                          only: timer
 
   ! Other algorithms
-  use runtime_tools_mod,                  only: find_mesh_index,            &
-                                                check_initialised_field,    &
-                                                check_initialised_operator, &
-                                                primary_mesh_label,         &
+  use runtime_tools_mod,                  only: primary_mesh_label,         &
                                                 shifted_mesh_label,         &
                                                 twod_mesh_label,            &
                                                 extra_mesh_label,           &
@@ -63,24 +61,19 @@ module geometric_constants_mod
   type(inventory_by_mesh_type), target :: chi_inventory
   type(inventory_by_mesh_type), target :: panel_id_inventory
 
-  ! Panel ID fields
-  type(field_type), allocatable,  target :: panel_id_list(:)
-
   ! Coordinate fields
-  type(field_type), allocatable, target :: chi_list(:,:)
-  type(field_type), allocatable, target :: extended_chi_list(:,:)
+  type(inventory_by_mesh_type) :: extended_chi_inventory
 
   ! Other geometric objects
-  type(field_type), allocatable, target :: dA_at_w2_list(:)
-  type(field_type), allocatable, target :: height_w1_list(:)
-  type(field_type), allocatable, target :: height_w2_list(:)
-  type(field_type), allocatable, target :: height_w3_list(:)
-  type(field_type), allocatable, target :: height_wth_list(:)
-  type(field_type), allocatable, target :: dz_w3_list(:)
-  type(field_type), allocatable, target :: lat_w3_list(:)
-  type(field_type), allocatable, target :: lat_w2_list(:)
-  type(field_type), allocatable, target :: long_w2_list(:)
-  type(field_type), allocatable, target :: long_w3_list(:)
+  type(inventory_by_mesh_type) :: dA_at_w2_inventory
+  type(inventory_by_mesh_type) :: height_w1_inventory
+  type(inventory_by_mesh_type) :: height_w2_inventory
+  type(inventory_by_mesh_type) :: height_w3_inventory
+  type(inventory_by_mesh_type) :: height_wth_inventory
+  type(inventory_by_mesh_type) :: dz_w3_inventory
+  type(inventory_by_mesh_type) :: lat_w3_inventory
+  type(inventory_by_mesh_type) :: lat_w2_inventory
+  type(inventory_by_mesh_type) :: long_w3_inventory
 
   ! Public functions to create and access the module contents
 
@@ -122,31 +115,41 @@ contains
     type(function_space_type), pointer :: w1_k0_fs  => null() ! lowest order w1 fs
     type(function_space_type), pointer :: w2_k0_fs  => null() ! lowest order w2 fs
     type(function_space_type), pointer :: w3_k0_fs  => null() ! lowest order w3 fs
+    type(function_space_type), pointer :: wchi_fs  => null()
+
+    ! Temporary runtime constants
+    type(field_type), pointer :: extended_chi(:) => null()
+    type(field_type), pointer :: height_w1 => null()
+    type(field_type), pointer :: height_w2 => null()
+    type(field_type), pointer :: height_w3 => null()
+    type(field_type), pointer :: height_wth => null()
+    type(field_type), pointer :: dz_w3 => null()
+    type(field_type), pointer :: dA_at_w2 => null()
+    type(field_type), pointer :: long_w3 => null()
+    type(field_type), pointer :: lat_w3 => null()
+    type(field_type), pointer :: lat_w2 => null()
+    type(field_type)          :: long_w2
 
     type(mesh_type), pointer :: mesh => null()
 
     ! Temporary values for iterating through list
-    integer(kind=i_def) :: i, j, num_meshes
+    integer(kind=i_def) :: i, num_meshes
 
     if ( subroutine_timers ) call timer('geometric_constants_alg')
     call log_event( "Gungho: creating geometric_constants", LOG_LEVEL_INFO )
 
     num_meshes = size(mesh_id_list)
 
-    allocate(chi_list(3,num_meshes))
-    allocate(panel_id_list(num_meshes))
-    allocate(height_w1_list(num_meshes))
-    allocate(height_w2_list(num_meshes))
-    allocate(height_w3_list(num_meshes))
-    allocate(height_wth_list(num_meshes))
-    allocate(dz_w3_list(num_meshes))
-    allocate(dA_at_w2_list(num_meshes))
-    allocate(long_w3_list(num_meshes))
-    allocate(lat_w3_list(num_meshes))
-    allocate(long_w2_list(num_meshes))
-    allocate(lat_w2_list(num_meshes))
-
-    if ( extended_mesh ) allocate(extended_chi_list(3,num_meshes))
+    call height_w1_inventory%initialise(name="height_w1", table_len=num_meshes)
+    call height_w2_inventory%initialise(name="height_w2", table_len=num_meshes)
+    call height_w3_inventory%initialise(name="height_w3", table_len=num_meshes)
+    call height_wth_inventory%initialise(name="height_wth", table_len=num_meshes)
+    call dz_w3_inventory%initialise(name="dz_w3", table_len=num_meshes)
+    call dA_at_w2_inventory%initialise(name="dA_w2", table_len=num_meshes)
+    call long_w3_inventory%initialise(name="lon_w3", table_len=num_meshes)
+    call lat_w3_inventory%initialise(name="lat_w3", table_len=num_meshes)
+    call lat_w2_inventory%initialise(name="lat_w2", table_len=num_meshes)
+    if ( extended_mesh ) call extended_chi_inventory%initialise(name="extended_chi", table_len=num_meshes)
 
     !==========================================================================!
     ! Begin loop through meshes
@@ -163,24 +166,18 @@ contains
 
       ! Don't need most function spaces for 2D meshes
       if ( mesh%get_id() /= twod_mesh_label) then
-        w1_k0_fs  => function_space_collection%get_fs( mesh,             0, W1 )
-        wth_k0_fs => function_space_collection%get_fs( mesh,             0, Wtheta )
+        w1_k0_fs  => function_space_collection%get_fs( mesh, 0, W1 )
+        wth_k0_fs => function_space_collection%get_fs( mesh, 0, Wtheta )
       end if
 
       !================ Set coordinates field and panel ID ====================!
 
-      do j = 1, 3
-        call chi_in(j,i)%copy_field_serial(chi_list(j,i))
-      end do
-
-      call panel_id_in(i)%copy_field_serial(panel_id_list(i))
-
       if ( extended_mesh ) then
         call log_event( "Computing extended mesh coodinates", LOG_LEVEL_INFO )
-        do j = 1, 3
-          call extended_chi_list(j,i)%initialise( chi_in(j,i)%get_function_space() )
-        end do
-        call extend_chi_field(extended_chi_list(:,i), chi_in(:,i), panel_id_in(i))
+        wchi_fs => chi_in(1,i)%get_function_space()
+        call extended_chi_inventory%add_field_array(extended_chi, wchi_fs, 3, mesh)
+        call extend_chi_field(extended_chi, chi_in(:,i), panel_id_in(i))
+        nullify(extended_chi, wchi_fs)
       end if
 
       !======================= Create a height field ==========================!
@@ -193,22 +190,23 @@ contains
            label_list(i) == shifted_mesh_label .or. &
            label_list(i) == extra_mesh_label .or. &
            label_list(i) == multigrid_mesh_label) then
-        call height_w1_list(i)%initialise( vector_space = w1_k0_fs )
-        call height_w2_list(i)%initialise( vector_space = w2_k0_fs )
-        call height_w3_list(i)%initialise( vector_space = w3_k0_fs )
-        call height_wth_list(i)%initialise( vector_space = wth_k0_fs )
-        call invoke( get_height_kernel_type( height_w1_list(i),  &
+        call height_w1_inventory%add_field(height_w1, w1_k0_fs, mesh)
+        call height_w2_inventory%add_field(height_w2, w2_k0_fs, mesh)
+        call height_w3_inventory%add_field(height_w3, w3_k0_fs, mesh)
+        call height_wth_inventory%add_field(height_wth, wth_k0_fs, mesh)
+        call invoke( get_height_kernel_type( height_w1,          &
                                              chi_in(:,i),        &
                                              scaled_radius ),    &
-                     get_height_kernel_type( height_w2_list(i),  &
+                     get_height_kernel_type( height_w2,          &
                                              chi_in(:,i),        &
                                              scaled_radius ),    &
-                     get_height_kernel_type( height_w3_list(i),  &
+                     get_height_kernel_type( height_w3,          &
                                              chi_in(:,i),        &
                                              scaled_radius ),    &
-                     get_height_kernel_type( height_wth_list(i), &
+                     get_height_kernel_type( height_wth,         &
                                              chi_in(:,i),        &
                                              scaled_radius )     )
+        nullify(height_w1, height_w3, height_wth)
       end if
 
       ! ======================= Calculate dz for w3 ===========================!
@@ -216,39 +214,39 @@ contains
 
       if ( label_list(i) == primary_mesh_label .or. &
            label_list(i) == shifted_mesh_label) then
-        call dz_w3_list(i)%initialise( vector_space = w3_k0_fs )
-        call invoke( get_dz_w3_kernel_type( dz_w3_list(i), height_w2_list(i)) )
+        call dz_w3_inventory%add_field(dz_w3, w3_k0_fs, mesh)
+        call invoke( get_dz_w3_kernel_type(dz_w3, height_w2) )
+        nullify(dz_w3)
       end if
+      nullify(height_w2)
 
       ! ================= Compute latitude and longitude maps =================!
 
       if ( label_list(i) == twod_mesh_label ) then
         ! for w3_k0_fs
-        call lat_w3_list(i)%initialise( vector_space = w3_k0_fs )
-        call long_w3_list(i)%initialise( vector_space = w3_k0_fs )
+        call lat_w3_inventory%add_field(lat_w3, w3_k0_fs, mesh)
+        call long_w3_inventory%add_field(long_w3, w3_k0_fs, mesh)
         if ( geometry == geometry_spherical ) then
-          call invoke( compute_latlon_kernel_type( lat_w3_list(i),   &
-                                                   long_w3_list(i),  &
+          call invoke( compute_latlon_kernel_type( lat_w3, long_w3,  &
                                                    chi_in(:,i),      &
                                                    panel_id_in(i) )  )
         else
-          call invoke( setval_c(lat_w3_list(i), f_lat),  &
-                       setval_c(long_w3_list(i), 0.0_r_def) )
+          call invoke( setval_c(lat_w3, f_lat),  &
+                       setval_c(long_w3, 0.0_r_def) )
         end if
 
         ! for w2_k0_fs (only lat)
-        call lat_w2_list(i)%initialise( vector_space = w2_k0_fs )
-        call long_w2_list(i)%initialise( vector_space = w2_k0_fs )
+        call lat_w2_inventory%add_field(lat_w2, w2_k0_fs, mesh)
+        call long_w2%initialise( w2_k0_fs )
         if ( geometry == geometry_spherical ) then
-          call invoke( compute_latlon_kernel_type( lat_w2_list(i),   &
-                                                   long_w2_list(i),  &
+          call invoke( compute_latlon_kernel_type( lat_w2, long_w2,  &
                                                    chi_in(:,i),      &
                                                    panel_id_in(i) )  )
         else
-          call invoke( setval_c(lat_w2_list(i), f_lat),  &
-                       setval_c(long_w2_list(i), 0.0_r_def) )
+          call invoke( setval_c(lat_w2, f_lat) )
         end if
 
+        nullify(lat_w3, long_w3, lat_w2)
       end if
 
       !================ Create dA values at W2 dof locations ==================!
@@ -256,21 +254,19 @@ contains
       if ( label_list(i) /= twod_mesh_label .and.      &
            label_list(i) /= multigrid_mesh_label .and. &
            element_order == 0 ) then
-        call dA_at_w2_list(i)%initialise( vector_space = w2_k0_fs )
-        call invoke( setval_c(dA_at_w2_list(i), 0.0_r_def),&
-                     calc_dA_at_w2_kernel_type(dA_at_w2_list(i), &
+        call dA_at_w2_inventory%add_field(dA_at_w2, w2_k0_fs, mesh)
+        call invoke( setval_c(dA_at_w2, 0.0_r_def),&
+                     calc_dA_at_w2_kernel_type(dA_at_w2,         &
                                                chi_in(:,i),      &
                                                panel_id_in(i)  ) )
+        nullify(dA_at_w2)
       end if
 
     !========================= End loop through meshes ========================!
 
     end do
 
-    nullify( wth_k0_fs )
-    nullify( w3_k0_fs  )
-    nullify( w2_k0_fs  )
-    nullify( w1_k0_fs  )
+    nullify(wth_k0_fs, w3_k0_fs, w2_k0_fs, w1_k0_fs, mesh)
 
     call log_event( "Gungho: created geometric_constants", LOG_LEVEL_INFO )
     if ( subroutine_timers ) call timer('geometric_constants_alg')
@@ -283,11 +279,18 @@ contains
   function get_panel_id(mesh_id) result(panel_id_ptr)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
+    type(mesh_type),        pointer :: prime_extrusion_mesh => null()
     type(field_type),       pointer :: panel_id_ptr
 
-    mesh_index = find_mesh_index(mesh_id)
-    panel_id_ptr => panel_id_list(mesh_index)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    if (mesh%get_extrusion_id() == TWOD) then
+      prime_extrusion_mesh => mesh_collection%get_mesh(mesh, PRIME_EXTRUSION)
+      call panel_id_inventory%get_field(prime_extrusion_mesh, panel_id_ptr)
+    else
+      call panel_id_inventory%get_field(mesh, panel_id_ptr)
+    end if
+    nullify(mesh, prime_extrusion_mesh)
   end function get_panel_id
 
   !> @brief Returns a pointer to the coordinate field array on the finest level
@@ -296,11 +299,18 @@ contains
   function get_coordinates(mesh_id) result(coords_ptr)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
+    type(mesh_type),        pointer :: prime_extrusion_mesh => null()
     type(field_type),       pointer :: coords_ptr(:)
 
-    mesh_index = find_mesh_index(mesh_id)
-    coords_ptr => chi_list(:,mesh_index)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    if (mesh%get_extrusion_id() == TWOD) then
+      prime_extrusion_mesh => mesh_collection%get_mesh(mesh, PRIME_EXTRUSION)
+      call chi_inventory%get_field_array(prime_extrusion_mesh, coords_ptr)
+    else
+      call chi_inventory%get_field_array(mesh, coords_ptr)
+    end if
+    nullify(mesh, prime_extrusion_mesh)
 
   end function get_coordinates
 
@@ -310,11 +320,12 @@ contains
   function get_extended_coordinates(mesh_id) result(coords_ptr)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     type(field_type),       pointer :: coords_ptr(:)
 
-    mesh_index = find_mesh_index(mesh_id)
-    coords_ptr => extended_chi_list(:,mesh_index)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call extended_chi_inventory%get_field_array(mesh, coords_ptr)
+    nullify(mesh)
 
   end function get_extended_coordinates
 
@@ -324,14 +335,12 @@ contains
   function get_dA_at_w2(mesh_id) result(dA)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     type(field_type),       pointer :: dA
-    character(str_def)              :: field_name
 
-    mesh_index = find_mesh_index(mesh_id)
-    field_name = 'dA_at_w2'
-    dA => dA_at_w2_list(mesh_index)
-    call check_initialised_field(dA, field_name, mesh_id)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call dA_at_w2_inventory%get_field(mesh, dA)
+    nullify(mesh)
 
   end function get_dA_at_w2
 
@@ -343,28 +352,26 @@ contains
     implicit none
     integer(kind=i_def), intent(in) :: space
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     type(field_type),       pointer :: height
-    character(str_def)              :: field_name
 
-    mesh_index = find_mesh_index(mesh_id)
-    field_name = 'height'
+    mesh => mesh_collection%get_mesh(mesh_id)
 
     select case (space)
     case (W1)
-      height => height_w1_list(mesh_index)
+      call height_w1_inventory%get_field(mesh, height)
     case (W2)
-      height => height_w2_list(mesh_index)
+      call height_w2_inventory%get_field(mesh, height)
     case (W3)
-      height => height_w3_list(mesh_index)
+      call height_w3_inventory%get_field(mesh, height)
     case (Wtheta)
-      height => height_wth_list(mesh_index)
+      call height_wth_inventory%get_field(mesh, height)
     case default
       height => null()
       call log_event( "Height not available on requested space", LOG_LEVEL_ERROR)
     end select
 
-    call check_initialised_field(height, field_name, mesh_id, space)
+    nullify(mesh)
 
   end function get_height
 
@@ -375,10 +382,11 @@ contains
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
     type(field_type),       pointer :: dz_w3
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
 
-    mesh_index = find_mesh_index(mesh_id)
-    dz_w3 => dz_w3_list(mesh_index)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call dz_w3_inventory%get_field(mesh, dz_w3)
+    nullify(mesh)
 
   end function get_dz_w3
 
@@ -388,14 +396,12 @@ contains
   function get_latitude(mesh_id) result(lat_ptr)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     type(field_type),       pointer :: lat_ptr
-    character(str_def)              :: field_name
 
-    mesh_index = find_mesh_index(mesh_id)
-    field_name = 'latitude'
-    lat_ptr => lat_w3_list(mesh_index)
-    call check_initialised_field(lat_ptr, field_name, mesh_id)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call lat_w3_inventory%get_field(mesh, lat_ptr)
+    nullify(mesh)
 
   end function get_latitude
 
@@ -405,14 +411,12 @@ contains
   function get_latitude_w2(mesh_id) result(lat_ptr)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     type(field_type),       pointer :: lat_ptr
-    character(str_def)              :: field_name
 
-    mesh_index = find_mesh_index(mesh_id)
-    field_name = 'latitude'
-    lat_ptr => lat_w2_list(mesh_index)
-    call check_initialised_field(lat_ptr, field_name, mesh_id)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call lat_w2_inventory%get_field(mesh, lat_ptr)
+    nullify(mesh)
 
   end function get_latitude_w2
 
@@ -422,14 +426,12 @@ contains
   function get_longitude(mesh_id) result(long_ptr)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     type(field_type),       pointer :: long_ptr
-    character(str_def)              :: field_name
 
-    mesh_index = find_mesh_index(mesh_id)
-    field_name = 'longitude'
-    long_ptr => long_w3_list(mesh_index)
-    call check_initialised_field(long_ptr, field_name, mesh_id)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call long_w3_inventory%get_field(mesh, long_ptr)
+    nullify(mesh)
 
   end function get_longitude
 
@@ -457,19 +459,18 @@ contains
 
     implicit none
 
-    if (allocated(lat_w3_list)) deallocate(lat_w3_list)
-    if (allocated(long_w3_list)) deallocate(long_w3_list)
-    if (allocated(lat_w2_list)) deallocate(lat_w2_list)
-    if (allocated(long_w2_list)) deallocate(long_w2_list)
-    if (allocated(dA_at_w2_list)) deallocate(dA_at_w2_list)
-    if (allocated(height_wth_list)) deallocate(height_wth_list)
-    if (allocated(height_w3_list)) deallocate(height_w3_list)
-    if (allocated(height_w2_list)) deallocate(height_w2_list)
-    if (allocated(height_w1_list)) deallocate(height_w1_list)
-    if (allocated(dz_w3_list)) deallocate(dz_w3_list)
-    if (allocated(panel_id_list)) deallocate(panel_id_list)
-    if (allocated(chi_list)) deallocate(chi_list)
-    if (allocated(extended_chi_list)) deallocate(extended_chi_list)
+    call lat_w2_inventory%clear()
+    call lat_w3_inventory%clear()
+    call long_w3_inventory%clear()
+    call dA_at_w2_inventory%clear()
+    call height_wth_inventory%clear()
+    call height_w3_inventory%clear()
+    call height_w2_inventory%clear()
+    call height_w1_inventory%clear()
+    call dz_w3_inventory%clear()
+    call panel_id_inventory%clear()
+    call chi_inventory%clear()
+    call extended_chi_inventory%clear()
 
   end subroutine final_geometric_constants
 

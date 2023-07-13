@@ -36,6 +36,7 @@ module reconstruct_w3_field_alg_mod
   use fs_continuity_mod,              only: W2, W2h, W2v, W3, Wtheta
   use function_space_collection_mod,  only: function_space_collection
   use function_space_mod,             only: function_space_type
+  use inventory_by_mesh_mod,          only: inventory_by_mesh_type
   use poly1d_reconstruction_kernel_mod, &
                                       only: poly1d_reconstruction_kernel_type
   use poly1d_vert_w3_reconstruction_kernel_mod, &
@@ -85,14 +86,14 @@ module reconstruct_w3_field_alg_mod
 
   logical(kind=l_def) :: variables_allocated = .false.
 
-  integer(kind=i_def), allocatable, target :: flux_stencil_extent_list(:)
-  integer(kind=i_def), allocatable, target :: flux_2d_stencil_size_list(:)
-  integer(kind=i_def), allocatable, target :: ndata_h_list(:)
-  integer(kind=i_def), allocatable, target :: ndata_v_list(:)
-  integer(kind=i_def), allocatable, target :: reversible_ndata_v_list(:)
-  type(r_tran_field_type),    allocatable, target :: flux_coeffs_list(:)
-  type(r_tran_field_type),    allocatable, target :: vert_flux_coeffs_list(:)
-  type(r_tran_field_type),    allocatable, target :: reversible_vert_flux_coeffs_list(:)
+  type(inventory_by_mesh_type) :: flux_stencil_extent_inventory
+  type(inventory_by_mesh_type) :: flux_2d_stencil_size_inventory
+  type(inventory_by_mesh_type) :: ndata_h_inventory
+  type(inventory_by_mesh_type) :: ndata_v_inventory
+  type(inventory_by_mesh_type) :: reversible_ndata_v_inventory
+  type(inventory_by_mesh_type) :: flux_coeffs_inventory
+  type(inventory_by_mesh_type) :: vert_flux_coeffs_inventory
+  type(inventory_by_mesh_type) :: reversible_vert_flux_coeffs_inventory
   public :: reconstruct_w3_field_alg_set_num_meshes
   public :: reconstruct_w3_field_alg_init
   public :: reconstruct_w3_field_alg_final
@@ -121,14 +122,14 @@ contains
 
     ! Allocate the arrays of variables
     if (.not. variables_allocated) then
-      if (.not. allocated(flux_stencil_extent_list)) allocate(flux_stencil_extent_list(number_of_meshes))
-      if (.not. allocated(flux_2d_stencil_size_list)) allocate(flux_2d_stencil_size_list(number_of_meshes))
-      if (.not. allocated(flux_coeffs_list)) allocate(flux_coeffs_list(number_of_meshes))
-      if (.not. allocated(vert_flux_coeffs_list)) allocate(vert_flux_coeffs_list(number_of_meshes))
-      if (.not. allocated(reversible_vert_flux_coeffs_list)) allocate(reversible_vert_flux_coeffs_list(number_of_meshes))
-      if (.not. allocated(ndata_h_list)) allocate(ndata_h_list(number_of_meshes))
-      if (.not. allocated(ndata_v_list)) allocate(ndata_v_list(number_of_meshes))
-      if (.not. allocated(reversible_ndata_v_list)) allocate(reversible_ndata_v_list(number_of_meshes))
+      call flux_stencil_extent_inventory%initialise(name="flux_stencil_extent", table_len=number_of_meshes)
+      call flux_2d_stencil_size_inventory%initialise(name="flux_2d_stencil_size", table_len=number_of_meshes)
+      call flux_coeffs_inventory%initialise(name="hori_flux_coeffs", table_len=number_of_meshes)
+      call vert_flux_coeffs_inventory%initialise(name="vert_flux_coeffs", table_len=number_of_meshes)
+      call reversible_vert_flux_coeffs_inventory%initialise(name="rev_vert_flux_coeffs", table_len=number_of_meshes)
+      call ndata_h_inventory%initialise(name="flux_ndata_h", table_len=number_of_meshes)
+      call ndata_v_inventory%initialise(name="flux_ndata_v", table_len=number_of_meshes)
+      call reversible_ndata_v_inventory%initialise(name="flux_rev_ndata_v", table_len=number_of_meshes)
       variables_allocated = .true.
     else
       call log_event('Variables have already been allocated for ' // &
@@ -192,6 +193,9 @@ contains
     type(field_type),              pointer :: height => null()
     integer(kind=i_def)                    :: vertical_order, nlayers
     type(mesh_type),               pointer :: twod_mesh => null()
+    type(r_tran_field_type),       pointer :: flux_coeffs => null()
+    type(r_tran_field_type),       pointer :: vert_flux_coeffs => null()
+    type(r_tran_field_type),       pointer :: reversible_vert_flux_coeffs => null()
 
     type(domain_type)        :: domain
     type(operator_type)      :: mm_w3
@@ -293,8 +297,8 @@ contains
         ! Create multi-data space and field for the horizontal flux coefficients
         ndata_h = nfaces_re_h*flux_stencil_size
         multidata_fs => function_space_collection%get_fs( twod_mesh, element_order, W3, ndata_h )
-        ndata_h_list(mesh_index) = ndata_h
-        call flux_coeffs_list(mesh_index)%initialise( vector_space = multidata_fs, ndata_first = .false. )
+        call ndata_h_inventory%add_integer(ndata_h, mesh)
+        call flux_coeffs_inventory%add_field(flux_coeffs, multidata_fs, mesh, ndata_first=.false.)
 
         if ( oned_reconstruction ) then
           if ( extended_mesh ) then
@@ -311,7 +315,7 @@ contains
             md_w3 =>  mm3_diag
           end if
           call invoke(poly1d_flux_coeffs_kernel_type(                          &
-                                                flux_coeffs_list(mesh_index),  &
+                                                flux_coeffs,                   &
                                                 md_w3,                         &
                                                 flux_stencil_extent,           &
                                                 chi,                           &
@@ -327,7 +331,7 @@ contains
                                                 qr, qrf ) )
         else
           call invoke(poly2d_flux_coeffs_kernel_type(                          &
-                                                flux_coeffs_list(mesh_index),  &
+                                                flux_coeffs,                   &
                                                 md_w3,                         &
                                                 flux_stencil_extent,           &
                                                 chi,                           &
@@ -343,37 +347,42 @@ contains
                                                 nlayers,                       &
                                                 qr, qrf) )
         end if
+        nullify(flux_coeffs)
 
         ! Vertical flux coeffs
         call log_event( "Gungho: computing vertical flux coeffs", LOG_LEVEL_INFO )
         ! Create multi-data space and field for the vertical flux coefficients
         vertical_order = fv_vertical_order
         ndata_v = nfaces_re_v*(vertical_order + 1_i_def)
-        ndata_v_list(mesh_index) = ndata_v
+        call ndata_v_inventory%add_integer(ndata_v, mesh)
         multidata_fs => function_space_collection%get_fs( mesh, element_order, Wtheta, ndata_v )
-        call vert_flux_coeffs_list(mesh_index)%initialise( vector_space = multidata_fs, ndata_first = .true. )
+        call vert_flux_coeffs_inventory%add_field(                             &
+                      vert_flux_coeffs, multidata_fs, mesh, ndata_first=.true.)
         height => get_height(Wtheta, mesh%get_id())
         call invoke(poly1d_vert_flux_coeffs_kernel_type(                       &
-                                          vert_flux_coeffs_list(mesh_index),   &
+                                          vert_flux_coeffs,                    &
                                           height,                              &
                                           ndata_v,                             &
                                           vertical_order,                      &
                                           qr ) )
+        nullify(vert_flux_coeffs)
 
         if ( any(reversible) ) then
           ! Compute reversible vertical coefficients
           vertical_order = fv_vertical_order-1
           ndata_v = vertical_order + 1_i_def
-          reversible_ndata_v_list(mesh_index) = ndata_v
+          call reversible_ndata_v_inventory%add_integer(ndata_v, mesh)
           multidata_fs => function_space_collection%get_fs( mesh, element_order, Wtheta, ndata_v )
-          call reversible_vert_flux_coeffs_list(mesh_index)%initialise( vector_space = multidata_fs, ndata_first = .true. )
+          call reversible_vert_flux_coeffs_inventory%add_field(                &
+            reversible_vert_flux_coeffs, multidata_fs, mesh, ndata_first=.true.)
           height => get_height(Wtheta, mesh%get_id())
-          call invoke(poly1d_vert_flux_coeffs_kernel_type(                                &
-                                            reversible_vert_flux_coeffs_list(mesh_index), &
-                                            height,                                       &
-                                            ndata_v,                                      &
-                                            vertical_order,                               &
+          call invoke(poly1d_vert_flux_coeffs_kernel_type(                     &
+                                            reversible_vert_flux_coeffs,       &
+                                            height,                            &
+                                            ndata_v,                           &
+                                            vertical_order,                    &
                                             qr ) )
+          nullify(reversible_vert_flux_coeffs)
         end if
         !======================================================================!
       else
@@ -382,8 +391,8 @@ contains
       end if
     end if
 
-    flux_stencil_extent_list(mesh_index) = flux_stencil_extent
-    flux_2d_stencil_size_list(mesh_index) = flux_2d_stencil_size
+    call flux_stencil_extent_inventory%add_integer(flux_stencil_extent, mesh)
+    call flux_2d_stencil_size_inventory%add_integer(flux_2d_stencil_size, mesh)
 
     nullify( chi, panel_id, md_w3, w3_fs, reference_element, height, twod_mesh )
 
@@ -395,14 +404,14 @@ contains
 
     implicit none
 
-    if (allocated(ndata_v_list)) deallocate(ndata_v_list)
-    if (allocated(reversible_ndata_v_list)) deallocate(reversible_ndata_v_list)
-    if (allocated(ndata_h_list)) deallocate(ndata_h_list)
-    if (allocated(vert_flux_coeffs_list)) deallocate(vert_flux_coeffs_list)
-    if (allocated(reversible_vert_flux_coeffs_list)) deallocate(reversible_vert_flux_coeffs_list)
-    if (allocated(flux_coeffs_list)) deallocate(flux_coeffs_list)
-    if (allocated(flux_2d_stencil_size_list)) deallocate(flux_2d_stencil_size_list)
-    if (allocated(flux_stencil_extent_list)) deallocate(flux_stencil_extent_list)
+    call ndata_v_inventory%clear()
+    call reversible_ndata_v_inventory%clear()
+    call ndata_h_inventory%clear()
+    call vert_flux_coeffs_inventory%clear()
+    call reversible_vert_flux_coeffs_inventory%clear()
+    call flux_coeffs_inventory%clear()
+    call flux_2d_stencil_size_inventory%clear()
+    call flux_stencil_extent_inventory%clear()
 
   end subroutine reconstruct_w3_field_alg_final
 
@@ -491,7 +500,7 @@ contains
     type(transport_metadata_type),   intent(in)    :: transport_metadata
 
     type(mesh_type),     pointer :: mesh => null()
-    integer(kind=i_def)          :: mesh_index
+    integer(kind=i_def)          :: mesh_id
     integer(kind=i_def)          :: stencil_extent
 
     integer(kind=i_def), pointer :: flux_stencil_extent => null()
@@ -505,13 +514,13 @@ contains
     if ( subroutine_timers ) call timer('W3 horizontal recon')
 
     mesh => field_new%get_mesh()
-    mesh_index = find_mesh_index(mesh%get_id())
+    mesh_id = mesh%get_id()
 
     ! Get extents and data sizes for this mesh
-    flux_stencil_extent => flux_stencil_extent_list(mesh_index)
-    flux_2d_stencil_size => flux_2d_stencil_size_list(mesh_index)
-    ndata_h => ndata_h_list(mesh_index)
-    flux_coeffs => flux_coeffs_list(mesh_index)
+    flux_stencil_extent => get_flux_stencil_extent(mesh_id)
+    flux_2d_stencil_size => get_flux_2d_stencil_size(mesh_id)
+    ndata_h => get_flux_ndata_h(mesh_id)
+    flux_coeffs => get_flux_coeffs(mesh_id)
 
     if ( extended_mesh ) then
       call remap_on_extended_mesh_alg(remap_field, field_old)
@@ -571,7 +580,7 @@ contains
     logical(kind=l_def),           intent(in)    :: final_rk_stage
 
     type(mesh_type),         pointer :: mesh => null()
-    integer(kind=i_def)              :: mesh_index
+    integer(kind=i_def)              :: mesh_id
     integer(kind=i_def),     pointer :: ndata_v => null()
     type(r_tran_field_type), pointer :: vert_flux_coeffs => null()
     type(r_tran_field_type), pointer :: height_tr => null()
@@ -587,16 +596,16 @@ contains
     monotonicity = transport_metadata%get_vertical_monotone()
 
     mesh => field_new%get_mesh()
-    mesh_index = find_mesh_index(mesh%get_id())
+    mesh_id = mesh%get_id()
 
     ! Compute vertical components of mass flux
     if ( reversible ) then
-      ndata_v => reversible_ndata_v_list(mesh_index)
-      vert_flux_coeffs => reversible_vert_flux_coeffs_list(mesh_index)
+      ndata_v => get_reversible_flux_ndata_v(mesh_id)
+      vert_flux_coeffs => get_reversible_vert_flux_coeffs(mesh_id)
       vertical_order = fv_vertical_order - 1_i_def
     else
-      ndata_v => ndata_v_list(mesh_index)
-      vert_flux_coeffs => vert_flux_coeffs_list(mesh_index)
+      ndata_v => get_flux_ndata_v(mesh_id)
+      vert_flux_coeffs => get_vert_flux_coeffs(mesh_id)
       vertical_order = fv_vertical_order
     end if
 
@@ -636,11 +645,12 @@ contains
   function get_flux_stencil_extent(mesh_id) result(flux_stencil_extent)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     integer(kind=i_def),    pointer :: flux_stencil_extent
 
-    mesh_index = find_mesh_index(mesh_id)
-    flux_stencil_extent => flux_stencil_extent_list(mesh_index)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call flux_stencil_extent_inventory%get_integer(mesh, flux_stencil_extent)
+    nullify(mesh)
 
   end function get_flux_stencil_extent
 
@@ -650,11 +660,12 @@ contains
   function get_flux_2d_stencil_size(mesh_id) result(flux_stencil_size)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     integer(kind=i_def),    pointer :: flux_stencil_size
 
-    mesh_index = find_mesh_index(mesh_id)
-    flux_stencil_size => flux_2d_stencil_size_list(mesh_index)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call flux_2d_stencil_size_inventory%get_integer(mesh, flux_stencil_size)
+    nullify(mesh)
 
   end function get_flux_2d_stencil_size
 
@@ -664,11 +675,12 @@ contains
   function get_flux_ndata_h(mesh_id) result(ndata_h)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     integer(kind=i_def),    pointer :: ndata_h
 
-    mesh_index = find_mesh_index(mesh_id)
-    ndata_h => ndata_h_list(mesh_index)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call ndata_h_inventory%get_integer(mesh, ndata_h)
+    nullify(mesh)
 
   end function get_flux_ndata_h
 
@@ -678,11 +690,12 @@ contains
   function get_flux_ndata_v(mesh_id) result(ndata_v)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     integer(kind=i_def),    pointer :: ndata_v
 
-    mesh_index = find_mesh_index(mesh_id)
-    ndata_v => ndata_v_list(mesh_index)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call ndata_v_inventory%get_integer(mesh, ndata_v)
+    nullify(mesh)
 
   end function get_flux_ndata_v
 
@@ -692,11 +705,12 @@ contains
   function get_reversible_flux_ndata_v(mesh_id) result(ndata_v)
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     integer(kind=i_def),    pointer :: ndata_v
 
-    mesh_index = find_mesh_index(mesh_id)
-    ndata_v => reversible_ndata_v_list(mesh_index)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call reversible_ndata_v_inventory%get_integer(mesh, ndata_v)
+    nullify(mesh)
 
   end function get_reversible_flux_ndata_v
 
@@ -705,15 +719,13 @@ contains
   !> @return The flux coefficients field
   function get_flux_coeffs(mesh_id) result(flux_coeffs)
     implicit none
-    integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
-    type(r_tran_field_type),pointer :: flux_coeffs
-    character(str_def)              :: field_name
+    integer(kind=i_def),  intent(in) :: mesh_id
+    type(mesh_type),         pointer :: mesh => null()
+    type(r_tran_field_type), pointer :: flux_coeffs
 
-    mesh_index = find_mesh_index(mesh_id)
-    field_name = 'flux_coeffs'
-    flux_coeffs => flux_coeffs_list(mesh_index)
-    call check_initialised_field(flux_coeffs, field_name, mesh_id)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call flux_coeffs_inventory%get_field(mesh, flux_coeffs)
+    nullify(mesh)
 
   end function get_flux_coeffs
 
@@ -722,15 +734,14 @@ contains
   !> @return The vertical flux coefficient field
   function get_vert_flux_coeffs(mesh_id) result(vert_flux_coeffs)
     implicit none
-    integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
-    type(r_tran_field_type),pointer :: vert_flux_coeffs
-    character(str_def)              :: field_name
+    integer(kind=i_def),  intent(in) :: mesh_id
+    type(mesh_type),         pointer :: mesh => null()
+    type(r_tran_field_type), pointer :: vert_flux_coeffs
 
-    mesh_index = find_mesh_index(mesh_id)
-    field_name = 'vert_flux_coeffs'
-    vert_flux_coeffs => vert_flux_coeffs_list(mesh_index)
-    call check_initialised_field(vert_flux_coeffs, field_name, mesh_id)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call vert_flux_coeffs_inventory%get_field(mesh, vert_flux_coeffs)
+    nullify(mesh)
+
   end function get_vert_flux_coeffs
 
   !> @brief Returns a pointer to the reversible vertical flux coefficients
@@ -738,15 +749,14 @@ contains
   !> @return The vertical flux coefficient field
   function get_reversible_vert_flux_coeffs(mesh_id) result(vert_flux_coeffs)
     implicit none
-    integer(kind=i_def), intent(in) :: mesh_id
-    integer(kind=i_def)             :: mesh_index
-    type(r_tran_field_type),pointer :: vert_flux_coeffs
-    character(str_def)              :: field_name
+    integer(kind=i_def),  intent(in) :: mesh_id
+    type(mesh_type),         pointer :: mesh => null()
+    type(r_tran_field_type), pointer :: vert_flux_coeffs
 
-    mesh_index = find_mesh_index(mesh_id)
-    field_name = 'reversible_vert_flux_coeffs'
-    vert_flux_coeffs => reversible_vert_flux_coeffs_list(mesh_index)
-    call check_initialised_field(vert_flux_coeffs, field_name, mesh_id)
+    mesh => mesh_collection%get_mesh(mesh_id)
+    call reversible_vert_flux_coeffs_inventory%get_field(mesh, vert_flux_coeffs)
+    nullify(mesh)
+
   end function get_reversible_vert_flux_coeffs
 
 end module reconstruct_w3_field_alg_mod

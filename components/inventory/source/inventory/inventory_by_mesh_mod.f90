@@ -18,7 +18,9 @@ module inventory_by_mesh_mod
   use function_space_mod,               only: function_space_type
   use integer_field_mod,                only: integer_field_type
   use log_mod,                          only: log_event, log_scratch_space, &
-                                              LOG_LEVEL_ERROR, LOG_LEVEL_WARNING
+                                              LOG_LEVEL_ERROR,              &
+                                              LOG_LEVEL_DEBUG,              &
+                                              LOG_LEVEL_WARNING
   use linked_list_data_mod,             only: linked_list_data_type
   use linked_list_mod,                  only: linked_list_type, &
                                               linked_list_item_type
@@ -94,6 +96,28 @@ module inventory_by_mesh_mod
     procedure, public :: add_r64_operator
     generic           :: add_operator => add_r32_operator, &
                                          add_r64_operator
+    ! Specific routines for copying different objects into the inventory
+    ! To support new objects, add more routines here
+    procedure, public :: copy_r32_field
+    procedure, public :: copy_r64_field
+    procedure, public :: copy_integer_field
+    procedure, public :: copy_r32_intermesh_field
+    procedure, public :: copy_r64_intermesh_field
+    generic           :: copy_field => copy_r32_field,           &
+                                       copy_r64_field,           &
+                                       copy_integer_field,       &
+                                       copy_r32_intermesh_field, &
+                                       copy_r64_intermesh_field
+    procedure, public :: copy_r32_field_array
+    procedure, public :: copy_r64_field_array
+    procedure, public :: copy_integer_field_array
+    generic           :: copy_field_array => copy_r32_field_array, &
+                                             copy_r64_field_array, &
+                                             copy_integer_field_array
+    procedure, public :: copy_r32_operator
+    procedure, public :: copy_r64_operator
+    generic           :: copy_operator => copy_r32_operator, &
+                                          copy_r64_operator
     ! Specific routines for getting different objects from the inventory
     ! To support new objects, add more routines here
     procedure, public :: get_r32_field
@@ -180,7 +204,7 @@ subroutine add_paired_object(self, paired_object)
     write(log_scratch_space, '(A,I8,3A)') &
         'Paired object on mesh [', id,                              &
         '] already exists in inventory_by_mesh: ', trim(self%name), &
-        'Removing existing paired object...'
+        ', removing existing paired object...'
     call log_event(log_scratch_space, LOG_LEVEL_WARNING)
     call self%remove_paired_object(id)
   end if
@@ -188,6 +212,9 @@ subroutine add_paired_object(self, paired_object)
   ! Finished checking - so the object must be good to add - so add it
   hash = mod(id, self%table_len)
   call self%paired_object_list(hash)%insert_item( paired_object )
+  write(log_scratch_space, '(A,I8,2A)') &
+    'Adding object on mesh [', id, '] to inventory_by_mesh: ', trim(self%name)
+  call log_event(log_scratch_space, LOG_LEVEL_DEBUG)
 
 end subroutine add_paired_object
 
@@ -594,162 +621,239 @@ end subroutine remove_paired_object
 ! ADD OBJECT ROUTINES -- these are specific to an inventory_by_mesh
 ! ============================================================================ !
 
-!> @brief Adds an r32 field to the inventory
-!> @param[in] field       The field that is to be copied into the inventory
-!> @param[in] mesh        The mesh to pair the field with
-subroutine add_r32_field(self, field, mesh)
+!> @brief Adds an r32 field to the inventory and returns a pointer to it
+!> @param[out] field       Pointer to the field that is to be added
+!> @param[in]  fs          Function space for the field to be created
+!> @param[in]  mesh        The mesh to pair the field with
+!> @param[in]  name        Optional name for the field
+!> @param[in]  ndata_first Optional flag for ordering of multidata field DoFs
+subroutine add_r32_field(self, field, fs, mesh, name, ndata_first)
 
   implicit none
 
-  class(inventory_by_mesh_type), intent(inout) :: self
-  type(field_r32_type),          intent(in)    :: field
-  type(mesh_type),               intent(in)    :: mesh
-  type(id_r32_field_pair_type)                 :: paired_object
+  class(inventory_by_mesh_type),      intent(inout) :: self
+  type(field_r32_type),      pointer, intent(out)   :: field
+  type(function_space_type), pointer, intent(in)    :: fs
+  type(mesh_type),                    intent(in)    :: mesh
+  character(*),             optional, intent(in)    :: name
+  logical(kind=l_def),      optional, intent(in)    :: ndata_first
+  type(id_r32_field_pair_type)                      :: paired_object
+  character(str_def)                                :: local_name
+
+  if ( present(name) ) then
+    local_name = name
+  else
+    local_name = 'none'
+  end if
 
   ! Set up the paired_object
-  call paired_object%initialise(field, mesh%get_id())
-  call self%add_paired_object( paired_object )
+  if (present(ndata_first)) then
+    call paired_object%initialise(fs, mesh%get_id(), name=local_name, ndata_first=ndata_first)
+  else
+    call paired_object%initialise(fs, mesh%get_id(), name=local_name)
+  end if
+  call self%add_paired_object(paired_object)
+  call self%get_r32_field(mesh, field)
 
 end subroutine add_r32_field
 
-!> @brief Adds an r64 field to the inventory
-!> @param[in] field       The field that is to be copied into the inventory
-!> @param[in] mesh        The mesh to pair the field with
-subroutine add_r64_field(self, field, mesh)
+!> @brief Adds an r64 field to the inventory and returns a pointer to it
+!> @param[out] field       Pointer to the field that is to be added
+!> @param[in]  fs          Function space for the field to be created
+!> @param[in]  mesh        The mesh to pair the field with
+!> @param[in]  name        Optional name for the field
+!> @param[in]  ndata_first Optional flag for ordering of multidata field DoFs
+subroutine add_r64_field(self, field, fs, mesh, name, ndata_first)
 
   implicit none
 
-  class(inventory_by_mesh_type), intent(inout) :: self
-  type(field_r64_type),          intent(in)    :: field
-  type(mesh_type),               intent(in)    :: mesh
-  type(id_r64_field_pair_type)                 :: paired_object
+  class(inventory_by_mesh_type),      intent(inout) :: self
+  type(field_r64_type),      pointer, intent(out)   :: field
+  type(function_space_type), pointer, intent(in)    :: fs
+  type(mesh_type),                    intent(in)    :: mesh
+  character(*),             optional, intent(in)    :: name
+  logical(kind=l_def),      optional, intent(in)    :: ndata_first
+  type(id_r64_field_pair_type)                      :: paired_object
+  character(str_def)                                :: local_name
 
-  !Set up the paired_object
-  call paired_object%initialise(field, mesh%get_id())
-  call self%add_paired_object( paired_object )
+  if ( present(name) ) then
+    local_name = name
+  else
+    local_name = 'none'
+  end if
+
+  ! Set up the paired_object
+  if (present(ndata_first)) then
+    call paired_object%initialise(fs, mesh%get_id(), name=local_name, ndata_first=ndata_first)
+  else
+    call paired_object%initialise(fs, mesh%get_id(), name=local_name)
+  end if
+  call self%add_paired_object(paired_object)
+  call self%get_r64_field(mesh, field)
 
 end subroutine add_r64_field
 
 !> @brief Adds an r32 field to the inventory, that is used for intermesh mapping
-!> @param[in] field        The field that is to be copied into the inventory
-!> @param[in] source_mesh  The source mesh for the intermesh transform
-!> @param[in] target_mesh  The target mesh for the intermesh transform
-subroutine add_r32_intermesh_field(self, field, source_mesh, target_mesh)
+!!        and returns a pointer to it
+!> @param[out] field        Pointer to the field that is to be added
+!> @param[in]  fs           Function space for the field to be created
+!> @param[in]  source_mesh  The source mesh for the intermesh transform
+!> @param[in]  target_mesh  The target mesh for the intermesh transform
+subroutine add_r32_intermesh_field(self, field, fs, source_mesh, target_mesh)
 
   implicit none
 
-  class(inventory_by_mesh_type), intent(inout) :: self
-  type(field_r32_type),          intent(in)    :: field
-  type(mesh_type),               intent(in)    :: source_mesh
-  type(mesh_type),               intent(in)    :: target_mesh
-  type(id_r32_field_pair_type)                 :: paired_object
-  integer(kind=i_def)                          :: intermesh_id
+  class(inventory_by_mesh_type),      intent(inout) :: self
+  type(field_r32_type),      pointer, intent(out)   :: field
+  type(function_space_type), pointer, intent(in)    :: fs
+  type(mesh_type),                    intent(in)    :: source_mesh
+  type(mesh_type),                    intent(in)    :: target_mesh
+  type(id_r32_field_pair_type)                      :: paired_object
+  integer(kind=i_def)                               :: intermesh_id
 
   ! Make a unique ID for transform between source and target mesh
   intermesh_id = self%compute_intermesh_id(source_mesh, target_mesh)
   ! Set up the paired_object
-  call paired_object%initialise(field, intermesh_id)
-  call self%add_paired_object( paired_object )
+  call paired_object%initialise(fs, intermesh_id)
+  call self%add_paired_object(paired_object)
+  call self%get_r32_intermesh_field(source_mesh, target_mesh, field)
 
 end subroutine add_r32_intermesh_field
 
 !> @brief Adds an r64 field to the inventory, that is used for intermesh mapping
-!> @param[in] field        The field that is to be copied into the inventory
-!> @param[in] source_mesh  The source mesh for the intermesh transform
-!> @param[in] target_mesh  The target mesh for the intermesh transform
-subroutine add_r64_intermesh_field(self, field, source_mesh, target_mesh)
+!!        and returns a pointer to it
+!> @param[out] field        Pointer to the field that is to be added
+!> @param[in]  fs           Function space for the field to be created
+!> @param[in]  source_mesh  The source mesh for the intermesh transform
+!> @param[in]  target_mesh  The target mesh for the intermesh transform
+subroutine add_r64_intermesh_field(self, field, fs, source_mesh, target_mesh)
 
   implicit none
 
-  class(inventory_by_mesh_type), intent(inout) :: self
-  type(field_r64_type),          intent(in)    :: field
-  type(mesh_type),               intent(in)    :: source_mesh
-  type(mesh_type),               intent(in)    :: target_mesh
-  type(id_r64_field_pair_type)                 :: paired_object
-  integer(kind=i_def)                          :: intermesh_id
+  class(inventory_by_mesh_type),      intent(inout) :: self
+  type(field_r64_type),      pointer, intent(out)   :: field
+  type(function_space_type), pointer, intent(in)    :: fs
+  type(mesh_type),                    intent(in)    :: source_mesh
+  type(mesh_type),                    intent(in)    :: target_mesh
+  type(id_r64_field_pair_type)                      :: paired_object
+  integer(kind=i_def)                               :: intermesh_id
 
   ! Make a unique ID for transform between source and target mesh
   intermesh_id = self%compute_intermesh_id(source_mesh, target_mesh)
   ! Set up the paired_object
-  call paired_object%initialise(field, intermesh_id)
-  call self%add_paired_object( paired_object )
+  call paired_object%initialise(fs, intermesh_id)
+  call self%add_paired_object(paired_object)
+  call self%get_r64_intermesh_field(source_mesh, target_mesh, field)
 
 end subroutine add_r64_intermesh_field
 
-!> @brief Adds an integer field to the inventory
-!> @param[in] field       The field that is to be copied into the inventory
-!> @param[in] mesh        The mesh to pair the field with
-subroutine add_integer_field(self, field, mesh)
+!> @brief Adds an integer field to the inventory and returns a pointer to it
+!> @param[out] field        Pointer to the field that is to be added
+!> @param[in]  fs           Function space for the field to be created
+!> @param[in]  mesh         The mesh to pair the field with
+!> @param[in]  name         Optional name for the field
+!> @param[in]  ndata_first  Optional flag for ordering of multidata field DoFs
+subroutine add_integer_field(self, field, fs, mesh, name, ndata_first)
 
   implicit none
 
-  class(inventory_by_mesh_type), intent(inout) :: self
-  type(integer_field_type),      intent(in)    :: field
-  type(mesh_type),               intent(in)    :: mesh
-  type(id_integer_field_pair_type)             :: paired_object
+  class(inventory_by_mesh_type),      intent(inout) :: self
+  type(integer_field_type),  pointer, intent(out)   :: field
+  type(function_space_type), pointer, intent(in)    :: fs
+  type(mesh_type),                    intent(in)    :: mesh
+  character(*),             optional, intent(in)    :: name
+  logical(kind=l_def),      optional, intent(in)    :: ndata_first
+  type(id_integer_field_pair_type)                  :: paired_object
+  character(str_def)                                :: local_name
+
+  if ( present(name) ) then
+    local_name = name
+  else
+    local_name = 'none'
+  end if
 
   ! Set up the paired_object
-  call paired_object%initialise(field, mesh%get_id())
-  call self%add_paired_object( paired_object )
+  if (present(ndata_first)) then
+    call paired_object%initialise(fs, mesh%get_id(), name=local_name, ndata_first=ndata_first)
+  else
+    call paired_object%initialise(fs, mesh%get_id(), name=local_name)
+  end if
+  call self%add_paired_object(paired_object)
+  call self%get_integer_field(mesh, field)
 
 end subroutine add_integer_field
 
-!> @brief Adds an r32 field_array to the inventory
-!> @param[in] field_array The field_array that is to be copied into the inventory
-!> @param[in] mesh        The mesh to pair the field_array with
-subroutine add_r32_field_array(self, field_array, mesh)
+!> @brief Adds an r32 field_array to the inventory and returns a pointer to it
+!> @param[out] field_array  Pointer to the field_array that is to be added
+!> @param[in]  fs           Function space for the fields to be created
+!> @param[in]  array_size   Size of array of fields to be created
+!> @param[in]  mesh         The mesh to pair the field_array with
+subroutine add_r32_field_array(self, field_array, fs, array_size, mesh)
 
   implicit none
 
-  class(inventory_by_mesh_type),     intent(inout) :: self
-  type(field_r32_type),              intent(in)    :: field_array(:)
-  type(mesh_type),                   intent(in)    :: mesh
-  type(id_r32_field_array_pair_type)               :: paired_object
+  class(inventory_by_mesh_type),      intent(inout) :: self
+  type(field_r32_type),      pointer, intent(out)   :: field_array(:)
+  type(function_space_type), pointer, intent(in)    :: fs
+  integer(kind=i_def),                intent(in)    :: array_size
+  type(mesh_type),                    intent(in)    :: mesh
+  type(id_r32_field_array_pair_type)                :: paired_object
 
   ! Set up the paired_object
-  call paired_object%initialise(field_array, mesh%get_id())
-  call self%add_paired_object( paired_object )
+  call paired_object%initialise(fs, mesh%get_id(), array_size)
+  call self%add_paired_object(paired_object)
+  call self%get_r32_field_array(mesh, field_array)
 
 end subroutine add_r32_field_array
 
-!> @brief Adds an r64 field_array to the inventory
-!> @param[in] field_array The field_array that is to be copied into the inventory
-!> @param[in] mesh        The mesh to pair the field_array with
-subroutine add_r64_field_array(self, field_array, mesh)
+!> @brief Adds an r64 field_array to the inventory and returns a pointer to it
+!> @param[out] field_array  Pointer to the field_array that is to be added
+!> @param[in]  fs           Function space for the fields to be created
+!> @param[in]  array_size   Size of array of fields to be created
+!> @param[in]  mesh         The mesh to pair the field_array with
+subroutine add_r64_field_array(self, field_array, fs, array_size, mesh)
 
   implicit none
 
-  class(inventory_by_mesh_type),     intent(inout) :: self
-  type(field_r64_type),              intent(in)    :: field_array(:)
-  type(mesh_type),                   intent(in)    :: mesh
-  type(id_r64_field_array_pair_type)               :: paired_object
+  class(inventory_by_mesh_type),      intent(inout) :: self
+  type(field_r64_type),      pointer, intent(out)   :: field_array(:)
+  type(function_space_type), pointer, intent(in)    :: fs
+  integer(kind=i_def),                intent(in)    :: array_size
+  type(mesh_type),                    intent(in)    :: mesh
+  type(id_r64_field_array_pair_type)                :: paired_object
 
   ! Set up the paired_object
-  call paired_object%initialise(field_array, mesh%get_id())
-  call self%add_paired_object( paired_object )
+  call paired_object%initialise(fs, mesh%get_id(), array_size)
+  call self%add_paired_object(paired_object)
+  call self%get_r64_field_array(mesh, field_array)
 
 end subroutine add_r64_field_array
 
-!> @brief Adds an integer field_array to the inventory
-!> @param[in] field_array The field_array that is to be copied into the inventory
-!> @param[in] mesh        The mesh to pair the field_array with
-subroutine add_integer_field_array(self, field_array, mesh)
+!> @brief Adds an integer field_array to the inventory and returns a pointer to it
+!> @param[out] field_array  Pointer to the field_array that is to be added
+!> @param[in]  fs           Function space for the fields to be created
+!> @param[in]  array_size   Size of array of fields to be created
+!> @param[in]  mesh         The mesh to pair the field_array with
+subroutine add_integer_field_array(self, field_array, fs, array_size, mesh)
 
   implicit none
 
-  class(inventory_by_mesh_type),         intent(inout) :: self
-  type(integer_field_type),              intent(in)    :: field_array(:)
-  type(mesh_type),                       intent(in)    :: mesh
-  type(id_integer_field_array_pair_type)               :: paired_object
+  class(inventory_by_mesh_type),      intent(inout) :: self
+  type(integer_field_type),  pointer, intent(out)   :: field_array(:)
+  type(function_space_type), pointer, intent(in)    :: fs
+  integer(kind=i_def),                intent(in)    :: array_size
+  type(mesh_type),                    intent(in)    :: mesh
+  type(id_integer_field_array_pair_type)            :: paired_object
 
   ! Set up the paired_object
-  call paired_object%initialise(field_array, mesh%get_id())
-  call self%add_paired_object( paired_object )
+  call paired_object%initialise(fs, mesh%get_id(), array_size)
+  call self%add_paired_object(paired_object)
+  call self%get_integer_field_array(mesh, field_array)
 
 end subroutine add_integer_field_array
 
 !> @brief Adds an integer to the inventory
-!> @param[in] number      The integer that is to be copied into the inventory
+!> @param[in] number      The integer that is to be added to the inventory
 !> @param[in] mesh        The mesh to pair the integer with
 subroutine add_integer(self, number, mesh)
 
@@ -762,12 +866,12 @@ subroutine add_integer(self, number, mesh)
 
   ! Set up the paired_object
   call paired_object%initialise(number, mesh%get_id())
-  call self%add_paired_object( paired_object )
+  call self%add_paired_object(paired_object)
 
 end subroutine add_integer
 
 !> @brief Adds an integer_array to the inventory
-!> @param[in] numbers  The integer_array that is to be copied into the inventory
+!> @param[in] numbers  The integer_array that is to be added to the inventory
 !> @param[in] mesh     The mesh to pair the integer_array with
 subroutine add_integer_array(self, numbers, mesh)
 
@@ -780,14 +884,218 @@ subroutine add_integer_array(self, numbers, mesh)
 
   ! Set up the paired_object
   call paired_object%initialise(numbers, mesh%get_id())
-  call self%add_paired_object( paired_object )
+  call self%add_paired_object(paired_object)
 
 end subroutine add_integer_array
 
-!> @brief Adds an r32 operator to the inventory.
+!> @brief Adds an r32 operator to the inventory and returns a pointer to it
+!> @param[out] operator_out Pointer to the operator that is to be added
+!> @param[in]  fs_target    Function space for the target field of the operator
+!> @param[in]  fs_source    Function space for the source field of the operator
+!> @param[in]  mesh         The mesh to pair the operator with
+subroutine add_r32_operator(self, operator_out, fs_target, fs_source, mesh)
+
+  implicit none
+
+  class(inventory_by_mesh_type),      intent(inout) :: self
+  type(operator_r32_type),   pointer, intent(out)   :: operator_out
+  type(function_space_type), pointer, intent(in)    :: fs_target
+  type(function_space_type), pointer, intent(in)    :: fs_source
+  type(mesh_type),                    intent(in)    :: mesh
+  type(id_r32_operator_pair_type)                   :: paired_object
+
+  ! Set up the paired_object
+  call paired_object%initialise(fs_target, fs_source, mesh%get_id())
+  call self%add_paired_object(paired_object)
+  call self%get_r32_operator(mesh, operator_out)
+
+end subroutine add_r32_operator
+
+!> @brief Adds an r64 operator to the inventory and returns a pointer to it
+!> @param[out] operator_out Pointer to the operator that is to be added
+!> @param[in]  fs_target    Function space for the target field of the operator
+!> @param[in]  fs_source    Function space for the source field of the operator
+!> @param[in]  mesh         The mesh to pair the operator with
+subroutine add_r64_operator(self, operator_out, fs_target, fs_source, mesh)
+
+  implicit none
+
+  class(inventory_by_mesh_type),      intent(inout) :: self
+  type(operator_r64_type),   pointer, intent(out)   :: operator_out
+  type(function_space_type), pointer, intent(in)    :: fs_target
+  type(function_space_type), pointer, intent(in)    :: fs_source
+  type(mesh_type),                    intent(in)    :: mesh
+  type(id_r64_operator_pair_type)                   :: paired_object
+
+  ! Set up the paired_object
+  call paired_object%initialise(fs_target, fs_source, mesh%get_id())
+  call self%add_paired_object(paired_object)
+  call self%get_r64_operator(mesh, operator_out)
+
+end subroutine add_r64_operator
+
+! ============================================================================ !
+! COPY OBJECT ROUTINES -- these are specific to an inventory_by_mesh
+! ============================================================================ !
+
+!> @brief Copies an r32 field into the inventory
+!> @param[in] field       The field that is to be copied into the inventory
+!> @param[in] mesh        The mesh to pair the field with
+subroutine copy_r32_field(self, field, mesh)
+
+  implicit none
+
+  class(inventory_by_mesh_type), intent(inout) :: self
+  type(field_r32_type),          intent(in)    :: field
+  type(mesh_type),               intent(in)    :: mesh
+  type(id_r32_field_pair_type)                 :: paired_object
+
+  ! Set up the paired_object
+  call paired_object%copy_initialise(field, mesh%get_id())
+  call self%add_paired_object(paired_object)
+
+end subroutine copy_r32_field
+
+!> @brief Copies an r64 field into the inventory
+!> @param[in] field       The field that is to be copied into the inventory
+!> @param[in] mesh        The mesh to pair the field with
+subroutine copy_r64_field(self, field, mesh)
+
+  implicit none
+
+  class(inventory_by_mesh_type), intent(inout) :: self
+  type(field_r64_type),          intent(in)    :: field
+  type(mesh_type),               intent(in)    :: mesh
+  type(id_r64_field_pair_type)                 :: paired_object
+
+  ! Set up the paired_object
+  call paired_object%copy_initialise(field, mesh%get_id())
+  call self%add_paired_object(paired_object)
+
+end subroutine copy_r64_field
+
+!> @brief Copies an r32 field into the inventory, that is used for intermesh mapping
+!> @param[in] field        The field that is to be copied into the inventory
+!> @param[in] source_mesh  The source mesh for the intermesh transform
+!> @param[in] target_mesh  The target mesh for the intermesh transform
+subroutine copy_r32_intermesh_field(self, field, source_mesh, target_mesh)
+
+  implicit none
+
+  class(inventory_by_mesh_type), intent(inout) :: self
+  type(field_r32_type),          intent(in)    :: field
+  type(mesh_type),               intent(in)    :: source_mesh
+  type(mesh_type),               intent(in)    :: target_mesh
+  type(id_r32_field_pair_type)                 :: paired_object
+  integer(kind=i_def)                          :: intermesh_id
+
+  ! Make a unique ID for transform between source and target mesh
+  intermesh_id = self%compute_intermesh_id(source_mesh, target_mesh)
+  ! Set up the paired_object
+  call paired_object%copy_initialise(field, intermesh_id)
+  call self%add_paired_object(paired_object)
+
+end subroutine copy_r32_intermesh_field
+
+!> @brief Copies an r64 field into the inventory, that is used for intermesh mapping
+!> @param[in] field        The field that is to be copied into the inventory
+!> @param[in] source_mesh  The source mesh for the intermesh transform
+!> @param[in] target_mesh  The target mesh for the intermesh transform
+subroutine copy_r64_intermesh_field(self, field, source_mesh, target_mesh)
+
+  implicit none
+
+  class(inventory_by_mesh_type), intent(inout) :: self
+  type(field_r64_type),          intent(in)    :: field
+  type(mesh_type),               intent(in)    :: source_mesh
+  type(mesh_type),               intent(in)    :: target_mesh
+  type(id_r64_field_pair_type)                 :: paired_object
+  integer(kind=i_def)                          :: intermesh_id
+
+  ! Make a unique ID for transform between source and target mesh
+  intermesh_id = self%compute_intermesh_id(source_mesh, target_mesh)
+  ! Set up the paired_object
+  call paired_object%copy_initialise(field, intermesh_id)
+  call self%add_paired_object(paired_object)
+
+end subroutine copy_r64_intermesh_field
+
+!> @brief Copies an integer field into the inventory
+!> @param[in] field       The field that is to be copied into the inventory
+!> @param[in] mesh        The mesh to pair the field with
+subroutine copy_integer_field(self, field, mesh)
+
+  implicit none
+
+  class(inventory_by_mesh_type), intent(inout) :: self
+  type(integer_field_type),      intent(in)    :: field
+  type(mesh_type),               intent(in)    :: mesh
+  type(id_integer_field_pair_type)             :: paired_object
+
+  ! Set up the paired_object
+  call paired_object%copy_initialise(field, mesh%get_id())
+  call self%add_paired_object(paired_object)
+
+end subroutine copy_integer_field
+
+!> @brief Copies an r32 field_array into the inventory
+!> @param[in] field_array The field_array that is to be copied into the inventory
+!> @param[in] mesh        The mesh to pair the field_array with
+subroutine copy_r32_field_array(self, field_array, mesh)
+
+  implicit none
+
+  class(inventory_by_mesh_type),     intent(inout) :: self
+  type(field_r32_type),              intent(in)    :: field_array(:)
+  type(mesh_type),                   intent(in)    :: mesh
+  type(id_r32_field_array_pair_type)               :: paired_object
+
+  ! Set up the paired_object
+  call paired_object%copy_initialise(field_array, mesh%get_id())
+  call self%add_paired_object(paired_object)
+
+end subroutine copy_r32_field_array
+
+!> @brief Copies an r64 field_array into the inventory
+!> @param[in] field_array The field_array that is to be copied into the inventory
+!> @param[in] mesh        The mesh to pair the field_array with
+subroutine copy_r64_field_array(self, field_array, mesh)
+
+  implicit none
+
+  class(inventory_by_mesh_type),     intent(inout) :: self
+  type(field_r64_type),              intent(in)    :: field_array(:)
+  type(mesh_type),                   intent(in)    :: mesh
+  type(id_r64_field_array_pair_type)               :: paired_object
+
+  ! Set up the paired_object
+  call paired_object%copy_initialise(field_array, mesh%get_id())
+  call self%add_paired_object(paired_object)
+
+end subroutine copy_r64_field_array
+
+!> @brief Copies an integer field_array into the inventory
+!> @param[in] field_array The field_array that is to be copied into the inventory
+!> @param[in] mesh        The mesh to pair the field_array with
+subroutine copy_integer_field_array(self, field_array, mesh)
+
+  implicit none
+
+  class(inventory_by_mesh_type),         intent(inout) :: self
+  type(integer_field_type),              intent(in)    :: field_array(:)
+  type(mesh_type),                       intent(in)    :: mesh
+  type(id_integer_field_array_pair_type)               :: paired_object
+
+  ! Set up the paired_object
+  call paired_object%copy_initialise(field_array, mesh%get_id())
+  call self%add_paired_object(paired_object)
+
+end subroutine copy_integer_field_array
+
+!> @brief Copies an r32 operator into the inventory.
 !> @param[in] operator_in The operator that is to be copied into the inventory
 !> @param[in] mesh        The mesh to pair the operator with
-subroutine add_r32_operator(self, operator_in, mesh)
+subroutine copy_r32_operator(self, operator_in, mesh)
 
   implicit none
 
@@ -797,15 +1105,15 @@ subroutine add_r32_operator(self, operator_in, mesh)
   type(id_r32_operator_pair_type)                  :: paired_object
 
   ! Set up the paired_object
-  call paired_object%initialise(operator_in, mesh%get_id())
-  call self%add_paired_object( paired_object )
+  call paired_object%copy_initialise(operator_in, mesh%get_id())
+  call self%add_paired_object(paired_object)
 
-end subroutine add_r32_operator
+end subroutine copy_r32_operator
 
-!> @brief Adds an r64 operator to the inventory.
+!> @brief Copies an r64 operator into the inventory.
 !> @param[in] operator_in The operator that is to be copied into the inventory
 !> @param[in] mesh        The mesh to pair the operator with
-subroutine add_r64_operator(self, operator_in, mesh)
+subroutine copy_r64_operator(self, operator_in, mesh)
 
   implicit none
 
@@ -815,10 +1123,10 @@ subroutine add_r64_operator(self, operator_in, mesh)
   type(id_r64_operator_pair_type)                  :: paired_object
 
   ! Set up the paired_object
-  call paired_object%initialise(operator_in, mesh%get_id())
-  call self%add_paired_object( paired_object )
+  call paired_object%copy_initialise(operator_in, mesh%get_id())
+  call self%add_paired_object(paired_object)
 
-end subroutine add_r64_operator
+end subroutine copy_r64_operator
 
 ! ============================================================================ !
 ! GET OBJECT ROUTINES -- these are specific to an inventory_by_mesh

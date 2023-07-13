@@ -109,39 +109,53 @@ contains
     type(quadrature_xyoz_type), pointer :: qr => null()
     type(field_type)                    :: dummy_theta
     type(field_type)                    :: dummy_w2_field
-    type(field_type)                    :: consist_w3_to_sh_w3_rdef(2)
-    type(field_type)                    :: consist_w3_to_sh_w3_rtran(2)
-    type(field_type)                    :: proj_mr_to_sh_rho_rhs_op(4)
-    type(field_type)                    :: intermesh_weights_w2
-    type(field_type)                    :: intermesh_weights_w3_rdef
-    type(r_tran_field_type)             :: intermesh_weights_w3_rtran
+    type(field_type),           pointer :: consist_w3_to_sh_w3_rdef(:) => null()
+    type(field_type),           pointer :: consist_w3_to_sh_w3_rtran(:) => null()
+    type(field_type),           pointer :: proj_mr_to_sh_rho_rhs_op(:) => null()
+    type(field_type),           pointer :: intermesh_weights_w2 => null()
+    type(field_type),           pointer :: intermesh_weights_w3_rdef => null()
+    type(r_tran_field_type),    pointer :: intermesh_weights_w3_rtran => null()
     logical(kind=l_def)                 :: any_wt_eqn_conservative
     character(str_def), allocatable     :: all_mesh_names(:)
+    integer(kind=i_def)                 :: num_meshes
+    integer(kind=i_def)                 :: max_num_shifted
+    integer(kind=i_def)                 :: max_num_mesh_maps
 
     integer(i_def) :: i, j, k, target_ncells, source_ncells
 
     if ( subroutine_timers ) call timer('intermesh_constants_alg')
     call log_event( "Gungho: creating intermesh_constants", LOG_LEVEL_INFO )
 
+    ! To loop through mesh collection, get all mesh names
+    ! Then get mesh from collection using these names
+    all_mesh_names = mesh_collection%get_mesh_names()
+
+    num_meshes = SIZE(all_mesh_names)
+    ! Number of prime -> shifted mesh interactions. Can't have more than half
+    ! of the meshes being shifted meshes. Ensure we have at least one space.
+    max_num_shifted = min(num_meshes / 2, 1)
+    ! Max number of horizontal mesh maps. This is the triangle number for (n-1).
+    ! Ensure that we have at least one.
+    max_num_mesh_maps = min(num_meshes*(num_meshes - 1)/2, 1)
+
     !======================== Initialise inventories ==========================!
 
-    call proj_mr_to_sh_rho_inventory%initialise(name="proj_mr_to_sh_rho_rhs_op", table_len=5)
-    call consist_w3_to_sh_w3_rdef_inventory%initialise(name="consist_w3_to_sh_w3_rdef", table_len=5)
-    call consist_w3_to_sh_w3_rtran_inventory%initialise(name="consist_w3_to_sh_w3_rtran", table_len=5)
-    call intermesh_wghts_w2_inventory%initialise(name="intermesh_weights_w2", table_len=20)
-    call intermesh_wghts_rdef_w3_inventory%initialise(name="intermesh_weights_w3_rdef", table_len=20)
-    call intermesh_wghts_rtran_w3_inventory%initialise(name="intermesh_weights_w3_rtran", table_len=20)
+    call proj_mr_to_sh_rho_inventory%initialise(name="proj_mr_to_sh_rho_rhs_op", table_len=max_num_shifted)
+    call consist_w3_to_sh_w3_rdef_inventory%initialise(name="consist_w3_to_sh_w3_rdef", table_len=max_num_shifted)
+    call consist_w3_to_sh_w3_rtran_inventory%initialise(name="consist_w3_to_sh_w3_rtran", table_len=max_num_shifted)
+    call intermesh_wghts_w2_inventory%initialise(name="intermesh_weights_w2", table_len=max_num_mesh_maps)
+    call intermesh_wghts_rdef_w3_inventory%initialise(name="intermesh_weights_w3_rdef", table_len=max_num_mesh_maps)
+    call intermesh_wghts_rtran_w3_inventory%initialise(name="intermesh_weights_w3_rtran", table_len=max_num_mesh_maps)
 
     any_wt_eqn_conservative = check_any_wt_eqn_conservative()
     qr => get_qr()
 
     ! ============================= Start loop ================================!
 
-    ! To loop through mesh collection, get all mesh names
-    ! Then get mesh from collection using these names
+    ! Best way to loop through mesh collection is to get all mesh names, then
+    ! to get mesh from collection using these names
     all_mesh_names = mesh_collection%get_mesh_names()
-
-    do i = 1, SIZE(all_mesh_names)
+    do i = 1, num_meshes
       target_mesh => mesh_collection%get_mesh(all_mesh_names(i))
 
       ! =================== CONSTANTS FOR SHIFTED MESH ======================= !
@@ -151,11 +165,11 @@ contains
         prime_extrusion_mesh => mesh_collection%get_mesh(target_mesh, PRIME_EXTRUSION)
         w3_fs => function_space_collection%get_fs(prime_extrusion_mesh, 0, W3)
 
-        ! ============= Operator for mapping W3 to shifted W3 ============== !
-        do k = 1, 2
-          call consist_w3_to_sh_w3_rdef(k)%initialise(vector_space = w3_fs)
-          call consist_w3_to_sh_w3_rtran(k)%initialise(vector_space = w3_fs)
-        end do
+        ! ============== Operator for mapping W3 to shifted W3 =============== !
+        call consist_w3_to_sh_w3_rdef_inventory%add_field_array(               &
+                      consist_w3_to_sh_w3_rdef, w3_fs, 2, prime_extrusion_mesh)
+        call consist_w3_to_sh_w3_rtran_inventory%add_field_array(              &
+                      consist_w3_to_sh_w3_rtran, w3_fs, 2, prime_extrusion_mesh)
 
         mm_w3 => get_mass_matrix(W3, prime_extrusion_mesh%get_id())
         mm_inv_sh_w3 => get_inverse_W3_mass_matrix(target_mesh%get_id())
@@ -169,12 +183,8 @@ contains
                                     consist_w3_to_sh_w3_rdef(k))
         end do
 
-        call consist_w3_to_sh_w3_rdef_inventory%add_field_array(             &
-                              consist_w3_to_sh_w3_rdef, prime_extrusion_mesh)
-        call consist_w3_to_sh_w3_rtran_inventory%add_field_array(             &
-                              consist_w3_to_sh_w3_rtran, prime_extrusion_mesh)
-
-        nullify( mm_w3, mm_inv_sh_w3 )
+        nullify( mm_w3, mm_inv_sh_w3, consist_w3_to_sh_w3_rtran, &
+                 consist_w3_to_sh_w3_rdef )
 
 
         if ( any_wt_eqn_conservative ) then
@@ -185,8 +195,10 @@ contains
           double_level_mesh => mesh_collection%get_mesh(target_mesh, DOUBLE_LEVEL)
           double_level_chi => get_coordinates(double_level_mesh%get_id())
 
+          call proj_mr_to_sh_rho_inventory%add_field_array(                    &
+                       proj_mr_to_sh_rho_rhs_op, w3_fs, 4, prime_extrusion_mesh)
+
           do k = 1, 4
-            call proj_mr_to_sh_rho_rhs_op(k)%initialise(vector_space = w3_fs)
             call invoke( setval_c(proj_mr_to_sh_rho_rhs_op(k), 0.0_r_def) )
           end do
 
@@ -199,17 +211,15 @@ contains
                                                     dummy_theta,              &
                                                     qr ) )
 
-          call proj_mr_to_sh_rho_inventory%add_field_array(                   &
-                                proj_mr_to_sh_rho_rhs_op, prime_extrusion_mesh)
-
-          nullify( panel_id, double_level_mesh, double_level_chi, wtheta_fs )
+          nullify( panel_id, double_level_mesh, double_level_chi, wtheta_fs, &
+                   proj_mr_to_sh_rho_rhs_op )
         end if
         nullify( prime_extrusion_mesh, w3_fs )
       end if
 
       ! ================ LOOP FOR HORIZONTAL MESH TRANSFORMS ================= !
 
-      do j = 1, SIZE(all_mesh_names)
+      do j = 1, num_meshes
         source_mesh => mesh_collection%get_mesh(all_mesh_names(j))
 
         ! Only do this for prime extrusions, and if there is a mesh map
@@ -230,14 +240,12 @@ contains
 
             call dummy_w2_field%initialise(vector_space = source_w2_fs)
             call invoke( setval_c(dummy_w2_field, 0.0_r_def) )
-            call intermesh_weights_w2%initialise(vector_space = target_w2_fs)
+            call intermesh_wghts_w2_inventory%add_field(                       &
+                  intermesh_weights_w2, target_w2_fs, source_mesh, target_mesh)
 
-            call invoke( setval_c(intermesh_weights_w2, 0.0_r_def),           &
-                        weights_prolong_w2_kernel_type(intermesh_weights_w2, &
-                                                       dummy_w2_field) )
-            call intermesh_wghts_w2_inventory%add_field(intermesh_weights_w2, &
-                                                        source_mesh, target_mesh)
-
+            call invoke( setval_c(intermesh_weights_w2, 0.0_r_def),            &
+                         weights_prolong_w2_kernel_type(intermesh_weights_w2,  &
+                                                        dummy_w2_field) )
 
             source_w3_fs => function_space_collection%get_fs(source_mesh, 0, W3)
             target_w3_fs => function_space_collection%get_fs(target_mesh, 0, W3)
@@ -245,23 +253,22 @@ contains
             mm_w3_fine => get_mass_matrix_diagonal(W3, target_mesh%get_id())
             mm_w3_coarse => get_mass_matrix_diagonal(W3, source_mesh%get_id())
 
-            call intermesh_weights_w3_rdef%initialise(vector_space = target_w3_fs)
-            call intermesh_weights_w3_rtran%initialise(vector_space = target_w3_fs)
+            call intermesh_wghts_rdef_w3_inventory%add_field(                  &
+                                    intermesh_weights_w3_rdef, target_w3_fs,   &
+                                    source_mesh, target_mesh)
+            call intermesh_wghts_rtran_w3_inventory%add_field(                 &
+                                    intermesh_weights_w3_rtran, target_w3_fs,  &
+                                    source_mesh, target_mesh)
 
             call invoke( weights_intermesh_w3_kernel_type(                  &
                                                 intermesh_weights_w3_rdef,  &
                                                 mm_w3_fine, mm_w3_coarse) )
-            call intermesh_wghts_rdef_w3_inventory%add_field(               &
-                                                intermesh_weights_w3_rdef,  &
-                                                source_mesh, target_mesh)
             call invoke_copy_to_rtran(intermesh_weights_w3_rtran,           &
                                       intermesh_weights_w3_rdef)
-            call intermesh_wghts_rtran_w3_inventory%add_field(              &
-                                                intermesh_weights_w3_rtran, &
-                                                source_mesh, target_mesh)
 
             nullify( source_w2_fs, target_w2_fs, source_w3_fs, target_w3_fs, &
-                     mm_w3_fine, mm_w3_coarse )
+                     mm_w3_fine, mm_w3_coarse, intermesh_weights_w2,         &
+                     intermesh_weights_w3_rdef, intermesh_weights_w3_rtran )
           end if
         end if
         nullify( source_mesh )
@@ -274,7 +281,6 @@ contains
     if ( subroutine_timers ) call timer('intermesh_constants_alg')
 
   end subroutine create_intermesh_constants
-
 
   !> @brief Returns a pointer to the Wtheta to shifted W3 ints
   !> @param[in] prime_extrusion_mesh  The prime extrusion mesh for the transform

@@ -84,18 +84,18 @@ contains
     type(field_type),    target, intent(in) :: chi(:)
     type(field_type),    target, intent(in) :: panel_id
 
-    type(operator_type) :: mm_w0
-    type(operator_type) :: mm_w1
-    type(operator_type) :: mm_w2
-    type(operator_type) :: mm_w2b
-    type(operator_type) :: mm_w3
-    type(operator_type) :: mm_wtheta
+    type(operator_type), pointer :: mm_w0 => null()
+    type(operator_type), pointer :: mm_w1 => null()
+    type(operator_type), pointer :: mm_w2 => null()
+    type(operator_type), pointer :: mm_w2b => null()
+    type(operator_type), pointer :: mm_w3 => null()
+    type(operator_type), pointer :: mm_wtheta => null()
 
     ! Differential operators
-    type(operator_type) :: div
-    type(operator_type) :: grad
-    type(operator_type) :: curl
-    type(operator_type) :: broken_div
+    type(operator_type), pointer :: div => null()
+    type(operator_type), pointer :: grad => null()
+    type(operator_type), pointer :: curl => null()
+    type(operator_type), pointer :: broken_div => null()
 
     ! Internal variables
     type(function_space_type), pointer :: w0_fs     => null()
@@ -141,19 +141,16 @@ contains
     !=================== Create de Rham cochain operators ===================!
 
     ! Set up all mass matrices and operators
-    ! Mass matrices
-    call mm_w0%initialise( w0_fs, w0_fs )
-    call mm_w1%initialise( w1_fs, w1_fs )
-    call mm_w2%initialise( w2_fs, w2_fs )
-    call mm_w2b%initialise( w2b_fs, w2b_fs )
-    call mm_w3%initialise( w3_fs, w3_fs )
-    call mm_wtheta%initialise( wtheta_fs, wtheta_fs )
-
-    ! Differential operators
-    call div%initialise( w3_fs, w2_fs )
-    call grad%initialise( w1_fs, w0_fs )
-    call curl%initialise( w2_fs, w1_fs )
-    call broken_div%initialise( w3_fs, w2b_fs )
+    call mm_w0_inventory%add_operator( mm_w0, w0_fs, w0_fs, mesh )
+    call mm_w1_inventory%add_operator( mm_w1, w1_fs, w1_fs, mesh )
+    call mm_w2_inventory%add_operator( mm_w2, w2_fs, w2_fs, mesh )
+    call mm_w2b_inventory%add_operator( mm_w2b, w2b_fs, w2b_fs, mesh )
+    call mm_w3_inventory%add_operator( mm_w3, w3_fs, w3_fs, mesh )
+    call mm_wtheta_inventory%add_operator( mm_wtheta, wtheta_fs, wtheta_fs, mesh )
+    call div_inventory%add_operator( div, w3_fs, w2_fs, mesh )
+    call grad_inventory%add_operator( grad, w1_fs, w0_fs, mesh )
+    call curl_inventory%add_operator( curl, w2_fs, w1_fs, mesh )
+    call broken_div_inventory%add_operator( broken_div, w3_fs, w2b_fs, mesh )
 
     call invoke( name = "create_de_rham_matrices",                      &
                  compute_derham_matrices_kernel_type(mm_w0, mm_w1,      &
@@ -165,25 +162,9 @@ contains
 
     !===================== Add operators to inventories =======================!
 
-    call mm_w0_inventory%add_operator( mm_w0, mesh )
-    call mm_w1_inventory%add_operator( mm_w1, mesh )
-    call mm_w2_inventory%add_operator( mm_w2, mesh )
-    call mm_w2b_inventory%add_operator( mm_w2b, mesh )
-    call mm_w3_inventory%add_operator( mm_w3, mesh )
-    call mm_wtheta_inventory%add_operator( mm_wtheta, mesh )
-    call div_inventory%add_operator( div, mesh )
-    call grad_inventory%add_operator( grad, mesh )
-    call curl_inventory%add_operator( curl, mesh )
-    call broken_div_inventory%add_operator( broken_div, mesh )
-
-    nullify( wtheta_fs )
-    nullify( w3_fs  )
-    nullify( w2v_fs )
-    nullify( w2h_fs )
-    nullify( w2b_fs )
-    nullify( w2_fs  )
-    nullify( w1_fs  )
-    nullify( w0_fs  )
+    nullify( wtheta_fs, w3_fs, w2v_fs, w2h_fs, w2b_fs, w2_fs, w1_fs, w0_fs,  &
+             mm_w0, mm_w1, mm_w2, mm_w2b, mm_w3, mm_wtheta, grad, curl, div, &
+             broken_div )
 
     if ( subroutine_timers ) call timer('skeleton_constants_alg')
     call log_event( "Skeleton: created FEM constants", LOG_LEVEL_INFO )
@@ -196,9 +177,7 @@ contains
     implicit none
     type(mesh_type),       intent(in) :: mesh
     type(operator_type),   pointer    :: div_op
-    character(str_def)                :: op_name
 
-    op_name = 'div'
     call div_inventory%get_operator(mesh, div_op)
 
     if (.not. div_op%is_initialised()) then

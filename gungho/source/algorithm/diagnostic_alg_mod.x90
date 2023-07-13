@@ -55,8 +55,7 @@ contains
   !> @param[in] mesh            Mesh
   subroutine divergence_diagnostic_alg(divergence, l2, u, mesh)
     use dg_matrix_vector_kernel_mod,  only: dg_matrix_vector_kernel_type
-    use fem_constants_mod,            only: get_inverse_w3_mass_matrix, &
-                                            get_div
+    use fem_constants_mod,            only: get_im3_div
     use constants_mod,                only: pi
 
     implicit none
@@ -65,17 +64,12 @@ contains
     type(field_type), intent(in)    :: u
     type(mesh_type),  intent(in), pointer :: mesh
 
-    type(field_type)             :: div_u
-    type(operator_type), pointer :: div => null(), m3_inv => null()
+    type(operator_type), pointer :: div => null()
 
     call divergence%initialise( vector_space = function_space_collection%get_fs(mesh,element_order, W3) )
-    call div_u%initialise( vector_space = function_space_collection%get_fs(mesh,element_order, W3) )
-    div    => get_div(mesh%get_id())
-    m3_inv => get_inverse_w3_mass_matrix(mesh%get_id())
+    div => get_im3_div(mesh%get_id())
     ! Compute l2 norm of area integrated quantity
-    call invoke( dg_matrix_vector_kernel_type( div_u, u, div ),             &
-                ! Convert to pointwise W3 field for output
-                 dg_matrix_vector_kernel_type( divergence, div_u , m3_inv ) )
+    call invoke( dg_matrix_vector_kernel_type( divergence, u, div ) )
     l2 = l2_norm_alg(divergence)
 
   end subroutine divergence_diagnostic_alg

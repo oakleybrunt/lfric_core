@@ -166,8 +166,8 @@ contains
     ! Create a inventory_by_local_mesh_A and put fields in it
     call test_inventory_by_local_mesh_A%initialise(name="test_inventory_of_fields", &
                                              table_len=5)
-    call test_inventory_by_local_mesh_A%add_field(test_field_A, local_mesh_A)
-    call test_inventory_by_local_mesh_A%add_field(test_field_B, local_mesh_B)
+    call test_inventory_by_local_mesh_A%copy_field(test_field_A, local_mesh_A)
+    call test_inventory_by_local_mesh_A%copy_field(test_field_B, local_mesh_B)
 
     !--- Check fields exist in inventory
     exists = test_inventory_by_local_mesh_A%paired_object_exists(local_mesh_A%get_id())
@@ -196,7 +196,7 @@ contains
     @assertFalse(exists)
 
     ! Check we can add the field back into the inventory
-    call test_inventory_by_local_mesh_A%add_field(test_field_A, local_mesh_A)
+    call test_inventory_by_local_mesh_A%copy_field(test_field_A, local_mesh_A)
     call test_inventory_by_local_mesh_A%get_field(local_mesh_A, returned_field_A)
     returned_field_A_p = returned_field_A%get_proxy()
     @assertEqual(99.0_r_def, returned_field_A_p%data(1), tol)

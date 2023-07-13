@@ -335,8 +335,8 @@ contains
     allocate(nodes_lon( coord_dim_owned ))
     allocate(nodes_lat( coord_dim_owned ))
 
-    allocate(bnd_nodes_lon(1,size(nodes_lon)))
-    allocate(bnd_nodes_lat(1,size(nodes_lat)))
+    allocate(bnd_nodes_lon(1,size(nodes_lon_full)))
+    allocate(bnd_nodes_lat(1,size(nodes_lat_full)))
 
     allocate(bnd_faces_lon(nodes_per_face,num_face_local))
     allocate(bnd_faces_lat(nodes_per_face,num_face_local))
@@ -352,8 +352,8 @@ contains
                                   bnd_edges_lon, bnd_edges_lat )
 
     ! Construct node bounds arrays
-    bnd_nodes_lon=(reshape(nodes_lon, (/1, size(nodes_lon)/) ) )
-    bnd_nodes_lat=(reshape(nodes_lat, (/1, size(nodes_lat)/) ) )
+    bnd_nodes_lon=(reshape(nodes_lon_full, (/1, size(nodes_lon_full)/) ) )
+    bnd_nodes_lat=(reshape(nodes_lat_full, (/1, size(nodes_lat_full)/) ) )
 
     ! Initialise XIOS UGRID domains
     if (mesh_is_prime_mesh) then

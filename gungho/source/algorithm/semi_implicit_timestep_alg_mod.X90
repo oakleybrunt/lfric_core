@@ -400,8 +400,8 @@ contains
 
     qr => get_qr()
 
-    mm_wt    => get_mass_matrix(Wtheta, mesh%get_id())
-    mm_vel   => get_mass_matrix(W2,     mesh%get_id())
+    mm_wt  => get_mass_matrix(Wtheta, mesh%get_id())
+    mm_vel => get_mass_matrix(W2, mesh%get_id())
 
     !--------------------------------------------------------------------
     ! If winds are being spunup overwrite the local copy of the winds

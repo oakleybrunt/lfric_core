@@ -167,8 +167,8 @@ contains
     ! Create a inventory_by_mesh_A and put fields in it
     call test_inventory_by_mesh_A%initialise(name="test_inventory_of_fields", &
                                              table_len=5)
-    call test_inventory_by_mesh_A%add_field(test_field_A, this%mesh_A)
-    call test_inventory_by_mesh_A%add_field(test_field_B, this%mesh_B)
+    call test_inventory_by_mesh_A%copy_field(test_field_A, this%mesh_A)
+    call test_inventory_by_mesh_A%copy_field(test_field_B, this%mesh_B)
 
     !--- Check fields exist in inventory
     exists = test_inventory_by_mesh_A%paired_object_exists(this%mesh_A%get_id())
@@ -197,7 +197,7 @@ contains
     @assertFalse(exists)
 
     ! Check we can add the field back into the inventory
-    call test_inventory_by_mesh_A%add_field(test_field_A, this%mesh_A)
+    call test_inventory_by_mesh_A%copy_field(test_field_A, this%mesh_A)
     call test_inventory_by_mesh_A%get_field(this%mesh_A, returned_field_A)
     returned_field_A_p = returned_field_A%get_proxy()
     @assertEqual(99.0_r_def, returned_field_A_p%data(1), tol)
@@ -206,8 +206,8 @@ contains
     ! Create a inventory_by_mesh_B and put fields in it
     call test_inventory_by_mesh_B%initialise(name="test_inventory_of_fields", &
                                              table_len=5)
-    call test_inventory_by_mesh_B%add_operator(test_op_A, this%mesh_A)
-    call test_inventory_by_mesh_B%add_operator(test_op_B, this%mesh_B)
+    call test_inventory_by_mesh_B%copy_operator(test_op_A, this%mesh_A)
+    call test_inventory_by_mesh_B%copy_operator(test_op_B, this%mesh_B)
 
     !---Check operators exist in inventory
     exists = test_inventory_by_mesh_B%paired_object_exists(this%mesh_A%get_id())
@@ -236,7 +236,7 @@ contains
     @assertFalse(exists)
 
     ! Check we can add the operator back into the inventory
-    call test_inventory_by_mesh_B%add_operator(test_op_A, this%mesh_A)
+    call test_inventory_by_mesh_B%copy_operator(test_op_A, this%mesh_A)
     call test_inventory_by_mesh_B%get_operator(this%mesh_A, returned_op_A)
     returned_op_A_p = returned_op_A%get_proxy()
     @assertEqual(20.1_r_def, returned_op_A_p%local_stencil(1,1,1), tol)

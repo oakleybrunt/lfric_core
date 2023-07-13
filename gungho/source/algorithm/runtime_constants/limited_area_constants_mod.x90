@@ -27,6 +27,7 @@ module limited_area_constants_mod
   use function_space_collection_mod,     only: function_space_collection
   use function_space_chain_mod,          only: multigrid_function_space_chain
   use fs_continuity_mod,                 only: W2, W3, Wtheta
+  use inventory_by_mesh_mod,             only: inventory_by_mesh_type
   use io_config_mod,                     only: subroutine_timers
   use lfric_xios_write_mod,              only: write_field_edge, &
                                                write_field_face, &
@@ -39,10 +40,8 @@ module limited_area_constants_mod
   use mesh_mod,                          only: mesh_type
   use restrict_scalar_masked_kernel_mod, only: restrict_scalar_masked_kernel_type
   use restrict_masked_w2_kernel_mod,     only: restrict_masked_w2_kernel_type
-  use runtime_tools_mod,                 only: find_mesh_index,        &
-                                               primary_mesh_label,     &
-                                               twod_mesh_label,        &
-                                               check_initialised_field
+  use runtime_tools_mod,                 only: primary_mesh_label,     &
+                                               twod_mesh_label
   use timer_mod,                         only: timer
 
 
@@ -81,36 +80,36 @@ module limited_area_constants_mod
   ! The mask lists are associated with and in the same order as the
   ! mesh_id_list. i.e. They are lists of fields that define masks on all the
   ! meshes.
-  ! The mask_w2_list, masks_w3_list and mask_wtheta_list give
+  ! The mask_w2_inventory, masks_w3_inventory and mask_wtheta_inventory give
   ! fields that are 1.0 in the interior of the domain (as defined by the
   ! solver boundary) and 0.0 elsewhere, for the W2, W3 and Wtheta
   ! function spaces.
-  ! The mask_lbc*_list give fields that are 0.0 in the interior but are 1.0
+  ! The mask_lbc*_inventory give fields that are 0.0 in the interior but are 1.0
   ! elsewhere, as defined by the width of the Lateral Boundary
   ! Conditions (LBCs),for the W2, W3 and Wtheta function spaces.
-  ! The mask_blend*_list gives fields that are similar to the mask_lbc*_list
+  ! The mask_blend*_inventory gives fields that are similar to the mask_lbc*_inventory
   ! but with weights that ramp from 1.0 to 0.0 in the interior, for the W2,
   ! W3 and Wtheta function spaces.
-  ! The mask_boundary_w2_list gives fields that are 1.0 on the solver boundary
+  ! The mask_boundary_w2_inventory gives fields that are 1.0 on the solver boundary
   ! (in the W2 space) and 0.0 elsewhere.
   ! onion_layers is a single field that identifies the cells in each concentric
   ! layer of the LAM blending zone, on the primary mesh.
-  type(field_type), allocatable, target :: mask_w2_list(:)
-  type(field_type), allocatable, target :: mask_w3_list(:)
-  type(field_type), allocatable, target :: mask_wtheta_list(:)
-  type(field_type), allocatable, target :: mask_lbc_w2_list(:)
-  type(field_type), allocatable, target :: mask_lbc_w3_list(:)
-  type(field_type), allocatable, target :: mask_lbc_wtheta_list(:)
-  type(field_type), allocatable, target :: mask_blend_w2_list(:)
-  type(field_type), allocatable, target :: mask_blend_w3_list(:)
-  type(field_type), allocatable, target :: mask_blend_wtheta_list(:)
-  type(field_type), allocatable, target :: mask_boundary_w2_list(:)
+  type(inventory_by_mesh_type) :: mask_w2_inventory
+  type(inventory_by_mesh_type) :: mask_w3_inventory
+  type(inventory_by_mesh_type) :: mask_wtheta_inventory
+  type(inventory_by_mesh_type) :: mask_lbc_w2_inventory
+  type(inventory_by_mesh_type) :: mask_lbc_w3_inventory
+  type(inventory_by_mesh_type) :: mask_lbc_wtheta_inventory
+  type(inventory_by_mesh_type) :: mask_blend_w2_inventory
+  type(inventory_by_mesh_type) :: mask_blend_w3_inventory
+  type(inventory_by_mesh_type) :: mask_blend_wtheta_inventory
+  type(inventory_by_mesh_type) :: mask_boundary_w2_inventory
   type(field_type), target :: onion_layers
 
   ! r_solver masks
-  type(r_solver_field_type), allocatable, target :: mask_w2_list_r_solver(:)
-  type(r_solver_field_type), allocatable, target :: mask_w3_list_r_solver(:)
-  type(r_solver_field_type), allocatable, target :: mask_wt_list_r_solver(:)
+  type(inventory_by_mesh_type) :: mask_w2_r_solver_inventory
+  type(inventory_by_mesh_type) :: mask_w3_r_solver_inventory
+  type(inventory_by_mesh_type) :: mask_wt_r_solver_inventory
 
   ! Public functions to create and access the module contents
   public :: create_limited_area_constants
@@ -161,19 +160,33 @@ contains
     type(field_type) :: w2perp_mask
     type(field_type) :: w2interior_mask
 
+    ! Temporary mask fields to point to those in inventories
+    type(field_type),          pointer :: mask_w2 => null()
+    type(field_type),          pointer :: mask_w3 => null()
+    type(field_type),          pointer :: mask_wtheta => null()
+    type(field_type),          pointer :: mask_lbc_w2 => null()
+    type(field_type),          pointer :: mask_lbc_w3 => null()
+    type(field_type),          pointer :: mask_lbc_wtheta => null()
+    type(field_type),          pointer :: mask_blend_w2 => null()
+    type(field_type),          pointer :: mask_blend_w3 => null()
+    type(field_type),          pointer :: mask_blend_wtheta => null()
+    type(field_type),          pointer :: mask_boundary_w2 => null()
+    type(r_solver_field_type), pointer :: mask_w2_r_solver => null()
+    type(r_solver_field_type), pointer :: mask_w3_r_solver => null()
+    type(r_solver_field_type), pointer :: mask_wt_r_solver => null()
+
     ! Fields used to calculate the masks on multigrid mesh levels.
-    ! e.g. To create mask_w3_list(mesh_index_coarse) it restricts
+    ! e.g. To create mask_w3_inventory(mesh_coarse) it restricts
     ! using the w3_source_mask as a field, but using the w3_mask
     ! as the mask.
-    type(field_type) :: w3_source_mask
-    type(field_type) :: w3_mask
-    type(field_type) :: w2_source_mask
-    type(field_type) :: w2_mask
+    type(field_type), pointer :: w3_source_mask => null()
+    type(field_type), pointer :: w3_fine_mask => null()
+    type(field_type), pointer :: w2_source_mask => null()
+    type(field_type), pointer :: w2_fine_mask => null()
     type(field_type), pointer :: rmultiplicity_w2 => null()
 
     integer(kind=i_def) :: i, num_meshes
-    integer(kind=i_def) :: mesh_index_fine, mesh_id_fine
-    integer(kind=i_def) :: mesh_index_coarse, mesh_id_coarse
+    integer(kind=i_def) :: mesh_id_fine
 
     if ( subroutine_timers ) call timer('limited_area_constants_alg')
     call log_event( "Gungho: creating limited_area_constants", LOG_LEVEL_INFO )
@@ -182,22 +195,22 @@ contains
 
     num_meshes = size(mesh_id_list)
 
-    ! Setup masks on all multigrid levels
-    allocate(mask_w2_list(num_meshes))
-    allocate(mask_w3_list(num_meshes))
-    allocate(mask_wtheta_list(num_meshes))
-    allocate(mask_lbc_w2_list(num_meshes))
-    allocate(mask_lbc_w3_list(num_meshes))
-    allocate(mask_lbc_wtheta_list(num_meshes))
-    allocate(mask_blend_w2_list(num_meshes))
-    allocate(mask_blend_w3_list(num_meshes))
-    allocate(mask_blend_wtheta_list(num_meshes))
-    allocate(mask_boundary_w2_list(num_meshes))
-    allocate(mask_w3_list_r_solver(num_meshes))
-    allocate(mask_w2_list_r_solver(num_meshes))
-    allocate(mask_wt_list_r_solver(num_meshes))
+    ! Set up inventories
+    call mask_w2_inventory%initialise(name='w2_mask', table_len=num_meshes)
+    call mask_w3_inventory%initialise(name='w3_mask', table_len=num_meshes)
+    call mask_wtheta_inventory%initialise(name='wtheta_mask', table_len=num_meshes)
+    call mask_lbc_w2_inventory%initialise(name='w2lbc_mask', table_len=num_meshes)
+    call mask_lbc_w3_inventory%initialise(name='w3lbc_mask', table_len=num_meshes)
+    call mask_lbc_wtheta_inventory%initialise(name='wthetalbc_mask', table_len=num_meshes)
+    call mask_blend_w2_inventory%initialise(name='w2blend_mask', table_len=num_meshes)
+    call mask_blend_w3_inventory%initialise(name='w3blend_mask', table_len=num_meshes)
+    call mask_blend_wtheta_inventory%initialise(name='wthetablend_mask', table_len=num_meshes)
+    call mask_boundary_w2_inventory%initialise(name='w2boundary_mask', table_len=num_meshes)
+    call mask_w3_r_solver_inventory%initialise(name="mask_w3_r_solver", table_len=num_meshes)
+    call mask_w2_r_solver_inventory%initialise(name="mask_w2_r_solver", table_len=num_meshes)
+    call mask_wt_r_solver_inventory%initialise(name="mask_wt_r_solver", table_len=num_meshes)
 
-    !===================== Start loop and creation of fields =================!
+    !===================== Start loop and creation of fields ==================!
 
     ! Loop through meshes to find the ones we're interested in, i.e. primary and twod
     ! TODO: #2790 should change this structure to avoid looping through meshes
@@ -221,16 +234,11 @@ contains
         call create_onion_layers( onion_layers )
         call mask_collection%add_field( onion_layers )
 
-        call mask_w2_list(i)%initialise( vector_space = w2_fs, name = 'w2_mask' )
-        call mask_w3_list(i)%initialise( vector_space = w3_fs, name = 'w3_mask' )
-        call mask_wtheta_list(i)%initialise( vector_space = wtheta_fs, name = 'wtheta_mask' )
-        call mask_lbc_w2_list(i)%initialise( vector_space = w2_fs, name = 'w2lbc_mask' )
-        call mask_lbc_w3_list(i)%initialise( vector_space = w3_fs, name = 'w3lbc_mask' )
-        call mask_lbc_wtheta_list(i)%initialise( vector_space = wtheta_fs, name = 'wthetalbc_mask' )
-        call mask_blend_w2_list(i)%initialise( vector_space = w2_fs, name = 'w2blend_mask' )
-        call mask_blend_w3_list(i)%initialise( vector_space = w3_fs, name = 'w3blend_mask' )
-        call mask_blend_wtheta_list(i)%initialise( vector_space = wtheta_fs, name = 'wthetablend_mask' )
-        call mask_boundary_w2_list(i)%initialise( vector_space = w2_fs, name = 'w2boundary_mask' )
+        ! Basic masks ----------------------------------------------------------
+        call mask_w2_inventory%add_field(mask_w2, w2_fs, mesh, name='w2_mask')
+        call mask_w3_inventory%add_field(mask_w3, w3_fs, mesh, name='w3_mask')
+        call mask_wtheta_inventory%add_field(mask_wtheta, wtheta_fs, mesh, name='wtheta_mask')
+        call mask_boundary_w2_inventory%add_field(mask_boundary_w2, w2_fs, mesh, name='w2boundary_mask')
 
         call w2perp_mask%initialise( vector_space = w2_fs )
         call w2parallel_mask%initialise( vector_space = w2_fs )
@@ -239,8 +247,8 @@ contains
         if (normal_only) then
           call log_event( "Using w2 dofs on boundary for LBC", &
                LOG_LEVEL_DEBUG )
-          call create_boundary_mask( mask_boundary_w2_list(i), onion_layers, chi(:,i) )
-          call create_limited_area_mask( mask_w2_list(i), onion_layers, chi(:,i) )
+          call create_boundary_mask( mask_boundary_w2, onion_layers, chi(:,i) )
+          call create_limited_area_mask( mask_w2, onion_layers, chi(:,i) )
         else
           call log_event( "Using w2 dofs on boundary and tangential 1 cell in", &
                LOG_LEVEL_DEBUG )
@@ -250,53 +258,76 @@ contains
 
           call invoke( &
              ! Add the W2parallel and W2perp masks together
-             X_plus_Y ( mask_boundary_w2_list(i),  w2perp_mask, w2parallel_mask ), &
+             X_plus_Y ( mask_boundary_w2,  w2perp_mask, w2parallel_mask ), &
              ! Subtract the W2parallel mask from the W2interior_mask
-             X_minus_Y( mask_w2_list(i), w2interior_mask, w2parallel_mask ) )
+             X_minus_Y( mask_w2, w2interior_mask, w2parallel_mask ) )
         end if
-
-        call create_limited_area_mask( mask_w3_list(i), onion_layers, chi(:,i) )
-        call create_limited_area_mask( mask_wtheta_list(i), onion_layers, chi(:,i) )
-
-        call create_lbc_mask( mask_lbc_w2_list(i), onion_layers, chi(:,i) )
-        call create_lbc_mask( mask_lbc_w3_list(i), onion_layers, chi(:,i) )
-        call create_lbc_mask( mask_lbc_wtheta_list(i), onion_layers, chi(:,i) )
-
-        call create_blend_mask( mask_blend_w2_list(i), onion_layers, chi(:,i) )
-        call create_blend_mask( mask_blend_w3_list(i), onion_layers, chi(:,i) )
-        call create_blend_mask( mask_blend_wtheta_list(i), onion_layers, chi(:,i) )
 
         ! Check that the W2 boundary mask has the correct number of dofs
         ! if we're using the coordinate_based method
         if ( lbc_method == lbc_method_coordinate_based )then
-          call check_w2b_mask( mask_boundary_w2_list(i) )
+          call check_w2b_mask( mask_boundary_w2 )
         end if
 
-        ! Add the masks to the mask_collection to enable writing out
-        call mask_collection%add_field( mask_w2_list(i) )
-        call mask_collection%add_field( mask_w3_list(i) )
-        call mask_collection%add_field( mask_wtheta_list(i) )
-        call mask_collection%add_field( mask_lbc_w2_list(i) )
-        call mask_collection%add_field( mask_lbc_w3_list(i) )
-        call mask_collection%add_field( mask_lbc_wtheta_list(i) )
-        call mask_collection%add_field( mask_blend_w2_list(i) )
-        call mask_collection%add_field( mask_blend_w3_list(i) )
-        call mask_collection%add_field( mask_blend_wtheta_list(i) )
-        call mask_collection%add_field( mask_boundary_w2_list(i) )
+        call create_limited_area_mask( mask_w3, onion_layers, chi(:,i) )
+        call create_limited_area_mask( mask_wtheta, onion_layers, chi(:,i) )
 
-        ! Create r_solver masks
-        call mask_w2_list_r_solver(i)%initialise( vector_space = w2_fs )
-        call mask_w3_list_r_solver(i)%initialise( vector_space = w3_fs )
-        call mask_wt_list_r_solver(i)%initialise( vector_space = wtheta_fs )
-        call invoke_copy_to_rsolver(mask_w2_list_r_solver(i), mask_w2_list(i))
-        call invoke_copy_to_rsolver(mask_w3_list_r_solver(i), mask_w3_list(i))
-        call invoke_copy_to_rsolver(mask_wt_list_r_solver(i), mask_wtheta_list(i))
+        ! Add the masks to the mask_collection to enable writing out
+        call mask_collection%add_field( mask_w2 )
+        call mask_collection%add_field( mask_w3 )
+        call mask_collection%add_field( mask_wtheta )
+        call mask_collection%add_field( mask_boundary_w2 )
+
+        ! r_solver masks -------------------------------------------------------
+        call mask_w2_r_solver_inventory%add_field(mask_w2_r_solver, w2_fs, mesh)
+        call mask_w3_r_solver_inventory%add_field(mask_w3_r_solver, w3_fs, mesh)
+        call mask_wt_r_solver_inventory%add_field(mask_wt_r_solver, wtheta_fs, mesh)
+
+        call invoke_copy_to_rsolver(mask_w2_r_solver, mask_w2)
+        call invoke_copy_to_rsolver(mask_w3_r_solver, mask_w3)
+        call invoke_copy_to_rsolver(mask_wt_r_solver, mask_wtheta)
+
+        nullify(mask_w2, mask_w3, mask_wtheta, mask_w2_r_solver, &
+                mask_w3_r_solver, mask_wt_r_solver, mask_boundary_w2)
+
+        ! LBC masks ------------------------------------------------------------
+        call mask_lbc_w2_inventory%add_field(mask_lbc_w2, w2_fs, mesh, name='w2lbc_mask')
+        call mask_lbc_w3_inventory%add_field(mask_lbc_w3, w3_fs, mesh, name='w3lbc_mask')
+        call mask_lbc_wtheta_inventory%add_field(mask_lbc_wtheta, wtheta_fs, mesh, name='wthetalbc_mask')
+
+        call create_lbc_mask( mask_lbc_w2, onion_layers, chi(:,i) )
+        call create_lbc_mask( mask_lbc_w3, onion_layers, chi(:,i) )
+        call create_lbc_mask( mask_lbc_wtheta, onion_layers, chi(:,i) )
+
+        call mask_collection%add_field( mask_lbc_w2 )
+        call mask_collection%add_field( mask_lbc_w3 )
+        call mask_collection%add_field( mask_lbc_wtheta )
+
+        nullify(mask_lbc_w2, mask_lbc_w3, mask_lbc_wtheta)
+
+        ! Blend masks ----------------------------------------------------------
+        call mask_blend_w2_inventory%add_field(mask_blend_w2, w2_fs, mesh, name='w2blend_mask')
+        call mask_blend_w3_inventory%add_field(mask_blend_w3, w3_fs, mesh, name='w3blend_mask')
+        call mask_blend_wtheta_inventory%add_field(mask_blend_wtheta, wtheta_fs, mesh, name='wthetablend_mask')
+
+        call create_blend_mask( mask_blend_w2, onion_layers, chi(:,i) )
+        call create_blend_mask( mask_blend_w3, onion_layers, chi(:,i) )
+        call create_blend_mask( mask_blend_wtheta, onion_layers, chi(:,i) )
+
+        call mask_collection%add_field( mask_blend_w2 )
+        call mask_collection%add_field( mask_blend_w3 )
+        call mask_collection%add_field( mask_blend_wtheta )
+
+        nullify(mask_blend_w2, mask_blend_w3, mask_blend_wtheta)
 
         if (run_log_level == run_log_level_debug) call list_mask_fields()
 
       end if
     end do
 
+    ! ------------------------------------------------------------------------ !
+    ! Multigrid masks
+    ! ------------------------------------------------------------------------ !
     if (l_multigrid) then
       ! If using multigrid, create the masks on each multigrid level mesh.
 
@@ -306,60 +337,46 @@ contains
       do i = 1, multigrid_chain_nitems-1
 
         ! Define mesh indexes for the fine level mesh
-        mesh_fine       => w3_fs%get_mesh()
-        mesh_id_fine    =  mesh_fine%get_id()
-        mesh_index_fine =  find_mesh_index(mesh_id_fine)
+        mesh_fine => w3_fs%get_mesh()
+        mesh_id_fine =  mesh_fine%get_id()
 
         rmultiplicity_w2 => get_rmultiplicity(W2, mesh_id_fine)
 
         ! Set the input as the fine level mesh masks
-        call w3_mask%initialise(vector_space = w3_fs)
-        call w3_source_mask%initialise(vector_space = w3_fs)
-        call w2_mask%initialise(vector_space = w2_fs)
-        call w2_source_mask%initialise(vector_space = w2_fs)
-
-        call invoke( setval_X(w3_mask,        mask_w3_list(mesh_index_fine) ))
-        call invoke( setval_X(w3_source_mask, mask_w3_list(mesh_index_fine) ))
-        call invoke( setval_X(w2_mask,        mask_w2_list(mesh_index_fine) ))
-        call invoke( setval_X(w2_source_mask, mask_w2_list(mesh_index_fine) ))
+        call mask_w3_inventory%get_field(mesh_fine, w3_source_mask)
+        call mask_w3_inventory%get_field(mesh_fine, w3_fine_mask)
+        call mask_w2_inventory%get_field(mesh_fine, w2_source_mask)
+        call mask_w2_inventory%get_field(mesh_fine, w2_fine_mask)
 
         ! Define mesh indexes for the coarse level mesh
         w3_fs => multigrid_function_space_chain%get_next()
 
-        mesh_coarse       => w3_fs%get_mesh()
-        mesh_id_coarse    =  mesh_coarse%get_id()
-        mesh_index_coarse =  find_mesh_index(mesh_id_coarse)
+        mesh_coarse => w3_fs%get_mesh()
 
         w2_fs => function_space_collection%get_fs( mesh_coarse, element_order, W2 )
 
-        call mask_w3_list(mesh_index_coarse)%initialise( vector_space = w3_fs )
-        call mask_w2_list(mesh_index_coarse)%initialise( vector_space = w2_fs )
+        call mask_w3_inventory%add_field(mask_w3, w3_fs, mesh_coarse)
+        call mask_w2_inventory%add_field(mask_w2, w2_fs, mesh_coarse)
 
         ! Define the masks on the coarse level meshes using restrict kernels.
         ! coarse_level_mask (coarse cell) = average ( fine_level_mask (fine cells) )
         ! where the average is only performed over the cells with non-zero values.
-        call invoke(                                                         &
-            restrict_scalar_masked_kernel_type( mask_w3_list(mesh_index_coarse),    &
-                                                w3_source_mask,                     &
-                                                w3_mask ),                          &
-            setval_C( mask_w2_list(mesh_index_coarse), 0.0_r_def ),          &
-            restrict_masked_w2_kernel_type( mask_w2_list(mesh_index_coarse), &
-                                                     w2_source_mask,         &
-                                                     rmultiplicity_w2,       &
-                                                     w2_mask ) )
+        call invoke(                                                        &
+            restrict_scalar_masked_kernel_type(mask_w3, w3_source_mask,     &
+                                               w3_fine_mask),               &
+            setval_C( mask_w2, 0.0_r_def ),                                 &
+            restrict_masked_w2_kernel_type(mask_w2, w2_source_mask,         &
+                                           rmultiplicity_w2,  w2_fine_mask) )
 
-        call mask_w3_list_r_solver(mesh_index_coarse)%initialise( w3_fs )
-        call invoke_copy_to_rsolver(mask_w3_list_r_solver(mesh_index_coarse), mask_w3_list(mesh_index_coarse))
-
-        call mask_w2_list_r_solver(mesh_index_coarse)%initialise( w2_fs )
-        call invoke_copy_to_rsolver(mask_w2_list_r_solver(mesh_index_coarse), mask_w2_list(mesh_index_coarse))
-
+        call mask_w3_r_solver_inventory%add_field(mask_w3_r_solver, w3_fs, mesh_coarse)
+        call mask_w2_r_solver_inventory%add_field(mask_w2_r_solver, w2_fs, mesh_coarse)
+        call invoke_copy_to_rsolver(mask_w3_r_solver, mask_w3)
+        call invoke_copy_to_rsolver(mask_w2_r_solver, mask_w2)
+        nullify(mask_w3, mask_w2, mask_w3_r_solver, mask_w2_r_solver)
       end do
     end if
 
-    nullify( w2_fs )
-    nullify( w3_fs )
-    nullify( wtheta_fs )
+    nullify(w2_fs, w3_fs, wtheta_fs)
 
     call log_event( "Gungho: created limited_area_constants", LOG_LEVEL_INFO )
     if ( subroutine_timers ) call timer('limited_area_constants_alg')
@@ -447,30 +464,24 @@ contains
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
     integer(kind=i_def), intent(in) :: space
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     type(field_type),       pointer :: mask_ptr
-    character(len=str_short)        :: mesh_number
-    character(len=str_def)          :: field_name
 
-    write(mesh_number, '(I8)') mesh_id
-    field_name='mask'
-
-    mesh_index = find_mesh_index(mesh_id)
+    mesh => mesh_collection%get_mesh(mesh_id)
 
     select case (space)
       case (W2)
-        mask_ptr => mask_w2_list(mesh_index)
+        call mask_w2_inventory%get_field(mesh, mask_ptr)
       case (W3)
-        mask_ptr => mask_w3_list(mesh_index)
+        call mask_w3_inventory%get_field(mesh, mask_ptr)
       case (Wtheta)
-        mask_ptr => mask_wtheta_list(mesh_index)
+        call mask_wtheta_inventory%get_field(mesh, mask_ptr)
       case default
         mask_ptr => null()
         call log_event( "Mask not available on requested space", &
           LOG_LEVEL_ERROR)
     end select
-
-    call check_initialised_field(mask_ptr, field_name, mesh_id, space)
+    nullify(mesh)
 
   end function get_mask
 
@@ -483,22 +494,23 @@ contains
     integer(kind=i_def), intent(in)    :: mesh_id
     integer(kind=i_def), intent(in)    :: space
     type(r_solver_field_type), pointer :: sol_mask_ptr
-    integer(kind=i_def)                :: mesh_index
+    type(mesh_type),           pointer :: mesh => null()
 
-    mesh_index = find_mesh_index(mesh_id)
+    mesh => mesh_collection%get_mesh(mesh_id)
 
     select case (space)
       case (W2)
-        sol_mask_ptr => mask_w2_list_r_solver(mesh_index)
+        call mask_w2_r_solver_inventory%get_field(mesh, sol_mask_ptr)
       case (W3)
-        sol_mask_ptr => mask_w3_list_r_solver(mesh_index)
+        call mask_w3_r_solver_inventory%get_field(mesh, sol_mask_ptr)
       case (Wtheta)
-        sol_mask_ptr => mask_wt_list_r_solver(mesh_index)
+        call mask_wt_r_solver_inventory%get_field(mesh, sol_mask_ptr)
       case default
         sol_mask_ptr => null()
         call log_event( "r_solver Mask not available on requested space", &
           LOG_LEVEL_ERROR)
     end select
+    nullify(mesh)
 
   end function get_mask_r_solver
 
@@ -510,27 +522,20 @@ contains
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
     integer(kind=i_def), intent(in) :: space
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     type(field_type),       pointer :: mask_ptr
-    character(len=str_short)        :: mesh_number
-    character(len=str_def)          :: field_name
 
-    write(mesh_number, '(I8)') mesh_id
-
-    mesh_index = find_mesh_index(mesh_id)
-
-    field_name='boundary_mask'
+    mesh => mesh_collection%get_mesh(mesh_id)
 
     select case (space)
       case (W2)
-       mask_ptr => mask_boundary_w2_list(mesh_index)
+        call mask_boundary_w2_inventory%get_field(mesh, mask_ptr)
       case default
         mask_ptr => null()
         call log_event( "Boundary mask not available on requested space", &
           LOG_LEVEL_ERROR)
     end select
-
-    call check_initialised_field(mask_ptr, field_name, mesh_id, space)
+    nullify(mesh)
 
   end function get_boundary_mask
 
@@ -542,31 +547,24 @@ contains
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
     integer(kind=i_def), intent(in) :: space
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     type(field_type),       pointer :: mask_ptr
-    character(len=str_short)        :: mesh_number
-    character(len=str_def)          :: field_name
 
-    write(mesh_number, '(I8)') mesh_id
-
-    mesh_index = find_mesh_index(mesh_id)
-
-    field_name='lbc_mask'
+    mesh => mesh_collection%get_mesh(mesh_id)
 
     select case (space)
       case (W2)
-        mask_ptr => mask_lbc_w2_list(mesh_index)
+        call mask_lbc_w2_inventory%get_field(mesh, mask_ptr)
       case (W3)
-        mask_ptr => mask_lbc_w3_list(mesh_index)
+        call mask_lbc_w3_inventory%get_field(mesh, mask_ptr)
       case (Wtheta)
-        mask_ptr => mask_lbc_wtheta_list(mesh_index)
+        call mask_lbc_wtheta_inventory%get_field(mesh, mask_ptr)
       case default
         mask_ptr => null()
         call log_event( "Mask not available on requested space", &
           LOG_LEVEL_ERROR)
     end select
-
-    call check_initialised_field(mask_ptr, field_name, mesh_id, space)
+    nullify(mesh)
 
   end function get_lbc_mask
 
@@ -589,31 +587,24 @@ contains
     implicit none
     integer(kind=i_def), intent(in) :: mesh_id
     integer(kind=i_def), intent(in) :: space
-    integer(kind=i_def)             :: mesh_index
+    type(mesh_type),        pointer :: mesh => null()
     type(field_type),       pointer :: mask_ptr
-    character(len=str_short)        :: mesh_number
-    character(len=str_def)          :: field_name
 
-    write(mesh_number, '(I8)') mesh_id
-
-    mesh_index = find_mesh_index(mesh_id)
-
-    field_name='blend_mask'
+    mesh => mesh_collection%get_mesh(mesh_id)
 
     select case (space)
     case (W2)
-      mask_ptr => mask_blend_w2_list(mesh_index)
+      call mask_blend_w2_inventory%get_field(mesh, mask_ptr)
     case (W3)
-      mask_ptr => mask_blend_w3_list(mesh_index)
+      call mask_blend_w3_inventory%get_field(mesh, mask_ptr)
     case (Wtheta)
-      mask_ptr => mask_blend_wtheta_list(mesh_index)
+      call mask_blend_wtheta_inventory%get_field(mesh, mask_ptr)
     case default
       mask_ptr => null()
       call log_event( "Blend mask not available on requested space", &
         LOG_LEVEL_ERROR)
     end select
-
-    call check_initialised_field(mask_ptr, field_name, mesh_id, space)
+    nullify(mesh)
 
   end function get_blend_mask
 
@@ -623,19 +614,19 @@ contains
 
     implicit none
 
-    if (allocated(mask_w2_list)) deallocate(mask_w2_list)
-    if (allocated(mask_w3_list)) deallocate(mask_w3_list)
-    if (allocated(mask_wtheta_list)) deallocate(mask_wtheta_list)
-    if (allocated(mask_lbc_w2_list)) deallocate(mask_lbc_w2_list)
-    if (allocated(mask_lbc_w3_list)) deallocate(mask_lbc_w3_list)
-    if (allocated(mask_lbc_wtheta_list)) deallocate(mask_lbc_wtheta_list)
-    if (allocated(mask_blend_w2_list)) deallocate(mask_blend_w2_list)
-    if (allocated(mask_blend_w3_list)) deallocate(mask_blend_w3_list)
-    if (allocated(mask_blend_wtheta_list)) deallocate(mask_blend_wtheta_list)
-    if (allocated(mask_boundary_w2_list)) deallocate(mask_boundary_w2_list)
-    if (allocated(mask_w3_list_r_solver)) deallocate(mask_w3_list_r_solver)
-    if (allocated(mask_w2_list_r_solver)) deallocate(mask_w2_list_r_solver)
-    if (allocated(mask_wt_list_r_solver)) deallocate(mask_wt_list_r_solver)
+    call mask_w2_inventory%clear()
+    call mask_w3_inventory%clear()
+    call mask_wtheta_inventory%clear()
+    call mask_lbc_w2_inventory%clear()
+    call mask_lbc_w3_inventory%clear()
+    call mask_lbc_wtheta_inventory%clear()
+    call mask_blend_w2_inventory%clear()
+    call mask_blend_w3_inventory%clear()
+    call mask_blend_wtheta_inventory%clear()
+    call mask_boundary_w2_inventory%clear()
+    call mask_w3_r_solver_inventory%clear()
+    call mask_w2_r_solver_inventory%clear()
+    call mask_wt_r_solver_inventory%clear()
 
   end subroutine final_limited_area_constants
 

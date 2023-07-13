@@ -72,6 +72,14 @@ module inventory_by_local_mesh_mod
                                       add_integer_field
     procedure, public :: add_integer
     procedure, public :: add_integer_array
+    ! Specific routines for copying different objects into the inventory
+    ! To support new objects, add more routines here
+    procedure, public :: copy_r32_field
+    procedure, public :: copy_r64_field
+    procedure, public :: copy_integer_field
+    generic           :: copy_field => copy_r32_field, &
+                                       copy_r64_field, &
+                                       copy_integer_field
     ! Specific routines for getting different objects from the inventory
     ! To support new objects, add more routines here
     procedure, public :: get_r32_field
@@ -142,7 +150,7 @@ subroutine add_paired_object(self, paired_object)
     write(log_scratch_space, '(A,I8,3A)') &
         'Paired object on local mesh [', id,                              &
         '] already exists in inventory_by_local_mesh: ', trim(self%name), &
-        'Removing existing paired object...'
+        ', removing existing paired object...'
     call log_event(log_scratch_space, LOG_LEVEL_WARNING)
     call self%remove_paired_object(id)
   end if
@@ -466,57 +474,111 @@ end subroutine remove_paired_object
 ! ADD OBJECT ROUTINES -- these are specific to an inventory_by_local_mesh
 ! ============================================================================ !
 
-!> @brief Adds an r32 field to the inventory
-!> @param[in] field       The field that is to be copied into the inventory
-!> @param[in] local_mesh  The local mesh to pair the field with
-subroutine add_r32_field(self, field, local_mesh)
+!> @brief Adds an r32 field to the inventory and returns a pointer to it
+!> @param[out] field       Pointer to the field that is to be added
+!> @param[in]  fs          Function space for the field to be created
+!> @param[in]  local_mesh  The local mesh to pair the field with
+!> @param[in]  name        Optional name for the field
+!> @param[in]  ndata_first Optional flag for ordering of multidata field DoFs
+subroutine add_r32_field(self, field, fs, local_mesh, name, ndata_first)
 
   implicit none
 
   class(inventory_by_local_mesh_type), intent(inout) :: self
-  type(field_r32_type),                intent(in)    :: field
+  type(field_r32_type),       pointer, intent(out)   :: field
+  type(function_space_type),  pointer, intent(in)    :: fs
   type(local_mesh_type),               intent(in)    :: local_mesh
+  character(*),              optional, intent(in)    :: name
+  logical(kind=l_def),       optional, intent(in)    :: ndata_first
   type(id_r32_field_pair_type)                       :: paired_object
+  character(str_def)                                 :: local_name
+
+  if ( present(name) ) then
+    local_name = name
+  else
+    local_name = 'none'
+  end if
 
   ! Set up the paired_object
-  call paired_object%initialise(field, local_mesh%get_id())
-  call self%add_paired_object( paired_object )
+  if (present(ndata_first)) then
+    call paired_object%initialise(fs, local_mesh%get_id(), name=local_name, ndata_first=ndata_first)
+  else
+    call paired_object%initialise(fs, local_mesh%get_id(), name=local_name)
+  end if
+  call self%add_paired_object(paired_object)
+  call self%get_r32_field(local_mesh, field)
 
 end subroutine add_r32_field
 
-!> @brief Adds an r64 field to the inventory
-!> @param[in] field       The field that is to be copied into the inventory
-!> @param[in] local_mesh  The local mesh to pair the field with
-subroutine add_r64_field(self, field, local_mesh)
+!> @brief Adds an r64 field to the inventory and returns a pointer to it
+!> @param[out] field       Pointer to the field that is to be added
+!> @param[in]  fs          Function space for the field to be created
+!> @param[in]  local_mesh  The local mesh to pair the field with
+!> @param[in]  name        Optional name for the field
+!> @param[in]  ndata_first Optional flag for ordering of multidata field DoFs
+subroutine add_r64_field(self, field, fs, local_mesh, name, ndata_first)
 
   implicit none
 
   class(inventory_by_local_mesh_type), intent(inout) :: self
-  type(field_r64_type),                intent(in)    :: field
+  type(field_r64_type),       pointer, intent(out)   :: field
+  type(function_space_type),  pointer, intent(in)    :: fs
   type(local_mesh_type),               intent(in)    :: local_mesh
+  character(*),              optional, intent(in)    :: name
+  logical(kind=l_def),       optional, intent(in)    :: ndata_first
   type(id_r64_field_pair_type)                       :: paired_object
+  character(str_def)                                 :: local_name
+
+  if ( present(name) ) then
+    local_name = name
+  else
+    local_name = 'none'
+  end if
 
   ! Set up the paired_object
-  call paired_object%initialise(field, local_mesh%get_id())
-  call self%add_paired_object( paired_object )
+  if (present(ndata_first)) then
+    call paired_object%initialise(fs, local_mesh%get_id(), name=local_name, ndata_first=ndata_first)
+  else
+    call paired_object%initialise(fs, local_mesh%get_id(), name=local_name)
+  end if
+  call self%add_paired_object(paired_object)
+  call self%get_r64_field(local_mesh, field)
 
 end subroutine add_r64_field
 
-!> @brief Adds an integer field to the inventory
-!> @param[in] field       The field that is to be copied into the inventory
-!> @param[in] local_mesh  The local mesh to pair the field with
-subroutine add_integer_field(self, field, local_mesh)
+!> @brief Adds an integer field to the inventory and returns a pointer to it
+!> @param[out] field       Pointer to the field that is to be added
+!> @param[in]  fs          Function space for the field to be created
+!> @param[in]  local_mesh  The local mesh to pair the field with
+!> @param[in]  name        Optional name for the field
+!> @param[in]  ndata_first Optional flag for ordering of multidata field DoFs
+subroutine add_integer_field(self, field, fs, local_mesh, name, ndata_first)
 
   implicit none
 
   class(inventory_by_local_mesh_type), intent(inout) :: self
-  type(integer_field_type),            intent(in)    :: field
+  type(integer_field_type),   pointer, intent(out)   :: field
+  type(function_space_type),  pointer, intent(in)    :: fs
   type(local_mesh_type),               intent(in)    :: local_mesh
-  type(id_integer_field_pair_type)                   :: paired_object
+  character(*),              optional, intent(in)    :: name
+  logical(kind=l_def),       optional, intent(in)    :: ndata_first
+  type(id_r64_field_pair_type)                       :: paired_object
+  character(str_def)                                 :: local_name
+
+  if ( present(name) ) then
+    local_name = name
+  else
+    local_name = 'none'
+  end if
 
   ! Set up the paired_object
-  call paired_object%initialise(field, local_mesh%get_id())
-  call self%add_paired_object( paired_object )
+  if (present(ndata_first)) then
+    call paired_object%initialise(fs, local_mesh%get_id(), name=local_name, ndata_first=ndata_first)
+  else
+    call paired_object%initialise(fs, local_mesh%get_id(), name=local_name)
+  end if
+  call self%add_paired_object(paired_object)
+  call self%get_integer_field(local_mesh, field)
 
 end subroutine add_integer_field
 
@@ -534,7 +596,7 @@ subroutine add_integer(self, number, local_mesh)
 
   ! Set up the paired_object
   call paired_object%initialise(number, local_mesh%get_id())
-  call self%add_paired_object( paired_object )
+  call self%add_paired_object(paired_object)
 
 end subroutine add_integer
 
@@ -552,9 +614,67 @@ subroutine add_integer_array(self, numbers, local_mesh)
 
   ! Set up the paired_object
   call paired_object%initialise(numbers, local_mesh%get_id())
-  call self%add_paired_object( paired_object )
+  call self%add_paired_object(paired_object)
 
 end subroutine add_integer_array
+
+! ============================================================================ !
+! COPY OBJECT ROUTINES -- these are specific to an inventory_by_local_mesh
+! ============================================================================ !
+
+!> @brief Copies an r32 field into the inventory
+!> @param[in] field       The field that is to be copied into the inventory
+!> @param[in] local_mesh  The local mesh to pair the field with
+subroutine copy_r32_field(self, field, local_mesh)
+
+  implicit none
+
+  class(inventory_by_local_mesh_type), intent(inout) :: self
+  type(field_r32_type),                intent(in)    :: field
+  type(local_mesh_type),               intent(in)    :: local_mesh
+  type(id_r32_field_pair_type)                       :: paired_object
+
+  ! Set up the paired_object
+  call paired_object%copy_initialise(field, local_mesh%get_id())
+  call self%add_paired_object(paired_object)
+
+end subroutine copy_r32_field
+
+!> @brief Copies an r64 field into the inventory
+!> @param[in] field       The field that is to be copied into the inventory
+!> @param[in] local_mesh  The local mesh to pair the field with
+subroutine copy_r64_field(self, field, local_mesh)
+
+  implicit none
+
+  class(inventory_by_local_mesh_type), intent(inout) :: self
+  type(field_r64_type),                intent(in)    :: field
+  type(local_mesh_type),               intent(in)    :: local_mesh
+  type(id_r64_field_pair_type)                       :: paired_object
+
+  ! Set up the paired_object
+  call paired_object%copy_initialise(field, local_mesh%get_id())
+  call self%add_paired_object(paired_object)
+
+end subroutine copy_r64_field
+
+!> @brief Copies an integer field into the inventory
+!> @param[in] field       The field that is to be copied into the inventory
+!> @param[in] local_mesh  The local mesh to pair the field with
+subroutine copy_integer_field(self, field, local_mesh)
+
+  implicit none
+
+  class(inventory_by_local_mesh_type), intent(inout) :: self
+  type(integer_field_type),            intent(in)    :: field
+  type(local_mesh_type),               intent(in)    :: local_mesh
+  type(id_integer_field_pair_type)                   :: paired_object
+
+  ! Set up the paired_object
+  call paired_object%copy_initialise(field, local_mesh%get_id())
+  call self%add_paired_object(paired_object)
+
+end subroutine copy_integer_field
 
 ! ============================================================================ !
 ! GET OBJECT ROUTINES -- these are specific to an inventory_by_local_mesh

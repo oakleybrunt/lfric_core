@@ -9,6 +9,7 @@ module id_r64_field_array_pair_mod
 
   use constants_mod,         only: i_def
   use field_r64_mod,         only: field_r64_type
+  use function_space_mod,    only: function_space_type
   use id_abstract_pair_mod,  only: id_abstract_pair_type
 
   implicit none
@@ -30,16 +31,42 @@ module id_r64_field_array_pair_mod
   contains
 
     procedure, public :: initialise
+    procedure, public :: copy_initialise
     procedure, public :: get_field_array
 
   end type id_r64_field_array_pair_type
 
 contains
 
-  !> @brief Initialises the id_r64_field_array_pair object
+  !> @brief Initialises the id_r64_field_pair object with a new field
+  !> @param[in] fs           The function space of the new field
+  !> @param[in] id           The integer ID to pair with the field
+  !> @param[in] array_size   The size of the field array
+  subroutine initialise(self, fs, id, array_size)
+
+    implicit none
+
+    class(id_r64_field_array_pair_type),      intent(inout) :: self
+    type(function_space_type),       pointer, intent(in)    :: fs
+    integer(kind=i_def),                      intent(in)    :: id
+    integer(kind=i_def),                      intent(in)    :: array_size
+
+    integer(kind=i_def) :: i
+
+    allocate(self%field_array_(array_size))
+
+    do i = 1, array_size
+      call self%field_array_(i)%initialise(fs)
+    end do
+
+    call self%set_id(id)
+
+  end subroutine initialise
+
+  !> @brief Initialises the id_r64_field_array_pair object by copying in fields
   !> @param[in] field_array   The fields to be stored in the paired object
   !> @param[in] id            The integer ID to pair with the field_array
-  subroutine initialise( self, field_array, id )
+  subroutine copy_initialise(self, field_array, id)
 
     implicit none
 
@@ -52,13 +79,13 @@ contains
     allocate(self%field_array_(size(field_array)))
 
     do i = 1, size(field_array)
-      call self%field_array_(i)%initialise( vector_space=field_array(i)%get_function_space() )
+      call self%field_array_(i)%initialise(field_array(i)%get_function_space())
       call field_array(i)%copy_field_serial(self%field_array_(i))
     end do
 
     call self%set_id(id)
 
-  end subroutine initialise
+  end subroutine copy_initialise
 
   !> @brief Get the field_array corresponding to the paired object
   !> @param[in] self     The paired object
