@@ -10,7 +10,7 @@
 module gungho_driver_mod
 
   use base_mesh_config_mod,       only : prime_mesh_name
-  use clock_mod,                  only : clock_type
+  use calendar_mod,               only : calendar_type
   use derived_config_mod,         only : l_esm_couple
   use driver_io_mod,              only : get_io_context
   use extrusion_mod,              only : TWOD
@@ -44,7 +44,6 @@ module gungho_driver_mod
                                          log_scratch_space
   use mesh_mod,                   only : mesh_type
   use mesh_collection_mod,        only : mesh_collection
-  use model_clock_mod,            only : model_clock_type
   use mpi_mod,                    only : mpi_type
   use multires_coupling_config_mod, &
                                   only : aerosol_mesh_name
@@ -62,9 +61,7 @@ module gungho_driver_mod
   implicit none
 
   private
-  public initialise, run, finalise
-
-  type(model_clock_type), allocatable :: model_clock
+  public initialise, step, finalise
 
 contains
 
@@ -72,15 +69,16 @@ contains
   !> @brief Sets up required state in preparation for run.
   !> @param [in]     program_name An identifier given to the model being run
   !> @param [in,out] modeldb      The structure that holds model state
-  subroutine initialise( program_name, modeldb )
+  subroutine initialise( program_name, modeldb, calendar )
 
     use io_context_mod,         only : io_context_type
     use lfric_xios_context_mod, only : lfric_xios_context_type
 
     implicit none
 
-    character(*), intent(in)          :: program_name
-    type(modeldb_type), intent(inout) :: modeldb
+    character(*),         intent(in)    :: program_name
+    type(modeldb_type),   intent(inout) :: modeldb
+    class(calendar_type), intent(in)    :: calendar
 
     class(io_context_type), pointer :: io_context => null()
     type(mesh_type),        pointer :: mesh              => null()
@@ -91,7 +89,8 @@ contains
     ! Initialise infrastructure and setup constants
     call initialise_infrastructure( program_name,       &
                                     modeldb%model_data, &
-                                    model_clock,        &
+                                    modeldb%clock,      &
+                                    calendar,           &
                                     modeldb%mpi )
 
     ! Get primary and 2D meshes for initialising model data
@@ -111,14 +110,17 @@ contains
     end if
 
     ! Instantiate the fields stored in model_data
-    call create_model_data( modeldb%model_data, mesh, twod_mesh, aerosol_mesh, aerosol_twod_mesh, model_clock )
+    call create_model_data( modeldb%model_data, &
+                            mesh, twod_mesh, aerosol_mesh, aerosol_twod_mesh, &
+                            modeldb%clock )
 
     ! Initialise the fields stored in the model_data
-    call initialise_model_data( modeldb%model_data, model_clock, mesh, twod_mesh )
+    call initialise_model_data( modeldb%model_data, modeldb%clock, mesh, twod_mesh )
 
     ! Initial output
     io_context => get_io_context()
-    call write_initial_output( mesh, twod_mesh, modeldb%model_data, model_clock, &
+    call write_initial_output( mesh, twod_mesh,                   &
+                               modeldb%model_data, modeldb%clock, &
                                io_context, nodal_output_on_w3 )
 
     ! Model configuration initialisation
@@ -137,113 +139,92 @@ contains
   end subroutine initialise
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> @brief Timesteps the model, calling the desired timestepping algorithm
+  !> @brief Timestep the model, calling the desired timestepping algorithm
   !>        based upon the configuration.
-  !> @param [in]     program_name An identifier given to the model begin run
   !> @param [in,out] modeldb   The structure that holds model state
   !>
-  subroutine run( program_name, modeldb )
+  subroutine step( modeldb )
 
     implicit none
 
-    character(*), intent(in)          :: program_name
     type(modeldb_type), intent(inout) :: modeldb
 
     type(mesh_type), pointer :: mesh      => null()
     type(mesh_type), pointer :: twod_mesh => null()
 
-    write(log_scratch_space,'(A)') 'Running '//program_name//' ...'
-    call log_event( log_scratch_space, LOG_LEVEL_ALWAYS )
-
-    if(l_esm_couple) then
-      write(log_scratch_space,'(A)') 'Configuration is coupled to ocean'
-      call log_event( log_scratch_space, LOG_LEVEL_ALWAYS )
-    else
-      write(log_scratch_space,'(A)') 'Configuration is not coupled to ocean'
-      call log_event( log_scratch_space, LOG_LEVEL_ALWAYS )
-    endif
-
     ! Get primary and 2D meshes
     mesh => mesh_collection%get_mesh(prime_mesh_name)
     twod_mesh => mesh_collection%get_mesh(mesh, TWOD)
 
-    do while (model_clock%tick())
-
 #ifdef COUPLED
-      if(l_esm_couple) then
+    if(l_esm_couple) then
 
-         write(log_scratch_space, &
-               '(A, I0)') 'Coupling timestep: ', model_clock%get_step() - 1
-         call log_event( log_scratch_space, LOG_LEVEL_INFO )
+       write(log_scratch_space, &
+             '(A, I0)') 'Coupling timestep: ', modeldb%clock%get_step() - 1
+       call log_event( log_scratch_space, LOG_LEVEL_INFO )
 
-         call save_sea_ice_frac_previous(modeldb%model_data%depository)
+       call save_sea_ice_frac_previous(modeldb%model_data%depository)
 
-         ! Receive all incoming (ocean/seaice fields) from the coupler
-         call cpl_rcv(modeldb%model_data%cpl_rcv, modeldb%model_data%depository, model_clock)
+       ! Receive all incoming (ocean/seaice fields) from the coupler
+       call cpl_rcv( modeldb%model_data%cpl_rcv,    &
+                     modeldb%model_data%depository, &
+                     modeldb%clock )
 
-         ! Send all outgoing (ocean/seaice driving fields) to the coupler
-         call cpl_snd(modeldb%model_data%cpl_snd, modeldb%model_data%depository, model_clock)
+       ! Send all outgoing (ocean/seaice driving fields) to the coupler
+       call cpl_snd( modeldb%model_data%cpl_snd,    &
+                     modeldb%model_data%depository, &
+                     modeldb%clock )
 
-      endif
+    endif
 #endif
 
-      if ( lbc_option == lbc_option_gungho_file .or. &
-           lbc_option == lbc_option_um2lfric_file) then
+    if ( lbc_option == lbc_option_gungho_file .or. &
+         lbc_option == lbc_option_um2lfric_file) then
 
-        call update_lbcs_file_alg( modeldb%model_data%lbc_times_list, &
-                                   model_clock, modeldb%model_data%lbc_fields )
-      endif
+      call update_lbcs_file_alg( modeldb%model_data%lbc_times_list, &
+                                 modeldb%clock, modeldb%model_data%lbc_fields )
+    endif
 
-      ! Perform a timestep
-      call gungho_step( mesh, twod_mesh, modeldb, model_clock )
+    ! Perform a timestep
+    call gungho_step( mesh, twod_mesh, modeldb, modeldb%clock )
 
-      ! Use diagnostic output frequency to determine whether to write
-      ! diagnostics on this timestep
+    ! Use diagnostic output frequency to determine whether to write
+    ! diagnostics on this timestep
 
-      if ( ( mod(model_clock%get_step(), diagnostic_frequency) == 0 ) &
-           .and. ( write_diag ) ) then
+    if ( ( mod(modeldb%clock%get_step(), diagnostic_frequency) == 0 ) &
+         .and. ( write_diag ) ) then
 
-        ! Calculation and output diagnostics
-        call gungho_diagnostics_driver( mesh,        &
-                                        twod_mesh,   &
-                                        modeldb%model_data,  &
-                                        model_clock, &
-                                        nodal_output_on_w3 )
-      end if
+      ! Calculation and output diagnostics
+      call gungho_diagnostics_driver( mesh,               &
+                                      twod_mesh,          &
+                                      modeldb%model_data, &
+                                      modeldb%clock,      &
+                                      nodal_output_on_w3 )
+    end if
 
 #ifdef UM_PHYSICS
-      ! Update time-varying ancillaries
-      ! This is done last in the timestep, because the time data of the
-      ! ancillaries needs to be that of the start of timestep, but the
-      ! first thing that happens in a timestep is that the clock ticks to the
-      ! end of timestep date.
-      if ( ancil_option == ancil_option_updating ) then
-        call update_variable_fields( modeldb%model_data%ancil_times_list, &
-                                     model_clock, modeldb%model_data%ancil_fields )
-        call update_ancils_alg( modeldb%model_data%ancil_times_list, &
-                                model_clock, modeldb%model_data%ancil_fields, &
-                                modeldb%model_data%surface_fields)
-      end if
+    ! Update time-varying ancillaries
+    ! This is done last in the timestep, because the time data of the
+    ! ancillaries needs to be that of the start of timestep, but the
+    ! first thing that happens in a timestep is that the clock ticks to the
+    ! end of timestep date.
+    if ( ancil_option == ancil_option_updating ) then
+      call update_variable_fields( modeldb%model_data%ancil_times_list, &
+                                   modeldb%clock,                       &
+                                   modeldb%model_data%ancil_fields )
+      call update_ancils_alg( modeldb%model_data%ancil_times_list, &
+                              modeldb%clock,                       &
+                              modeldb%model_data%ancil_fields,     &
+                              modeldb%model_data%surface_fields)
+    end if
 
-      ! Update the time varying trace gases
-      call gas_calc_all()
-#endif
-
-    end do ! end ts loop
-
-#ifdef COUPLED
-    if (l_esm_couple) then
-       ! Ensure coupling fields are updated at the end of a cycle to ensure the values
-       ! stored in and recovered from checkpoint dumps are correct and reproducible
-       ! when (re)starting subsequent runs!
-       call cpl_fld_update(modeldb%model_data%cpl_snd, modeldb%model_data%depository, &
-                           model_clock)
-    endif
+    ! Update the time varying trace gases
+    call gas_calc_all()
 #endif
 
     nullify(mesh, twod_mesh)
 
-  end subroutine run
+  end subroutine step
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> @brief Tidies up after a run.
@@ -257,10 +238,19 @@ contains
     character(*), intent(in)          :: program_name
     type(modeldb_type), intent(inout) :: modeldb
 
-    call log_event( 'Finalising '//program_name//' ...', LOG_LEVEL_ALWAYS )
+#ifdef COUPLED
+    if (l_esm_couple) then
+       ! Ensure coupling fields are updated at the end of a cycle to ensure the values
+       ! stored in and recovered from checkpoint dumps are correct and reproducible
+       ! when (re)starting subsequent runs!
+       call cpl_fld_update(modeldb%model_data%cpl_snd,    &
+                           modeldb%model_data%depository, &
+                           modeldb%clock)
+    endif
+#endif
 
     ! Output the fields stored in the model_data (checkpoint and dump)
-    call output_model_data( modeldb%model_data, model_clock )
+    call output_model_data( modeldb%model_data, modeldb%clock )
 
     ! Model configuration finalisation
     call finalise_model( modeldb%model_data, &

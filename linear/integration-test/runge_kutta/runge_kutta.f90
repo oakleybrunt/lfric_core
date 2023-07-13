@@ -12,6 +12,7 @@ program runge_kutta
 
   use configuration_mod,      only: read_configuration, final_configuration
   use driver_collections_mod, only: init_collections, final_collections
+  use driver_time_mod,        only: init_time, get_calendar
   use gungho_modeldb_mod,     only: modeldb_type
   use halo_comms_mod,         only: initialise_halo_comms, finalise_halo_comms
   use log_mod,                only: log_event,       &
@@ -133,7 +134,8 @@ program runge_kutta
   deallocate( filename )
 
   call init_collections()
-  call initialise( application_name, modeldb )
+  call init_time( modeldb%clock )
+  call initialise( application_name, modeldb, get_calendar() )
 
   if (do_test_timesteps) then
     call run_timesteps(modeldb)

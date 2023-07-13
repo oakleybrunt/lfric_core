@@ -11,12 +11,12 @@
 module io_dev_driver_mod
 
   use base_mesh_config_mod,       only: prime_mesh_name
+  use calendar_mod,               only: calendar_type
   use checksum_alg_mod,           only: checksum_alg
   use clock_mod,                  only: clock_type
   use constants_mod,              only: i_def, i_native, str_def, &
                                         PRECISION_REAL, r_def, r_second
   use convert_to_upper_mod,       only: convert_to_upper
-  use driver_time_mod,            only: init_time, get_calendar
   use driver_mesh_mod,            only: init_mesh, final_mesh
   use driver_fem_mod,             only: init_fem, final_fem
   use driver_io_mod,              only: init_io, final_io, &
@@ -53,21 +53,20 @@ module io_dev_driver_mod
 
   private
 
-  public initialise, run, finalise
-
-  type(model_clock_type), allocatable :: model_clock
-
+  public initialise, step, finalise
 
   contains
 
   !> @brief Sets up required state in preparation for run.
-  subroutine initialise( model_data, mpi, program_name )
+  subroutine initialise( model_data, model_clock, mpi, program_name, calendar )
 
     implicit none
 
     class(io_dev_data_type), intent(inout) :: model_data
+    class(model_clock_type), intent(inout) :: model_clock
     class(mpi_type),         intent(inout) :: mpi
     character(*),            intent(in)    :: program_name
+    class(calendar_type),    intent(in)    :: calendar
 
 
     type(field_type), pointer :: chi(:) => null()
@@ -85,18 +84,9 @@ module io_dev_driver_mod
 
     procedure(filelist_populator), pointer :: files_init_ptr => null()
 
-    write(log_scratch_space,'(A)')                        &
-        'Application built with '//trim(PRECISION_REAL)// &
-        '-bit real numbers'
-    call log_event( log_scratch_space, LOG_LEVEL_ALWAYS )
-
     !-------------------------------------------------------------------------
     ! Model init
     !-------------------------------------------------------------------------
-    call log_event( 'Initialising '//program_name//' ...', LOG_LEVEL_ALWAYS )
-
-    ! Initialise model clock and calendar
-    call init_time( model_clock )
 
     ! Create the meshes used to test multi-mesh output
     if (multi_mesh) then
@@ -129,20 +119,20 @@ module io_dev_driver_mod
       alt_mesh_names(1) = alt_mesh_name
       call create_model_data( model_data, chi, panel_id, &
                               mesh, twod_mesh, alt_mesh )
-      call init_io( program_name, mpi%get_comm(),              &
-                    chi_inventory, panel_id_inventory,         &
-                    model_clock, get_calendar(),               &
-                    populate_filelist = files_init_ptr,        &
-                    model_data = model_data,                   &
+      call init_io( program_name, mpi%get_comm(),       &
+                    chi_inventory, panel_id_inventory,  &
+                    model_clock, calendar,              &
+                    populate_filelist = files_init_ptr, &
+                    model_data = model_data,            &
                     alt_mesh_names = alt_mesh_names )
 
     else
       call create_model_data( model_data, chi, panel_id, &
                               mesh, twod_mesh )
-      call init_io( program_name, mpi%get_comm(),              &
-                    chi_inventory, panel_id_inventory,         &
-                    model_clock, get_calendar(),               &
-                    populate_filelist = files_init_ptr,        &
+      call init_io( program_name, mpi%get_comm(),       &
+                    chi_inventory, panel_id_inventory,  &
+                    model_clock, calendar,              &
+                    populate_filelist = files_init_ptr, &
                     model_data = model_data )
     end if
 
@@ -163,47 +153,37 @@ module io_dev_driver_mod
 
   end subroutine initialise
 
-  !> @brief Timesteps the model, calling the desired timestepping algorithm
+  !> @brief Timestep the model, calling the desired timestepping algorithm
   !>        based upon the configuration
   !> @param [in,out] model_data The structure that holds model state
-  subroutine run( model_data, program_name )
+  subroutine step( model_data, model_clock, program_name )
 
     implicit none
 
     class(io_dev_data_type), intent(inout) :: model_data
-    character(*),             intent(in) :: program_name
+    class(model_clock_type), intent(in)    :: model_clock
+    character(*),            intent(in)    :: program_name
 
-    write(log_scratch_space,'(A)') 'Running '//program_name//' ...'
-    call log_event( log_scratch_space, LOG_LEVEL_ALWAYS )
+    ! Update fields
+    call update_model_data( model_data, model_clock )
 
-    ! Model step
-    do while( model_clock%tick() )
-
-      ! Update fields
-      call update_model_data( model_data, model_clock )
-
-      ! Write out diagnostics
-      if (write_diag) then
-        if ( (mod( model_clock%get_step(), diagnostic_frequency ) == 0) ) then
-          call log_event( program_name//': Writing output', LOG_LEVEL_INFO)
-          call output_model_data( model_data, model_clock )
-        end if
+    ! Write out diagnostics
+    if (write_diag) then
+      if ( (mod( model_clock%get_step(), diagnostic_frequency ) == 0) ) then
+        call log_event( program_name//': Writing output', LOG_LEVEL_INFO)
+        call output_model_data( model_data, model_clock )
       end if
+    end if
 
-    end do
-
-  end subroutine run
+  end subroutine step
 
   !> @brief Tidies up after a model run.
   !> @param [in,out] model_data The structure that holds model state
-  subroutine finalise( model_data, program_name )
+  subroutine finalise( model_data )
 
     implicit none
 
     class(io_dev_data_type), intent(inout) :: model_data
-    character(*),            intent(in) :: program_name
-
-    call log_event( 'Finalising '//program_name//' ...', LOG_LEVEL_ALWAYS )
 
     ! Finalise IO context
     call final_io()

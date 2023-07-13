@@ -9,6 +9,7 @@ module shallow_water_model_mod
 
   use assign_orography_field_mod,     only: assign_orography_field
   use base_mesh_config_mod,           only: prime_mesh_name
+  use calendar_mod,                   only: calendar_type
   use check_configuration_mod,        only: get_required_stencil_depth
   use checksum_alg_mod,               only: checksum_alg
   use conservation_algorithm_mod,     only: conservation_algorithm
@@ -21,7 +22,6 @@ module shallow_water_model_mod
   use driver_io_mod,                  only: init_io, final_io, &
                                             filelist_populator
   use driver_mesh_mod,                only: init_mesh, final_mesh
-  use driver_time_mod,                only: init_time, get_calendar
   use field_mod,                      only: field_type
   use field_parent_mod,               only: write_interface
   use field_collection_mod,           only: field_collection_type
@@ -70,13 +70,15 @@ module shallow_water_model_mod
   !> @param [in]    mpi          Communication object
   subroutine initialise_infrastructure(program_name, &
                                        model_clock,  &
+                                       calendar,     &
                                        mpi )
 
     implicit none
 
-    character(*),           intent(in)               :: program_name
-    type(model_clock_type), intent(out), allocatable :: model_clock
-    class(mpi_type),        intent(inout)            :: mpi
+    character(*),           intent(in)    :: program_name
+    type(model_clock_type), intent(inout) :: model_clock
+    class(calendar_type),   intent(in)    :: calendar
+    class(mpi_type),        intent(inout) :: mpi
 
     type(inventory_by_mesh_type),  pointer :: chi_inventory => null()
     type(inventory_by_mesh_type),  pointer :: panel_id_inventory => null()
@@ -99,14 +101,10 @@ module shallow_water_model_mod
     !-------------------------------------------------------------------------
     ! Initialise timers and counters
     !-------------------------------------------------------------------------
-    call log_event( 'Initialising '//program_name//' ...', LOG_LEVEL_INFO )
-
     if ( subroutine_counters ) then
       allocate(halo_calls, source=count_type('halo_calls'))
       call halo_calls%counter(program_name)
     end if
-
-    call init_time( model_clock )
 
     !-------------------------------------------------------------------------
     ! Work out which meshes are required
@@ -141,7 +139,7 @@ module shallow_water_model_mod
     files_init_ptr => init_shallow_water_files
     call init_io( io_context_name, mpi%get_comm(),   &
                   chi_inventory, panel_id_inventory, &
-                  model_clock, get_calendar(),       &
+                  model_clock, calendar,             &
                   populate_filelist=files_init_ptr )
 
     !-------------------------------------------------------------------------

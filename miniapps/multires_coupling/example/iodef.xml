@@ -620,7 +620,7 @@
 	<field id="du_rot_skeb" name="du_rot_skeb" long_name="eastward wind increment from rotational skeb" unit="m s-1" grid_ref="half_level_face_grid" />
     <field id="dv_rot_skeb" name="dv_rot_skeb" long_name="northward wind increment from rotational skeb" unit="m s-1" grid_ref="half_level_face_grid" />
     <field id="du_div_skeb" name="du_div_skeb" long_name="eastward wind increment from divergent skeb" unit="m s-1" grid_ref="half_level_face_grid" />
-    <field id="dv_div_skeb" name="dv_div_skeb" long_name="northward wind increment from divergent skeb" unit="m s-1" grid_ref="half_level_face_grid" />  	
+    <field id="dv_div_skeb" name="dv_div_skeb" long_name="northward wind increment from divergent skeb" unit="m s-1" grid_ref="half_level_face_grid" />
         <!-- Aerosol and Radiation (RADAER) fields -->
         <field id="wetdp_ait_sol" name="wetdp_ait_sol" long_name="aitken_mode_soluble_wet_diameter" unit="m" grid_ref="full_level_face_grid" />
         <field id="wetdp_acc_sol" name="wetdp_acc_sol" long_name="accumulation_mode_soluble_wet_diameter" unit="m" grid_ref="full_level_face_grid" />
@@ -671,7 +671,7 @@
 	<field id="init_u2" name="u2" long_name="northward_wind" standard_name="northward_wind" unit="m s-1" grid_ref="half_level_edge_grid" />
 	<field id="init_u3" name="u3" long_name="upward_air_velocity" standard_name="upward_air_velocity" unit="m s-1" grid_ref="full_level_face_grid" />
 	<field id="init_divergence" name="divergence" long_name="divergence_of_wind" standard_name="divergence_of_wind" unit="s-1" grid_ref="half_level_face_grid" />
-	<field id="init_potential_vorticity" name="potential_vorticity" long_name="potential_vorticity" standard_name="potential_vorticity" unit="m2 s-1 K kg-1" grid_ref="half_level_face_grid" />
+	<field id="init_potential_vorticity" name="potential_vorticity" long_name="potential_vorticity" standard_name="potential_vorticity" unit="m2 s-1 K kg-1"grid_ref="half_level_face_grid" />
 	<field id="init_exner" name="exner" long_name="exner_pressure" unit="1" grid_ref="half_level_face_grid" />
 	<field id="init_area_fraction" name="area_fraction" long_name="area_fraction"  unit="1" grid_ref="full_level_face_grid" />
 	<field id="init_frozen_fraction" name="frozen_fraction" long_name="frozen_fraction"  unit="1" grid_ref="full_level_face_grid" />

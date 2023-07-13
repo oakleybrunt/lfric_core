@@ -10,12 +10,11 @@
 module diagnostics_driver_mod
 
   use base_mesh_config_mod,          only : prime_mesh_name
-  use clock_mod,                     only : clock_type
+  use calendar_mod,                  only : calendar_type
   use constants_mod,                 only : i_def, i_native, str_def, r_def
   use driver_fem_mod,                only : init_fem
   use driver_io_mod,                 only : init_io, final_io
   use driver_mesh_mod,               only : init_mesh
-  use driver_time_mod,               only : init_time, get_calendar
   use extrusion_mod,                 only : TWOD
   use field_mod,                     only : field_type
   use field_parent_mod,              only : field_parent_type
@@ -39,9 +38,7 @@ module diagnostics_driver_mod
   implicit none
 
   private
-  public initialise, run, finalise
-
-  type(model_clock_type), allocatable :: model_clock
+  public initialise, step, finalise
 
   ! Coordinate field
   type(field_type), pointer :: chi(:) => null()
@@ -62,7 +59,7 @@ contains
   !> @param [in,out] model_data The structure that holds model state
   !> @param [in,out] mpi        The structure that holds comms details
   !>
-  subroutine initialise( model_data, mpi, xios_ctx )
+  subroutine initialise( model_data, model_clock, mpi, xios_ctx, calendar )
 
     use convert_to_upper_mod,       only : convert_to_upper
     use driver_fem_mod,             only : init_fem
@@ -75,19 +72,19 @@ contains
 
     implicit none
 
-    type(model_data_type), intent(inout) :: model_data
-    class(mpi_type),       intent(inout) :: mpi
-    character(*),          intent(in)    :: xios_ctx
-    character(str_def)              :: base_mesh_names(1)
+    type(model_data_type),   intent(inout) :: model_data
+    class(model_clock_type), intent(inout) :: model_clock
+    class(mpi_type),         intent(inout) :: mpi
+    character(*),            intent(in)    :: xios_ctx
+    class(calendar_type),    intent(in)    :: calendar
+
+    character(str_def) :: base_mesh_names(1)
     type(inventory_by_mesh_type)    :: chi_inventory
     type(inventory_by_mesh_type)    :: panel_id_inventory
 
     !----------------------------------------------------------------------
     ! Model init
     !----------------------------------------------------------------------
-
-    ! Initialise model clock and calendar
-    call init_time( model_clock )
 
     ! Create the mesh
     base_mesh_names(1) = prime_mesh_name
@@ -109,7 +106,7 @@ contains
                   chi_inventory,      &
                   panel_id_inventory, &
                   model_clock,        &
-                  get_calendar() )
+                  calendar )
 
     ! Create and initialise prognostic fields
     mesh => mesh_collection%get_mesh(prime_mesh_name)
@@ -130,33 +127,31 @@ contains
   end subroutine initialise
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> Performs time steps.
-  !> @param [in,out] model_data The structure that holds model state
+  !> Performs time step.
   !>
-  subroutine run( model_data )
+  !> @param [in,out] model_data The structure that holds model state
+  !> @param [in]     model_clock Time within the model.
+  !>
+  subroutine step( model_data, model_clock )
 
     use diagnostics_step_mod,       only : diagnostics_step
 
     implicit none
 
-    type(model_data_type), intent(inout) :: model_data
+    type(model_data_type),   intent(inout) :: model_data
+    class(model_clock_type), intent(in)    :: model_clock
 
-    ! standard timestepping from gungho
-    do while (model_clock%tick())
+      write(log_scratch_space, '("/", A, "\ ")') repeat("*", 76)
+      call log_event(log_scratch_space, LOG_LEVEL_TRACE)
+      write( log_scratch_space, &
+             '(A,I0)' ) 'Start of timestep ', model_clock%get_step()
+      call log_event(log_scratch_space, LOG_LEVEL_INFO)
 
-        write(log_scratch_space, '("/", A, "\ ")') repeat("*", 76)
-        call log_event(log_scratch_space, LOG_LEVEL_TRACE)
-        write( log_scratch_space, &
-               '(A,I0)' ) 'Start of timestep ', model_clock%get_step()
-        call log_event(log_scratch_space, LOG_LEVEL_INFO)
+      call diagnostics_step( mesh,       &
+                             twod_mesh,  &
+                             model_data )
 
-        call diagnostics_step( mesh,       &
-                               twod_mesh,  &
-                               model_data )
-
-    end do
-
-  end subroutine run
+  end subroutine step
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Tidies up after a run.

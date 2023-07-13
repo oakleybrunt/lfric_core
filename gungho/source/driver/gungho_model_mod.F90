@@ -10,14 +10,13 @@ module gungho_model_mod
 
   use assign_orography_field_mod, only : assign_orography_field
   use base_mesh_config_mod,       only : prime_mesh_name
+  use calendar_mod,               only : calendar_type
   use checksum_alg_mod,           only : checksum_alg
-  use clock_mod,                  only : clock_type
   use driver_fem_mod,             only : init_fem, final_fem, &
                                          init_function_space_chains
   use driver_io_mod,              only : init_io, final_io,  &
                                          filelist_populator
   use driver_mesh_mod,            only : init_mesh, final_mesh
-  use driver_time_mod,            only : init_time, get_calendar
   use check_configuration_mod,    only : get_required_stencil_depth, &
                                          check_any_shifted
   use conservation_algorithm_mod, only : conservation_algorithm
@@ -65,9 +64,9 @@ module gungho_model_mod
   use minmax_tseries_mod,         only : minmax_tseries,      &
                                          minmax_tseries_init, &
                                          minmax_tseries_final
-  use model_clock_mod,            only : model_clock_type
   use mesh_mod,                   only : mesh_type
   use mesh_collection_mod,        only : mesh_collection
+  use model_clock_mod,            only : model_clock_type
   use moisture_conservation_alg_mod, &
                                   only : moisture_conservation_alg
   use mpi_mod,                    only : mpi_type
@@ -132,7 +131,7 @@ contains
   !> @param [in]     mpi          Communication object
   !>
   subroutine initialise_infrastructure( program_name, model_data, &
-                                        model_clock, mpi )
+                                        model_clock, calendar, mpi )
 
     use logging_config_mod, only: key_from_run_log_level, &
                                   RUN_LOG_LEVEL_ERROR,    &
@@ -151,8 +150,9 @@ contains
     !
     class(mpi_type), intent(inout) :: mpi
 
-    type(model_data_type),               intent(inout) :: model_data
-    type(model_clock_type), allocatable, intent(out)   :: model_clock
+    type(model_data_type),   intent(inout) :: model_data
+    class(model_clock_type), intent(inout) :: model_clock
+    class(calendar_type),    intent(in)    :: calendar
 
     character(len=*), parameter :: io_context_name = "gungho_atm"
 
@@ -203,8 +203,6 @@ contains
       allocate(halo_calls, source=count_type('halo_calls'))
       call halo_calls%counter(program_name)
     end if
-
-    call init_time( model_clock )
 
     !-------------------------------------------------------------------------
     ! Work out which meshes are required
@@ -394,16 +392,16 @@ contains
         end if
       end do
 
-      call init_io( io_context_name, mpi%get_comm(),  &
+      call init_io( io_context_name, mpi%get_comm(),   &
                     chi_inventory, panel_id_inventory, &
-                    model_clock, get_calendar(),       &
+                    model_clock, calendar,             &
                     populate_filelist=files_init_ptr,  &
                     alt_mesh_names=extra_io_mesh_names )
 
     else
-      call init_io( io_context_name, mpi%get_comm(),  &
+      call init_io( io_context_name, mpi%get_comm(),   &
                     chi_inventory, panel_id_inventory, &
-                    model_clock, get_calendar(),       &
+                    model_clock, calendar,             &
                     populate_filelist=files_init_ptr )
     end if
 

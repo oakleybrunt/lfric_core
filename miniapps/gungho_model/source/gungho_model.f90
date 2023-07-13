@@ -15,19 +15,22 @@
 
 program gungho_model
 
-  use cli_mod,                only: get_initial_filename
-  use driver_collections_mod, only: init_collections, final_collections
-  use driver_comm_mod,        only: init_comm, final_comm
-  use driver_config_mod,      only: init_config, final_config
-  use driver_log_mod,         only: init_logger, final_logger
-  use driver_timer_mod,       only: init_timers, final_timers
-  use gungho_mod,             only: gungho_required_namelists
-  use gungho_driver_mod,      only: initialise, run, finalise
-  use gungho_modeldb_mod,     only: modeldb_type
-  use log_mod,                only: log_event,       &
-                                    log_level_trace, &
-                                    log_scratch_space
-  use mpi_mod,                only: global_mpi
+  use cli_mod,                only : get_initial_filename
+  use derived_config_mod,     only : l_esm_couple
+  use driver_collections_mod, only : init_collections, final_collections
+  use driver_comm_mod,        only : init_comm, final_comm
+  use driver_config_mod,      only : init_config, final_config
+  use driver_log_mod,         only : init_logger, final_logger
+  use driver_time_mod,        only : init_time, get_calendar
+  use driver_timer_mod,       only : init_timers, final_timers
+  use gungho_mod,             only : gungho_required_namelists
+  use gungho_driver_mod,      only : initialise, step, finalise
+  use gungho_modeldb_mod,     only : modeldb_type
+  use log_mod,                only : log_event,       &
+                                     log_level_info,  &
+                                     log_level_trace, &
+                                     log_scratch_space
+  use mpi_mod,                only : global_mpi
 
   implicit none
 
@@ -43,11 +46,11 @@ program gungho_model
   call init_comm( application_name )
   call get_initial_filename( filename )
   call init_config( filename, gungho_required_namelists )
+  deallocate(filename)
   call init_logger( modeldb%mpi%get_comm(), application_name )
   call init_timers( application_name )
   call init_collections()
-  deallocate( filename )
-
+  call init_time( modeldb%clock )
 
   ! Create the depository, prognostics and diagnostics field collections
   call modeldb%model_data%depository%initialise(name='depository', table_len=100)
@@ -56,8 +59,22 @@ program gungho_model
 
   write( log_scratch_space, '("Initialise ", A, " ...")' ) application_name
   call log_event( log_scratch_space, log_level_trace )
-  call initialise( application_name, modeldb )
-  call run( application_name, modeldb )
+  call initialise( application_name, modeldb, get_calendar() )
+
+  if(l_esm_couple) then
+    write(log_scratch_space,'("Configuration is coupled to ocean")')
+  else
+    write(log_scratch_space,'("Configuration is not coupled to ocean")')
+  endif
+  call log_event( log_scratch_space, log_level_info )
+
+  write(log_scratch_space,'("Running ", A, " ...")') application_name
+  call log_event( log_scratch_space, log_level_trace )
+  do while (modeldb%clock%tick())
+    call step( modeldb )
+  end do
+
+  call log_event( 'Finalising '//application_name//' ...', log_level_trace )
   call finalise( application_name, modeldb )
 
   call final_collections()

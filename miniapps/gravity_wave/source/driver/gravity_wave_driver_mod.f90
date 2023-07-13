@@ -9,6 +9,7 @@
 module gravity_wave_driver_mod
 
   use base_mesh_config_mod,           only: prime_mesh_name
+  use calendar_mod,                   only: calendar_type
   use constants_mod,                  only: i_def, i_native, r_def
   use gravity_wave_infrastructure_mod,only: initialise_infrastructure, &
                                             finalise_infrastructure
@@ -55,33 +56,30 @@ module gravity_wave_driver_mod
 
   private
 
-  public initialise, run, finalise
-
-  type(model_clock_type), allocatable :: model_clock
+  public initialise, step, finalise
 
   ! The prognostic fields
   type( field_type ), target :: wind
   type( field_type ), target :: pressure
   type( field_type ), target :: buoyancy
 
-  type( mesh_type ), pointer :: mesh      => null()
+  type( mesh_type ), pointer :: mesh => null()
 
 contains
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Sets up required state in preparation for run.
   !>
-  subroutine initialise( mpi, program_name )
+  subroutine initialise( mpi, model_clock, calendar )
 
   implicit none
 
-  class(mpi_type), intent(inout) :: mpi
-  character(*),    intent(in)    :: program_name
+  class(mpi_type),         intent(inout) :: mpi
+  class(model_clock_type), intent(inout) :: model_clock
+  class(calendar_type),    intent(in)    :: calendar
 
   ! Initialise aspects of the infrastructure
-  call initialise_infrastructure( model_clock, mpi )
-
-  call log_event( 'Initialising '//program_name//' ...', LOG_LEVEL_ALWAYS )
+  call initialise_infrastructure( model_clock, mpi, calendar )
 
   ! The limited area version is unable to work with buoyancy in W0 when using
   ! a biperiodic mesh. However, this could be solved by breaking the continuity
@@ -144,21 +142,14 @@ contains
   end subroutine initialise
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> Performs time steps.
+  !> Performs time step.
   !>
-  subroutine run( program_name )
+  subroutine step( model_clock, program_name )
 
-  implicit none
+    implicit none
 
-  character(*), intent(in) :: program_name
-
-  write(log_scratch_space,'(A,I0,A)') 'Running '//program_name//' ...'
-  call log_event( log_scratch_space, LOG_LEVEL_ALWAYS )
-
-  !--------------------------------------------------------------------------
-  ! Model step
-  !--------------------------------------------------------------------------
-  do while (model_clock%tick())
+    class(model_clock_type), intent(in) :: model_clock
+    character(*),            intent(in) :: program_name
 
     ! Update XIOS calendar if we are using it for diagnostic output or
     ! checkpoint
@@ -194,24 +185,22 @@ contains
                                             nodal_output_on_w3)
     end if
 
-  end do
-
-  end subroutine run
+  end subroutine step
 
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Tidies up after a run.
   !>
-  subroutine finalise( program_name )
+  subroutine finalise( model_clock, program_name )
 
   implicit none
 
-  character(*), intent(in) :: program_name
+  class(model_clock_type), intent(in) :: model_clock
+  character(*),            intent(in) :: program_name
 
   !--------------------------------------------------------------------------
   ! Model finalise
   !--------------------------------------------------------------------------
-  call log_event( 'Finalising '//program_name//' ...', LOG_LEVEL_ALWAYS )
 
   ! Write checksums to file
   call checksum_alg( program_name, wind, 'wind', buoyancy, 'buoyancy', pressure, 'pressure')

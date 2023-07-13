@@ -10,6 +10,7 @@ module multires_coupling_model_mod
 
   use assign_orography_field_mod, only : assign_orography_field
   use base_mesh_config_mod,       only : prime_mesh_name
+  use calendar_mod,               only : calendar_type
   use checksum_alg_mod,           only : checksum_alg
   use check_configuration_mod,    only : get_required_stencil_depth, &
                                          check_any_shifted
@@ -18,7 +19,6 @@ module multires_coupling_model_mod
   use driver_mesh_mod,            only : init_mesh, final_mesh
   use driver_io_mod,              only : init_io, final_io, &
                                          filelist_populator
-  use driver_time_mod,            only : init_time, get_calendar
   use conservation_algorithm_mod, only : conservation_algorithm
   use constants_mod,              only : i_def, i_native,          &
                                          PRECISION_REAL, r_second, &
@@ -111,15 +111,16 @@ contains
   !> @param[out]    model_clock  Time within the model
   !> @param[in,out] mpi          Communication object
   !>
-  subroutine initialise_infrastructure( program_name, model_clock, mpi )
+  subroutine initialise_infrastructure( program_name, model_clock, calendar, mpi )
 
     use check_configuration_mod, only: get_required_stencil_depth
 
     implicit none
 
-    character(*),           intent(in)               :: program_name
-    type(model_clock_type), intent(out), allocatable :: model_clock
-    class(mpi_type),        intent(inout)            :: mpi
+    character(*),           intent(in)    :: program_name
+    type(model_clock_type), intent(inout) :: model_clock
+    class(calendar_type),   intent(in)    :: calendar
+    class(mpi_type),        intent(inout) :: mpi
 
     type(mesh_type), pointer :: mesh => null()
     type(mesh_type), pointer :: shifted_mesh => null()
@@ -168,8 +169,6 @@ contains
       allocate(halo_calls, source=count_type('halo_calls'))
       call halo_calls%counter(program_name)
     end if
-
-    call init_time( model_clock )
 
     !-------------------------------------------------------------------------
     ! Work out which meshes are required
@@ -332,7 +331,7 @@ contains
     call init_io( program_name,                      &
                   mpi%get_comm(),                    &
                   chi_inventory, panel_id_inventory, &
-                  model_clock, get_calendar(),       &
+                  model_clock, calendar,             &
                   populate_filelist=files_init_ptr,  &
                   alt_mesh_names=extra_io_mesh_names )
 

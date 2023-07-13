@@ -12,12 +12,7 @@
 !>
 module multires_coupling_driver_mod
 
-  use multires_coupling_config_mod, &
-    only : dynamics_mesh_name,      &
-           physics_mesh_name,       &
-           multires_coupling_mode,  &
-           multires_coupling_mode_test
-  use variable_fields_mod,                      only : update_variable_fields
+  use calendar_mod,                             only : calendar_type
   use gungho_modeldb_mod,                       only : modeldb_type
   use gungho_step_mod,                          only : gungho_step
   use constants_mod,                            only : i_def, i_native, &
@@ -34,7 +29,6 @@ module multires_coupling_driver_mod
   use mesh_mod,                                 only : mesh_type
   use model_clock_mod,                          only : model_clock_type
   use mpi_mod,                                  only : mpi_type
-  use coupling_test_alg_mod,                    only : coupling_test_alg
   use xios,                                     only : xios_context_finalize
   use multires_coupling_model_mod,              only : initialise_model,          &
                                                        finalise_model,            &
@@ -43,16 +37,20 @@ module multires_coupling_driver_mod
   use gungho_model_data_mod,                    only : create_model_data,     &
                                                        finalise_model_data,   &
                                                        initialise_model_data
+  use multires_coupling_config_mod, &
+    only : dynamics_mesh_name,      &
+           physics_mesh_name,       &
+           multires_coupling_mode,  &
+           multires_coupling_mode_test
   use multires_coupling_diagnostics_driver_mod, only : multires_coupling_diagnostics_driver
   use field_collection_mod,                     only : field_collection_type
   use field_mod,                                only : field_type
+  use variable_fields_mod,                      only : update_variable_fields
 
   implicit none
 
   private
-  public initialise, run, finalise
-
-  type(model_clock_type), allocatable :: model_clock
+  public initialise, step, finalise
 
   ! Dynamics and Physics mesh ids
   type(mesh_type), pointer :: dynamics_mesh    => null()
@@ -79,13 +77,15 @@ contains
   !>                                       state for the physics mesh
   subroutine initialise( dynamics_mesh_modeldb, &
                          physics_mesh_modeldb,  &
-                         program_name )
+                         program_name,          &
+                         calendar )
 
     implicit none
 
-    type(modeldb_type), intent(inout) :: dynamics_mesh_modeldb
-    type(modeldb_type), intent(inout) :: physics_mesh_modeldb
-    character(*),    intent(in)    :: program_name
+    type(modeldb_type),   intent(inout) :: dynamics_mesh_modeldb
+    type(modeldb_type),   intent(inout) :: physics_mesh_modeldb
+    character(*),         intent(in)    :: program_name
+    class(calendar_type), intent(in)    :: calendar
 
     !-------------------------------------------------------------------------
     ! Model init
@@ -94,10 +94,10 @@ contains
     !-------------------------------------------------------------------------
     ! Initialise Infrastructure such as meshes, FEM and runtime constants
     !-------------------------------------------------------------------------
-    call log_event( 'Initialising Infrastructure...', LOG_LEVEL_ALWAYS )
 
-    call initialise_infrastructure( program_name,            &
-                                    model_clock,             &
+    call initialise_infrastructure( program_name,                &
+                                    dynamics_mesh_modeldb%clock, &
+                                    calendar,                    &
                                     dynamics_mesh_modeldb%mpi )
 
     dynamics_2D_mesh_name = trim(dynamics_mesh_name)//'_2d'
@@ -120,34 +120,36 @@ contains
                             dynamics_2D_mesh,                 &
                             aerosol_mesh,                     &
                             aerosol_2D_mesh,                  &
-                            model_clock )
+                            dynamics_mesh_modeldb%clock )
     call create_model_data( physics_mesh_modeldb%model_data, &
                             physics_mesh,                    &
                             physics_2D_mesh,                 &
                             aerosol_mesh,                    &
                             aerosol_2D_mesh,                 &
-                            model_clock )
+                            physics_mesh_modeldb%clock )
 
 
     ! Initialise the fields stored in the model_data
     call initialise_model_data( dynamics_mesh_modeldb%model_data, &
-                                model_clock,                      &
+                                dynamics_mesh_modeldb%clock,      &
                                 dynamics_mesh,                    &
                                 dynamics_2D_mesh )
     call initialise_model_data( physics_mesh_modeldb%model_data,  &
-                                model_clock,                      &
+                                dynamics_mesh_modeldb%clock,      &
                                 physics_mesh,                     &
                                 physics_2D_mesh )
 
    ! Initial output
    ! We only want these once at the beginning of a run
-   if ( model_clock%is_initialisation() .and. write_diag .and. &
+   if ( dynamics_mesh_modeldb%clock%is_initialisation() .and. write_diag .and. &
         multires_coupling_mode /= multires_coupling_mode_test ) then
-     call multires_coupling_diagnostics_driver( dynamics_mesh,            &
-                                                dynamics_2D_mesh,         &
-                                        dynamics_mesh_modeldb%model_data, &
-                                                model_clock,              &
-                                                nodal_output_on_w3 )
+     call multires_coupling_diagnostics_driver( &
+        dynamics_mesh,                          &
+        dynamics_2D_mesh,                       &
+        dynamics_mesh_modeldb%model_data,       &
+        dynamics_mesh_modeldb%clock,            &
+        nodal_output_on_w3                      &
+    )
    end if
 
    if ( multires_coupling_mode /= multires_coupling_mode_test ) then
@@ -162,50 +164,42 @@ contains
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !>
-  !> @brief Timesteps the model, calling the desired timestepping algorithm
+  !> @brief Timestep the model, calling the desired timestepping algorithm
   !> @param [in,out] dynamics_mesh_modeldb The structure that holds model
   !>                                       state for the dynamics mesh
   !> @param [in,out] physics_mesh_modeldb  The structure that holds model
   !>                                       state for the physics mesh
-  subroutine run( dynamics_mesh_modeldb, physics_mesh_modeldb )
+  subroutine step( dynamics_mesh_modeldb, physics_mesh_modeldb )
 
     implicit none
 
     type(modeldb_type), intent(inout) :: dynamics_mesh_modeldb
     type(modeldb_type), intent(inout) :: physics_mesh_modeldb
 
-    if ( multires_coupling_mode == multires_coupling_mode_test ) then
-      ! Call coupling test algorithm
-      call coupling_test_alg()
-    else
-      ! Do timestep
-      do while (model_clock%tick())
-        ! Update time-varying fields
-        call update_variable_fields(                         &
-          dynamics_mesh_modeldb%model_data%ancil_times_list, &
-          model_clock,                                       &
-          dynamics_mesh_modeldb%model_data%ancil_fields )
-        ! Perform gungho timestep
-        call gungho_step( dynamics_mesh,         &
-                          dynamics_2D_mesh,      &
-                          dynamics_mesh_modeldb, &
-                          model_clock )
-        ! Write out output file
-        call log_event( "Writing depository output", LOG_LEVEL_INFO )
+    ! Update time-varying fields
+    call update_variable_fields(                         &
+      dynamics_mesh_modeldb%model_data%ancil_times_list, &
+      dynamics_mesh_modeldb%clock,                       &
+      dynamics_mesh_modeldb%model_data%ancil_fields )
+    ! Perform gungho timestep
+    call gungho_step( dynamics_mesh,         &
+                      dynamics_2D_mesh,      &
+                      dynamics_mesh_modeldb, &
+                      dynamics_mesh_modeldb%clock )
+    ! Write out output file
+    call log_event( "Writing depository output", LOG_LEVEL_INFO )
 
-        if ( (mod(model_clock%get_step(), diagnostic_frequency) == 0) &
-              .and. (write_diag) ) then
-              call multires_coupling_diagnostics_driver( &
-                dynamics_mesh,                    &
-                dynamics_2D_mesh,                 &
-                dynamics_mesh_modeldb%model_data, &
-                model_clock,                      &
-                nodal_output_on_w3 )
-        end if
-      end do
+    if ( (mod(dynamics_mesh_modeldb%clock%get_step(), diagnostic_frequency) == 0) &
+          .and. (write_diag) ) then
+          call multires_coupling_diagnostics_driver( &
+            dynamics_mesh,                    &
+            dynamics_2D_mesh,                 &
+            dynamics_mesh_modeldb%model_data, &
+            dynamics_mesh_modeldb%clock,      &
+            nodal_output_on_w3 )
     end if
 
-  end subroutine run
+  end subroutine step
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Finalise after run

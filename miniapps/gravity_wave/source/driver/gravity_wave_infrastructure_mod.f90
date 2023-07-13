@@ -9,6 +9,7 @@
 module gravity_wave_infrastructure_mod
 
   use base_mesh_config_mod,       only : prime_mesh_name
+  use calendar_mod,               only : calendar_type
   use check_configuration_mod,    only : get_required_stencil_depth
   use constants_mod,              only : i_def, i_native, &
                                          PRECISION_REAL,  &
@@ -30,7 +31,6 @@ module gravity_wave_infrastructure_mod
   use driver_fem_mod,             only : init_fem, init_function_space_chains
   use driver_io_mod,              only : init_io, final_io
   use driver_mesh_mod,            only : init_mesh
-  use driver_time_mod,            only : init_time, get_calendar
   use runtime_constants_mod,      only : create_runtime_constants
   use formulation_config_mod,     only : l_multigrid
   use multigrid_config_mod,       only : chain_mesh_tags
@@ -47,15 +47,18 @@ contains
   !> @brief Initialises the infrastructure used by the model
   !> @param [out]    model_clock  Time within the model
   !> @param [in]     mpi          Communication object
-  subroutine initialise_infrastructure( model_clock, mpi )
+  !> @param [in]     caledar      Interprets date strings.
+  !>
+  subroutine initialise_infrastructure( model_clock, mpi, calendar )
 
     use log_mod,                 only : log_level_error
     use step_calendar_mod,       only : step_calendar_type
 
     implicit none
 
-    type(model_clock_type), intent(out), allocatable :: model_clock
-    class(mpi_type),        intent(inout)            :: mpi
+    type(model_clock_type), intent(inout) :: model_clock
+    class(mpi_type),        intent(inout) :: mpi
+    class(calendar_type),   intent(in)    :: calendar
 
     type(inventory_by_mesh_type), pointer :: chi_inventory => null()
     type(inventory_by_mesh_type), pointer :: panel_id_inventory => null()
@@ -71,8 +74,6 @@ contains
     call log_event( log_scratch_space, LOG_LEVEL_ALWAYS )
 
     call set_derived_config( .false. )
-
-    call init_time( model_clock )
 
     !-------------------------------------------------------------------------
     ! Work out which meshes are required
@@ -132,7 +133,7 @@ contains
     ! Initialise aspects of output
     !-------------------------------------------------------------------------
     call init_io( xios_ctx, mpi%get_comm(), chi_inventory, panel_id_inventory, &
-                  model_clock, get_calendar() )
+                  model_clock, calendar )
 
     !-------------------------------------------------------------------------
     ! Setup constants

@@ -9,6 +9,7 @@
 module transport_driver_mod
 
   use base_mesh_config_mod,             only: prime_mesh_name
+  use calendar_mod,                     only: calendar_type
   use checksum_alg_mod,                 only: checksum_alg
   use check_configuration_mod,          only: get_required_stencil_depth
   use configuration_mod,                only: final_configuration
@@ -63,9 +64,7 @@ module transport_driver_mod
 
   private
 
-  public :: initialise_transport, run_transport, finalise_transport
-
-  type(model_clock_type), allocatable :: model_clock
+  public :: initialise_transport, step_transport, finalise_transport
 
   ! Prognostic fields
   type(field_type) :: wind
@@ -90,12 +89,14 @@ contains
   !> @brief Sets up required state in preparation for run.
   !> @param [in,out] mpi          The structure that holds comms details
   !> @param [in]     program_name An identifier given to the model being run
-  subroutine initialise_transport( mpi, program_name )
+  subroutine initialise_transport( mpi, model_clock, program_name, calendar )
 
     implicit none
 
-    class(mpi_type), intent(inout) :: mpi
-    character(*),    intent(in)    :: program_name
+    class(mpi_type),         intent(inout) :: mpi
+    class(model_clock_type), intent(inout) :: model_clock
+    character(*),            intent(in)    :: program_name
+    class(calendar_type),    intent(in)    :: calendar
 
     character(len=*), parameter :: xios_ctx  = "transport"
 
@@ -111,18 +112,7 @@ contains
     character(str_def),       allocatable :: double_level_mesh_names(:)
     character(str_def),       allocatable :: extra_io_mesh_names(:)
 
-    call log_event( program_name//': Runtime default precision set as:', LOG_LEVEL_ALWAYS )
-    write(log_scratch_space, '(I1)') kind(1.0_r_def)
-    call log_event( '     r_def kind = '//log_scratch_space , LOG_LEVEL_ALWAYS )
-    write(log_scratch_space, '(I1)') kind(1_i_def)
-    call log_event( '     i_def kind = '//log_scratch_space , LOG_LEVEL_ALWAYS )
-
     call set_derived_config( .true. )
-
-    !-------------------------------------------------------------------------
-    ! Model init
-    !-------------------------------------------------------------------------
-    call init_time( model_clock )
 
     !-------------------------------------------------------------------------
     ! Work out which meshes are required
@@ -270,11 +260,13 @@ contains
   end subroutine initialise_transport
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> @brief Performs time stepping.
+  !> @brief Performs a time step.
   !>
-  subroutine run_transport()
+  subroutine step_transport( model_clock )
 
     implicit none
+
+    class(model_clock_type), intent(in) :: model_clock
 
     type(mesh_type), pointer :: mesh => null()
     type(mesh_type), pointer :: aerosol_mesh => null()
@@ -300,92 +292,81 @@ contains
       aerosol_mesh => mesh_collection%get_mesh(prime_mesh_name)
     end if
 
-    !--------------------------------------------------------------------------
-    ! Model step
-    !--------------------------------------------------------------------------
-    do while (model_clock%tick())
+    write(log_scratch_space, '("/", A, "\ ")') repeat('*', 76)
+    call log_event( log_scratch_space, LOG_LEVEL_TRACE )
+    write( log_scratch_space, '(A,I0)' ) &
+      'Start of timestep ', model_clock%get_step()
+    call log_event( log_scratch_space, LOG_LEVEL_INFO )
 
-      write(log_scratch_space, '("/", A, "\ ")') repeat('*', 76)
-      call log_event( log_scratch_space, LOG_LEVEL_TRACE )
-      write( log_scratch_space, '(A,I0)' ) &
-        'Start of timestep ', model_clock%get_step()
-      call log_event( log_scratch_space, LOG_LEVEL_INFO )
+    if ( subroutine_timers ) call timer( 'transport step' )
 
-      if ( subroutine_timers ) call timer( 'transport step' )
+    call transport_step( model_clock,                          &
+                         wind, density, theta, tracer_con,     &
+                         tracer_adv, constant, mr, w2_vector,  &
+                         w3_aerosol, wt_aerosol, aerosol_wind, &
+                         nummr_to_transport )
 
-      call transport_step( model_clock,                          &
-                           wind, density, theta, tracer_con,     &
-                           tracer_adv, constant, mr, w2_vector,  &
-                           w3_aerosol, wt_aerosol, aerosol_wind, &
-                           nummr_to_transport )
+    if ( subroutine_timers ) call timer( 'transport step' )
 
-      if ( subroutine_timers ) call timer( 'transport step' )
+    ! Write out conservation diagnostics
+    call mass_conservation( model_clock%get_step(), density, mr )
+    call density%log_minmax( LOG_LEVEL_INFO, 'rho' )
+    call theta%log_minmax( LOG_LEVEL_INFO, 'theta' )
+    call tracer_con%log_minmax( LOG_LEVEL_INFO, 'tracer_con' )
+    call tracer_adv%log_minmax( LOG_LEVEL_INFO, 'tracer_adv' )
+    call constant%log_minmax( LOG_LEVEL_INFO, 'constant' )
+    call mr(1)%log_minmax( LOG_LEVEL_INFO, 'm_v' )
+    if (use_aerosols) then
+      call w3_aerosol%log_minmax( LOG_LEVEL_INFO, 'w3_aerosol' )
+      call wt_aerosol%log_minmax( LOG_LEVEL_INFO, 'wt_aerosol' )
+    end if
 
-      ! Write out conservation diagnostics
-      call mass_conservation( model_clock%get_step(), density, mr )
-      call density%log_minmax( LOG_LEVEL_INFO, 'rho' )
-      call theta%log_minmax( LOG_LEVEL_INFO, 'theta' )
-      call tracer_con%log_minmax( LOG_LEVEL_INFO, 'tracer_con' )
-      call tracer_adv%log_minmax( LOG_LEVEL_INFO, 'tracer_adv' )
-      call constant%log_minmax( LOG_LEVEL_INFO, 'constant' )
-      call mr(1)%log_minmax( LOG_LEVEL_INFO, 'm_v' )
+    write( log_scratch_space, &
+           '(A,I0)' ) 'End of timestep ', model_clock%get_step()
+    call log_event( log_scratch_space, LOG_LEVEL_INFO )
+    write(log_scratch_space, '("\", A, "/ ")') repeat('*', 76)
+    call log_event( log_scratch_space, LOG_LEVEL_INFO )
+
+    ! Output wind and density values.
+    if ( (mod( model_clock%get_step(), diagnostic_frequency ) == 0) &
+         .and. write_diag ) then
+
+      ! Compute divergence
+      call divergence_alg( divergence, wind )
+
+      call write_vector_diagnostic( 'u', wind,                &
+                                    model_clock, mesh, nodal_output_on_w3 )
+      call write_scalar_diagnostic( 'rho', density,           &
+                                    model_clock, mesh, nodal_output_on_w3 )
+      call write_scalar_diagnostic( 'theta', theta,           &
+                                    model_clock, mesh, nodal_output_on_w3 )
+      call write_scalar_diagnostic( 'tracer_con', tracer_con, &
+                                    model_clock, mesh, nodal_output_on_w3 )
+      call write_scalar_diagnostic( 'tracer_adv', tracer_adv, &
+                                    model_clock, mesh, nodal_output_on_w3 )
+      call write_scalar_diagnostic( 'constant', constant,     &
+                                    model_clock, mesh, nodal_output_on_w3 )
+      call write_scalar_diagnostic( 'm_v', mr(1),             &
+                                    model_clock, mesh, nodal_output_on_w3 )
+      call write_scalar_diagnostic( 'divergence', divergence, &
+                                    model_clock, mesh, nodal_output_on_w3 )
+      if (use_w2_vector) then
+        call write_vector_diagnostic( 'w2_vector', w2_vector,   &
+                                      model_clock, mesh, nodal_output_on_w3 )
+      end if
       if (use_aerosols) then
-        call w3_aerosol%log_minmax( LOG_LEVEL_INFO, 'w3_aerosol' )
-        call wt_aerosol%log_minmax( LOG_LEVEL_INFO, 'wt_aerosol' )
+        call write_vector_diagnostic( 'aerosol_wind', aerosol_wind, model_clock, &
+                                      aerosol_mesh, nodal_output_on_w3 )
+        call write_scalar_diagnostic( 'w3_aerosol', w3_aerosol,   &
+                                      model_clock, aerosol_mesh, nodal_output_on_w3 )
+        call write_scalar_diagnostic( 'wt_aerosol', wt_aerosol,   &
+                                      model_clock, aerosol_mesh, nodal_output_on_w3 )
       end if
-
-
-      write( log_scratch_space, &
-             '(A,I0)' ) 'End of timestep ', model_clock%get_step()
-      call log_event( log_scratch_space, LOG_LEVEL_INFO )
-      write(log_scratch_space, '("\", A, "/ ")') repeat('*', 76)
-      call log_event( log_scratch_space, LOG_LEVEL_INFO )
-
-      ! Output wind and density values.
-      if ( (mod( model_clock%get_step(), diagnostic_frequency ) == 0) &
-           .and. write_diag ) then
-
-        ! Compute divergence
-        call divergence_alg( divergence, wind )
-
-        call write_vector_diagnostic( 'u', wind,                &
-                                      model_clock, mesh, nodal_output_on_w3 )
-        call write_scalar_diagnostic( 'rho', density,           &
-                                      model_clock, mesh, nodal_output_on_w3 )
-        call write_scalar_diagnostic( 'theta', theta,           &
-                                      model_clock, mesh, nodal_output_on_w3 )
-        call write_scalar_diagnostic( 'tracer_con', tracer_con, &
-                                      model_clock, mesh, nodal_output_on_w3 )
-        call write_scalar_diagnostic( 'tracer_adv', tracer_adv, &
-                                      model_clock, mesh, nodal_output_on_w3 )
-        call write_scalar_diagnostic( 'constant', constant,     &
-                                      model_clock, mesh, nodal_output_on_w3 )
-        call write_scalar_diagnostic( 'm_v', mr(1),             &
-                                      model_clock, mesh, nodal_output_on_w3 )
-        call write_scalar_diagnostic( 'divergence', divergence, &
-                                      model_clock, mesh, nodal_output_on_w3 )
-        if (use_w2_vector) then
-          call write_vector_diagnostic( 'w2_vector', w2_vector,   &
-                                        model_clock, mesh, nodal_output_on_w3 )
-        end if
-        if (use_aerosols) then
-          call write_vector_diagnostic( 'aerosol_wind', aerosol_wind, model_clock, &
-                                        aerosol_mesh, nodal_output_on_w3 )
-          call write_scalar_diagnostic( 'w3_aerosol', w3_aerosol,   &
-                                        model_clock, aerosol_mesh, nodal_output_on_w3 )
-          call write_scalar_diagnostic( 'wt_aerosol', wt_aerosol,   &
-                                        model_clock, aerosol_mesh, nodal_output_on_w3 )
-        end if
-      end if
-
-    end do ! while clock%is_running()
-
-    call transport_final( density, theta, tracer_con, tracer_adv, &
-                          constant, mr, w2_vector, w3_aerosol, wt_aerosol )
+    end if
 
     nullify(mesh)
 
-  end subroutine run_transport
+  end subroutine step_transport
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> @brief Tidies up after a run.
@@ -395,6 +376,9 @@ contains
     implicit none
 
     character(*), intent(in) :: program_name
+
+    call transport_final( density, theta, tracer_con, tracer_adv, &
+                          constant, mr, w2_vector, w3_aerosol, wt_aerosol )
 
     !--------------------------------------------------------------------------
     ! Model finalise

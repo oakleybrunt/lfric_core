@@ -10,6 +10,7 @@
 module tl_test_driver_mod
 
   use base_mesh_config_mod,       only : prime_mesh_name
+  use calendar_mod,               only : calendar_type
   use constants_mod,              only : i_def, i_native, imdi
   use extrusion_mod,              only : TWOD
   use gungho_model_mod,           only : initialise_infrastructure, &
@@ -65,8 +66,6 @@ module tl_test_driver_mod
          run_semi_imp_alg,            &
          run_transport_control
 
-  type(model_clock_type), allocatable :: model_clock
-
   type(mesh_type), pointer :: mesh              => null()
   type(mesh_type), pointer :: twod_mesh         => null()
   type(mesh_type), pointer :: aerosol_mesh      => null()
@@ -79,18 +78,20 @@ contains
   !>@param [in]     program_name An identifier given to the model being run
   !>@param [in,out] modeldb      The structure that holds model state
   !>
-  subroutine initialise( program_name, modeldb )
+  subroutine initialise( program_name, modeldb, calendar )
 
     implicit none
 
-    character(*),       intent(in)    :: program_name
-    type(modeldb_type), intent(inout) :: modeldb
+    character(*),         intent(in)    :: program_name
+    type(modeldb_type),   intent(inout) :: modeldb
+    class(calendar_type), intent(in)    :: calendar
 
     ! Initialise infrastructure and setup constants
     !
     call initialise_infrastructure( program_name,       &
                                     modeldb%model_data, &
-                                    model_clock,        &
+                                    modeldb%clock,      &
+                                    calendar,           &
                                     modeldb%mpi )
 
     ! Get primary and 2D meshes for initialising model data
@@ -107,7 +108,7 @@ contains
                             twod_mesh,          &
                             aerosol_mesh,       &
                             aerosol_twod_mesh,  &
-                            model_clock )
+                            modeldb%clock )
 
     ! Instantiate the linearisation state
     call linear_create_ls( modeldb%model_data, &
@@ -116,7 +117,7 @@ contains
 
     ! Initialise the fields stored in the model_data prognostics. This needs
     ! to be done before initialise_model.
-    call initialise_model_data( modeldb%model_data, model_clock, &
+    call initialise_model_data( modeldb%model_data, modeldb%clock, &
                                 mesh, twod_mesh )
 
     ! Model configuration initialisation
@@ -127,7 +128,7 @@ contains
     call linear_init_ls( mesh,      &
                          twod_mesh, &
                          modeldb,   &
-                         model_clock )
+                         modeldb%clock )
 
   end subroutine initialise
 
@@ -143,7 +144,7 @@ contains
     call test_timesteps( modeldb,   &
                          mesh,      &
                          twod_mesh, &
-                         model_clock )
+                         modeldb%clock )
 
   end subroutine run_timesteps
 
@@ -172,7 +173,7 @@ contains
     type(modeldb_type), intent(inout) :: modeldb
 
     call test_advect_density_field( modeldb%model_data, &
-                                    model_clock,        &
+                                    modeldb%clock,      &
                                     mesh,               &
                                     twod_mesh )
 
@@ -188,7 +189,7 @@ contains
     type(modeldb_type), intent(inout) :: modeldb
 
     call test_advect_theta_field( modeldb%model_data, &
-                                  model_clock,        &
+                                  modeldb%clock,      &
                                   mesh,               &
                                   twod_mesh )
 
@@ -281,7 +282,7 @@ contains
     call test_rk_alg( modeldb%model_data, &
                       mesh,               &
                       twod_mesh,          &
-                      model_clock )
+                      modeldb%clock )
 
   end subroutine run_rk_alg
 
@@ -295,7 +296,7 @@ contains
     type(modeldb_type), intent(inout) :: modeldb
 
     call test_transport_control( modeldb%model_data, &
-                                 model_clock,        &
+                                 modeldb%clock,      &
                                  mesh,               &
                                  twod_mesh )
 
@@ -313,7 +314,7 @@ contains
     call test_semi_imp_alg( modeldb%model_data, &
                             mesh,               &
                             twod_mesh,          &
-                            model_clock )
+                            modeldb%clock )
 
   end subroutine run_semi_imp_alg
 

@@ -10,11 +10,11 @@
 module skeleton_driver_mod
 
   use base_mesh_config_mod,       only : prime_mesh_name
+  use calendar_mod,               only : calendar_type
   use checksum_alg_mod,           only : checksum_alg
   use constants_mod,              only : i_def, i_native, str_def, &
-                                         PRECISION_REAL, r_def, r_second
+                                         r_def, r_second
   use convert_to_upper_mod,       only : convert_to_upper
-  use driver_time_mod,            only : init_time, get_calendar
   use driver_mesh_mod,            only : init_mesh, final_mesh
   use driver_fem_mod,             only : init_fem, final_fem
   use driver_io_mod,              only : init_io, final_io
@@ -33,9 +33,7 @@ module skeleton_driver_mod
   implicit none
 
   private
-  public initialise, run, finalise
-
-  type(model_clock_type), allocatable :: model_clock
+  public initialise, step, finalise
 
   ! Prognostic fields
   type( field_type ) :: field_1
@@ -45,14 +43,14 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Sets up required state in preparation for run.
   !>
-  subroutine initialise( mpi, program_name )
+  subroutine initialise( mpi, model_clock, program_name, calendar )
 
     implicit none
 
-    class(mpi_type), intent(inout) :: mpi
-    character(*),    intent(in)    :: program_name
-
-    real(r_def) :: dt_model
+    class(mpi_type),         intent(inout) :: mpi
+    class(model_clock_type), intent(inout) :: model_clock
+    character(*),            intent(in)    :: program_name
+    class(calendar_type),    intent(in)    :: calendar
 
     ! Coordinate field
     type(field_type),             pointer :: chi(:) => null()
@@ -62,19 +60,9 @@ contains
     type(inventory_by_mesh_type)          :: panel_id_inventory
     character(str_def),       allocatable :: base_mesh_names(:)
 
-
-    write(log_scratch_space,'(A)')                        &
-        'Application built with '//trim(PRECISION_REAL)// &
-        '-bit real numbers'
-    call log_event( log_scratch_space, LOG_LEVEL_ALWAYS )
-
     !-------------------------------------------------------------------------
     ! Model init
     !-------------------------------------------------------------------------
-
-    ! Initialise clock
-    call init_time( model_clock )
-    dt_model = real(model_clock%get_seconds_per_step(), r_def)
 
     ! Create the mesh
     allocate(base_mesh_names(1))
@@ -86,13 +74,14 @@ contains
 
     ! Initialise I/O context
     call init_io( program_name, mpi%get_comm(), chi_inventory, &
-                  panel_id_inventory, model_clock, get_calendar() )
+                  panel_id_inventory, model_clock, calendar )
 
     ! Create and initialise prognostic fields
     mesh => mesh_collection%get_mesh(prime_mesh_name)
     call chi_inventory%get_field_array(mesh, chi)
     call panel_id_inventory%get_field(mesh, panel_id)
-    call init_skeleton( mesh, chi, panel_id, dt_model, field_1 )
+    call init_skeleton( mesh, chi, panel_id, &
+                        model_clock%get_seconds_per_step(), field_1 )
 
     nullify(mesh, chi, panel_id)
     deallocate(base_mesh_names)
@@ -100,17 +89,13 @@ contains
   end subroutine initialise
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> Performs time steps.
+  !> Performs time step.
   !>
-  subroutine run( program_name )
+  subroutine step( program_name )
 
     implicit none
 
     character(*), intent(in) :: program_name
-
-    logical :: running
-
-    running = model_clock%tick()
 
     ! Call an algorithm
     call skeleton_alg(field_1)
@@ -123,7 +108,7 @@ contains
       call field_1%write_field('skeleton_field')
     end if
 
-  end subroutine run
+  end subroutine step
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Tidies up after a run.

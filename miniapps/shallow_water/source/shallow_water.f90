@@ -19,6 +19,7 @@ program shallow_water
   use driver_comm_mod,           only: init_comm, final_comm
   use driver_config_mod,         only: init_config, final_config
   use driver_log_mod,            only: init_logger, final_logger
+  use driver_time_mod,           only: init_time, get_calendar
   use driver_timer_mod,          only: init_timers, final_timers
   use log_mod,                   only: log_event,       &
                                        log_level_trace, &
@@ -27,7 +28,7 @@ program shallow_water
   use shallow_water_mod,         only: shallow_water_required_namelists
   use shallow_water_modeldb_mod, only: modeldb_type
   use shallow_water_driver_mod,  only: initialise, &
-                                       run,        &
+                                       step,       &
                                        finalise
 
   implicit none
@@ -44,20 +45,24 @@ program shallow_water
   call init_comm( program_name )
   call get_initial_filename( filename )
   call init_config( filename, shallow_water_required_namelists )
+  deallocate( filename )
   call init_logger( global_mpi%get_comm(), program_name )
   call init_timers( program_name )
   call init_collections()
-  deallocate( filename )
+  call init_time( modeldb%clock )
 
   ! Create the depository and prognostics field collections
   call modeldb%model_data%depository%initialise(name='depository', table_len=100)
   call modeldb%model_data%prognostic_fields%initialise(name="prognostics", table_len=100)
 
   call log_event( 'Initialising Infrastructure ...', log_level_trace )
-  call initialise( modeldb, program_name )
+  call initialise( modeldb, program_name, get_calendar() )
   write(log_scratch_space,'("Running ", A, "...")') program_name
   call log_event( log_scratch_space, log_level_trace )
-  call run( modeldb )
+  do while (modeldb%clock%tick())
+    call step( modeldb )
+  end do
+
   call log_event( 'Finalising ' // program_name // ' ...', log_level_trace )
   call finalise( modeldb, program_name )
 

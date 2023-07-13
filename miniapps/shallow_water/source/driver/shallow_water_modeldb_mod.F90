@@ -13,6 +13,7 @@
 module shallow_water_modeldb_mod
 
   use shallow_water_model_data_mod, only : model_data_type
+  use model_clock_mod,              only : model_clock_type
   use mpi_mod,                      only : mpi_type
 
   implicit none
@@ -27,6 +28,9 @@ module shallow_water_modeldb_mod
 
     !> Stores all the fields used by the model
     type( model_data_type ), public :: model_data
+
+    !> Manages time in the model instance
+    type(model_clock_type), public, allocatable :: clock
 
     !> MPI object that contains all the functionality to perform MPI tasks
     !> on the MPI communicator for this model instance.

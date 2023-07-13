@@ -9,6 +9,7 @@
 module shallow_water_driver_mod
 
   use base_mesh_config_mod,          only: prime_mesh_name
+  use calendar_mod,                  only: calendar_type
   use constants_mod,                 only: i_def, i_native, imdi, r_def
   use field_mod,                     only: field_type
   use field_collection_mod,          only: field_collection_type
@@ -40,10 +41,8 @@ module shallow_water_driver_mod
   private
 
   public :: initialise, &
-            run,        &
+            step,       &
             finalise
-
-  type(model_clock_type), allocatable :: model_clock
 
   ! Mesh
   type(mesh_type), pointer :: mesh => null()
@@ -56,15 +55,19 @@ contains
   !!          model_data, then sets the initial conditions for the run.
   !> @param [in,out] modeldb      The structure that holds model state
   !> @param [in]     program_name An identifier given to the model begin run
-  subroutine initialise( modeldb, program_name )
+  !> @param [in]     calendar     Interprets date strings.
+  !>
+  subroutine initialise( modeldb, program_name, calendar )
 
     implicit none
 
-    type(modeldb_type), intent(inout) :: modeldb
-    character(*),       intent(in)    :: program_name
+    type(modeldb_type),   intent(inout) :: modeldb
+    character(*),         intent(in)    :: program_name
+    class(calendar_type), intent(in)    :: calendar
 
     ! Initialise infrastructure (from shallow_water_model_mod.F90) and setup constants
-    call initialise_infrastructure( program_name, model_clock, modeldb%mpi )
+    call initialise_infrastructure( program_name, modeldb%clock, &
+                                    calendar, modeldb%mpi )
 
     !-------------------------------------------------------------------------
     ! Setup constants
@@ -77,15 +80,15 @@ contains
 
     call log_event( 'Initialising model data ...', LOG_LEVEL_INFO )
     ! Initialise the fields stored in the model_data
-    call initialise_model_data( modeldb%model_data, mesh, model_clock )
+    call initialise_model_data( modeldb%model_data, mesh, modeldb%clock )
 
     ! Initial output: we only want these once at the beginning of a run
-    if (model_clock%is_initialisation() .and. write_diag) then
+    if (modeldb%clock%is_initialisation() .and. write_diag) then
       call log_event( 'Output of initial diagnostics ...', LOG_LEVEL_INFO )
       ! Calculation and output of diagnostics
       call shallow_water_diagnostics( mesh,               &
                                       modeldb%model_data, &
-                                      model_clock,        &
+                                      modeldb%clock,      &
                                       nodal_output_on_w3, &
                                       1_i_def )
     end if
@@ -96,40 +99,32 @@ contains
   end subroutine initialise
 
   !=============================================================================
-  !> @brief Performs time stepping for the shallow water miniapp.
+  !> @brief Performs a time step for the shallow water miniapp.
   !> @param [in,out] modeldb The structure that holds model state
   !!
-  subroutine run( modeldb )
+  subroutine step( modeldb )
 
     implicit none
 
     type(modeldb_type), intent(inout) :: modeldb
-    !--------------------------------------------------------------------------
-    ! Model step
-    !--------------------------------------------------------------------------
-    do while (model_clock%tick())
 
-      call shallow_water_step( modeldb, &
-                               model_clock  )
+    call shallow_water_step( modeldb  )
 
-      ! Use diagnostic output frequency to determine whether to write
-      ! diagnostics on this timestep
+    ! Use diagnostic output frequency to determine whether to write
+    ! diagnostics on this timestep
 
-      if ( ( mod(model_clock%get_step(), diagnostic_frequency) == 0 ) &
-           .and. ( write_diag ) ) then
+    if ( ( mod(modeldb%clock%get_step(), diagnostic_frequency) == 0 ) &
+         .and. ( write_diag ) ) then
 
-        call shallow_water_diagnostics(mesh,               &
-                                       modeldb%model_data, &
-                                       model_clock,        &
-                                       nodal_output_on_w3, &
-                                       0_i_def)
+      call shallow_water_diagnostics(mesh,               &
+                                     modeldb%model_data, &
+                                     modeldb%clock,      &
+                                     nodal_output_on_w3, &
+                                     0_i_def)
 
+    end if
 
-      end if
-
-    end do ! while clock%is_running()
-
-  end subroutine run
+  end subroutine step
 
   !=============================================================================
   !> @brief Tidies up after a run.
@@ -143,7 +138,7 @@ contains
     character(*), intent(in) :: program_name
 
     ! Output the fields stored in the model_data (checkpoint and dump)
-    call output_model_data( modeldb%model_data, model_clock )
+    call output_model_data( modeldb%model_data, modeldb%clock )
 
     ! Model configuration finalisation
     call finalise_model( modeldb%model_data, &

@@ -19,7 +19,6 @@ module shallow_water_step_mod
                                             log_scratch_space, &
                                             LOG_LEVEL_INFO,    &
                                             LOG_LEVEL_ERROR
-  use model_clock_mod,                only: model_clock_type
   use swe_timestep_alg_mod,           only: swe_timestep_alg_si,     &
                                             swe_timestep_alg_ssprk3, &
                                             swe_timestep_alg_rk4
@@ -43,14 +42,12 @@ module shallow_water_step_mod
   !!          through one timestep. An iterated semi-implicit or an
   !!          explicit Runge-Kutta timestepping scheme is used.
   !> @param [in,out] modeldb      The working data set for the model run
-  !> @param [in]     model_clock  Model time
-  subroutine shallow_water_step( modeldb, &
-                                 model_clock )
+  !>
+  subroutine shallow_water_step( modeldb )
 
     implicit none
 
     type( modeldb_type ), target, intent(inout) :: modeldb
-    class(model_clock_type),      intent(in)    :: model_clock
 
     type( field_collection_type ), pointer :: prognostic_fields => null()
 
@@ -67,23 +64,23 @@ module shallow_water_step_mod
     call prognostic_fields%get_field('q', q)
 
     write( log_scratch_space, &
-           '(A,I0)' ) 'Start of timestep ', model_clock%get_step()
+           '(A,I0)' ) 'Start of timestep ', modeldb%clock%get_step()
     call log_event( log_scratch_space, LOG_LEVEL_INFO )
 
     select case( time_scheme )
 
     case( time_scheme_semi_implicit )
-      call swe_timestep_alg_si( model_clock,         &
+      call swe_timestep_alg_si( modeldb%clock,       &
                                 wind,                &
                                 geopot, buoyancy, q, &
                                 modeldb%model_data%s_geopot )
     case ( time_scheme_ssprk3 )
-      call swe_timestep_alg_ssprk3( model_clock,         &
+      call swe_timestep_alg_ssprk3( modeldb%clock,       &
                                     wind,                &
                                     geopot, buoyancy, q, &
                                     modeldb%model_data%s_geopot )
     case ( time_scheme_rk4 )
-      call swe_timestep_alg_rk4( model_clock,         &
+      call swe_timestep_alg_rk4( modeldb%clock,       &
                                  wind,                &
                                  geopot, buoyancy, q, &
                                  modeldb%model_data%s_geopot )

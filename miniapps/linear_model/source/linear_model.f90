@@ -14,15 +14,19 @@
 
 program linear_model
 
-  use cli_mod,                only: get_initial_filename
-  use driver_collections_mod, only: init_collections, final_collections
-  use driver_comm_mod,        only: init_comm, final_comm
-  use driver_config_mod,      only: init_config, final_config
-  use driver_log_mod,         only: init_logger, final_logger
-  use gungho_mod,             only: gungho_required_namelists
-  use gungho_modeldb_mod,     only: modeldb_type
-  use linear_driver_mod,      only: initialise, run, finalise
-  use mpi_mod,                only: global_mpi
+  use cli_mod,                only : get_initial_filename
+  use driver_collections_mod, only : init_collections, final_collections
+  use driver_comm_mod,        only : init_comm, final_comm
+  use driver_config_mod,      only : init_config, final_config
+  use driver_log_mod,         only : init_logger, final_logger
+  use driver_time_mod,        only : init_time, get_calendar
+  use gungho_mod,             only : gungho_required_namelists
+  use gungho_modeldb_mod,     only : modeldb_type
+  use linear_driver_mod,      only : initialise, step, finalise
+  use log_mod,                only : log_event,       &
+                                     log_level_trace, &
+                                     log_scratch_space
+  use mpi_mod,                only : global_mpi
 
   implicit none
 
@@ -38,17 +42,25 @@ program linear_model
   call init_comm( application_name )
   call get_initial_filename( filename )
   call init_config( filename, gungho_required_namelists )
-  call init_logger( modeldb%mpi%get_comm(), application_name )
-  call init_collections()
   deallocate( filename )
+  call init_logger( modeldb%mpi%get_comm(), application_name)
+  call init_collections()
+  call init_time( modeldb%clock )
 
   ! Create the depository, prognostics and diagnostics field collections
   call modeldb%model_data%depository%initialise(name='depository', table_len=100)
   call modeldb%model_data%prognostic_fields%initialise(name="prognostics", table_len=100)
   call modeldb%model_data%diagnostic_fields%initialise(name="diagnostics", table_len=100)
 
-  call initialise( application_name, modeldb )
-  call run( application_name, modeldb )
+  call initialise( application_name, modeldb, get_calendar() )
+
+  write( log_scratch_space,'("Running ", A, " ...")' ) application_name
+  call log_event( log_scratch_space, log_level_trace )
+  do while (modeldb%clock%tick())
+    call step( modeldb )
+  end do
+
+  call log_event( 'Finalising '//application_name//' ...', log_level_trace )
   call finalise( application_name, modeldb )
 
   call final_collections()
