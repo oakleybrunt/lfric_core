@@ -287,8 +287,7 @@ contains
                    ! for aerosol introduced by emissions since these would
                    ! be invalid prior to the availability of consistent
                    ! particle property values from UKCA's aerosol processing.
-                   ! N.B. CDNC lower limit = 5.0e6.
-                   setval_c(cloud_drop_no_conc,  5.0e6_r_def), &
+                   setval_c(cloud_drop_no_conc,  1.0e8_r_def), &
                    setval_c(drydp_ait_sol,         0.0_r_def), &
                    setval_c(drydp_acc_sol,         0.0_r_def), &
                    setval_c(drydp_cor_sol,         0.0_r_def), &
@@ -370,7 +369,6 @@ contains
                    ! Default values of CDNC for microphysics and
                    ! particle properties for RADAER if not output by the
                    ! GLOMAP climatology scheme.
-                   ! N.B. CDNC lower limit = 5.0e6.
                    setval_c(cloud_drop_no_conc,  1.0e8_r_def), &
                    setval_c(drydp_ait_sol,         0.0_r_def), &
                    setval_c(drydp_acc_sol,         0.0_r_def), &
@@ -494,7 +492,7 @@ contains
     else
 
       ! No GLOMAP-mode aerosol scheme and no requirement for mode-specific
-      ! output. Set CDNC to minimum value for microphysics. Other aerosol
+      ! output. Set CDNC to fixed value for microphysics. Other aerosol
       ! fields are not used so set to zero.
       call invoke( setval_c(n_nuc_sol,             0.0_r_def), &
                    setval_c(nuc_sol_su,            0.0_r_def), &
@@ -527,8 +525,7 @@ contains
                    setval_c(dust_mrel,             0.0_r_def), &
                    setval_c(dust_flux,             0.0_r_def), &
                    ! CDNC and particle properties
-                   ! N.B. CDNC lower limit = 5.0e6
-                   setval_c(cloud_drop_no_conc,  5.0e6_r_def), &
+                   setval_c(cloud_drop_no_conc,  1.0e8_r_def), &
                    setval_c(drydp_ait_sol,         0.0_r_def), &
                    setval_c(drydp_acc_sol,         0.0_r_def), &
                    setval_c(drydp_cor_sol,         0.0_r_def), &

@@ -312,7 +312,8 @@ contains
     use glomap_clim_mode_setup_interface_mod, only:                            &
         glomap_clim_mode_setup_interface
     use ukca_config_specification_mod, only: i_sussbcocdu_7mode
-    use ukca_option_mod, only: l_ukca, l_ukca_plume_scav, mode_aitsol_cvscav
+    use ukca_option_mod, only: l_ukca, l_ukca_plume_scav, mode_aitsol_cvscav, &
+         l_ukca_aie2
     use ukca_scavenging_mod, only: ukca_mode_scavcoeff
 
     implicit none
@@ -345,9 +346,6 @@ contains
       select case (glomap_mode)
 
         case(glomap_mode_climatology, glomap_mode_dust_and_clim)
-          ! l_glomap_clim_aie1 is not used in LFRic. The 1st indirect effect is
-          ! controlled through the radiation namelist: droplet_effective_radius
-          l_glomap_clim_aie2 = .true.
           ! Set up the correct mode and components for GLOMAP-mode:
           ! 5 mode with SU SS OM BC components
           i_glomap_clim_setup = i_sussbcocdu_7mode
@@ -825,7 +823,7 @@ contains
     dust_loaded = .true.
 
     ! ----------------------------------------------------------------
-    ! UM microphysics settings - contained in UM module mphys_inputs_mod
+    ! UM microphysics settings
     ! ----------------------------------------------------------------
 
     ! The following are needed by the bimodal cloud scheme, hence we initialise
@@ -862,6 +860,14 @@ contains
 
       ! Options only relevent to old microphysics scheme
       if (.not. microphysics_casim) then
+
+        ! These need to be set so that the cdnc value from ukca or glomap_clim
+        ! is used by the microphysics scheme. No other option is available
+        ! here
+        ! The aie1 equivalents are not required for radiation, which is
+        ! controlled via the droplet_effective_radius namelist option
+        l_ukca_aie2 = .true.
+        l_glomap_clim_aie2 = .true.
 
         select case (graupel_scheme)
         case (graupel_scheme_none)
