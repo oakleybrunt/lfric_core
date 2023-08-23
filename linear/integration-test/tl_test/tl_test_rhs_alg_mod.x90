@@ -129,7 +129,7 @@ module tl_test_rhs_alg_mod
     gamma_u = 1.e2_r_def
     gamma_theta = 1.e2_r_def
     gamma_rho = 1.e2_r_def
-    gamma_exner = 1.e2_r_def
+    gamma_exner = 1.e1_r_def
     gamma_moist_dyn = 1.e-1_r_def
 
     call set_bundle_scalar( 0.0_r_def, n1_rhs, bundle_size )

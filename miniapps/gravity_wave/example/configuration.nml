@@ -90,6 +90,7 @@ coarse_aerosol_ancil=.false.
 checkpoint_read = .false.
 checkpoint_write = .false.
 diagnostic_frequency = 36
+file_convention = 'UGRID'
 nodal_output_on_w3 = .true.
 subroutine_counters = .false.
 subroutine_timers = .true.

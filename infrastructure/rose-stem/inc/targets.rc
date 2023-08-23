@@ -77,7 +77,7 @@
                     'module load environment/lfric/ifort/19.0_64/3'
                 ],
                 'gnu' : [
-                    'module load environment/lfric/gcc/6.1.0/6'
+                    'module load environment/lfric/gcc/11.2.0/3'
                 ]
             },
             'plot' : ['module load scitools/production-os45-1'],
