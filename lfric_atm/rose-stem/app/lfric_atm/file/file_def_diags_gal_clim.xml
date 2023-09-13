@@ -59,6 +59,10 @@
       <field field_ref="processed__tot_col_wetplusdry_mass" />
       <field field_ref="processed__tot_col_int_energy" />
       <field field_ref="processed__tot_col_pot_energy" />
+      <field field_ref="processed__tot_col_pot_energy_gr" />
+      <field field_ref="processed__tot_col_uv_kinetic_energy" />
+      <field field_ref="processed__tot_col_w_kinetic_energy" />
+      <field field_ref="processed__tot_col_kinetic_energy" />
       <field field_ref="processed__tot_col_encorr" />
       <field field_ref="processed__trop_level" />
       <field field_ref="processed__total_prec" />

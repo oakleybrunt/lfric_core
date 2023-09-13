@@ -109,7 +109,6 @@ contains
     type( field_type), pointer :: v_in_w2h => null()
     type( field_type), pointer :: w_in_wth => null()
     type( field_type), pointer :: ageofair => null()
-    type( field_type), pointer :: theta_in_w3 => null()
     type( field_type), pointer :: exner_in_wth => null()
 
     ! Iterator for field collection
@@ -279,8 +278,7 @@ contains
       call pmsl_alg(exner, derived_fields, theta, twod_mesh)
 #endif
 
-      call derived_fields%get_field('theta_in_w3', theta_in_w3)
-      call column_total_diagnostics_alg(rho, mr, theta_in_w3, exner, &
+      call column_total_diagnostics_alg(rho, mr, derived_fields, exner, &
                                         mesh, twod_mesh,             &
                                         model_data%temperature_correction_rate)
 

@@ -147,6 +147,10 @@
        <field id="processed__tot_col_wetplusdry_mass" name="tot_col_wetplusdry_mass" long_name="atmosphere_wetplusdry_mass_per_unit_area" unit="kg m-2" domain_ref="face" />
        <field id="processed__tot_col_int_energy" name="tot_col_int_energy" long_name="atmosphere_energy_content" unit="J m-2" domain_ref="face" />
        <field id="processed__tot_col_pot_energy" name="tot_col_pot_energy" long_name="atmosphere_potential_energy_content" unit="J m-2" domain_ref="face" />
+       <field id="processed__tot_col_pot_energy_gr" name="tot_col_pot_energy_gr" long_name="atmosphere_potential_energy_content_from_planet_centre" unit="J m-2" domain_ref="face" />
+       <field id="processed__tot_col_uv_kinetic_energy" name="tot_col_uv_kinetic_energy" long_name="atmosphere_horizontal_kinetic_energy_content" unit="J m-2" domain_ref="face" />
+       <field id="processed__tot_col_w_kinetic_energy" name="tot_col_w_kinetic_energy" long_name="atmosphere_vertical_kinetic_energy_content" unit="J m-2" domain_ref="face" />
+       <field id="processed__tot_col_kinetic_energy" name="tot_col_kinetic_energy" long_name="atmosphere_kinetic_energy_content" unit="J m-2" domain_ref="face"> processed__tot_col_uv_kinetic_energy + processed__tot_col_w_kinetic_energy </field>
        <field id="processed__tot_col_encorr" name="tot_col_encorr" long_name="energy_correction_rate" unit="W m-2" domain_ref="face" />
        <field id="processed__wbig" name="wbig" long_name="wbig_eq_1_where_wphysics_gt_1" unit="1" grid_ref="full_level_face_grid" />
        <field id="processed__pressure_in_w3" name="pressure_in_w3" long_name="pressure_at_cell_centres" unit="Pa" grid_ref="half_level_face_grid" />
@@ -269,6 +273,10 @@
         <field field_ref="processed__tot_col_wetplusdry_mass" />
         <field field_ref="processed__tot_col_int_energy" />
         <field field_ref="processed__tot_col_pot_energy" />
+        <field field_ref="processed__tot_col_pot_energy_gr" />
+        <field field_ref="processed__tot_col_uv_kinetic_energy" />
+        <field field_ref="processed__tot_col_w_kinetic_energy" />
+        <field field_ref="processed__tot_col_kinetic_energy" />
         <field field_ref="processed__tot_col_encorr" />
         <field field_ref="processed__wbig" />
         <field field_ref="ageofair"/>

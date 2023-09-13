@@ -945,6 +945,10 @@
         <field id="processed__tot_col_wetplusdry_mass" name="tot_col_wetplusdry_mass" long_name="atmosphere_wetplusdry_mass_per_unit_area" unit="kg m-2" domain_ref="face" />
         <field id="processed__tot_col_int_energy" name="tot_col_int_energy" long_name="atmosphere_energy_content" unit="J m-2" domain_ref="face" />
         <field id="processed__tot_col_pot_energy" name="tot_col_pot_energy" long_name="atmosphere_potential_energy_content" unit="J m-2" domain_ref="face" />
+        <field id="processed__tot_col_pot_energy_gr" name="tot_col_pot_energy_gr" long_name="atmosphere_potential_energy_content_from_planet_centre" unit="J m-2" domain_ref="face" />
+        <field id="processed__tot_col_uv_kinetic_energy" name="tot_col_uv_kinetic_energy" long_name="atmosphere_horizontal_kinetic_energy_content" unit="J m-2" domain_ref="face" />
+        <field id="processed__tot_col_w_kinetic_energy" name="tot_col_w_kinetic_energy" long_name="atmosphere_vertical_kinetic_energy_content" unit="J m-2" domain_ref="face" />
+        <field id="processed__tot_col_kinetic_energy" name="tot_col_kinetic_energy" long_name="atmosphere_kinetic_energy_content" unit="J m-2" domain_ref="face"> processed__tot_col_uv_kinetic_energy + processed__tot_col_w_kinetic_energy </field>
         <field id="processed__tot_col_encorr" name="tot_col_encorr" long_name="energy_correction_rate" unit="W m-2" domain_ref="face" />
 	<field id="processed__m_tot" name="m_tot" long_name="total_moisture" unit="kg kg-1" grid_ref="full_level_face_grid"> m_v + m_cl + m_ci + m_r + m_s + m_g </field>
 	<field id="processed__qv" name="qv" long_name="specific_humidity" standard_name="specific_humidity" unit="kg kg-1" grid_ref="full_level_face_grid"> m_v / (1+processed__m_tot) </field>
@@ -1304,6 +1308,10 @@
 	<field field_ref="processed__tot_col_wetplusdry_mass" />
         <field field_ref="processed__tot_col_int_energy" />
         <field field_ref="processed__tot_col_pot_energy" />
+        <field field_ref="processed__tot_col_pot_energy_gr" />
+        <field field_ref="processed__tot_col_uv_kinetic_energy" />
+        <field field_ref="processed__tot_col_w_kinetic_energy" />
+        <field field_ref="processed__tot_col_kinetic_energy" />
         <field field_ref="processed__tot_col_encorr" />
 	<field field_ref="processed__trop_level" />
 	<field field_ref="processed__total_prec" />
