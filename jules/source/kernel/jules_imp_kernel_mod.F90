@@ -298,8 +298,7 @@ contains
     !---------------------------------------
     ! UM modules containing switches or global constants
     !---------------------------------------
-    use ancil_info, only: ssi_pts, sea_pts, sice_pts, sice_pts_ncat,           &
-                          nsurft, nsoilt, dim_cslayer, rad_nband, nmasst
+    use ancil_info, only: nsurft, nsoilt, dim_cslayer, rad_nband, nmasst
     use atm_fields_bounds_mod, only: pdims, pdims_s
     use atm_step_local, only: dim_cs1
     use bl_option_mod, only: l_noice_in_turb, alpha_cd, flux_bc_opt, &
@@ -321,7 +320,7 @@ contains
     use jules_soil_mod, only: ns_deep, l_bedrock
     use jules_soil_biogeochem_mod, only: dim_ch4layer, soil_bgc_model,         &
                                          soil_model_ecosse, l_layeredc
-    use nlsizes_namelist_mod, only: land_field, sm_levels, ntiles, bl_levels
+    use nlsizes_namelist_mod, only: sm_levels, ntiles, bl_levels
     use planet_constants_mod, only: p_zero, kappa, planet_radius, two_omega
     use rad_input_mod, only: co2_mmr
     use theta_field_sizes, only: t_i_length, t_j_length, &
@@ -471,7 +470,7 @@ contains
     ! Local variables for the kernel
     !-----------------------------------------------------------------------
     ! loop counters etc
-    integer(i_def) :: i, i_tile, i_sice, n, l, m
+    integer(i_def) :: i, i_tile, i_sice, n, l, m, land_field, ssi_pts, sice_pts
 
     ! local switches and scalars
     integer(i_um) :: error_code
@@ -510,9 +509,6 @@ contains
     ! fields on sea-ice categories
     real(r_um), dimension(seg_len,1,nice_use) :: alpha1_sice, &
          ashtf_prime, rhokh_sice, dtstar_sice, radnet_sice
-
-    ! integer fields on number of tile types
-    integer, dimension(ntype) :: surft_pts
 
     ! fields on land points and surface tiles
     real(r_um), dimension(:,:), allocatable :: dtstar_surft,              &
@@ -627,7 +623,7 @@ contains
                     .or. .not. associated(surf_lw_down, empty_real_data)
     sf_diag%l_lw_up_sice_weighted_cat = .not. associated(surf_lw_up, empty_real_data)
 
-    call alloc_sf_imp(sf_diag, outer == outer_iterations)
+    call alloc_sf_imp(sf_diag, outer == outer_iterations, land_field)
     sf_diag%sice_mlt_htf = 0.0_r_um
 
     allocate(epot_surft(land_field,ntiles))
@@ -698,7 +694,8 @@ contains
       end do
 
       ! Set type_pts and type_index
-      call tilepts(land_field, ainfo%frac_surft, surft_pts, ainfo%surft_index,ainfo%l_lice_point)
+      call tilepts(land_field, ainfo%frac_surft, ainfo%surft_pts,              &
+                   ainfo%surft_index, ainfo%l_lice_point, ainfo%l_lice_surft)
 
       ! combined sea and sea-ice index
       ssi_pts = seg_len
@@ -712,7 +709,6 @@ contains
       ! individual sea and sea-ice indices
       ! first set defaults
       sice_pts = 0
-      sea_pts = 0
       ! then calculate based on state
       do i = 1, seg_len
         if (ainfo%ssi_index(i) > 0) then
@@ -721,21 +717,15 @@ contains
             ainfo%sice_index(sice_pts) = i
             ainfo%sice_frac(i) = ainfo%ice_fract_ij(i, 1)
           end if
-          if (ainfo%ice_fract_ij(i, 1) < 1.0_r_um) then
-            sea_pts = sea_pts + 1
-            ainfo%sea_index(sea_pts) = i
-            ainfo%sea_frac(i) = 1.0_r_um - ainfo%sice_frac(i)
-          end if
         end if
       end do
 
       ! multi-category sea-ice index
-      sice_pts_ncat = 0
       do i = 1, seg_len
         do n = 1, nice_use
           if (ainfo%ssi_index(i) > 0 .and. ainfo%ice_fract_ncat_sicat(i, 1, n) > 0.0_r_um) then
-            sice_pts_ncat(n) = sice_pts_ncat(n) + 1
-            ainfo%sice_index_ncat(sice_pts_ncat(n), n) = i
+            ainfo%sice_pts_ncat(n) = ainfo%sice_pts_ncat(n) + 1
+            ainfo%sice_index_ncat(ainfo%sice_pts_ncat(n), n) = i
             ainfo%sice_frac_ncat(i, n) = ainfo%ice_fract_ncat_sicat(i, 1, n)
           end if
         end do
@@ -1071,7 +1061,7 @@ contains
          !UM-only arguments
          !JULES ancil_info module
          !IN
-         ntiles, land_field, surft_pts,                                      &
+         ntiles, land_field, ssi_pts, sice_pts, ainfo%surft_pts,             &
          !JULES coastal module IN
          flandg,                                                             &
          ! Coastal OUT - do this here as needs to be OUT
@@ -1466,9 +1456,6 @@ contains
     deallocate(resft)
     deallocate(flake)
     deallocate(wt_ext_surft)
-
-    ! set this back to 1 before exit
-    land_field = 1
 
     call ancil_info_nullify(ainfo)
     call ancil_info_dealloc(ainfo_data)

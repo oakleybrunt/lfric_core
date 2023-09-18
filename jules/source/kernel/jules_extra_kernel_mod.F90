@@ -266,8 +266,7 @@ contains
     use jules_physics_init_mod, only: decrease_sath_cond
 
     ! Module imports for surf_couple_extra JULESvn5.4
-    use ancil_info,               only: nsoilt, soil_pts, lice_pts,            &
-                                        dim_cslayer, rad_nband,                &
+    use ancil_info,               only: nsoilt, dim_cslayer, rad_nband,        &
                                         dim_soil_n_pool, nmasst
     use atm_step_local,           only: dim_cs1
     use cderived_mod,             only: delta_lambda, delta_phi
@@ -359,8 +358,7 @@ contains
                                         water_resources_dealloc
     use coastal,                  only: coastal_type
 
-    use nlsizes_namelist_mod, only: land_pts => land_field,  &
-                                    sm_levels, ntiles, bl_levels
+    use nlsizes_namelist_mod, only: sm_levels, ntiles, bl_levels
     use UM_ParCore, only: nproc
 
     ! Jules related subroutines
@@ -461,9 +459,8 @@ contains
 
     ! Integer indices (module intent=in)
     integer(i_um) :: a_step, g_p_field, g_r_field, global_row_length,         &
-         global_rows, global_river_row_length, global_river_rows
-
-    integer(i_um), dimension(nsurft) :: surft_pts
+         global_rows, global_river_row_length, global_river_rows,             &
+         land_pts, lice_pts, soil_pts
 
     ! Logical (module intent=in)
     logical :: smlt, stf_sub_surf_roff
@@ -577,9 +574,7 @@ contains
     end do
 
     if (land_pts == 0) then
-      ! If there's no land, we can just exit here (but need to set
-      ! land_pts back to 1 for reasons given at the end of the routine)
-      land_pts = 1
+      ! If there's no land, we can just exit here
       return
     end if
 
@@ -715,8 +710,8 @@ contains
     stf_sub_surf_roff = .true.
 
     ! Set type_pts and type_index
-    call tilepts(land_pts, ainfo%frac_surft, surft_pts, ainfo%surft_index, &
-         ainfo%l_lice_point)
+    call tilepts(land_pts, ainfo%frac_surft, ainfo%surft_pts,                  &
+         ainfo%surft_index, ainfo%l_lice_point, ainfo%l_lice_surft)
 
     ! Vegetation prognostics (for TRIFFID)
     do l = 1, land_pts
@@ -741,7 +736,7 @@ contains
     end if
 
     ! Get catch_snow_surft and catch_surft from call to sparm
-    call sparm(land_pts, n_land_tile, surft_pts, ainfo%surft_index,            &
+    call sparm(land_pts, n_land_tile, ainfo%surft_pts, ainfo%surft_index,      &
                ainfo%frac_surft, progs%canht_pft, progs%lai_pft,               &
                psparms%z0m_soil_gb, psparms%catch_snow_surft,                  &
                psparms%catch_surft, psparms%z0_surft, psparms%z0h_bare_surft,  &
@@ -835,9 +830,9 @@ contains
     end do
 
     ! Calculate the infiltration rate
-    call infiltration_rate(land_pts, ntiles, surft_pts, ainfo%surft_index, &
-                           psparms%satcon_soilt, ainfo%frac_surft,         &
-                           psparms%infil_surft)
+    call infiltration_rate(land_pts, ntiles, ainfo%surft_pts,                  &
+                           ainfo%surft_index, psparms%satcon_soilt,            &
+                           ainfo%frac_surft, psparms%infil_surft)
 
     ! Canopy water on each tile (canopy_surft)
     do l = 1, land_pts
@@ -927,7 +922,7 @@ contains
 
     !IN
     land_pts, seg_len, 1, river_row_length, river_rows,                       &
-    ls_graup_ij, cca_2d_ij, nsurft, surft_pts,                                &
+    ls_graup_ij, cca_2d_ij, nsurft, ainfo%surft_pts,                          &
     lice_pts, soil_pts, stf_sub_surf_roff, fexp_soilt,                        &
     gamtot_soilt, ti_mean_soilt, ti_sig_soilt, flash_rate_ancil,              &
     pop_den_ancil, wealth_index_ancil, a_fsat_soilt, c_fsat_soilt,            &
@@ -1060,16 +1055,6 @@ contains
         end do
       end do
     end if
-
-    ! Reset land_pts to 1 before exit
-    ! This is required because prior to calling the kernel, it is unknown
-    ! whether this is a land point or not. Local variables are dimensioned
-    ! using this as their size, hence it needs to be at least 1 to allow
-    ! for the possibility this is a land point. However it needs to be
-    ! set correctly in the kernel for use in Jules. Therefore it needs setting
-    ! back to 1 so that variables are dimensioned correctly on the next
-    ! kernel call.
-    land_pts = 1
 
     deallocate(ls_rainfrac_gb)
     deallocate(fexp_soilt)

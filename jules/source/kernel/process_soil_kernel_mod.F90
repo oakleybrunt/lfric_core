@@ -87,7 +87,6 @@ contains
                                ndf_2d, undf_2d, map_2d,       &
                                ndf_soil, undf_soil, map_soil)
 
-    use ancil_info, only: soil_pts
     use calc_fsat_mod, only: calc_fsat
     use calc_fit_fsat_mod, only: calc_fit_fsat
     use jules_soil_mod, only: dzsoil
@@ -132,7 +131,7 @@ contains
 
     real(r_um) :: zdepth, smc_min, smc_max
 
-    integer(i_um) :: n
+    integer(i_um) :: n, soil_pts
 
     ! Only process the ancils if this is a soil point
     if ( soil_moist_sat(map_2d(1)) > 0.0_r_def ) then

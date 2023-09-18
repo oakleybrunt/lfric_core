@@ -733,7 +733,7 @@ subroutine aerosol_ukca_code( nlayers,                                         &
   use chemistry_config_mod, only: chem_scheme, chem_scheme_strattrop
 
   ! UM modules
-  use nlsizes_namelist_mod, only: land_field, bl_levels
+  use nlsizes_namelist_mod, only: bl_levels
   use planet_constants_mod,  only: p_zero, kappa, planet_radius
   use timestep_mod, only: timestep
 
@@ -1004,8 +1004,6 @@ subroutine aerosol_ukca_code( nlayers,                                         &
   integer(i_um) :: k
   integer(i_um) :: error_code
 
-  integer(i_um) :: n_surft_pts(n_land_tile)
-                              ! Number of land points that include surface type
   integer(i_um) :: surft_index(n_land_tile)
                               ! Indices of land points that include surface type
   real(r_um) :: frac_land     ! Land fraction of cell
@@ -1013,15 +1011,15 @@ subroutine aerosol_ukca_code( nlayers,                                         &
   real(r_um) :: frac_seaice   ! Sea fraction with respect to sea area
   real(r_um) :: meanval       ! Arbitrary mean value
 
-  real(r_um) :: z0m_soil_gb(land_field) ! Soil roughness length (m)
+  real(r_um) :: z0m_soil_gb(1) ! Soil roughness length (m)
 
-  real(r_um) :: frac_surft( land_field, n_land_tile )
+  real(r_um) :: frac_surft( 1, n_land_tile )
                               ! Fraction of surf. type with respect to land area
-  real(r_um) :: z0_surft( land_field, n_land_tile )
+  real(r_um) :: z0_surft( 1, n_land_tile )
                               ! Surface roughness length on tiles (m)
-  real(r_um) :: lai_pft( land_field, n_land_tile )
+  real(r_um) :: lai_pft( 1, n_land_tile )
                               ! Leaf area index of plant functional type
-  real(r_um) :: canht_pft( land_field, n_land_tile )
+  real(r_um) :: canht_pft( 1, n_land_tile )
                               ! Canopy_height of plant functional type (m)
   real(r_um) :: rho_r2        ! Density * r * r
   real(r_um) :: exner_rho_top ! Exner pressure at top rho level
@@ -1029,13 +1027,13 @@ subroutine aerosol_ukca_code( nlayers,                                         &
 
   logical :: l_land           ! Land/sea indicator (True for land point)
 
-  logical :: l_tile_active( land_field, n_land_tile )
+  logical :: l_tile_active( 1, n_land_tile )
                               ! active tile indicator (True if tile is in use)
 
   ! Unused output fields from JULES sparm routine
-  real(r_um) :: catch_snow_surft( land_field, n_land_tile )
-  real(r_um) :: catch_surft( land_field, n_land_tile )
-  real(r_um) :: z0h_bare_surft( land_field, n_land_tile )
+  real(r_um) :: catch_snow_surft( 1, n_land_tile )
+  real(r_um) :: catch_surft( 1, n_land_tile )
+  real(r_um) :: z0h_bare_surft( 1, n_land_tile )
 
   type(ainfo_data_type) :: ainfo_data
   type(ainfo_type) :: ainfo
@@ -1331,10 +1329,10 @@ subroutine aerosol_ukca_code( nlayers,                                         &
   end if
 
 !  ! Set up JULES fields needed
-  call ancil_info_alloc(land_field, t_i_length, t_j_length, nice, nsoilt,      &
+  call ancil_info_alloc(n_land_pts, t_i_length, t_j_length, nice, nsoilt,      &
                         ntype, ainfo_data)
   call ancil_info_assoc(ainfo, ainfo_data)
-  call urban_param_alloc(land_field, l_urban2t, l_moruses, urban_param_data)
+  call urban_param_alloc(n_land_pts, l_urban2t, l_moruses, urban_param_data)
   call urban_param_assoc(urban_param, urban_param_data)
 
   if (l_land) then
@@ -1345,8 +1343,8 @@ subroutine aerosol_ukca_code( nlayers,                                         &
     end do
     ! Call JULES subroutine to determine number of active points (0 or 1)
     ! for each tile type
-    call tilepts( n_land_pts, frac_surft, n_surft_pts, surft_index,            &
-                  ainfo%l_lice_point )
+    call tilepts( n_land_pts, frac_surft, ainfo%surft_pts, surft_index,        &
+                  ainfo%l_lice_point, ainfo%l_lice_surft )
     ! Fields on plant functional type tiles: leaf area index & canopy height
     do i = 1, npft
       lai_pft( 1, i ) = real( leaf_area_index(map_pft(1) + i - 1), r_um )
@@ -1355,14 +1353,12 @@ subroutine aerosol_ukca_code( nlayers,                                         &
     ! Roughness length on tiles (z0_surft) from JULES
     z0m_soil_gb(1)     = real( soil_roughness(map_2d(1)), r_um )
     urban_param%ztm_gb = real(urbztm(map_2d(1)), r_um)
-    call sparm( n_land_pts, n_land_tile, n_surft_pts, surft_index,             &
+    call sparm( n_land_pts, n_land_tile, ainfo%surft_pts, surft_index,         &
                 frac_surft, canht_pft, lai_pft, z0m_soil_gb,                   &
                 catch_snow_surft, catch_surft, z0_surft, z0h_bare_surft,       &
                 urban_param%ztm_gb )
   end if
 
-  call ancil_info_nullify(ainfo)
-  call ancil_info_dealloc(ainfo_data)
   call urban_param_nullify(urban_param)
   call urban_param_dealloc(urban_param_data)
 
@@ -1884,7 +1880,7 @@ subroutine aerosol_ukca_code( nlayers,                                         &
       case(fldname_l_active_surft)
         l_tile_active( 1, : ) = .false.
         do j = 1, n_land_tile
-          do k = 1, n_surft_pts(j)   ! i.e 0 or 1 times
+          do k = 1, ainfo%surft_pts(j)   ! i.e 0 or 1 times
             l_tile_active( 1, j ) = .true.
           end do
           environ_landtile_logical( 1, j, i ) = l_tile_active( 1, j )
@@ -1897,6 +1893,9 @@ subroutine aerosol_ukca_code( nlayers,                                         &
       end select
     end do
   endif
+
+  call ancil_info_nullify(ainfo)
+  call ancil_info_dealloc(ainfo_data)
 
   ! Drivers in land-point plant functional type tile group (2D fields)
 

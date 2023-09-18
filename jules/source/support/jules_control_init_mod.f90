@@ -65,7 +65,7 @@ contains
     use section_choice_config_mod, only : surface, surface_jules
 
     ! UM/JULES modules containing things that need setting
-    use ancil_info, only: jules_dim_cs1 => dim_cs1, land_pts, nsurft
+    use ancil_info, only: jules_dim_cs1 => dim_cs1, nsurft
     use atm_step_local, only: co2_dim_len, co2_dim_row, &
         dim_cs1
     use jules_soil_mod, only: jules_sm_levels => sm_levels
@@ -74,7 +74,7 @@ contains
         soil, ice
     use jules_vegetation_mod, only: l_triffid
     use jules_model_environment_mod, only: lsm_id, jules
-    use nlsizes_namelist_mod, only: land_field, ntiles, sm_levels
+    use nlsizes_namelist_mod, only: ntiles, sm_levels
     use jules_surface_types_mod, only:                                         &
         set_derived_variables_jules_surface_types,                             &
         print_nlist_jules_surface_types, check_jules_surface_types
@@ -148,13 +148,6 @@ contains
     !  allocate_jules_arrays can access via modules. Ultimately the
     !  UM variables should be removed and only the JULES ones will exist.
     ! ----------------------------------------------------------------
-    ! The number of land points in a kernel. This is genuinely variable
-    ! and will be set to 0 or 1 respectively in each kernel calling JULES.
-    ! However, it must be set to 1 here so that arrays which are allocated
-    ! for persistent use contain enough memory for the potential that any
-    ! point is a land point.
-    land_field   = 1
-    land_pts     = land_field
     ! Number of soil levels - set to a constant as this rarely changes
     ! but may migrate to namelist or read from ancillary in due course.
     sm_levels       = 4

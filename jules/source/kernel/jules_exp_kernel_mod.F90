@@ -433,8 +433,7 @@ contains
     !---------------------------------------
     ! UM/Jules modules containing switches or global constants
     !---------------------------------------
-    use ancil_info, only: ssi_pts, sea_pts, sice_pts, sice_pts_ncat, rad_nband,&
-         nsoilt, dim_cslayer, nmasst
+    use ancil_info, only: rad_nband, nsoilt, dim_cslayer, nmasst
     use atm_fields_bounds_mod, only: pdims_s, pdims
     use atm_step_local, only: dim_cs1, co2_dim_len, co2_dim_row
     use dust_parameters_mod, only: ndiv, ndivh, ndivl, l_dust_flux_only
@@ -450,7 +449,7 @@ contains
     use jules_urban_mod, only: l_moruses
     use jules_vegetation_mod, only: l_crop, l_triffid, l_phenol, l_use_pft_psi,&
          can_rad_mod, l_acclim
-    use nlsizes_namelist_mod, only: land_field, sm_levels, ntiles, bl_levels
+    use nlsizes_namelist_mod, only: sm_levels, ntiles, bl_levels
     use planet_constants_mod, only: p_zero, kappa, planet_radius, cp, g, grcp, &
          c_virtual, repsilon, r, lcrcp, lsrcp, vkman
     use rad_input_mod, only: co2_mmr
@@ -466,7 +465,7 @@ contains
     use dust_srce_mod, only: dust_srce
     use qsat_mod, only: qsat_mix
     use surf_couple_explicit_mod, only: surf_couple_explicit
-    use sf_diags_mod, only: sf_diag, dealloc_sf_expl, dealloc_sf_imp, alloc_sf_expl
+    use sf_diags_mod, only: sf_diag, dealloc_sf_expl, alloc_sf_expl
     use sparm_mod, only: sparm
     use tilepts_mod, only: tilepts
 
@@ -677,7 +676,8 @@ contains
     !-----------------------------------------------------------------------
     real(kind=r_um), allocatable :: qs_star(:,:)
     real(r_um) :: rholem, tv1_sd, w_m, dqsdt_star, wthvbar, ch, theta1
-    integer(i_def) :: k, i, i_tile, i_sice, n, i_snow, j, l, idiv, m
+    integer(i_def) :: k, i, i_tile, i_sice, n, i_snow, j, l, idiv, m, &
+         land_field, ssi_pts, sea_pts
 
     ! local switches and scalars
     logical :: l_aero_classic, l_spec_z0
@@ -717,9 +717,6 @@ contains
     ! fields on land points
     real(r_um), dimension(:), allocatable ::                                 &
          hcons_soilt, rhostar_land, sand_land, clay_land, emis_soil
-
-    ! integer fields on number of tile types
-    integer, dimension(ntype) :: surft_pts
 
     ! fields on land points and tiles
     real(r_um), dimension(:,:), allocatable ::                               &
@@ -985,7 +982,8 @@ contains
     end do
 
     ! Set type_pts and type_index
-    call tilepts(land_field, ainfo%frac_surft, surft_pts, ainfo%surft_index,ainfo%l_lice_point)
+    call tilepts(land_field, ainfo%frac_surft, ainfo%surft_pts,                &
+                 ainfo%surft_index, ainfo%l_lice_point, ainfo%l_lice_surft)
 
     ! combined sea and sea-ice index
     ssi_pts = seg_len
@@ -998,31 +996,24 @@ contains
 
     ! individual sea and sea-ice indices
     ! first set defaults
-    sice_pts = 0
     sea_pts = 0
     ! then calculate based on state
     do i = 1, seg_len
       if (ainfo%ssi_index(i) > 0) then
-        if (ainfo%ice_fract_ij(i, 1) > 0.0_r_um) then
-          sice_pts = sice_pts + 1
-          ainfo%sice_index(sice_pts) = i
-          ainfo%sice_frac(i) = ainfo%ice_fract_ij(i, 1)
-        end if
         if (ainfo%ice_fract_ij(i, 1) < 1.0_r_um) then
           sea_pts = sea_pts + 1
           ainfo%sea_index(sea_pts) = i
-          ainfo%sea_frac(i) = 1.0_r_um - ainfo%sice_frac(i)
+          ainfo%sea_frac(i) = 1.0_r_um - ainfo%ice_fract_ij(i,1)
         end if
       end if
     end do
 
     ! multi-category sea-ice index
-    sice_pts_ncat = 0
     do i = 1, seg_len
       do n = 1, nice_use
         if (ainfo%ssi_index(i) > 0 .and. ainfo%ice_fract_ncat_sicat(i, 1, n) > 0.0_r_um) then
-          sice_pts_ncat(n) = sice_pts_ncat(n) + 1
-          ainfo%sice_index_ncat(sice_pts_ncat(n), n) = i
+          ainfo%sice_pts_ncat(n) = ainfo%sice_pts_ncat(n) + 1
+          ainfo%sice_index_ncat(ainfo%sice_pts_ncat(n), n) = i
           ainfo%sice_frac_ncat(i, n) = ainfo%ice_fract_ncat_sicat(i, 1, n)
         end if
       end do
@@ -1111,7 +1102,7 @@ contains
       end do
     end if
 
-    call sparm(land_field, n_land_tile, surft_pts, ainfo%surft_index,         &
+    call sparm(land_field, n_land_tile, ainfo%surft_pts, ainfo%surft_index,   &
                ainfo%frac_surft, progs%canht_pft, progs%lai_pft,              &
                psparms%z0m_soil_gb, psparms%catch_snow_surft,                 &
                psparms%catch_surft, psparms%z0_surft, psparms%z0h_bare_surft, &
@@ -1321,7 +1312,7 @@ contains
     sf_diag%l_mv10m_n = sf_diag%suv10m_n
     ! needed to ensure z0h_eff is saved if wanted
     sf_diag%l_z0h_eff_gb = .not. associated(z0h_eff, empty_real_data)
-    call alloc_sf_expl(sf_diag, .true.)
+    call alloc_sf_expl(sf_diag, .true., land_field)
 
     !-----------------------------------------------------------------------
     ! External science code called
@@ -1378,9 +1369,9 @@ contains
       ainfo%ti_cat_sicat,                                                      &
       !JULES ancil_info module
       !IN
-      land_field, ntiles,                                                      &
+      land_field, ssi_pts, sea_pts, ntiles,                                    &
       !OUT
-      surft_pts,                                                               &
+      ainfo%surft_pts,                                                         &
       ! IN input data from the wave model
       charnock_w,                                                              &
       !JULES coastal module
@@ -1564,7 +1555,7 @@ contains
 
       call dust_srce(                                                          &
            ! IN arguments
-             land_field,ntiles,surft_pts,ainfo%surft_index,coast%fland,        &
+             land_field,ntiles,ainfo%surft_pts,ainfo%surft_index,coast%fland,  &
              progs%tstar_surft,rhostar_land,soil_layer_moisture,               &
              progs%snow_surft, aerotype%u_s_std_surft,mrel_land,clay_land,     &
              sand_land, jules_vars%ho2r2_orog_gb,                              &
@@ -1576,7 +1567,7 @@ contains
       ! Get the fraction within each tile which is bare soil, for the purpose
       ! of dust emission:
       call dust_calc_emiss_frac(                                               &
-         land_field,ntiles,surft_pts,ainfo%surft_index,ainfo%frac_surft,       &
+         land_field,ntiles,ainfo%surft_pts,ainfo%surft_index,ainfo%frac_surft, &
          progs%lai_pft, dust_emiss_frac                                        &
          )
 
@@ -1587,7 +1578,7 @@ contains
       ! race on dust_flux.
       do idiv = 1, ndiv
         do m = 1, ntiles
-          do n = 1, surft_pts(m)
+          do n = 1, ainfo%surft_pts(m)
             l = ainfo%surft_index(n,m)
             j = (ainfo%land_index(l)-1)/pdims%i_end + 1
             i = ainfo%land_index(l) - (j-1)*pdims%i_end
@@ -1779,9 +1770,6 @@ contains
 
     ! deallocate diagnostics
     call dealloc_sf_expl(sf_diag)
-
-    ! set this back to 1 before exit
-    land_field = 1
 
     ! Set back to SCM for use elsewhere
     pdims_s%i_start=1

@@ -53,8 +53,6 @@ contains
                                 urbztm, urbdisp,               &
                                 ndf_2d, undf_2d, map_2d)
 
-  use nlsizes_namelist_mod, only: land_pts => land_field
-
   use calc_urban_aero_fields_mod, only: calc_urban_aero_fields
 
   implicit none
@@ -70,9 +68,9 @@ contains
     real(kind=r_def), intent(inout) :: urbztm(undf_2d)
     real(kind=r_def), intent(inout) :: urbdisp(undf_2d)
 
-    real(r_um), dimension(land_pts) :: ztm, disp
+    real(r_um), dimension(1) :: ztm, disp
 
-    call calc_urban_aero_fields(land_pts,                                      &
+    call calc_urban_aero_fields(1,                                             &
                                 real(urbwrr(map_2d(1):map_2d(1)), r_um),       &
                                 real(urbhwr(map_2d(1):map_2d(1)), r_um),       &
                                 real(urbhgt(map_2d(1):map_2d(1)), r_um),       &

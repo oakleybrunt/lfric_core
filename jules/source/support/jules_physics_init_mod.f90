@@ -97,7 +97,7 @@ module jules_physics_init_mod
 
   ! UM modules used
   use jules_surface_types_mod, only : npft, nnvg, ntype, ncpft, nnpft
-  use nlsizes_namelist_mod,    only : sm_levels, land_field, ntiles
+  use nlsizes_namelist_mod,    only : sm_levels, ntiles
 
   ! JULES modules used
   use cropparm,                 only: cropparm_alloc

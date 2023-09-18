@@ -364,7 +364,7 @@ contains
     use bl_option_mod, only: alpha_cd, l_noice_in_turb, l_use_surf_in_ri
     use cv_run_mod, only: i_convection_vn, i_convection_vn_6a,               &
                           cldbase_opt_dp, cldbase_opt_md
-    use nlsizes_namelist_mod, only: land_field, bl_levels
+    use nlsizes_namelist_mod, only: bl_levels
     use planet_constants_mod, only: p_zero, kappa, planet_radius, &
          lcrcp => lcrcp_bl, lsrcp => lsrcp_bl
     use timestep_mod, only: timestep
@@ -487,7 +487,7 @@ contains
     !-----------------------------------------------------------------------
     ! Local variables for the kernel
     !-----------------------------------------------------------------------
-    integer(i_def) :: k, i, l, n
+    integer(i_def) :: k, i, l, n, land_field
 
     ! local switches and scalars
     integer(i_um) :: error_code
@@ -1103,9 +1103,6 @@ contains
     deallocate(sd_orog)
     deallocate(ho2r2_orog_gb)
     deallocate(sil_orog_land_gb)
-
-    ! set this back to 1 before exit
-    land_field = 1
 
   end subroutine bl_exp_code
 

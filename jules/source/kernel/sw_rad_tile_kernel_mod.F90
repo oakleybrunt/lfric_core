@@ -192,12 +192,10 @@ subroutine sw_rad_tile_code(nlayers, seg_len,                       &
   use atm_step_local,            only: dim_cs1
   use atm_fields_bounds_mod,     only: pdims_s, pdims
   use surface_config_mod,        only: albedo_obs
-  use nlsizes_namelist_mod,      only: land_field, ntiles, sm_levels, bl_levels
+  use nlsizes_namelist_mod,      only: ntiles, sm_levels, bl_levels
   use jules_surface_types_mod,   only: ntype, npft, ice, nnpft
   use jules_sea_seaice_mod,      only: nice, nice_use
-  use ancil_info,                only: ssi_pts, sea_pts, sice_pts,             &
-                                       sice_pts_ncat, rad_nband, dim_cslayer,  &
-                                       nsoilt, nmasst
+  use ancil_info,                only: rad_nband, dim_cslayer, nsoilt, nmasst
   use jules_vegetation_mod,      only: l_triffid, l_phenol, l_use_pft_psi,     &
                                        can_rad_mod, l_acclim
   use jules_soil_mod,            only: ns_deep, l_bedrock
@@ -303,7 +301,7 @@ subroutine sw_rad_tile_code(nlayers, seg_len,                       &
   ! Local variables for the kernel
   !-----------------------------------------------------------------------
   integer(i_def) :: i, i_sice, i_band, l, n, r1, r2
-  integer(i_def) :: df_rtile
+  integer(i_def) :: df_rtile, land_field, sea_pts
 
   ! fields on land points
   real(r_um), dimension(:), allocatable          :: fland
@@ -458,7 +456,7 @@ subroutine sw_rad_tile_code(nlayers, seg_len,                       &
 
   ! Set type_pts and type_index
   call tilepts(land_field, ainfo%frac_surft, type_pts, ainfo%surft_index, &
-                ainfo%l_lice_point)
+                ainfo%l_lice_point, ainfo%l_lice_surft)
 
   ! Land tile temperatures
   do l = 1, land_field
@@ -487,7 +485,6 @@ subroutine sw_rad_tile_code(nlayers, seg_len,                       &
   end do ! i
 
   ! Combined sea and sea-ice index
-  ssi_pts = seg_len
   do i = 1, seg_len
     if ( flandg(i,1) < 1.0_r_um ) then
       ainfo%ssi_index(i) = i
@@ -508,12 +505,11 @@ subroutine sw_rad_tile_code(nlayers, seg_len,                       &
   end do ! i
 
   ! Multi-category sea-ice index
-  sice_pts_ncat = 0
   do i = 1, seg_len
     do n = 1, nice_use
       if ( ainfo%ssi_index(i) > 0 .and. ainfo%ice_fract_ncat_sicat(i,1,n) > 0.0_r_um ) then
-        sice_pts_ncat(n) = sice_pts_ncat(n)+1
-        ainfo%sice_index_ncat(sice_pts_ncat(n),n) = i
+        ainfo%sice_pts_ncat(n) = ainfo%sice_pts_ncat(n)+1
+        ainfo%sice_index_ncat(ainfo%sice_pts_ncat(n),n) = i
         ainfo%sice_frac_ncat(i,n) = ainfo%ice_fract_ncat_sicat(i,1,n)
       end if
     end do ! n
@@ -625,7 +621,7 @@ subroutine sw_rad_tile_code(nlayers, seg_len,                       &
     ! Misc INTENT(OUT)
     sea_ice_albedo, &
     ! (ancil_info mod)
-    ntiles, land_field, type_pts, seg_len, 1, &
+    ntiles, land_field, sea_pts, type_pts, seg_len, 1, &
     ! (coastal mod)
     flandg, &
     ! (prognostics mod)
@@ -728,9 +724,6 @@ subroutine sw_rad_tile_code(nlayers, seg_len,                       &
       end do ! n
     end do ! i_band
   end if
-
-  ! set this back to 1 before exit
-  land_field = 1
 
   deallocate(fland)
   deallocate(snow_surft)
