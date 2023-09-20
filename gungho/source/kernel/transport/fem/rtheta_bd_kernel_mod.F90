@@ -182,7 +182,7 @@ contains
         i_face = int(floor(real(mod(face_next, nfaces_re_h),r_tran)/2.0_r_tran) + 1.0_r_tran)
         sign_face_next_outward = (-1.0_r_tran)**i_face
         face_next_inward_normal(:) = -sign_face_next_outward &
-                                     * normals_to_horizontal_faces(:,face_next)
+                                     * real(normals_to_horizontal_faces(:,face_next), r_tran)
 
         ! Computing theta and f in adjacent cells
 

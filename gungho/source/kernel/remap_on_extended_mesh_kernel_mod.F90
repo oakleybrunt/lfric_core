@@ -20,7 +20,7 @@ use argument_mod,      only: arg_type, func_type,       &
                              GH_BASIS, CELL_COLUMN,     &
                              STENCIL, CROSS2D,          &
                              GH_EVALUATOR
-use constants_mod,     only: r_def, i_def, l_def, LARGE_REAL_POSITIVE
+use constants_mod,     only: r_def, r_tran, i_def, l_def, LARGE_REAL_POSITIVE
 use fs_continuity_mod, only: Wchi
 use log_mod,           only: log_event, &
                              LOG_LEVEL_ERROR
@@ -133,11 +133,11 @@ subroutine remap_on_extended_mesh_code(nlayers,                                 
 
   real(kind=r_def), dimension(1,ndf_wx,ndf_ws), intent(in) :: basis_wx
 
-  real(kind=r_def), dimension(undf_ws),  intent(inout) :: remap_field
-  real(kind=r_def), dimension(undf_ws),  intent(in)    :: field
-  real(kind=r_def), dimension(undf_wx),  intent(in)    :: alpha_ext, beta_ext, height_ext
-  real(kind=r_def), dimension(undf_wx),  intent(in)    :: alpha, beta, height
-  real(kind=r_def), dimension(undf_pid), intent(in)    :: panel_id
+  real(kind=r_tran), dimension(undf_ws),  intent(inout) :: remap_field
+  real(kind=r_tran), dimension(undf_ws),  intent(in)    :: field
+  real(kind=r_def),  dimension(undf_wx),  intent(in)    :: alpha_ext, beta_ext, height_ext
+  real(kind=r_def),  dimension(undf_wx),  intent(in)    :: alpha, beta, height
+  real(kind=r_def),  dimension(undf_pid), intent(in)    :: panel_id
 
   integer(kind=i_def)               :: owned_panel, halo_panel, panel, &
                                        panel_edge, df, k,              &
@@ -152,7 +152,8 @@ subroutine remap_on_extended_mesh_code(nlayers,                                 
   integer(kind=i_def), dimension(2*max_length-1, 2)         :: pid_stencil_1d
 
   real(kind=r_def), dimension(3) :: abh
-  real(kind=r_def)               :: x0, x, y, z, w1, w2, w3, w4
+  real(kind=r_def)               :: x0, x, y, z
+  real(kind=r_tran)              :: w1, w2, w3, w4
   real(kind=r_def), allocatable  :: x1(:), dx(:)
   real(kind=r_def), parameter    :: unit_radius = 1.0_r_def
   integer(kind=i_def)            :: alpha_dir_id, beta_dir_id
@@ -313,8 +314,8 @@ subroutine remap_on_extended_mesh_code(nlayers,                                 
 
     if ( linear_remap ) then
       ! Compute weights for linear interpolation
-      w1 = (x0 - x1(id2))/(x1(id1) - x1(id2))
-      w2 = (x0 - x1(id1))/(x1(id2) - x1(id1))
+      w1 = real((x0 - x1(id2))/(x1(id1) - x1(id2)), r_tran)
+      w2 = real((x0 - x1(id1))/(x1(id2) - x1(id1)), r_tran)
       ! Remap all dofs in the column using the same weights
       do k = 0, nl
         remap_field(map_ws(1)+k) = w1 * field( stencil_1d(id1,interp_dir)+k) &
@@ -329,10 +330,10 @@ subroutine remap_on_extended_mesh_code(nlayers,                                 
       id4 = minloc(dx,1)
 
       ! Now compute the weights
-      w1 = (x0 - x1(id2))/(x1(id1) - x1(id2)) * (x0 - x1(id3))/(x1(id1) - x1(id3)) * (x0 - x1(id4))/(x1(id1) - x1(id4))
-      w2 = (x0 - x1(id1))/(x1(id2) - x1(id1)) * (x0 - x1(id3))/(x1(id2) - x1(id3)) * (x0 - x1(id4))/(x1(id2) - x1(id4))
-      w3 = (x0 - x1(id1))/(x1(id3) - x1(id1)) * (x0 - x1(id2))/(x1(id3) - x1(id2)) * (x0 - x1(id4))/(x1(id3) - x1(id4))
-      w4 = (x0 - x1(id1))/(x1(id4) - x1(id1)) * (x0 - x1(id2))/(x1(id4) - x1(id2)) * (x0 - x1(id3))/(x1(id4) - x1(id3))
+      w1 = real((x0 - x1(id2))/(x1(id1) - x1(id2)) * (x0 - x1(id3))/(x1(id1) - x1(id3)) * (x0 - x1(id4))/(x1(id1) - x1(id4)), r_tran)
+      w2 = real((x0 - x1(id1))/(x1(id2) - x1(id1)) * (x0 - x1(id3))/(x1(id2) - x1(id3)) * (x0 - x1(id4))/(x1(id2) - x1(id4)), r_tran)
+      w3 = real((x0 - x1(id1))/(x1(id3) - x1(id1)) * (x0 - x1(id2))/(x1(id3) - x1(id2)) * (x0 - x1(id4))/(x1(id3) - x1(id4)), r_tran)
+      w4 = real((x0 - x1(id1))/(x1(id4) - x1(id1)) * (x0 - x1(id2))/(x1(id4) - x1(id2)) * (x0 - x1(id3))/(x1(id4) - x1(id3)), r_tran)
       ! Remap all dofs in the column using the same weights
       do k = 0, nl
         remap_field(map_ws(1)+k) = w1 * field( stencil_1d(id1,interp_dir)+k) &

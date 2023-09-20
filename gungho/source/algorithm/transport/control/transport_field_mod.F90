@@ -65,25 +65,16 @@ contains
     type(r_tran_field_type) :: field_n
     real(kind=r_tran)       :: model_dt
 
+    ! transfer r_def input to r_tran fields
+    call field_np1%initialise( vector_space = field_np1_rdef%get_function_space()  )
+    call field_n%initialise( vector_space = field_n_rdef%get_function_space()  )
+    call invoke_copy_to_rtran( field_n, field_n_rdef )
+    model_dt = real( model_dt_rdef, r_tran )
 
-    if (r_tran == r_def )then
-      ! If the default precision is the same as the transport precision, then
-      ! just call as normal
-      call transport_field_r_tran(field_np1_rdef, field_n_rdef, model_dt_rdef, transport_metadata)
-    else
-      ! If the default precision is NOT the same as the transport precision, then
-      ! transfer r_def input to r_tran fields
-      call field_np1%initialise( vector_space = field_np1_rdef%get_function_space()  )
-      call field_n%initialise( vector_space = field_n_rdef%get_function_space()  )
-      call invoke_copy_to_rtran( field_np1, field_np1_rdef )
-      call invoke_copy_to_rtran( field_n, field_n_rdef )
-      model_dt = real( model_dt_rdef, r_tran )
+    call transport_field_r_tran(field_np1, field_n, model_dt, transport_metadata)
 
-      call transport_field_r_tran(field_np1, field_n, model_dt, transport_metadata)
-
-      ! Transfer back to r_def output
-      call invoke_copy_rtran_to_rdef( field_np1_rdef, field_np1 )
-    end if
+    ! Transfer back to r_def output
+    call invoke_copy_rtran_to_rdef( field_np1_rdef, field_np1 )
 
   end subroutine transport_field
 
@@ -93,9 +84,9 @@ contains
     implicit none
 
     ! Arguments
-    type(r_tran_field_type),              intent(inout) :: field_np1
-    type(r_tran_field_type),              intent(in)    :: field_n
-    real(kind=r_tran),              intent(in)    :: model_dt
+    type(r_tran_field_type),       intent(inout) :: field_np1
+    type(r_tran_field_type),       intent(in)    :: field_n
+    real(kind=r_tran),             intent(in)    :: model_dt
     type(transport_metadata_type), intent(in)    :: transport_metadata
     type(transport_runtime_type),  pointer       :: transport_runtime => null()
 

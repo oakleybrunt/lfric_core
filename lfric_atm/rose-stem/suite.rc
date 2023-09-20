@@ -373,7 +373,7 @@ echo $RELATIVE_LOG_ROOT > $DESTINATION_DIRECTORY/compile.log.path
             UM_FCM_TARGET_PLATFORM  = {{TARGET_OPT}}
             MAKE_THREADS          = 4
             RDEF_PRECISION        = 64
-            R_TRAN_PRECISION      = 64
+            R_TRAN_PRECISION      = {{precision}}
             R_BL_PRECISION        = {{precision}}
 
             {{directives(PRIMARY_TARGET, 'build')}}

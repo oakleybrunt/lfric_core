@@ -20,7 +20,7 @@ use argument_mod,         only : arg_type, GH_FIELD,     &
                                  GH_INTEGER, GH_LOGICAL, &
                                  GH_READWRITE,           &
                                  GH_READ, CELL_COLUMN
-use constants_mod,        only : r_tran, i_def, l_def, tiny_eps, EPS_R_TRAN
+use constants_mod,        only : r_tran, r_def, i_def, l_def, tiny_eps, EPS_R_TRAN
 use fs_continuity_mod,    only : W2v, Wtheta
 use kernel_mod,           only : kernel_type
 use koren_support_mod,    only : interpolate_to_regular_grid
@@ -84,36 +84,40 @@ subroutine polyv_wtheta_koren_code( nlayers,              &
   implicit none
 
   ! Arguments
-  integer(kind=i_def), intent(in)                     :: nlayers
-  integer(kind=i_def), intent(in)                     :: ndf_wt
-  integer(kind=i_def), intent(in)                     :: undf_wt
-  integer(kind=i_def), intent(in)                     :: ndf_w2v
-  integer(kind=i_def), intent(in)                     :: undf_w2v
+  integer(kind=i_def), intent(in) :: nlayers
+  integer(kind=i_def), intent(in) :: ndf_wt
+  integer(kind=i_def), intent(in) :: undf_wt
+  integer(kind=i_def), intent(in) :: ndf_w2v
+  integer(kind=i_def), intent(in) :: undf_w2v
+
   integer(kind=i_def), dimension(ndf_w2v), intent(in) :: map_w2v
   integer(kind=i_def), dimension(ndf_wt),  intent(in) :: map_wt
+
   real(kind=r_tran), dimension(undf_wt),  intent(inout) :: advective
   real(kind=r_tran), dimension(undf_w2v), intent(in)    :: wind
   real(kind=r_tran), dimension(undf_wt),  intent(in)    :: tracer
-  real(kind=r_tran), dimension(undf_wt),  intent(in)    :: theta_height
-  logical(kind=l_def),                    intent(in)    :: reversible
-  logical(kind=l_def),                    intent(in)    :: logspace
+  real(kind=r_def),  dimension(undf_wt),  intent(in)    :: theta_height
 
-  !Internal variables
+  logical(kind=l_def), intent(in)    :: reversible
+  logical(kind=l_def), intent(in)    :: logspace
+
+  ! Internal variables
+  integer(kind=i_def) :: k, k1, k2, k3
+
+  real(kind=r_tran) :: x, y, r, r1, r2, phi
+  real(kind=r_tran) :: t1, t2, t3
   real(kind=r_tran), dimension(nlayers+1)   :: wind_1d
   real(kind=r_tran), dimension(nlayers+1)   :: tracer_edge_t, tracer_edge_b
   real(kind=r_tran), dimension(nlayers)     :: dtracerdz
   real(kind=r_tran), dimension(0:nlayers+2) :: tracer_1d, dz
-  integer(kind=i_def) :: k, k1, k2, k3
-  real(kind=r_tran)   :: x, y, r, r1, r2, phi
   real(kind=r_tran), dimension(nlayers+1)   :: zl
   real(kind=r_tran), dimension(nlayers)     :: zm
-  real(kind=r_tran)                         :: t1, t2, t3
 
   !Extract vertical 1d-arrays from global data
   do k=0,nlayers
     wind_1d(k+1)   = wind(map_w2v(1)+k)
     tracer_1d(k+1) = tracer(map_wt(1)+k)
-    zl(k+1)        = theta_height(map_wt(1)+k)
+    zl(k+1)        = real(theta_height(map_wt(1)+k),r_tran)
   end do
   do k = 1,nlayers
     zm(k) = 0.5_r_tran*(zl(k) + zl(k+1))

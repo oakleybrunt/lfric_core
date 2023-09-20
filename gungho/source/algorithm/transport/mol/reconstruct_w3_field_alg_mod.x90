@@ -585,7 +585,7 @@ contains
     integer(kind=i_def)              :: mesh_id
     integer(kind=i_def),     pointer :: ndata_v => null()
     type(r_tran_field_type), pointer :: vert_flux_coeffs => null()
-    type(r_tran_field_type), pointer :: height_tr => null()
+    type(field_type),        pointer :: height_tr => null()
     integer(kind=i_def)              :: vertical_order
     logical(kind=l_def)              :: logspace
     logical(kind=l_def)              :: reversible

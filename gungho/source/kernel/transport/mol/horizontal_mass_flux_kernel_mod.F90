@@ -23,7 +23,7 @@ use argument_mod,      only : arg_type, func_type,       &
                               CELL_COLUMN,               &
                               ANY_DISCONTINUOUS_SPACE_1, &
                               ANY_W2
-use constants_mod,     only : r_def, i_def
+use constants_mod,     only : r_tran, i_def
 use kernel_mod,        only : kernel_type
 
 implicit none
@@ -86,19 +86,19 @@ subroutine horizontal_mass_flux_code( nlayers,        &
   integer(kind=i_def), intent(in)                    :: undf_w2
   integer(kind=i_def), dimension(ndf_w2), intent(in) :: map_w2
 
-  real(kind=r_def), dimension(undf_md), intent(in)    :: reconstruction
-  real(kind=r_def), dimension(undf_w2), intent(in)    :: wind
-  real(kind=r_def), dimension(undf_w2), intent(inout) :: mass_flux
+  real(kind=r_tran), dimension(undf_md), intent(in)    :: reconstruction
+  real(kind=r_tran), dimension(undf_w2), intent(in)    :: wind
+  real(kind=r_tran), dimension(undf_w2), intent(inout) :: mass_flux
 
   ! Internal variables
   integer(kind=i_def)                    :: k, df, ijp
   integer(kind=i_def), parameter         :: nfaces = 4
-  real(kind=r_def)                       :: direction
-  real(kind=r_def), dimension(nfaces)    :: v_dot_n
+  real(kind=r_tran)                      :: direction
+  real(kind=r_tran), dimension(nfaces)   :: v_dot_n
 
   ! Implied direction of outward normals dotted with basis functions.
   ! If u*u_dot_n > 0 then this is the upwind cell
-  v_dot_n = (/ -1.0_r_def, 1.0_r_def, 1.0_r_def, -1.0_r_def /)
+  v_dot_n = (/ -1.0_r_tran, 1.0_r_tran, 1.0_r_tran, -1.0_r_tran /)
 
   ! Horizontal Flux
   ! Reconstruction is stored on a layer first multidata field
@@ -110,7 +110,7 @@ subroutine horizontal_mass_flux_code( nlayers,        &
   do df = 1,nfaces
     do k = 0, nlayers-1
       direction = wind(map_w2(df) + k)*v_dot_n(df)
-      if ( direction >= 0.0_r_def ) then
+      if ( direction >= 0.0_r_tran ) then
         ! Take value on edge from this column
         ijp = map_md(1) + (df-1)*nlayers
         mass_flux( map_w2(df) + k) = reconstruction(ijp + k)*wind(map_w2(df)+k)

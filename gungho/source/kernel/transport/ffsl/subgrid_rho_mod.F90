@@ -10,7 +10,7 @@
 !------------------------------------------------------------------------------
 module subgrid_rho_mod
 
-use constants_mod,                  only: i_def, r_tran, l_def, EPS, EPS_R_TRAN
+use constants_mod,                  only: i_def, r_tran, l_def, EPS_R_TRAN
 use transport_enumerated_types_mod, only: horizontal_monotone_none,    &
                                           horizontal_monotone_strict,  &
                                           horizontal_monotone_relaxed, &
@@ -419,8 +419,8 @@ contains
     ! Apply monotonicity if needed
     if ( monotone == horizontal_monotone_strict ) then
       ! Strict monotonicity
-      t1 = -0.5_r_tran * coeffs(2) / ( coeffs(3) + EPS )
-      if ( ( t1 + EPS ) * ( 1.0_r_tran + EPS - t1 ) > 0.0_r_tran ) then
+      t1 = -0.5_r_tran * coeffs(2) / ( coeffs(3) + EPS_R_TRAN )
+      if ( ( t1 + EPS_R_TRAN ) * ( 1.0_r_tran + EPS_R_TRAN - t1 ) > 0.0_r_tran ) then
         coeffs(1) = rho(2)
         coeffs(2) = 0.0_r_tran
         coeffs(3) = 0.0_r_tran
@@ -430,8 +430,8 @@ contains
       rho_left  = ( rho(2) + rho(1) ) / 2.0_r_tran
       rho_right = ( rho(2) + rho(3) ) / 2.0_r_tran
       ! Relaxed monotonicity
-      t1 = -0.5_r_tran * coeffs(2) / ( coeffs(3) + EPS )
-      if ( ( t1 + EPS ) * ( 1.0_r_tran + EPS - t1 ) > 0.0_r_tran ) then
+      t1 = -0.5_r_tran * coeffs(2) / ( coeffs(3) + EPS_R_TRAN )
+      if ( ( t1 + EPS_R_TRAN ) * ( 1.0_r_tran + EPS_R_TRAN - t1 ) > 0.0_r_tran ) then
         t2 = ( rho_right - rho(2) ) * ( rho(2) - rho_left )
         t3 = abs( rho(2) - rho_left ) - abs( rho_right - rho(2) )
         if ( t2 < 0.0_r_tran ) then
@@ -493,8 +493,8 @@ contains
     ! Apply monotonicity if needed
     if ( monotone == vertical_monotone_strict ) then
       ! Strict monotonicity
-      t1 = -0.5_r_tran * coeffs(2) / ( coeffs(3) + EPS )
-      if ( ( t1 + EPS ) * ( 1.0_r_tran + EPS - t1 ) > 0.0_r_tran ) then
+      t1 = -0.5_r_tran * coeffs(2) / ( coeffs(3) + EPS_R_TRAN )
+      if ( ( t1 + EPS_R_TRAN ) * ( 1.0_r_tran + EPS_R_TRAN - t1 ) > 0.0_r_tran ) then
         coeffs(1) = rho(2)
         coeffs(2) = 0.0_r_tran
         coeffs(3) = 0.0_r_tran
@@ -504,8 +504,8 @@ contains
       rho_left  = ( rho(2) + rho(1) ) / 2.0_r_tran
       rho_right = ( rho(2) + rho(3) ) / 2.0_r_tran
       ! Relaxed monotonicity
-      t1 = -0.5_r_tran * coeffs(2) / ( coeffs(3) + EPS )
-      if ( ( t1 + EPS ) * ( 1.0_r_tran + EPS - t1 ) > 0.0_r_tran ) then
+      t1 = -0.5_r_tran * coeffs(2) / ( coeffs(3) + EPS_R_TRAN )
+      if ( ( t1 + EPS_R_TRAN ) * ( 1.0_r_tran + EPS_R_TRAN - t1 ) > 0.0_r_tran ) then
         t2 = ( rho_right - rho(2) ) * ( rho(2) - rho_left )
         t3 = abs( rho(2) - rho_left ) - abs( rho_right - rho(2) )
         if ( t2 < 0.0_r_tran ) then
@@ -614,8 +614,8 @@ contains
     if ( monotone == horizontal_monotone_strict .OR. &
          monotone == vertical_monotone_strict ) then
       ! Strict monotonicity
-      t1 = -0.5_r_tran*coeffs(2)/(coeffs(3) + EPS)
-      if ((t1+EPS)*(1.0_r_tran+EPS-t1) > 0.0_r_tran) then
+      t1 = -0.5_r_tran*coeffs(2)/(coeffs(3) + EPS_R_TRAN)
+      if ((t1+EPS_R_TRAN)*(1.0_r_tran+EPS_R_TRAN-t1) > 0.0_r_tran) then
         coeffs(1) = density_of_cell
         coeffs(2) = 0.0_r_tran
         coeffs(3) = 0.0_r_tran
@@ -623,8 +623,8 @@ contains
     else if ( monotone == horizontal_monotone_relaxed .OR. &
               monotone == vertical_monotone_relaxed ) then
       ! Relaxed monotonicity
-      t1 = -0.5_r_tran*coeffs(2)/(coeffs(3) + EPS)
-      if ((t1+EPS)*(1.0_r_tran+EPS-t1) > 0.0_r_tran) then
+      t1 = -0.5_r_tran*coeffs(2)/(coeffs(3) + EPS_R_TRAN)
+      if ((t1+EPS_R_TRAN)*(1.0_r_tran+EPS_R_TRAN-t1) > 0.0_r_tran) then
         t2 = (density_cell_edge_right-density_of_cell) * (density_of_cell-density_cell_edge_left)
         t3 = abs(density_of_cell-density_cell_edge_left) - abs(density_cell_edge_right-density_of_cell)
         if ( t2 < 0.0_r_tran ) then

@@ -11,6 +11,7 @@ module advective_and_flux_alg_mod
   use constants_mod,                   only: i_def, l_def, r_tran
   use fem_constants_mod,               only: get_inverse_w3_mass_matrix
   use r_tran_field_mod,                only: r_tran_field_type
+  use field_mod,                       only: field_type
   use log_mod,                         only: log_event, LOG_LEVEL_ERROR
   use monotonic_update_kernel_mod,     only: monotonic_update_kernel_type
   use operator_mod,                    only: operator_type
@@ -91,7 +92,7 @@ contains
     integer(kind=i_def), parameter     :: stencil_depth = 1
     type(mesh_type),           pointer :: mesh => null()
     integer(kind=i_def)                :: recon_space
-    type(r_tran_field_type), pointer   :: rmultiplicity_rdef => null()
+    type(field_type),        pointer   :: rmultiplicity_rdef => null()
     type(r_tran_field_type)            :: rmultiplicity
     integer(kind=i_def)                :: mono_stencil
     logical(kind=l_def)                :: do_horizontal_monotone, &

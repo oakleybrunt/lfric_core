@@ -110,7 +110,7 @@ contains
     type(field_type)                    :: dummy_theta
     type(field_type)                    :: dummy_w2_field
     type(field_type),           pointer :: consist_w3_to_sh_w3_rdef(:) => null()
-    type(field_type),           pointer :: consist_w3_to_sh_w3_rtran(:) => null()
+    type(r_tran_field_type),    pointer :: consist_w3_to_sh_w3_rtran(:) => null()
     type(field_type),           pointer :: proj_mr_to_sh_rho_rhs_op(:) => null()
     type(field_type),           pointer :: intermesh_weights_w2 => null()
     type(field_type),           pointer :: intermesh_weights_w3_rdef => null()

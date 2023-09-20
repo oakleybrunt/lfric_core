@@ -300,8 +300,8 @@ contains
     logical(l_def),          intent(in)    :: strang
     logical(kind=l_def),     intent(in)    :: advect_flux
     type(r_tran_field_type), intent(inout) :: mass_flux
-    type(field_type),        intent(inout) :: increment_con
-    type(field_type),        intent(inout) :: increment_adv
+    type(r_tran_field_type), intent(inout) :: increment_con
+    type(r_tran_field_type), intent(inout) :: increment_adv
 
     ! Subroutine name for timer
     character(*), parameter :: routine_name = 'ffsl_conservative_horizontal_alg'

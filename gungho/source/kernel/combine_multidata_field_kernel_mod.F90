@@ -17,7 +17,7 @@ module combine_multidata_field_kernel_mod
                                 ANY_SPACE_1,               &
                                 ANY_SPACE_2,               &
                                 ANY_SPACE_3
-  use constants_mod,     only : r_def, i_def, l_def
+  use constants_mod,     only : r_double, r_single, i_def, l_def
   use kernel_mod,        only : kernel_type
 
   implicit none
@@ -42,13 +42,18 @@ module combine_multidata_field_kernel_mod
          arg_type(GH_SCALAR, GH_LOGICAL, GH_READ)                 &
          /)
     integer :: operates_on = CELL_COLUMN
-  contains
-    procedure, nopass :: combine_multidata_field_code
   end type
   !---------------------------------------------------------------------------
   ! Contained functions/subroutines
   !---------------------------------------------------------------------------
   public :: combine_multidata_field_code
+
+  ! Generic interface for real32 and real64 types
+  interface combine_multidata_field_code
+    module procedure  &
+      combine_multidata_field_code_r_single, &
+      combine_multidata_field_code_r_double
+  end interface
 
 contains
 
@@ -70,14 +75,17 @@ contains
 !! @param[in]     ndf_2       Number of dofs per cell for field2_in
 !! @param[in]     undf_2      Total number of dofs per cell for field2_in
 !! @param[in]     map_2       Cell dofmap for field2_in
-subroutine combine_multidata_field_code(nlayers,              &
-                                        field_out, n,         &
-                                        field1_in, n1,        &
-                                        field2_in, n2,        &
-                                        ndata_first,          &
-                                        ndf, undf, map,       &
-                                        ndf_1, undf_1, map_1, &
-                                        ndf_2, undf_2, map_2 )
+
+! R_SINGLE PRECISION
+! ==================
+subroutine combine_multidata_field_code_r_single(nlayers,              &
+                                                 field_out, n,         &
+                                                 field1_in, n1,        &
+                                                 field2_in, n2,        &
+                                                 ndata_first,          &
+                                                 ndf, undf, map,       &
+                                                 ndf_1, undf_1, map_1, &
+                                                 ndf_2, undf_2, map_2 )
 
   implicit none
 
@@ -89,9 +97,9 @@ subroutine combine_multidata_field_code(nlayers,              &
   integer(kind=i_def), dimension(ndf),     intent(in)    :: map
   integer(kind=i_def), dimension(ndf_1),   intent(in)    :: map_1
   integer(kind=i_def), dimension(ndf_2),   intent(in)    :: map_2
-  real(kind=r_def),    dimension(undf),    intent(inout) :: field_out
-  real(kind=r_def),    dimension(undf_1),  intent(in)    :: field1_in
-  real(kind=r_def),    dimension(undf_2),  intent(in)    :: field2_in
+  real(kind=r_single), dimension(undf),    intent(inout) :: field_out
+  real(kind=r_single), dimension(undf_1),  intent(in)    :: field1_in
+  real(kind=r_single), dimension(undf_2),  intent(in)    :: field2_in
   logical(kind=l_def),                     intent(in)    :: ndata_first
 
 
@@ -124,6 +132,64 @@ subroutine combine_multidata_field_code(nlayers,              &
     end do
   end if
 
-end subroutine combine_multidata_field_code
+end subroutine combine_multidata_field_code_r_single
+
+! R_DOUBLE PRECISION
+! ==================
+subroutine combine_multidata_field_code_r_double(nlayers,              &
+                                                 field_out, n,         &
+                                                 field1_in, n1,        &
+                                                 field2_in, n2,        &
+                                                 ndata_first,          &
+                                                 ndf, undf, map,       &
+                                                 ndf_1, undf_1, map_1, &
+                                                 ndf_2, undf_2, map_2 )
+
+  implicit none
+
+  ! Arguments
+  integer(kind=i_def),                     intent(in)    :: nlayers
+  integer(kind=i_def),                     intent(in)    :: ndf, ndf_1, ndf_2
+  integer(kind=i_def),                     intent(in)    :: undf, undf_1, undf_2
+  integer(kind=i_def),                     intent(in)    :: n, n1, n2
+  integer(kind=i_def), dimension(ndf),     intent(in)    :: map
+  integer(kind=i_def), dimension(ndf_1),   intent(in)    :: map_1
+  integer(kind=i_def), dimension(ndf_2),   intent(in)    :: map_2
+  real(kind=r_double), dimension(undf),    intent(inout) :: field_out
+  real(kind=r_double), dimension(undf_1),  intent(in)    :: field1_in
+  real(kind=r_double), dimension(undf_2),  intent(in)    :: field2_in
+  logical(kind=l_def),                     intent(in)    :: ndata_first
+
+
+  ! Internal variables
+  integer(kind=i_def) :: df, k, ij
+
+  if ( ndata_first ) then
+    do k = 0, nlayers-1
+      ij = map(1) + k*n
+      do df = 0, n1-1
+        field_out(ij + df) = field1_in(map_1(1) + k*n1 + df)
+      end do
+      ij = map(1) + k*n + n1
+      do df = 0, n2-1
+        field_out(ij + df) = field2_in(map_2(1) + k*n2 + df)
+      end do
+    end do
+  else
+    do df = 1, n1
+      ij = map(1) + (df-1)*nlayers
+      do k = 0, nlayers-1
+        field_out(ij + k) = field1_in(map_1(1) + (df-1)*nlayers + k)
+      end do
+    end do
+    do df = 1, n2
+      ij = map(1) + n1*nlayers + (df-1)*nlayers
+      do k = 0, nlayers-1
+        field_out(ij + k) = field2_in(map_2(1) + (df-1)*nlayers + k)
+      end do
+    end do
+  end if
+
+end subroutine combine_multidata_field_code_r_double
 
 end module combine_multidata_field_kernel_mod

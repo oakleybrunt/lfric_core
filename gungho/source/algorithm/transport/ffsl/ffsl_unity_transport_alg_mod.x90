@@ -16,9 +16,10 @@ module ffsl_unity_transport_alg_mod
 
   use check_configuration_mod,          only: check_horz_dep_pts, &
                                               check_vert_dep_pts
-  use constants_mod,                    only: r_def, i_def, l_def
+  use constants_mod,                    only: r_tran, i_def, l_def
   use ffsl_1d_flux_alg_mod,             only: ffsl_1d_flux_vert
   use ffsl_2d_flux_alg_mod,             only: ffsl_2d_flux_first
+  use r_tran_field_mod,                 only: r_tran_field_type
   use field_mod,                        only: field_type
   use flux_direction_mod,               only: x_direction, y_direction
   use function_space_mod,               only: function_space_type
@@ -77,32 +78,32 @@ contains
     implicit none
 
     ! Arguments
-    type(field_type), intent(in)    :: dep_pts_x
-    type(field_type), intent(in)    :: dep_pts_y
-    type(field_type), intent(in)    :: dep_pts_z
-    type(field_type), intent(in)    :: detj_at_w2
-    real(r_def),      intent(in)    :: dt
-    type(field_type), intent(inout) :: np1_x
-    type(field_type), intent(inout) :: np1_y
-    type(field_type), intent(inout) :: np1_z
-    type(field_type), intent(inout) :: np1_half_x
-    type(field_type), intent(inout) :: np1_half_y
-    type(field_type), intent(inout) :: np1_half_z
+    type(r_tran_field_type), intent(in)    :: dep_pts_x
+    type(r_tran_field_type), intent(in)    :: dep_pts_y
+    type(r_tran_field_type), intent(in)    :: dep_pts_z
+    type(r_tran_field_type), intent(in)    :: detj_at_w2
+    real(r_tran),            intent(in)    :: dt
+    type(r_tran_field_type), intent(inout) :: np1_x
+    type(r_tran_field_type), intent(inout) :: np1_y
+    type(r_tran_field_type), intent(inout) :: np1_z
+    type(r_tran_field_type), intent(inout) :: np1_half_x
+    type(r_tran_field_type), intent(inout) :: np1_half_y
+    type(r_tran_field_type), intent(inout) :: np1_half_z
 
     ! Parameters, set log_space to be false for unity transport
     logical(l_def), parameter :: log_space =.false.
 
     ! Unity fields, increments, and fluxes
-    type(field_type) :: inc_one_x
-    type(field_type) :: inc_one_y
-    type(field_type) :: inc_one_z
-    type(field_type) :: ini_one
-    type(field_type) :: flux_x
-    type(field_type) :: flux_y
-    type(field_type) :: flux_z
+    type(r_tran_field_type) :: inc_one_x
+    type(r_tran_field_type) :: inc_one_y
+    type(r_tran_field_type) :: inc_one_z
+    type(r_tran_field_type) :: ini_one
+    type(r_tran_field_type) :: flux_x
+    type(r_tran_field_type) :: flux_y
+    type(r_tran_field_type) :: flux_z
 
     ! Half time step and flags for departure points
-    real(kind=r_def)    :: half_dt
+    real(kind=r_tran)   :: half_dt
     logical(kind=l_def) :: any_horz_dep_pts, any_vert_dep_pts, reversibility
     integer(kind=i_def) :: hori_monotone, vert_monotone
 
@@ -122,16 +123,16 @@ contains
     call flux_z%initialise( vector_space=dep_pts_z%get_function_space() )
 
     ! Set values to zero (apart from initial unity field)
-    call invoke( setval_c(inc_one_x, 0.0_r_def), &
-                 setval_c(inc_one_y, 0.0_r_def), &
-                 setval_c(inc_one_z, 0.0_r_def), &
-                 setval_c(ini_one,   1.0_r_def), &
-                 setval_c(flux_x,    0.0_r_def), &
-                 setval_c(flux_y,    0.0_r_def), &
-                 setval_c(flux_z,    0.0_r_def)  )
+    call invoke( setval_c(inc_one_x, 0.0_r_tran), &
+                 setval_c(inc_one_y, 0.0_r_tran), &
+                 setval_c(inc_one_z, 0.0_r_tran), &
+                 setval_c(ini_one,   1.0_r_tran), &
+                 setval_c(flux_x,    0.0_r_tran), &
+                 setval_c(flux_y,    0.0_r_tran), &
+                 setval_c(flux_z,    0.0_r_tran)  )
 
     ! Set half time step, monotone flag to none, reversibility to false
-    half_dt = 0.5_r_def * dt
+    half_dt = 0.5_r_tran * dt
     hori_monotone = horizontal_monotone_none
     vert_monotone = vertical_monotone_none
     reversibility = .false.

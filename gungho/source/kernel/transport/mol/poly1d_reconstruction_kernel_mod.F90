@@ -26,7 +26,7 @@ use argument_mod,      only : arg_type, func_type,         &
                               ANY_DISCONTINUOUS_SPACE_1,   &
                               ANY_DISCONTINUOUS_SPACE_2,   &
                               ANY_DISCONTINUOUS_SPACE_3
-use constants_mod,     only : r_def, i_def
+use constants_mod,     only : r_tran, i_def
 use kernel_mod,        only : kernel_type
 
 implicit none
@@ -112,9 +112,9 @@ subroutine poly1d_reconstruction_code( nlayers,        &
   integer(kind=i_def), intent(in)                    :: order
   integer(kind=i_def), intent(in)                    :: stencil_size
 
-  real(kind=r_def), dimension(undf_md), intent(inout) :: reconstruction
-  real(kind=r_def), dimension(undf_ws), intent(in)    :: tracer
-  real(kind=r_def), dimension(undf_c),  intent(in)    :: coeff
+  real(kind=r_tran), dimension(undf_md), intent(inout) :: reconstruction
+  real(kind=r_tran), dimension(undf_ws), intent(in)    :: tracer
+  real(kind=r_tran), dimension(undf_c),  intent(in)    :: coeff
 
   integer(kind=i_def), dimension(ndf_ws,stencil_size), intent(in) :: stencil_map
 
@@ -163,7 +163,7 @@ subroutine poly1d_reconstruction_code( nlayers,        &
   do f = 1,nfaces
     df = map_md(1) + (f-1)*(nl+1)
     do k = 0, nl
-      reconstruction(df + k) = 0.0_r_def
+      reconstruction(df + k) = 0.0_r_tran
     end do
     do p = 1, order+1
       ijp = (p - 1 + (f-1)*(order+1)) + map_c(1)

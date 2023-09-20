@@ -20,7 +20,7 @@ use argument_mod,      only : arg_type, func_type, &
                               STENCIL, CROSS2D,    &
                               CELL_COLUMN,         &
                               ANY_DISCONTINUOUS_SPACE_1
-use constants_mod,     only : r_def, i_def, l_def
+use constants_mod,     only : r_tran, i_def, l_def
 use fs_continuity_mod, only : W2, Wtheta
 use kernel_mod,        only : kernel_type
 
@@ -117,18 +117,18 @@ subroutine poly_adv_update_code( nlayers,                &
   integer(kind=i_def), dimension(4),                      intent(in) :: smap_w2_size
   integer(kind=i_def), dimension(ndf_w2, smap_w2_max, 4), intent(in) :: smap_w2
 
-  real(kind=r_def), dimension(undf_wt), intent(inout) :: advective
-  real(kind=r_def), dimension(undf_md), intent(in)    :: reconstruction
-  real(kind=r_def), dimension(undf_w2), intent(in)    :: wind
+  real(kind=r_tran), dimension(undf_wt), intent(inout) :: advective
+  real(kind=r_tran), dimension(undf_md), intent(in)    :: reconstruction
+  real(kind=r_tran), dimension(undf_w2), intent(in)    :: wind
 
   ! Internal variables
   integer(kind=i_def)                      :: k, df, ijp, df1, df2
   integer(kind=i_def), parameter           :: nfaces = 4
-  real(kind=r_def)                         :: direction
-  real(kind=r_def), dimension(nfaces)      :: v_dot_n
-  real(kind=r_def), dimension(4,0:nlayers) :: tracer
-  real(kind=r_def), dimension(2,0:nlayers) :: uv
-  real(kind=r_def)                         :: dtdx, dtdy
+  real(kind=r_tran)                         :: direction
+  real(kind=r_tran), dimension(nfaces)      :: v_dot_n
+  real(kind=r_tran), dimension(4,0:nlayers) :: tracer
+  real(kind=r_tran), dimension(2,0:nlayers) :: uv
+  real(kind=r_tran)                         :: dtdx, dtdy
 
   integer(kind=i_def), dimension(nfaces) :: opposite
   logical(kind=l_def), dimension(nfaces) :: missing_neighbour
@@ -137,7 +137,7 @@ subroutine poly_adv_update_code( nlayers,                &
   integer(kind=i_def), parameter :: E = 3
   integer(kind=i_def), parameter :: N = 4
 
-  v_dot_n = (/ -1.0_r_def, 1.0_r_def, 1.0_r_def, -1.0_r_def /)
+  v_dot_n = (/ -1.0_r_tran, 1.0_r_tran, 1.0_r_tran, -1.0_r_tran /)
 
   ! For each face of cell, find the index in the neighbouring cell that
   ! corresponds to it.
@@ -163,17 +163,17 @@ subroutine poly_adv_update_code( nlayers,                &
   end do
 
   k = 0
-  uv(1,k) = 0.25_r_def*( wind(map_w2(1)) + wind(map_w2(3)) )
-  uv(2,k) = 0.25_r_def*( wind(map_w2(2)) + wind(map_w2(4)) )
+  uv(1,k) = 0.25_r_tran*( wind(map_w2(1)) + wind(map_w2(3)) )
+  uv(2,k) = 0.25_r_tran*( wind(map_w2(2)) + wind(map_w2(4)) )
   do k = 1, nlayers-1
-    uv(1,k) = 0.25_r_def*( wind(map_w2(1) + k - 1 ) + wind(map_w2(1) + k ) &
+    uv(1,k) = 0.25_r_tran*( wind(map_w2(1) + k - 1 ) + wind(map_w2(1) + k ) &
                          + wind(map_w2(3) + k - 1 ) + wind(map_w2(3) + k ) )
-    uv(2,k) = 0.25_r_def*( wind(map_w2(2) + k - 1 ) + wind(map_w2(2) + k ) &
+    uv(2,k) = 0.25_r_tran*( wind(map_w2(2) + k - 1 ) + wind(map_w2(2) + k ) &
                          + wind(map_w2(4) + k - 1 ) + wind(map_w2(4) + k ) )
   end do
   k = nlayers
-  uv(1,k) = 0.25_r_def*( wind(map_w2(1) + k - 1) + wind(map_w2(3) + k - 1) )
-  uv(2,k) = 0.25_r_def*( wind(map_w2(2) + k - 1) + wind(map_w2(4) + k - 1) )
+  uv(1,k) = 0.25_r_tran*( wind(map_w2(1) + k - 1) + wind(map_w2(3) + k - 1) )
+  uv(2,k) = 0.25_r_tran*( wind(map_w2(2) + k - 1) + wind(map_w2(4) + k - 1) )
 
   ! Horizontal advective update
   ! Reconstruction is stored on a layer first multidata field
@@ -192,7 +192,7 @@ subroutine poly_adv_update_code( nlayers,                &
     end if
     do k = 0, nlayers
       direction = uv(df1,k)*v_dot_n(df)
-      if ( direction > 0.0_r_def .or. missing_neighbour(df) ) then
+      if ( direction > 0.0_r_tran .or. missing_neighbour(df) ) then
         ! Take value on edge from this column
         ijp = map_md(1) + (df-1)*(nlayers+1)
         tracer(df, k) = reconstruction(ijp + k )

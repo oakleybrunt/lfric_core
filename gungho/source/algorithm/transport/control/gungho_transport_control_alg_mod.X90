@@ -7,7 +7,8 @@
 
 module gungho_transport_control_alg_mod
 
-  use constants_mod,                     only: i_def, r_def, l_def, r_tran
+  use constants_mod,                     only: i_def, r_def, l_def, r_tran, &
+                                               PRECISION_R_TRAN
   use extrusion_mod,                     only: SHIFTED
   use field_mod,                         only: field_type
   use formulation_config_mod,            only: moisture_formulation,     &
@@ -16,7 +17,8 @@ module gungho_transport_control_alg_mod
   use local_mesh_mod,                    only: local_mesh_type
   use log_mod,                           only: log_event,         &
                                                log_scratch_space, &
-                                               LOG_LEVEL_INFO
+                                               LOG_LEVEL_INFO,    &
+                                               LOG_LEVEL_ALWAYS
   use mesh_collection_mod,               only: mesh_collection
   use mesh_mod,                          only: mesh_type
   use multires_coupling_config_mod,      only: coarse_aerosol_transport, &
@@ -75,6 +77,11 @@ contains
     type(mesh_type),         pointer :: aerosol_mesh => null()
     type(mesh_type),         pointer :: shifted_mesh => null()
     type(local_mesh_type),   pointer :: local_mesh => null()
+
+    write(log_scratch_space,'(A)')                               &
+        'Transport scheme built with '//trim(PRECISION_R_TRAN)// &
+        '-bit real numbers'
+    call log_event( log_scratch_space, LOG_LEVEL_ALWAYS )
 
     ! Set up linked list of metadatas
     transport_metadata_collection = transport_metadata_collection_type()

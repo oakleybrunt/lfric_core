@@ -168,7 +168,7 @@ module constants_mod
   !> @{
   real(kind=r_def), parameter  :: EPS = 3.0e-15_r_def
   !<                              Relative precision: if (abs(x-y) < EPS) then assume x==y.
-  real(kind=r_tran), parameter :: EPS_R_TRAN = 3.0e-15_r_def
+  real(kind=r_tran), parameter :: EPS_R_TRAN = 3.0e-15_r_tran
   !<                              Relative precision: if (abs(x-y) < EPS_R_TRAN) then assume x==y.
   real(kind=r_tran), parameter :: tiny_eps = 1.0e-30_r_tran
   !<                              Similar to EPS but lot smaller, which can be used where

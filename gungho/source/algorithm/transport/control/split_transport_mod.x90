@@ -249,9 +249,9 @@ contains
       ! Choose form of transport equation
       select case ( transport_metadata%get_equation_form() )
       case ( equation_form_conservative )
-        call vertical_sl_conservative_alg( field_np1, field_n, step_dt, transport_metadata )
+        call vertical_sl_conservative_alg( field_np1, field_n, transport_metadata )
       case ( equation_form_advective )
-        call vertical_sl_advective_alg( field_np1, field_n, step_dt, transport_metadata )
+        call vertical_sl_advective_alg( field_np1, field_n, transport_metadata )
       case default
         call log_event('Trying to solve unrecognised form of transport equation', &
                         LOG_LEVEL_ERROR)

@@ -60,15 +60,13 @@ contains
   !> @brief Algorithm for 1D vertical conservative transport using the SLICE algorithm.
   !> @param[in,out]  field_np1          Field at timestep n+1 = field_n at departure point
   !> @param[in]      field_n            Field at timestep n
-  !> @param[in]      dt                 Time step (local)
   !> @param[in]      transport_metadata Metadata for the advection of field
-  subroutine vertical_sl_conservative_alg( field_np1, field_n, dt, transport_metadata )
+  subroutine vertical_sl_conservative_alg( field_np1, field_n, transport_metadata )
 
     implicit none
 
     type(r_tran_field_type),       intent(inout) :: field_np1
     type(r_tran_field_type),       intent(in)    :: field_n
-    real(kind=r_tran),             intent(in)    :: dt
     type(transport_metadata_type), intent(in)    :: transport_metadata
 
     ! Parameters, set log_space to be false for conservative SL transport

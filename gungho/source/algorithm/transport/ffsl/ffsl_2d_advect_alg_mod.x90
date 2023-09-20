@@ -79,7 +79,7 @@ contains
     type(r_tran_field_type), intent(in)    :: dep_pts_x, dep_pts_y
     type(r_tran_field_type), intent(in)    :: detj_at_w2
     real(r_tran),            intent(in)    :: dt
-    type(r_tran_field_type), intent(in)    :: panel_id
+    type(field_type),        intent(in)    :: panel_id
     integer(i_def),          intent(in)    :: order
     integer(kind=i_def),     intent(in)    :: monotone
     logical(l_def),          intent(in)    :: strang
@@ -206,7 +206,7 @@ contains
     type(r_tran_field_type), intent(in)    :: dep_pts_x, dep_pts_y
     type(r_tran_field_type), intent(in)    :: detj_at_w2
     real(r_tran),            intent(in)    :: dt
-    type(r_tran_field_type), intent(in)    :: panel_id
+    type(field_type),        intent(in)    :: panel_id
     integer(i_def),          intent(in)    :: order
     integer(kind=i_def),     intent(in)    :: monotone
     logical(l_def),          intent(in)    :: strang

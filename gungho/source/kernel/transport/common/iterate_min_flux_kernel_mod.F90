@@ -21,7 +21,7 @@ use argument_mod,            only : arg_type,                           &
                                     CELL_COLUMN, GH_REAL, GH_READINC,   &
                                     GH_SCALAR
 use fs_continuity_mod,       only : W3, W2
-use constants_mod,           only : r_tran, i_def, EPS_R_TRAN
+use constants_mod,           only : r_def, r_tran, i_def, EPS_R_TRAN
 use kernel_mod,              only : kernel_type
 
 implicit none
@@ -87,7 +87,7 @@ subroutine iterate_min_flux_code(cell,                    &
   integer(kind=i_def), intent(in)    :: map_w2(ndf_w2)
   real(kind=r_tran),   intent(inout) :: flux(undf_w2)
   real(kind=r_tran),   intent(in)    :: field(undf_w3)
-  real(kind=r_tran),   intent(in)    :: div(ndf_w3,ndf_w2,ncell_3d)
+  real(kind=r_def),    intent(in)    :: div(ndf_w3,ndf_w2,ncell_3d)
   real(kind=r_tran),   intent(in)    :: min_value
   real(kind=r_tran),   intent(in)    :: dts
 

@@ -10,7 +10,6 @@ module mol_advective_alg_mod
   use end_of_transport_step_alg_mod,  only: end_of_advective_step_alg
   use constants_mod,                  only: r_def, i_def, l_def, r_tran
   use r_tran_field_mod,               only: r_tran_field_type
-  use field_mod,                      only: field_type
   use runge_kutta_init_mod,           only: get_rk_transport_weights
   use io_config_mod,                  only: subroutine_timers
   use timer_mod,                      only: timer
@@ -58,7 +57,7 @@ contains
     integer(i_def)                :: nstage, substeps
     real(r_tran), allocatable     :: rk_weights(:,:)
     type(r_tran_field_type)       :: rhs_field
-    type(field_type)              :: dummy
+    type(r_tran_field_type)       :: dummy
     type(mesh_type),      pointer :: mesh => null()
     type(transport_runtime_type), pointer :: transport_runtime => null()
 

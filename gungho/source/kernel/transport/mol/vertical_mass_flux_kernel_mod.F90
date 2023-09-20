@@ -16,7 +16,7 @@ use argument_mod,      only : arg_type, func_type,         &
                               CELL_COLUMN,                 &
                               ANY_DISCONTINUOUS_SPACE_1,   &
                               ANY_W2
-use constants_mod,     only : r_def, i_def, l_def
+use constants_mod,     only : r_tran, i_def, l_def
 use kernel_mod,        only : kernel_type
 
 implicit none
@@ -80,13 +80,13 @@ subroutine vertical_mass_flux_code( nlayers,                &
   integer(kind=i_def), intent(in)                    :: undf_w2
   integer(kind=i_def), dimension(ndf_w2), intent(in) :: map_w2
 
-  real(kind=r_def), dimension(undf_md), intent(in)    :: reconstruction
-  real(kind=r_def), dimension(undf_w2), intent(in)    :: wind
-  real(kind=r_def), dimension(undf_w2), intent(inout) :: mass_flux
+  real(kind=r_tran), dimension(undf_md), intent(in)    :: reconstruction
+  real(kind=r_tran), dimension(undf_w2), intent(in)    :: wind
+  real(kind=r_tran), dimension(undf_w2), intent(inout) :: mass_flux
 
   ! Internal variables
   integer(kind=i_def) :: k, df, ijp1, ijp2, offset
-  real(kind=r_def)    :: wgt
+  real(kind=r_tran)   :: wgt
 
   ! df of dof on face
   if  ( ndf_w2 == 2 ) then
@@ -99,7 +99,7 @@ subroutine vertical_mass_flux_code( nlayers,                &
     offset = 4*nlayers
   end if
 
-  mass_flux( map_w2(df) ) = 0.0_r_def
+  mass_flux( map_w2(df) ) = 0.0_r_tran
   ! Vertical Flux, loop over edges ignoring the top and bottom face (where flux = 0)
   ! Reconstruction is stored on a layer first multidata field
   ! with index for face f = (0,1) = (Bottom, Top): map_md(1) + f*nlayers + k
@@ -112,14 +112,14 @@ subroutine vertical_mass_flux_code( nlayers,                &
     ! Take value from top face of cell below edge
     ijp1 = map_md(1) + offset + k
 
-    wgt = (0.5_r_def - sign(0.5_r_def, wind(map_w2(df)+k)))
+    wgt = (0.5_r_tran - sign(0.5_r_tran, wind(map_w2(df)+k)))
 
     mass_flux( map_w2(df) + k) = wind(map_w2(df)+k)*( &
                                  wgt*reconstruction(ijp1) &
-                               + (1.0_r_def-wgt)*reconstruction(ijp2))
+                               + (1.0_r_tran-wgt)*reconstruction(ijp2))
 
   end do
-  mass_flux( map_w2(df) + nlayers ) = 0.0_r_def
+  mass_flux( map_w2(df) + nlayers ) = 0.0_r_tran
 
 end subroutine vertical_mass_flux_code
 

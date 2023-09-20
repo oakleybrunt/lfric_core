@@ -22,7 +22,7 @@ use argument_mod,      only : arg_type, func_type,         &
                               ANY_DISCONTINUOUS_SPACE_1,   &
                               GH_READ, CELL_COLUMN
 use fs_continuity_mod, only : W3, Wtheta
-use constants_mod,     only : i_def, l_def, tiny_eps, EPS_R_TRAN, r_tran
+use constants_mod,     only : i_def, l_def, tiny_eps, EPS_R_TRAN, r_tran, r_def
 use kernel_mod,        only : kernel_type
 use koren_support_mod, only:  interpolate_to_regular_grid
 
@@ -86,36 +86,38 @@ subroutine polyv_w3_koren_code( nlayers,                           &
                                 map_wtheta                         )
   implicit none
   ! Arguments
-  integer(kind=i_def), intent(in)                        :: nlayers
-  integer(kind=i_def), intent(in)                        :: ndf_md
-  integer(kind=i_def), intent(in)                        :: undf_md
-  integer(kind=i_def), intent(in)                        :: ndf_w3
-  integer(kind=i_def), intent(in)                        :: undf_w3
-  integer(kind=i_def), intent(in)                        :: ndf_wtheta
-  integer(kind=i_def), intent(in)                        :: undf_wtheta
+  integer(kind=i_def), intent(in) :: nlayers
+  integer(kind=i_def), intent(in) :: ndf_md
+  integer(kind=i_def), intent(in) :: undf_md
+  integer(kind=i_def), intent(in) :: ndf_w3
+  integer(kind=i_def), intent(in) :: undf_w3
+  integer(kind=i_def), intent(in) :: ndf_wtheta
+  integer(kind=i_def), intent(in) :: undf_wtheta
 
-  integer(kind=i_def), dimension(ndf_md),  intent(in)    :: map_md
-  integer(kind=i_def), dimension(ndf_w3),  intent(in)    :: map_w3
+  integer(kind=i_def), dimension(ndf_md),     intent(in) :: map_md
+  integer(kind=i_def), dimension(ndf_w3),     intent(in) :: map_w3
   integer(kind=i_def), dimension(ndf_wtheta), intent(in) :: map_wtheta
 
-  real(kind=r_tran), dimension(undf_md), intent(inout)   :: reconstruction
-  real(kind=r_tran), dimension(undf_w3),  intent(in)     :: tracer
-  real(kind=r_tran), dimension(undf_wtheta), intent(in)  :: theta_height
-  logical(kind=l_def), intent(in)                        :: reversible
-  logical(kind=l_def), intent(in)                        :: logspace
+  real(kind=r_tran), dimension(undf_md),     intent(inout) :: reconstruction
+  real(kind=r_tran), dimension(undf_w3),     intent(in)    :: tracer
+  real(kind=r_def),  dimension(undf_wtheta), intent(in)    :: theta_height
+
+  logical(kind=l_def), intent(in) :: reversible
+  logical(kind=l_def), intent(in) :: logspace
+
   ! Local variables
-  integer(kind=i_def)                              :: k, k1, k2, k3
-  real(kind=r_tran)                                :: x, y, r, r1, r2, phi
-  integer(kind=i_def), parameter                   :: ext = 2
-  real(kind=r_tran), dimension(nlayers+1)          :: tracer_edge_t,tracer_edge_b
-  real(kind=r_tran), dimension(1-ext:nlayers+ext)  :: tracer_1d
-  real(kind=r_tran), dimension(nlayers+1)          :: zl
-  real(kind=r_tran), dimension(1-ext:nlayers+ext)  :: dz
-  real(kind=r_tran)                                :: t1, t2, t3
+  integer(kind=i_def), parameter                  :: ext = 2
+  integer(kind=i_def)                             :: k, k1, k2, k3
+  real(kind=r_tran)                               :: x, y, r, r1, r2, phi
+  real(kind=r_tran)                               :: t1, t2, t3
+  real(kind=r_tran), dimension(nlayers+1)         :: tracer_edge_t,tracer_edge_b
+  real(kind=r_tran), dimension(1-ext:nlayers+ext) :: tracer_1d
+  real(kind=r_tran), dimension(nlayers+1)         :: zl
+  real(kind=r_tran), dimension(1-ext:nlayers+ext) :: dz
 
   ! Extract the global data into 1d-array
   do k = 0,nlayers
-    zl(k+1) = theta_height(map_wtheta(1)+k)
+    zl(k+1) = real(theta_height(map_wtheta(1)+k),r_tran)
   end do
   do k = 0,nlayers - 1
     tracer_1d(k+1) = tracer(map_w3(1)+k)

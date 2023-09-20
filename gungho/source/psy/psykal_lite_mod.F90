@@ -911,7 +911,8 @@ contains
 
       implicit none
 
-      type(field_type), intent(in) :: remap_field, field, chi_ext(3), chi(3), panel_id
+      type(r_tran_field_type), intent(in) :: remap_field, field
+      type(field_type),       intent(in) :: chi_ext(3), chi(3), panel_id
       logical(kind=l_def), intent(in) :: linear_remap
       integer(kind=i_def) :: cell, stencil_depth, chi_stencil_depth, pid_stencil_depth
       integer(kind=i_def) :: df_nodal, df_wchi
@@ -919,7 +920,8 @@ contains
       integer(kind=i_def) :: dim_wchi
       real(kind=r_def), pointer :: nodes_remap_field(:,:) => null()
       integer(kind=i_def) :: nlayers
-      type(field_proxy_type) :: remap_field_proxy, field_proxy, chi_ext_proxy(3), chi_proxy(3), panel_id_proxy
+      type(r_tran_field_proxy_type) :: remap_field_proxy, field_proxy
+      type(field_proxy_type) :: chi_ext_proxy(3), chi_proxy(3), panel_id_proxy
       integer(kind=i_def), pointer :: map_remap_field(:,:) => null(), map_panel_id(:,:) => null(), map_wchi(:,:) => null()
       integer(kind=i_def) :: ndf_remap_field, undf_remap_field, ndf_wchi, undf_wchi, ndf_panel_id, undf_panel_id
       type(mesh_type), pointer :: mesh => null()

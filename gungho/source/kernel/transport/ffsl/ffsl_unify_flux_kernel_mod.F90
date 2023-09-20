@@ -192,23 +192,23 @@ contains
           select case(halo)
             case(2)
               do k = 0, nlayers-1
-                flux_x(map_w2(3)+k) = 0.5_r_def*(flux_x_broken(map_w2b(3)+k) &
-                                               + flux_x_broken(smap_x(1,2,3)+k))
+                flux_x(map_w2(3)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(3)+k) &
+                                                + flux_x_broken(smap_x(1,2,3)+k))
               end do
             case(4)
               do k = 0, nlayers-1
-                flux_x(map_w2(1)+k) = 0.5_r_def*(flux_x_broken(map_w2b(1)+k) &
-                                               - flux_y_broken(smap_y(2,2,1)+k))
+                flux_x(map_w2(1)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(1)+k) &
+                                                - flux_y_broken(smap_y(2,2,1)+k))
               end do
             case(5)
               do k = 0, nlayers-1
-                flux_y(map_w2(4)+k) = 0.5_r_def*(flux_y_broken(map_w2b(4)+k) &
-                                               + flux_y_broken(smap_x(2,2,4)+k))
+                flux_y(map_w2(4)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(4)+k) &
+                                                + flux_y_broken(smap_x(2,2,4)+k))
               end do
             case(6)
               do k = 0, nlayers-1
-                flux_y(map_w2(2)+k) = 0.5_r_def*(flux_y_broken(map_w2b(2)+k) &
-                                               - flux_x_broken(smap_x(1,2,2)+k))
+                flux_y(map_w2(2)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(2)+k) &
+                                                - flux_x_broken(smap_x(1,2,2)+k))
               end do
           end select
         end do
@@ -219,23 +219,23 @@ contains
           select case(halo)
             case(1)
               do k = 0, nlayers-1
-                flux_x(map_w2(1)+k) = 0.5_r_def*(flux_x_broken(map_w2b(1)+k) &
-                                               + flux_x_broken(smap_x(3,2,1)+k))
+                flux_x(map_w2(1)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(1)+k) &
+                                                + flux_x_broken(smap_x(3,2,1)+k))
               end do
             case(3)
               do k = 0, nlayers-1
-                flux_x(map_w2(3)+k) = 0.5_r_def*(flux_x_broken(map_w2b(3)+k) &
-                                               - flux_y_broken(smap_y(4,2,3)+k))
+                flux_x(map_w2(3)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(3)+k) &
+                                                - flux_y_broken(smap_y(4,2,3)+k))
               end do
             case(5)
               do k = 0, nlayers-1
-                flux_y(map_w2(4)+k) = 0.5_r_def*(flux_y_broken(map_w2b(4)+k) &
-                                               - flux_x_broken(smap_x(3,2,4)+k))
+                flux_y(map_w2(4)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(4)+k) &
+                                                - flux_x_broken(smap_x(3,2,4)+k))
               end do
             case(6)
               do k = 0, nlayers-1
-                flux_y(map_w2(2)+k) = 0.5_r_def*(flux_y_broken(map_w2b(2)+k) &
-                                               + flux_y_broken(smap_y(4,2,2)+k))
+                flux_y(map_w2(2)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(2)+k) &
+                                                + flux_y_broken(smap_y(4,2,2)+k))
               end do
           end select
         end do
@@ -246,23 +246,23 @@ contains
           select case(halo)
             case(2)
               do k = 0, nlayers-1
-                flux_y(map_w2(4)+k) = 0.5_r_def*(flux_y_broken(map_w2b(4)+k) &
-                                               - flux_x_broken(smap_x(3,2,4)+k))
+                flux_y(map_w2(4)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(4)+k) &
+                                                - flux_x_broken(smap_x(3,2,4)+k))
               end do
             case(4)
               do k = 0, nlayers-1
-                flux_y(map_w2(2)+k) = 0.5_r_def*(flux_y_broken(map_w2b(2)+k) &
-                                               + flux_y_broken(smap_y(4,2,2)+k))
+                flux_y(map_w2(2)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(2)+k) &
+                                                + flux_y_broken(smap_y(4,2,2)+k))
               end do
             case(5)
               do k = 0, nlayers-1
-                flux_x(map_w2(3)+k) = 0.5_r_def*(flux_x_broken(map_w2b(3)+k) &
-                                               - flux_y_broken(smap_y(4,2,3)+k))
+                flux_x(map_w2(3)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(3)+k) &
+                                                - flux_y_broken(smap_y(4,2,3)+k))
               end do
             case(6)
               do k = 0, nlayers-1
-                flux_x(map_w2(1)+k) = 0.5_r_def*(flux_x_broken(map_w2b(1)+k) &
-                                               + flux_x_broken(smap_x(3,2,1)+k))
+                flux_x(map_w2(1)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(1)+k) &
+                                                + flux_x_broken(smap_x(3,2,1)+k))
               end do
           end select
         end do
@@ -273,23 +273,23 @@ contains
           select case(halo)
             case(1)
               do k = 0, nlayers-1
-                flux_y(map_w2(2)+k) = 0.5_r_def*(flux_y_broken(map_w2b(2)+k) &
-                                               - flux_x_broken(smap_x(1,2,2)+k))
+                flux_y(map_w2(2)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(2)+k) &
+                                                - flux_x_broken(smap_x(1,2,2)+k))
               end do
             case(3)
               do k = 0, nlayers-1
-                flux_y(map_w2(4)+k) = 0.5_r_def*(flux_y_broken(map_w2b(4)+k) &
-                                               + flux_y_broken(smap_y(2,2,4)+k))
+                flux_y(map_w2(4)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(4)+k) &
+                                                + flux_y_broken(smap_y(2,2,4)+k))
               end do
             case(5)
               do k = 0, nlayers-1
-                flux_x(map_w2(3)+k) = 0.5_r_def*(flux_x_broken(map_w2b(3)+k) &
-                                               + flux_x_broken(smap_x(1,2,3)+k))
+                flux_x(map_w2(3)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(3)+k) &
+                                                + flux_x_broken(smap_x(1,2,3)+k))
               end do
             case(6)
               do k = 0, nlayers-1
-                flux_x(map_w2(1)+k) = 0.5_r_def*(flux_x_broken(map_w2b(1)+k) &
-                                               - flux_y_broken(smap_y(2,2,1)+k))
+                flux_x(map_w2(1)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(1)+k) &
+                                                - flux_y_broken(smap_y(2,2,1)+k))
               end do
           end select
         end do
@@ -300,23 +300,23 @@ contains
           select case(halo)
             case(1)
               do k = 0, nlayers-1
-                flux_y(map_w2(2)+k) = 0.5_r_def*(flux_y_broken(map_w2b(2)+k) &
-                                               + flux_y_broken(smap_y(4,2,2)+k))
+                flux_y(map_w2(2)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(2)+k) &
+                                                + flux_y_broken(smap_y(4,2,2)+k))
               end do
             case(2)
               do k = 0, nlayers-1
-                flux_x(map_w2(3)+k) = 0.5_r_def*(flux_x_broken(map_w2b(3)+k) &
-                                               - flux_y_broken(smap_y(4,2,3)+k))
+                flux_x(map_w2(3)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(3)+k) &
+                                                - flux_y_broken(smap_y(4,2,3)+k))
               end do
             case(3)
               do k = 0, nlayers-1
-                flux_y(map_w2(4)+k) = 0.5_r_def*(flux_y_broken(map_w2b(4)+k) &
-                                               - flux_x_broken(smap_x(3,2,4)+k))
+                flux_y(map_w2(4)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(4)+k) &
+                                                - flux_x_broken(smap_x(3,2,4)+k))
               end do
             case(4)
               do k = 0, nlayers-1
-                flux_x(map_w2(1)+k) = 0.5_r_def*(flux_x_broken(map_w2b(1)+k) &
-                                               + flux_x_broken(smap_x(3,2,1)+k))
+                flux_x(map_w2(1)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(1)+k) &
+                                                + flux_x_broken(smap_x(3,2,1)+k))
               end do
           end select
         end do
@@ -327,23 +327,23 @@ contains
           select case(halo)
             case(1)
               do k = 0, nlayers-1
-                flux_x(map_w2(1)+k) = 0.5_r_def*(flux_x_broken(map_w2b(1)+k) &
-                                               - flux_y_broken(smap_y(2,2,1)+k))
+                flux_x(map_w2(1)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(1)+k) &
+                                                - flux_y_broken(smap_y(2,2,1)+k))
               end do
             case(2)
               do k = 0, nlayers-1
-                flux_y(map_w2(4)+k) = 0.5_r_def*(flux_y_broken(map_w2b(4)+k) &
-                                               + flux_y_broken(smap_y(2,2,4)+k))
+                flux_y(map_w2(4)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(4)+k) &
+                                                + flux_y_broken(smap_y(2,2,4)+k))
               end do
             case(3)
               do k = 0, nlayers-1
-                flux_x(map_w2(3)+k) = 0.5_r_def*(flux_x_broken(map_w2b(3)+k) &
-                                               + flux_x_broken(smap_x(1,2,3)+k))
+                flux_x(map_w2(3)+k) = 0.5_r_tran*(flux_x_broken(map_w2b(3)+k) &
+                                                + flux_x_broken(smap_x(1,2,3)+k))
               end do
             case(4)
               do k = 0, nlayers-1
-                flux_y(map_w2(2)+k) = 0.5_r_def*(flux_y_broken(map_w2b(2)+k) &
-                                               - flux_x_broken(smap_x(1,2,2)+k))
+                flux_y(map_w2(2)+k) = 0.5_r_tran*(flux_y_broken(map_w2b(2)+k) &
+                                                - flux_x_broken(smap_x(1,2,2)+k))
               end do
           end select
         end do
