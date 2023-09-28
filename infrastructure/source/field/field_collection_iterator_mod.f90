@@ -107,13 +107,6 @@ subroutine initialise_iter(self, collection)
   nullify(self%current)
   self%current => self%collection%get_next_item(self%current)
 
-  if(.not.associated(self%current))then
-    write(log_scratch_space, '(2A)') &
-       'Cannot create an iterator on an empty field collection: ', &
-        trim(self%collection%get_name())
-    call log_event( log_scratch_space, LOG_LEVEL_ERROR)
-  end if
-
 end subroutine initialise_iter
 
 !> Initialise an iterator over the real fields in a field collection
@@ -132,14 +125,11 @@ subroutine initialise_real_iter(self, collection)
   nullify(self%current)
   self%current => self%collection%get_next_item(self%current)
 
-  do
-    if(.not.associated(self%current))then
-      write(log_scratch_space, '(2A)') &
-         'Cannot create a r_def real field iterator on field collection: ', &
-          trim(self%collection%get_name())
-      call log_event( log_scratch_space, LOG_LEVEL_ERROR)
-    end if
+  ! Empty lists are valid
+  !
+  if (.not. associated(self%current)) return
 
+  do
     ! Make sure first field pointed to in list is a real field
     select type(listfield => self%current%payload)
       type is (field_type)
@@ -169,14 +159,11 @@ subroutine initialise_integer_iter(self, collection)
   nullify(self%current)
   self%current => self%collection%get_next_item(self%current)
 
-  do
-    if(.not.associated(self%current))then
-      write(log_scratch_space, '(2A)') &
-         'Cannot create an integer field iterator on field collection: ', &
-          trim(self%collection%get_name())
-      call log_event( log_scratch_space, LOG_LEVEL_ERROR)
-    end if
+  ! Empty lists are valid
+  !
+  if (.not. associated(self%current)) return
 
+  do
     ! Make sure first field pointed to in list is an integer field
     select type(listfield => self%current%payload)
       type is (integer_field_type)
@@ -199,6 +186,13 @@ function next(self) result (field)
 
   class(field_collection_iterator_type), intent(inout), target :: self
   class(field_parent_type), pointer :: field
+
+  ! Empty lists are valid
+  !
+  if (.not. associated(self%current)) then
+    field => null()
+    return
+  end if
 
   ! Extract a pointer to the current field in the collection
   select type(listfield => self%current%payload)
@@ -228,6 +222,13 @@ function next_real(self) result (field)
 
   class(field_collection_real_iterator_type), intent(inout), target :: self
   type(field_type), pointer :: field
+
+  ! Empty lists are valid
+  !
+  if (.not. associated(self%current)) then
+    field => null()
+    return
+  end if
 
   ! Extract a pointer to the current field in the collection
   select type(listfield => self%current%payload)
@@ -263,6 +264,13 @@ function next_integer(self) result (field)
 
   class(field_collection_integer_iterator_type), intent(inout), target :: self
   type(integer_field_type), pointer :: field
+
+  ! Empty lists are valid
+  !
+  if (.not. associated(self%current)) then
+    field => null()
+    return
+  end if
 
   ! Extract a pointer to the current field in the collection
   select type(listfield => self%current%payload)

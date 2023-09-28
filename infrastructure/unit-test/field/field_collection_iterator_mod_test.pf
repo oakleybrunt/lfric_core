@@ -35,7 +35,10 @@ module field_collection_iterator_mod_test
   implicit none
 
   private
-  public :: test_all
+  public :: test_all, &
+            test_zero_length_iteration, &
+            test_zero_length_real_iteration, &
+            test_zero_length_integer_iteration
 
   @TestCase
   type, extends(MPITestCase), public :: field_collection_iterator_test_type
@@ -44,6 +47,7 @@ module field_collection_iterator_mod_test
     type(function_space_type), pointer :: w2_fs => null()
     type(function_space_type), pointer :: w3_fs => null()
     type(local_mesh_type)              :: unit_test_local_mesh
+    type(field_collection_type)        :: collection
   contains
     procedure setUp
     procedure tearDown
@@ -104,6 +108,9 @@ contains
                                                     W3 )
     nullify( mesh )
 
+    call this%collection%initialise( name="field_collection", &
+                                     table_len=5 )
+
   end subroutine setUp
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -153,8 +160,6 @@ contains
     type(field_proxy_type)              :: returned_field1_p
     type(integer_field_proxy_type)      :: returned_field2_p
 
-    type(field_collection_type)         :: test_field_collectionA
-
     type(field_collection_iterator_type)           :: iter
     type(field_collection_real_iterator_type)      :: iter_real
     type(field_collection_integer_iterator_type)   :: iter_integer
@@ -177,11 +182,10 @@ contains
     test_field2_p%data(1) = 33_i_def
 
     !----------------- Create field collection 'A' & test extracts -------------------!
-    ! Create a field_collection_A and put test_field1 and test_field2 in it
-    call test_field_collectionA%initialise(name="test_field_collectionA5", &
-                                           table_len=5)
-    call test_field_collectionA%add_field(test_field1)  ! a real field
-    call test_field_collectionA%add_field(test_field2)  ! an integer field
+    ! Put test_field1 and test_field2 in to a collection.
+    !
+    call this%collection%add_field(test_field1)  ! a real field
+    call this%collection%add_field(test_field2)  ! an integer field
 
     !----------------------Iterating over the 'A' Collection --------------------------!
 
@@ -191,7 +195,7 @@ contains
     ! 1. The real field with a first data item of 99.0
     ! 2. The integer field with 33 as the first data item
     !    - so check for that:
-    call iter%initialise(test_field_collectionA)
+    call iter%initialise(this%collection)
     do i=1,10
       if(.not.iter%has_next())exit
       fld=>iter%next()
@@ -215,7 +219,7 @@ contains
     ! ------- real ---------
     ! Check the real field iterator sees just the real field:
 
-    call iter_real%initialise(test_field_collectionA)
+    call iter_real%initialise(this%collection)
     do i=1,10
       if(.not.iter_real%has_next())exit
       returned_field1=>iter_real%next()
@@ -228,7 +232,7 @@ contains
 
     ! ------- integer ---------
     ! Check the integer field iterator sees just the integer field:
-    call iter_integer%initialise(test_field_collectionA)
+    call iter_integer%initialise(this%collection)
     do i=1,10
       if(.not.iter_integer%has_next())exit
       returned_field2=>iter_integer%next()
@@ -240,5 +244,65 @@ contains
     @assertEqual(2, i)
 
   end subroutine test_all
+
+
+  @test( npes=1 )
+  subroutine test_zero_length_iteration( this )
+
+    implicit none
+
+    class(field_collection_iterator_test_type), intent(inout) :: this
+
+    class(field_parent_type), pointer :: field => null()
+
+    type(field_collection_iterator_type) :: test_unit
+
+    call test_unit%initialise(this%collection)
+    @assertFalse( test_unit%has_next(), message="Empty list iterator didn't signal completion." )
+
+    field=>test_unit%next()
+    @assertFalse( associated(field), message="Empty list iterator didn't return null field." )
+
+  end subroutine test_zero_length_iteration
+
+
+  @test( npes=1 )
+  subroutine test_zero_length_real_iteration( this )
+
+    implicit none
+
+    class(field_collection_iterator_test_type), intent(inout) :: this
+
+    class(field_parent_type), pointer :: field => null()
+
+    type(field_collection_real_iterator_type) :: test_unit
+
+    call test_unit%initialise(this%collection)
+    @assertFalse( test_unit%has_next(), message="Empty list real iterator didn't signal completion." )
+
+    field=>test_unit%next()
+    @assertFalse( associated(field), message="Empty list real iterator didn't return null field." )
+
+  end subroutine test_zero_length_real_iteration
+
+
+  @test( npes=1 )
+  subroutine test_zero_length_integer_iteration( this )
+
+    implicit none
+
+    class(field_collection_iterator_test_type), intent(inout) :: this
+
+    class(field_parent_type), pointer :: field => null()
+
+    type(field_collection_integer_iterator_type) :: test_unit
+
+    call test_unit%initialise(this%collection)
+    @assertFalse( test_unit%has_next(), message="Empty list integer iterator didn't signal completion." )
+
+    field=>test_unit%next()
+    @assertFalse( associated(field), message="Empty list integer iterator didn't return null field." )
+
+  end subroutine test_zero_length_integer_iteration
 
 end module field_collection_iterator_mod_test
