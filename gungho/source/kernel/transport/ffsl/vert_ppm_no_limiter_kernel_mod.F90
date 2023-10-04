@@ -27,8 +27,6 @@ use argument_mod,       only : arg_type,              &
 use fs_continuity_mod,  only : W3
 use constants_mod,      only : r_tran, i_def, l_def, EPS_R_TRAN
 use kernel_mod,         only : kernel_type
-use transport_enumerated_types_mod, &
-                        only : vertical_monotone_none
 
 implicit none
 
@@ -106,14 +104,11 @@ subroutine vert_ppm_no_limiter_code( nlayers,   &
   real(kind=r_tran)   :: rho_1d(0:nlayers-1)
   real(kind=r_tran)   :: dz_local(1:4)
   real(kind=r_tran)   :: edge_below(0:nlayers)
-  integer(kind=i_def) :: k, ii, edge_to_do, monotone
+  integer(kind=i_def) :: k, ii, edge_to_do
 
   ! Compute each edge separately, then use edge values to calculate subgrid coefficients
   ! rho_local and dz_local have index: | 1 | 2 | 3 | 4 | for second_order_edges_with_height
   ! edge_to_do specifies which edge:   0   1   2   3   4
-
-  ! Set monotone = vertical_monotone_none as this is the unlimited kernel
-  monotone = vertical_monotone_none
 
   ! If using log_space then convert rho to log space
   if (log_space) then
@@ -167,7 +162,7 @@ subroutine vert_ppm_no_limiter_code( nlayers,   &
 
   ! Compute the PPM coefficients using the edge values
   do k = 0,nlayers-1
-    call ppm_output( edge_below(k), edge_below(k+1), rho(map_w3(1)+k), monotone, coeffs )
+    call ppm_output( edge_below(k), edge_below(k+1), rho(map_w3(1)+k), coeffs )
     a0(map_w3(1)+k) = coeffs(1)
     a1(map_w3(1)+k) = coeffs(2)
     a2(map_w3(1)+k) = coeffs(3)

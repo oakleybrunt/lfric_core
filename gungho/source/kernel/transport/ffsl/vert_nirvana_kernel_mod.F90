@@ -80,8 +80,12 @@ subroutine vert_nirvana_code( nlayers,   &
                               undf_w3,   &
                               map_w3 )
 
-  use subgrid_rho_mod, only : second_order_vertical_gradient, &
-                              vertical_nirvana_coeffs
+  use subgrid_rho_mod,                only: second_order_vertical_gradient, &
+                                            vertical_nirvana_coeffs,        &
+                                            vertical_nirvana_strict,        &
+                                            vertical_nirvana_relaxed
+  use transport_enumerated_types_mod, only: vertical_monotone_strict, &
+                                            vertical_monotone_relaxed
 
   implicit none
 
@@ -124,20 +128,47 @@ subroutine vert_nirvana_code( nlayers,   &
     call second_order_vertical_gradient(rho_local, dz_local, gradient_below(k))
   end do
 
-  ! Compute the Nirvana coefficients using the edge gradients
-  do k = 0,nlayers-1
-    ! 3 point rho stencil is needed for monotonicity
-    kminus = max( k-1, 0_i_def )
-    kplus  = min( k+1, nlayers-1_i_def )
-    rho_for_coeffs(1) = rho(map_w3(1)+kminus)
-    rho_for_coeffs(2) = rho(map_w3(1)+k)
-    rho_for_coeffs(3) = rho(map_w3(1)+kplus)
-    ! Calculate coefficients
-    call vertical_nirvana_coeffs(coeffs,rho_for_coeffs,dz(map_w3(1)+k),gradient_below(k),gradient_below(k+1),monotone)
-    a0(map_w3(1)+k) = coeffs(1)
-    a1(map_w3(1)+k) = coeffs(2)
-    a2(map_w3(1)+k) = coeffs(3)
-  end do
+  ! Compute the Nirvana coefficients using the edge gradients and apply monotonicity if needed
+  if (monotone == vertical_monotone_strict) then
+    ! Use strict monotonicity
+    do k = 0,nlayers-1
+      ! 3 point rho stencil is needed for monotonicity
+      kminus = max( k-1, 0_i_def )
+      kplus  = min( k+1, nlayers-1_i_def )
+      rho_for_coeffs(1) = rho(map_w3(1)+kminus)
+      rho_for_coeffs(2) = rho(map_w3(1)+k)
+      rho_for_coeffs(3) = rho(map_w3(1)+kplus)
+      ! Calculate coefficients
+      call vertical_nirvana_strict(coeffs,rho_for_coeffs,dz(map_w3(1)+k),gradient_below(k),gradient_below(k+1))
+      a0(map_w3(1)+k) = coeffs(1)
+      a1(map_w3(1)+k) = coeffs(2)
+      a2(map_w3(1)+k) = coeffs(3)
+    end do
+  elseif (monotone == vertical_monotone_relaxed) then
+    ! Use relaxed monotonicity
+    do k = 0,nlayers-1
+      ! 3 point rho stencil is needed for monotonicity
+      kminus = max( k-1, 0_i_def )
+      kplus  = min( k+1, nlayers-1_i_def )
+      rho_for_coeffs(1) = rho(map_w3(1)+kminus)
+      rho_for_coeffs(2) = rho(map_w3(1)+k)
+      rho_for_coeffs(3) = rho(map_w3(1)+kplus)
+      ! Calculate coefficients
+      call vertical_nirvana_relaxed(coeffs,rho_for_coeffs,dz(map_w3(1)+k),gradient_below(k),gradient_below(k+1))
+      a0(map_w3(1)+k) = coeffs(1)
+      a1(map_w3(1)+k) = coeffs(2)
+      a2(map_w3(1)+k) = coeffs(3)
+    end do
+  else
+    ! Unlimited
+    do k = 0,nlayers-1
+      ! Calculate coefficients
+      call vertical_nirvana_coeffs(coeffs,rho(map_w3(1)+k),dz(map_w3(1)+k),gradient_below(k),gradient_below(k+1))
+      a0(map_w3(1)+k) = coeffs(1)
+      a1(map_w3(1)+k) = coeffs(2)
+      a2(map_w3(1)+k) = coeffs(3)
+    end do
+  end if
 
 end subroutine vert_nirvana_code
 

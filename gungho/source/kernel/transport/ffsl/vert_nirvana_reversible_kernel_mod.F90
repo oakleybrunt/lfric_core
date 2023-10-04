@@ -85,8 +85,12 @@ subroutine vert_nirvana_reversible_code( nlayers,   &
                                          undf_w3,   &
                                          map_w3 )
 
-  use subgrid_rho_mod, only : second_order_vertical_edge, &
-                              ppm_output
+  use subgrid_rho_mod,                only: second_order_vertical_edge, &
+                                            ppm_output_strict,          &
+                                            ppm_output_relaxed,         &
+                                            ppm_output
+  use transport_enumerated_types_mod, only: vertical_monotone_strict, &
+                                            vertical_monotone_relaxed
 
   implicit none
 
@@ -159,13 +163,32 @@ subroutine vert_nirvana_reversible_code( nlayers,   &
   end if
 
   ! Compute the PPM coefficients using the second-order edge values to get
-  ! reversible Nirvana
-  do k = 0,nlayers-1
-    call ppm_output( edge_below(k), edge_below(k+1), rho(map_w3(1)+k), monotone, coeffs )
-    a0(map_w3(1)+k) = coeffs(1)
-    a1(map_w3(1)+k) = coeffs(2)
-    a2(map_w3(1)+k) = coeffs(3)
-  end do
+  ! reversible Nirvana, applying monotonicity if needed
+  if (monotone == vertical_monotone_strict) then
+    ! Use strict monotonicity
+    do k = 0,nlayers-1
+      call ppm_output_strict( edge_below(k), edge_below(k+1), rho(map_w3(1)+k), coeffs )
+      a0(map_w3(1)+k) = coeffs(1)
+      a1(map_w3(1)+k) = coeffs(2)
+      a2(map_w3(1)+k) = coeffs(3)
+    end do
+  else if (monotone == vertical_monotone_relaxed) then
+    ! Use relaxed monotonicity
+    do k = 0,nlayers-1
+      call ppm_output_relaxed( edge_below(k), edge_below(k+1), rho(map_w3(1)+k), coeffs )
+      a0(map_w3(1)+k) = coeffs(1)
+      a1(map_w3(1)+k) = coeffs(2)
+      a2(map_w3(1)+k) = coeffs(3)
+    end do
+  else
+    ! Unlimited
+    do k = 0,nlayers-1
+      call ppm_output( edge_below(k), edge_below(k+1), rho(map_w3(1)+k), coeffs )
+      a0(map_w3(1)+k) = coeffs(1)
+      a1(map_w3(1)+k) = coeffs(2)
+      a2(map_w3(1)+k) = coeffs(3)
+    end do
+  end if
 
 end subroutine vert_nirvana_reversible_code
 

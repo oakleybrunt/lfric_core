@@ -28,8 +28,6 @@ use argument_mod,       only : arg_type,              &
 use fs_continuity_mod,  only : W3
 use constants_mod,      only : r_tran, i_def, l_def
 use kernel_mod,         only : kernel_type
-use transport_enumerated_types_mod, &
-                        only : vertical_monotone_relaxed
 
 implicit none
 
@@ -85,7 +83,7 @@ subroutine vert_ppm_limiter_code( nlayers,   &
                                   map_w3 )
 
   use subgrid_rho_mod, only : fourth_order_vertical_edge_relaxed, &
-                              ppm_output
+                              ppm_output_relaxed
 
   implicit none
 
@@ -107,13 +105,10 @@ subroutine vert_ppm_limiter_code( nlayers,   &
   real(kind=r_tran)   :: rho_1d(0:nlayers-1)
   real(kind=r_tran)   :: dz_local(1:4)
   real(kind=r_tran)   :: edge_below(0:nlayers)
-  integer(kind=i_def) :: k, ii, edge_to_do, monotone
+  integer(kind=i_def) :: k, ii, edge_to_do
 
   ! Compute each edge separately, then use edge values to calculate subgrid coefficients
   ! rho_local and dz_local have index: | 1 | 2 | 3 | 4 | for second_order_edges_with_height
-
-  ! Compute PPM coefficients using relaxed limiter
-  monotone = vertical_monotone_relaxed
 
   ! Get local rho array
   do k=0,nlayers-1
@@ -159,7 +154,7 @@ subroutine vert_ppm_limiter_code( nlayers,   &
 
   ! Compute the PPM coefficients using the edge values
   do k = 0,nlayers-1
-    call ppm_output( edge_below(k), edge_below(k+1), rho(map_w3(1)+k), monotone, coeffs )
+    call ppm_output_relaxed( edge_below(k), edge_below(k+1), rho(map_w3(1)+k), coeffs )
     a0(map_w3(1)+k) = coeffs(1)
     a1(map_w3(1)+k) = coeffs(2)
     a2(map_w3(1)+k) = coeffs(3)
