@@ -3,6 +3,10 @@
 ! For further details please refer to the file LICENCE
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
+!> @brief   Module containing um2lfric configuration TYPE
+!> @details Hold information on input and output files and fields to be
+!!          regridded, including proceedures to read this information from
+!!          the relevant namelist.
 MODULE um2lfric_namelist_mod
 
 ! Intrinsic modules
@@ -43,6 +47,9 @@ INTEGER(KIND=int64), PARAMETER :: max_stash_list = 999
 ! Input namelist configuration
 TYPE(config) :: um2lfric_config
 
+! Namelist filenames read from command line
+CHARACTER(LEN=fnamelen), PUBLIC :: um2lfric_nl_fname
+
 CHARACTER(*), PARAMETER :: required_lfric_namelists(6) =  &
     ['logging             ', &
      'finite_element      ', &
@@ -53,7 +60,7 @@ CHARACTER(*), PARAMETER :: required_lfric_namelists(6) =  &
 
 CONTAINS
 
-SUBROUTINE load_namelist(self, fname)
+SUBROUTINE load_namelist(self)
 
   ! lfricinp modules
   USE lfricinp_unit_handler_mod, ONLY: get_free_unit
@@ -65,8 +72,6 @@ SUBROUTINE load_namelist(self, fname)
 
   IMPLICIT NONE
   CLASS(config) :: self
-  CHARACTER(LEN=fnamelen) :: fname
-
 
   ! Local variables
   INTEGER :: i_stash
@@ -95,11 +100,11 @@ SUBROUTINE load_namelist(self, fname)
   stash_list(:) = um_imdi
 
   self%status = 0
-  self%message = 'Reading namelist from ' // TRIM(fname)
+  self%message = 'Reading namelist from ' // TRIM(um2lfric_nl_fname)
 
   CALL get_free_unit(self%unit_number)
 
-  OPEN(UNIT=self%unit_number, FILE=fname, IOSTAT=self%status,                  &
+  OPEN(UNIT=self%unit_number, FILE=um2lfric_nl_fname, IOSTAT=self%status,                  &
                               IOMSG=self%message)
   IF (self%status /= 0) CALL log_event(self%message, LOG_LEVEL_ERROR)
 
@@ -151,7 +156,7 @@ SUBROUTINE load_namelist(self, fname)
   self%stash_list(:) = stash_list(1:self%num_fields)
 
   self%status = 0
-  self%message = 'Successfully read namelist from ' // TRIM(fname)
+  self%message = 'Successfully read namelist from ' // TRIM(um2lfric_nl_fname)
 
   CLOSE(self%unit_number)
 

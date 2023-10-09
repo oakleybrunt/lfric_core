@@ -26,7 +26,7 @@ USE mesh_mod,       ONLY: mesh_type
 
 USE lfricinp_lfric_driver_mod,         ONLY: local_rank
 USE lfricinp_check_shumlib_status_mod, ONLY: shumlib
-USE lfricinp_initialise_um_mod,        ONLY: um_input_file
+USE um2lfric_read_um_file_mod,        ONLY: um_input_file
 USE lfricinp_ancils_mod,               ONLY: ancil_fields, l_land_area_fraction
 !
 ! shumlib modules

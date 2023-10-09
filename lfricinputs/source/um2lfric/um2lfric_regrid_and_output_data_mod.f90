@@ -112,7 +112,7 @@ USE constants_mod,      ONLY: i_def, r_second
 USE lfricinp_check_stat_ncdf_mod, ONLY: check_stat_ncdf
 
 ! Path to output file
-USE lfricinp_setup_io_mod, ONLY: checkpoint_write_file
+USE lfricinp_setup_io_mod, ONLY: io_config
 
   IMPLICIT NONE
 
@@ -128,7 +128,7 @@ USE lfricinp_setup_io_mod, ONLY: checkpoint_write_file
 
   IF (local_rank == 0) THEN
 
-    file_path = TRIM(ADJUSTL(checkpoint_write_file)) // '.nc'
+    file_path = TRIM(ADJUSTL(io_config%checkpoint_write_file)) // '.nc'
 
     WRITE(log_scratch_space,*) 'NetCDF file to be processed: ', file_path
     CALL log_event(log_scratch_space, LOG_LEVEL_INFO)

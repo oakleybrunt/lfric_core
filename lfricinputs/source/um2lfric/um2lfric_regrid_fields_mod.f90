@@ -61,7 +61,7 @@ USE lfricinp_regrid_options_mod, ONLY: regrid_type
 
 ! um2lfric modules
 USE um2lfric_namelist_mod,       ONLY: um2lfric_config
-USE lfricinp_initialise_um_mod,  ONLY: um_input_file
+USE um2lfric_read_um_file_mod,  ONLY: um_input_file
 USE um2lfric_regrid_weights_mod, ONLY: get_weights
 USE um2lfric_post_process_fields_mod, ONLY: um2lfric_post_process_fields
 USE um2lfric_apply_masked_field_adjustments_mod, ONLY:                         &

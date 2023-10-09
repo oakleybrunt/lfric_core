@@ -29,7 +29,7 @@ USE io_context_mod,             ONLY: callback_clock_arg
 USE lfric_xios_context_mod,     ONLY: lfric_xios_context_type, advance
 USE lfric_xios_driver_mod,      ONLY: lfric_xios_initialise, &
                                       lfric_xios_finalise
-USE lfricinp_setup_io_mod,      ONLY: init_lfricinp_files
+USE lfricinp_setup_io_mod,      ONLY: io_config
 USE linked_list_mod,            ONLY: linked_list_type
 USE mesh_mod,                   ONLY: mesh_type
 USE mesh_collection_mod,        ONLY: mesh_collection
@@ -49,6 +49,9 @@ IMPLICIT NONE
 PRIVATE
 PUBLIC :: lfricinp_initialise_lfric, lfricinp_finalise_lfric, lfric_fields,    &
           io_context
+
+! Input namelist configuration
+CHARACTER(LEN=fnamelen), PUBLIC :: lfric_nl_fname
 
 CHARACTER(len=fnamelen) :: xios_id
 ! xios_ctx names needs to match iodef.xml file
@@ -73,7 +76,6 @@ type(lfric_xios_context_type),  ALLOCATABLE :: io_context
 CONTAINS
 
 SUBROUTINE lfricinp_initialise_lfric(program_name_arg,                         &
-                                     lfric_nl_fname,                           &
                                      required_lfric_namelists,                 &
                                      start_date, time_origin,                  &
                                      first_step, last_step,                    &
@@ -85,7 +87,6 @@ SUBROUTINE lfricinp_initialise_lfric(program_name_arg,                         &
 IMPLICIT NONE
 
 CHARACTER(LEN=*),    INTENT(IN) :: program_name_arg
-CHARACTER(LEN=*),    INTENT(IN) :: lfric_nl_fname
 CHARACTER(LEN=*),    INTENT(IN) :: required_lfric_namelists(:)
 CHARACTER(LEN=*),    INTENT(IN) :: start_date, time_origin
 INTEGER(KIND=i_def), INTENT(IN) :: first_step, last_step
@@ -164,7 +165,7 @@ model_clock = model_clock_type( first_step, last_step, seconds_per_step, &
 
 allocate( io_context )
 file_list => io_context%get_filelist()
-CALL init_lfricinp_files(file_list)
+CALL io_config%init_lfricinp_files(file_list)
 CALL io_context%initialise( xios_ctx, comm, chi, panel_id, &
                             model_clock, model_calendar, before_close )
 call advance(io_context, model_clock)

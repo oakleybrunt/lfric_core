@@ -11,14 +11,12 @@ MODULE scintelapi_interface_mod
 
 USE log_mod,                   ONLY: log_event, log_scratch_space,             &
                                      LOG_LEVEL_INFO, LOG_LEVEL_ERROR
-USE scintelapi_namelist_mod,   ONLY: scintelapi_namelist_from_cl, lfric_nl,    &
-                                     scintelapi_nl, required_lfric_namelists,  &
-                                     io_nl
+USE scintelapi_namelist_mod,   ONLY: scintelapi_nl, required_lfric_namelists
 USE constants_def_mod,         ONLY: field_kind_name_len, field_name_len,      &
-                                     gen_id_len, genpar_len, field_dim_len,    &
+                                     gen_id_len, genpar_len,                   &
                                      field_id_list_max_size, empty_string, rmdi
-USE lfricinp_setup_io_mod,     ONLY: init_io_setup
-USE lfricinp_datetime_mod,     ONLY: datetime_type
+USE lfricinp_setup_io_mod,     ONLY: io_config
+USE lfricinp_datetime_mod,     ONLY: datetime
 
 IMPLICIT NONE
 
@@ -34,25 +32,26 @@ SUBROUTINE scintelapi_initialise()
 USE field_list_mod,            ONLY: init_field_list
 USE generator_library_mod,     ONLY: init_generator_lib
 USE dependency_graph_list_mod, ONLY: init_dependency_graph_list
-USE lfricinp_lfric_driver_mod, ONLY: lfricinp_initialise_lfric, model_clock
+USE lfricinp_lfric_driver_mod, ONLY: lfricinp_initialise_lfric, model_clock,   &
+                                     lfric_nl_fname
+USE lfricinp_setup_io_mod,     ONLY: io_fname
+USE lfricinp_read_command_line_args_mod, ONLY: lfricinp_read_command_line_args
 
 IMPLICIT NONE
 
-TYPE(datetime_type)                 :: datetime
 LOGICAL                             :: l_advance
 
 ! Read namelist file names from command line
-CALL scintelapi_namelist_from_cl()
+CALL lfricinp_read_command_line_args(scintelapi_nl, lfric_nl_fname, io_fname)
 
 ! Set up IO file configuration
-CALL init_io_setup(io_nl)
+CALL io_config%load_namelist()
 
 ! Load date and time information
 CALL datetime % initialise()
 
 ! Initialise LFRic infrastructure
 CALL lfricinp_initialise_lfric(program_name_arg="scintelapi",                  &
-     lfric_nl_fname=lfric_nl,                                                  &
      required_lfric_namelists = required_lfric_namelists,                      &
      start_date = datetime % first_validity_time,                              &
      time_origin = datetime % first_validity_time,                             &

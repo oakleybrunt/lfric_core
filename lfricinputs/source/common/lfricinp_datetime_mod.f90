@@ -3,6 +3,12 @@
 ! For further details please refer to the file LICENCE
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
+
+!> @brief     Module containing datetime TYPE
+!> @details   Holds details of dates and times required by input and output
+!!            files
+!>
+
 MODULE lfricinp_datetime_mod
 
 ! Intrinsic modules
@@ -12,7 +18,7 @@ USE constants_mod, ONLY: i_def, r_second
 
 IMPLICIT NONE
 PRIVATE
-PUBLIC :: datetime_type
+PUBLIC :: datetime, datetime_type
 
 TYPE :: datetime_type
 
@@ -34,6 +40,8 @@ CONTAINS
 
 END TYPE datetime_type
 
+TYPE(datetime_type) :: datetime
+
 CONTAINS
 
 SUBROUTINE initialise(self)
@@ -47,6 +55,7 @@ self % validity_times(:) = 'XXXX-XX-XX XX:XX:XX'
 
 self % num_times = 1
 self % fctimes(1) = 0.0
+
 self % first_fctime = 0.0
 self % validity_times(1) = '2016-01-01 15:00:00'
 self % first_validity_time = '2016-01-01 15:00:00'

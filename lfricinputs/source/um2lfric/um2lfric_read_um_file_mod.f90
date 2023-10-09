@@ -5,7 +5,7 @@
 ! *****************************COPYRIGHT*******************************
 ! This module has an underlying dependency on LFRic's logging module
 
-MODULE lfricinp_initialise_um_mod
+MODULE um2lfric_read_um_file_mod
 
 ! Intrinsic modules
 USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_BOOL
@@ -26,7 +26,7 @@ IMPLICIT NONE
 
 PRIVATE
 
-PUBLIC :: lfricinp_initialise_um, lfricinp_finalise_um, um_input_file
+PUBLIC :: um2lfric_read_um_file, um2lfric_close_um_file, um_input_file
 
 TYPE(shum_file_type), SAVE :: um_input_file
 
@@ -41,12 +41,12 @@ CONTAINS
 
 !-------------------------------------------------------------------------------
 
-SUBROUTINE lfricinp_initialise_um(fname)
+SUBROUTINE um2lfric_read_um_file(fname)
 
   IMPLICIT NONE
 
   CHARACTER(LEN=fnamelen), INTENT(IN) :: fname
-  CHARACTER(LEN=*), PARAMETER :: routinename='lfricinp_initialise_um'
+  CHARACTER(LEN=*), PARAMETER :: routinename='um2lfric_read_um_file'
 
   ! Load the UM file
   CALL log_event('Loading file '//TRIM(fname), LOG_LEVEL_INFO)
@@ -56,15 +56,15 @@ SUBROUTINE lfricinp_initialise_um(fname)
   CALL shumlib(routinename//'::open_file', um_input_file%read_header(),  &
                 print_on_success=.TRUE._C_BOOL)
 
-END SUBROUTINE lfricinp_initialise_um
+END SUBROUTINE um2lfric_read_um_file
 
-SUBROUTINE lfricinp_finalise_um()
+SUBROUTINE um2lfric_close_um_file()
   IMPLICIT NONE
-  CHARACTER(LEN=*), PARAMETER :: routinename='lfricinp_finalise_um'
+  CHARACTER(LEN=*), PARAMETER :: routinename='um2lfric_close_um_file'
 
   ! Close file
   CALL shumlib(routinename//'::close_file', um_input_file%close_file() )
 
-END SUBROUTINE lfricinp_finalise_um
+END SUBROUTINE um2lfric_close_um_file
 
-END MODULE lfricinp_initialise_um_mod
+END MODULE um2lfric_read_um_file_mod

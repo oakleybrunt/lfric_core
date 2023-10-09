@@ -3,6 +3,10 @@
 ! For further details please refer to the file LICENCE
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
+!> @brief   Module containing lfric2um configuration TYPE
+!> @details Hold information on input and output files and fields to be
+!!          regridded, including proceedures to read this information from
+!!          the relevant namelist.
 MODULE lfric2um_namelists_mod
 
 ! Intrinsic modules
@@ -42,9 +46,7 @@ END TYPE config
 TYPE(config) :: lfric2um_config
 
 ! Namelist filenames read from command line
-CHARACTER(LEN=fnamelen), PUBLIC :: lfric_nl_fname
 CHARACTER(LEN=fnamelen), PUBLIC :: lfric2um_nl_fname
-CHARACTER(LEN=fnamelen), PUBLIC :: io_nl_fname
 
 INTEGER(KIND=int64), PARAMETER :: max_stash_list = 999
 
@@ -57,7 +59,7 @@ CHARACTER(*), PARAMETER  :: required_lfric_namelists(6) = ['logging         ', &
 
 CONTAINS
 
-SUBROUTINE load_namelists(self, fname)
+SUBROUTINE load_namelists(self)
 
 ! Descriptions:
 !  Reads in lfric2um namelists. Performs checking on namelist values.
@@ -79,7 +81,6 @@ USE lfricinp_um_grid_mod, ONLY: um_grid
 
 IMPLICIT NONE
 CLASS(config) :: self
-CHARACTER(LEN=fnamelen), INTENT(IN) :: fname
 
 
 ! Local variables
@@ -111,11 +112,11 @@ NAMELIST /configure_lfric2um/ output_filename,                                 &
 stash_list(:) = um_imdi
 
 self%status = 0
-self%message = 'Reading namelist from ' // TRIM(fname)
+self%message = 'Reading namelist from ' // TRIM(lfric2um_nl_fname)
 
 CALL get_free_unit(self%unit_number)
 
-OPEN(UNIT=self%unit_number, FILE=fname, IOSTAT=self%status,                    &
+OPEN(UNIT=self%unit_number, FILE=lfric2um_nl_fname, IOSTAT=self%status,                    &
                             IOMSG=self%message)
 IF (self%status /= 0) CALL log_event(self%message, LOG_LEVEL_ERROR)
 
@@ -223,7 +224,7 @@ CALL um_grid%set_grid_coords(                                                  &
 CALL um_grid%print_grid_coords()
 
 self%status = 0
-self%message = 'Successfully read namelists from ' // TRIM(fname)
+self%message = 'Successfully read namelists from ' // TRIM(lfric2um_nl_fname)
 CALL log_event(self%message, LOG_LEVEL_INFO)
 CLOSE(self%unit_number)
 

@@ -13,13 +13,13 @@ USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_BOOL
 USE constants_mod, ONLY: i_def
 
 ! LFRic Inputs modules
-USE lfricinp_datetime_mod, ONLY: datetime_type
+USE lfricinp_datetime_mod, ONLY: datetime
 
 IMPLICIT NONE
 
 CONTAINS
 
-SUBROUTINE lfricinp_read_um_time_data(datetime, um_file, stash_list)
+SUBROUTINE lfricinp_read_um_time_data(um_file, stash_list)
 !
 ! This routine reads, for a list of stash codes, the forecast and validity times
 ! associated with those stash codes from a UM dump/fieldsfile and forms a list
@@ -38,7 +38,6 @@ USE lfricinp_check_shumlib_status_mod, ONLY: shumlib
 
 IMPLICIT NONE
 
-TYPE(datetime_type),     INTENT(IN OUT) :: datetime
 TYPE(shum_file_type),    INTENT(IN OUT) :: um_file
 INTEGER(KIND=int64),     INTENT(IN)     :: stash_list(:)
 
