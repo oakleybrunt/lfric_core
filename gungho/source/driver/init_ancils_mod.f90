@@ -16,7 +16,7 @@ module init_ancils_mod
   use field_mod,                      only : field_type
   use field_parent_mod,               only : read_interface, &
                                              write_interface
-  use io_config_mod,                  only : use_xios_io
+  use io_config_mod,                  only : use_xios_io, checkpoint_read
   use linked_list_mod,                only : linked_list_type
   use lfric_xios_read_mod,            only : read_field_face, &
                                              read_field_single_face
@@ -34,7 +34,9 @@ module init_ancils_mod
   use initialization_config_mod,      only : ancil_option,          &
                                              ancil_option_updating, &
                                              sst_source,            &
-                                             sst_source_start_dump
+                                             sst_source_start_dump, &
+                                             init_option,           &
+                                             init_option_fd_start_dump
   use aerosol_config_mod,             only : glomap_mode,               &
                                              glomap_mode_climatology,   &
                                              glomap_mode_dust_and_clim, &
@@ -148,11 +150,15 @@ contains
     ! subroutine.
 
     !=====  LAND ANCILS  =====
-    call setup_ancil_field("land_area_fraction", depository, ancil_fields, &
+    if (init_option == init_option_fd_start_dump .and. &
+         .not. checkpoint_read) then
+      call setup_ancil_field("land_area_fraction", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
-    call setup_ancil_field("land_tile_fraction", depository, ancil_fields, &
+      call setup_ancil_field("land_tile_fraction", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.,          &
                               ndata=n_land_tile)
+    end if
+
     call pft_time_axis%initialise("plant_func_time",          &
                                   file_id="plant_func_ancil", &
                                   interp_flag=interp_flag, pop_freq="daily")
@@ -235,60 +241,63 @@ contains
     end if
 
     !=====  SOIL ANCILS  =====
-    call setup_ancil_field("soil_albedo", depository, ancil_fields, mesh, &
+    if (init_option == init_option_fd_start_dump .and. &
+         .not. checkpoint_read) then
+      call setup_ancil_field("soil_albedo", depository, ancil_fields, mesh, &
                               twod_mesh, twod=.true.)
-    if ( l_vary_z0m_soil ) then
-      call setup_ancil_field("soil_roughness", depository, ancil_fields, &
+      if ( l_vary_z0m_soil ) then
+        call setup_ancil_field("soil_roughness", depository, ancil_fields, &
                                 mesh, twod_mesh, twod=.true.)
-    endif
-    call setup_ancil_field("soil_thermal_cond", depository, ancil_fields, &
+      endif
+      call setup_ancil_field("soil_thermal_cond", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
-    call setup_ancil_field("soil_moist_wilt", depository, ancil_fields, &
+      call setup_ancil_field("soil_moist_wilt", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
-    call setup_ancil_field("soil_moist_crit", depository, ancil_fields, &
+      call setup_ancil_field("soil_moist_crit", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
-    call setup_ancil_field("soil_moist_sat", depository, ancil_fields, &
+      call setup_ancil_field("soil_moist_sat", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
-    call setup_ancil_field("soil_cond_sat", depository, ancil_fields, &
+      call setup_ancil_field("soil_cond_sat", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
-    call setup_ancil_field("soil_thermal_cap", depository, ancil_fields, &
+      call setup_ancil_field("soil_thermal_cap", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
-    call setup_ancil_field("soil_suction_sat", depository, ancil_fields, &
+      call setup_ancil_field("soil_suction_sat", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
-    call setup_ancil_field("clapp_horn_b", depository, ancil_fields, &
+      call setup_ancil_field("clapp_horn_b", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
-    call setup_ancil_field("mean_topog_index", depository, ancil_fields, &
+      call setup_ancil_field("mean_topog_index", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
-    call setup_ancil_field("stdev_topog_index", depository, ancil_fields, &
+      call setup_ancil_field("stdev_topog_index", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
 
     !=====  OROGRAPHY ANCILS  =====
-    call setup_ancil_field("sd_orog", depository, ancil_fields, mesh, &
+      call setup_ancil_field("sd_orog", depository, ancil_fields, mesh, &
                               twod_mesh, twod=.true.)
-    call setup_ancil_field("grad_xx_orog", depository, ancil_fields, mesh,&
+      call setup_ancil_field("grad_xx_orog", depository, ancil_fields, mesh,&
                               twod_mesh, twod=.true.)
-    call setup_ancil_field("grad_xy_orog", depository, ancil_fields, mesh,&
+      call setup_ancil_field("grad_xy_orog", depository, ancil_fields, mesh,&
                               twod_mesh, twod=.true.)
-    call setup_ancil_field("grad_yy_orog", depository, ancil_fields, mesh,&
+      call setup_ancil_field("grad_yy_orog", depository, ancil_fields, mesh,&
                               twod_mesh, twod=.true.)
-    call setup_ancil_field("peak_to_trough_orog", depository, ancil_fields,  &
+      call setup_ancil_field("peak_to_trough_orog", depository, ancil_fields,  &
                               mesh, twod_mesh, twod=.true.)
-    call setup_ancil_field("silhouette_area_orog", depository, ancil_fields, &
+      call setup_ancil_field("silhouette_area_orog", depository, ancil_fields, &
                               mesh, twod_mesh, twod=.true.)
-    if (topography == topography_slope .or. &
-        topography == topography_horizon) then
-      call setup_ancil_field("grad_x_orog", depository, ancil_fields, &
+      if (topography == topography_slope .or. &
+           topography == topography_horizon) then
+        call setup_ancil_field("grad_x_orog", depository, ancil_fields, &
                                 mesh, twod_mesh, twod=.true.)
-      call setup_ancil_field("grad_y_orog", depository, ancil_fields, &
+        call setup_ancil_field("grad_y_orog", depository, ancil_fields, &
                                 mesh, twod_mesh, twod=.true.)
-    end if
-    if (topography == topography_horizon) then
-      call setup_ancil_field("horizon_angle", depository, ancil_fields, &
+      end if
+      if (topography == topography_horizon) then
+        call setup_ancil_field("horizon_angle", depository, ancil_fields, &
                                 mesh, twod_mesh, twod=.true., &
                                 ndata=n_horiz_ang*n_horiz_layer)
-      call setup_ancil_field("horizon_aspect", depository, ancil_fields, &
+        call setup_ancil_field("horizon_aspect", depository, ancil_fields, &
                                 mesh, twod_mesh, twod=.true., &
                                 ndata=n_horiz_ang)
+      end if
     end if
 
     !=====  OZONE ANCIL  =====
@@ -366,8 +375,10 @@ contains
     end if
 
     !=====  EMISSION ANCILS (dust only) =====
-    if ( ( glomap_mode == glomap_mode_dust_and_clim ) .or. &
-         ( glomap_mode == glomap_mode_ukca ) ) then
+    if ( ( glomap_mode == glomap_mode_dust_and_clim .or. &
+           glomap_mode == glomap_mode_ukca ) .and. &
+           init_option == init_option_fd_start_dump .and. &
+           .not. checkpoint_read) then
 
       ! -- Single level ancils
       call setup_ancil_field( "soil_clay", depository, ancil_fields, &
@@ -504,8 +515,11 @@ contains
 
       ! -- 3-D ancils
       !-- natural SO2 emissions, currently single-time
-      call setup_ancil_field("emiss_so2_nat", depository, ancil_fields,     &
-                             mesh, twod_mesh)
+      if (init_option == init_option_fd_start_dump .and. &
+           .not. checkpoint_read) then
+        call setup_ancil_field("emiss_so2_nat", depository, ancil_fields,     &
+                               mesh, twod_mesh)
+      end if
 
       if (emissions == emissions_GC3) then
         call em_bc_bb_time_axis%initialise("em_bc_bb_time",                &

@@ -31,6 +31,8 @@ module field_maker_mod
   use lfric_xios_diag_mod,            only : field_is_enabled
   use io_config_mod,                  only : use_xios_io, &
                                              checkpoint_write, checkpoint_read
+  use initialization_config_mod,      only: init_option,               &
+                                            init_option_checkpoint_dump
 
 #ifdef UM_PHYSICS
   use multidata_field_dimensions_mod, only :                                   &
@@ -125,7 +127,7 @@ contains
           call log_event('checkpoint field not enabled for ' &
             // trim(spec%name), log_level_error)
       end if
-      if (checkpoint_read .and. &
+      if ((checkpoint_read .or. init_option == init_option_checkpoint_dump) .and. &
           .not. field_is_enabled('restart_' // trim(spec%name))) then
           call log_event('restart field not enabled for ' &
             // trim(spec%name), log_level_error)
@@ -180,6 +182,8 @@ contains
     use io_config_mod,           only : use_xios_io, &
                                         write_diag, checkpoint_write, &
                                         checkpoint_read
+    use initialization_config_mod, only: init_option,               &
+                                         init_option_checkpoint_dump
     use lfric_xios_read_mod,     only : read_field_face, &
                                         read_field_single_face
     use lfric_xios_write_mod,    only : write_field_face, &
@@ -244,7 +248,8 @@ contains
       end if
       if (write_diag .or. checkpoint_write) &
         call new_field%set_write_behaviour(write_behaviour)
-      if (checkpoint_read .and. checkpointed) &
+      if ((checkpoint_read .or. init_option == init_option_checkpoint_dump) &
+           .and. checkpointed) &
         call new_field%set_read_behaviour(read_behaviour)
     else
       checkpoint_write_behaviour => checkpoint_write_netcdf
@@ -291,6 +296,8 @@ contains
     use io_config_mod,           only : use_xios_io, &
                                         write_diag, checkpoint_write, &
                                         checkpoint_read
+    use initialization_config_mod, only: init_option,               &
+                                         init_option_checkpoint_dump
     use lfric_xios_read_mod,     only : read_field_face, &
                                         read_field_single_face
     use lfric_xios_write_mod,    only : write_field_face, &
@@ -355,7 +362,8 @@ contains
       end if
       if (write_diag .or. checkpoint_write) &
         call new_field%set_write_behaviour(write_behaviour)
-      if (checkpoint_read .and. checkpointed) &
+      if ((checkpoint_read .or. init_option == init_option_checkpoint_dump) &
+           .and. checkpointed) &
         call new_field%set_read_behaviour(read_behaviour)
     else
       checkpoint_write_behaviour => checkpoint_write_netcdf

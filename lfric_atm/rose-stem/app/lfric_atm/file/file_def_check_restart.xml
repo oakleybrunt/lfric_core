@@ -138,12 +138,12 @@
       <field id="checkpoint_pvol_du_acc_ins" name="pvol_du_acc_ins" long_name="partial_volume_of_dust_in_accumulation_insoluble_mode" unit="m3" grid_ref="full_level_face_grid" enabled=".FALSE." />
       <field id="checkpoint_pvol_du_cor_ins" name="pvol_du_cor_ins" long_name="partial_volume_of_dust_in_coarse_insoluble_mode" unit="m3" grid_ref="full_level_face_grid" enabled=".FALSE." />
       <!-- Easy Aerosol fields -->
-      <field id="checkpoint_easy_asymmetry_sw" name="easy_asymmetry_sw" long_name="asymmetry parameter of EasyAerosol" unit="1" grid_ref="full_level_face_grid_sw_bands" />
-      <field id="checkpoint_easy_asymmetry_lw" name="easy_asymmetry_lw" long_name="asymmetry parameter of EasyAerosol" unit="1" grid_ref="full_level_face_grid_lw_bands" />
-      <field id="checkpoint_easy_absorption_sw" name="easy_absorption_sw" long_name="absorption coefficient of EasyAerosol" unit="m-1" grid_ref="full_level_face_grid_sw_bands" />
-      <field id="checkpoint_easy_absorption_lw" name="easy_absorption_lw" long_name="absorption coefficient of EasyAerosol" unit="m-1" grid_ref="full_level_face_grid_lw_bands" />
-      <field id="checkpoint_easy_extinction_sw" name="easy_extinction_sw" long_name="extinction coefficient of EasyAerosol" unit="m-1" grid_ref="full_level_face_grid_sw_bands" />
-      <field id="checkpoint_easy_extinction_lw" name="easy_extinction_lw" long_name="extinction coefficient of EasyAerosol" unit="m-1" grid_ref="full_level_face_grid_lw_bands" />
+      <field id="checkpoint_easy_asymmetry_sw" name="easy_asymmetry_sw" long_name="asymmetry parameter of EasyAerosol" unit="1" grid_ref="full_level_face_grid_sw_bands" enabled=".FALSE." />
+      <field id="checkpoint_easy_asymmetry_lw" name="easy_asymmetry_lw" long_name="asymmetry parameter of EasyAerosol" unit="1" grid_ref="full_level_face_grid_lw_bands" enabled=".FALSE." />
+      <field id="checkpoint_easy_absorption_sw" name="easy_absorption_sw" long_name="absorption coefficient of EasyAerosol" unit="m-1" grid_ref="full_level_face_grid_sw_bands" enabled=".FALSE." />
+      <field id="checkpoint_easy_absorption_lw" name="easy_absorption_lw" long_name="absorption coefficient of EasyAerosol" unit="m-1" grid_ref="full_level_face_grid_lw_bands" enabled=".FALSE." />
+      <field id="checkpoint_easy_extinction_sw" name="easy_extinction_sw" long_name="extinction coefficient of EasyAerosol" unit="m-1" grid_ref="full_level_face_grid_sw_bands" enabled=".FALSE." />
+      <field id="checkpoint_easy_extinction_lw" name="easy_extinction_lw" long_name="extinction coefficient of EasyAerosol" unit="m-1" grid_ref="full_level_face_grid_lw_bands" enabled=".FALSE." />
       <!-- cloud fields -->
       <field id="checkpoint_area_fraction" name="area_fraction" long_name="area_fraction" unit="1" grid_ref="full_level_face_grid" enabled=".FALSE." />
       <field id="checkpoint_frozen_fraction" name="frozen_fraction" long_name="frozen_fraction" unit="1" grid_ref="full_level_face_grid" enabled=".FALSE." />
@@ -421,12 +421,12 @@
     <field id="restart_pvol_du_acc_ins" name="pvol_du_acc_ins" long_name="partial_volume_of_dust_in_accumulation_insoluble_mode" unit="m3" operation="once" grid_ref="full_level_face_grid" enabled=".FALSE." />
     <field id="restart_pvol_du_cor_ins" name="pvol_du_cor_ins" long_name="partial_volume_of_dust_in_coarse_insoluble_mode" unit="m3" operation="once" grid_ref="full_level_face_grid" enabled=".FALSE." />
     <!-- Easy Aerosol fields -->
-    <field id="restart_easy_asymmetry_sw" name="easy_asymmetry_sw" long_name="asymmetry parameter of EasyAerosol" unit="1" operation="once" grid_ref="full_level_face_grid_sw_bands" />
-    <field id="restart_easy_asymmetry_lw" name="easy_asymmetry_lw" long_name="asymmetry parameter of EasyAerosol" unit="1" operation="once" grid_ref="full_level_face_grid_lw_bands" />
-    <field id="restart_easy_absorption_sw" name="easy_absorption_sw" long_name="absorption coefficient of EasyAerosol" unit="m-1" operation="once" grid_ref="full_level_face_grid_sw_bands" />
-    <field id="restart_easy_absorption_lw" name="easy_absorption_lw" long_name="absorption coefficient of EasyAerosol" unit="m-1" operation="once" grid_ref="full_level_face_grid_lw_bands" />
-    <field id="restart_easy_extinction_sw" name="easy_extinction_sw" long_name="extinction coefficient of EasyAerosol" unit="m-1" operation="once" grid_ref="full_level_face_grid_sw_bands" />
-    <field id="restart_easy_extinction_lw" name="easy_extinction_lw" long_name="extinction coefficient of EasyAerosol" unit="m-1" operation="once" grid_ref="full_level_face_grid_lw_bands" />
+    <field id="restart_easy_asymmetry_sw" name="easy_asymmetry_sw" long_name="asymmetry parameter of EasyAerosol" unit="1" operation="once" grid_ref="full_level_face_grid_sw_bands" enabled=".FALSE." />
+    <field id="restart_easy_asymmetry_lw" name="easy_asymmetry_lw" long_name="asymmetry parameter of EasyAerosol" unit="1" operation="once" grid_ref="full_level_face_grid_lw_bands" enabled=".FALSE." />
+    <field id="restart_easy_absorption_sw" name="easy_absorption_sw" long_name="absorption coefficient of EasyAerosol" unit="m-1" operation="once" grid_ref="full_level_face_grid_sw_bands" enabled=".FALSE." />
+    <field id="restart_easy_absorption_lw" name="easy_absorption_lw" long_name="absorption coefficient of EasyAerosol" unit="m-1" operation="once" grid_ref="full_level_face_grid_lw_bands" enabled=".FALSE." />
+    <field id="restart_easy_extinction_sw" name="easy_extinction_sw" long_name="extinction coefficient of EasyAerosol" unit="m-1" operation="once" grid_ref="full_level_face_grid_sw_bands" enabled=".FALSE." />
+    <field id="restart_easy_extinction_lw" name="easy_extinction_lw" long_name="extinction coefficient of EasyAerosol" unit="m-1" operation="once" grid_ref="full_level_face_grid_lw_bands" enabled=".FALSE." />
     <!-- cloud fields -->
     <field id="restart_area_fraction" name="area_fraction" long_name="area_fraction" unit="1" operation="once" grid_ref="full_level_face_grid" enabled=".FALSE." />
     <field id="restart_frozen_fraction" name="frozen_fraction" long_name="frozen_fraction" unit="1" operation="once" grid_ref="full_level_face_grid" enabled=".FALSE." />

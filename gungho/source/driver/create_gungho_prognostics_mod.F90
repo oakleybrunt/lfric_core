@@ -41,6 +41,8 @@ module create_gungho_prognostics_mod
                                              write_diag,      &
                                              checkpoint_read, &
                                              checkpoint_write
+  use initialization_config_mod,      only: init_option,               &
+                                            init_option_checkpoint_dump
   use derived_config_mod,             only : l_esm_couple
   use transport_config_mod,           only : transport_ageofair
   implicit none
@@ -58,7 +60,8 @@ contains
     character(*), intent(in) :: field_name
     if (use_xios_io) then
       if (checkpoint_write) call enable_field('checkpoint_' // trim(field_name))
-      if (checkpoint_read) call enable_field('restart_' // trim(field_name))
+      if (checkpoint_read .or. init_option == init_option_checkpoint_dump) &
+           call enable_field('restart_' // trim(field_name))
     end if
   end subroutine enable_checkpointing
 
@@ -227,7 +230,8 @@ contains
 
     end if
 
-    if ( checkpoint_write .or. checkpoint_read) then
+    if ( checkpoint_write .or. checkpoint_read .or. &
+         init_option == init_option_checkpoint_dump ) then
 
       if ( use_xios_io ) then
 

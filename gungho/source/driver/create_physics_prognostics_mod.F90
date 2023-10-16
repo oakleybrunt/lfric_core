@@ -471,14 +471,6 @@ contains
     call processor%apply(make_spec('silhouette_area_orog', main%orography, W3,        &
         twod=.true., ckp=checkpoint_flag))
 
-    ! Mean X, Y Gradients for the orographic correction to radiation
-    checkpoint_flag = .false.
-    call processor%apply(make_spec('grad_x_orog', main%orography, W3, twod=.true.,    &
-        ckp=checkpoint_flag))
-    call processor%apply(make_spec('grad_y_orog', main%orography, W3, twod=.true.,    &
-        ckp=checkpoint_flag))
-
-
     !========================================================================
     ! Fields owned by the turbulence scheme
     !========================================================================

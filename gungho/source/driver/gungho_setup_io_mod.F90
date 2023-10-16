@@ -86,6 +86,7 @@ module gungho_setup_io_mod
                                        coarse_ancil_directory
   use initialization_config_mod, only: init_option,               &
                                        init_option_fd_start_dump, &
+                                       init_option_checkpoint_dump,&
                                        ancil_option,              &
                                        ancil_option_start_dump,   &
                                        ancil_option_fixed,        &
@@ -107,7 +108,8 @@ module gungho_setup_io_mod
                                        diag_active_files,         &
                                        diag_always_on_sampling
   use orography_config_mod,      only: orog_init_option,          &
-                                       orog_init_option_ancil
+                                       orog_init_option_ancil,    &
+                                       orog_init_option_start_dump
   use time_config_mod,           only: timestep_start,            &
                                        timestep_end
   use derived_config_mod,        only: l_esm_couple
@@ -205,8 +207,10 @@ module gungho_setup_io_mod
     end if
 
     ! Setup dump-reading context information
-    if( init_option == init_option_fd_start_dump .or. &
-        ancil_option == ancil_option_start_dump ) then
+    if( ((init_option == init_option_fd_start_dump .or. &
+         ancil_option == ancil_option_start_dump) .and. &
+         .not. checkpoint_read) .or. &
+         orog_init_option == orog_init_option_start_dump) then
       ! Create dump filename from stem
       write(dump_fname,'(A)') trim(start_dump_directory)//'/'// &
                               trim(start_dump_filename)
@@ -223,126 +227,154 @@ module gungho_setup_io_mod
     if( ancil_option == ancil_option_fixed .or. &
         ancil_option == ancil_option_updating ) then
 
-      ! Set orography ancil filename from namelist
-      write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                               trim(orography_subgrid_ancil_path)
-      call files_list%insert_item( lfric_xios_file_type( ancil_fname,               &
+      ! Only read static ancils on cold start from UM
+      if (init_option == init_option_fd_start_dump .and. &
+           .not. checkpoint_read) then
+
+        ! Set orography ancil filename from namelist
+        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                 trim(orography_subgrid_ancil_path)
+        call files_list%insert_item( lfric_xios_file_type( ancil_fname,        &
                                                          xios_id="orography_subgrid_ancil", &
                                                          io_mode=FILE_MODE_READ ) )
 
-      ! Set land area ancil filename from namelist
-      write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                               trim(land_area_ancil_path)
-      call files_list%insert_item( lfric_xios_file_type( ancil_fname,               &
+        ! Set land area ancil filename from namelist
+        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                 trim(land_area_ancil_path)
+        call files_list%insert_item( lfric_xios_file_type( ancil_fname,        &
                                                          xios_id="land_area_ancil", &
                                                          io_mode=FILE_MODE_READ ) )
 
-      ! Set soil ancil filename from namelist
-      write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                               trim(soil_ancil_path)
-      call files_list%insert_item( lfric_xios_file_type( ancil_fname,          &
-                                                         xios_id="soil_ancil", &
-                                                         io_mode=FILE_MODE_READ ) )
-
-      if (l_vary_z0m_soil) then
-        ! Set soil roughness ancil filename from namelist
+        ! Set surface fraction ancil filename from namelist
         write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                                 trim(soil_rough_ancil_path)
-        call files_list%insert_item( lfric_xios_file_type( ancil_fname,                &
-                                                           xios_id="soil_rough_ancil", &
-                                                           io_mode=FILE_MODE_READ ) )
-      end if
-
-      ! Set plant functional type ancil filename from namelist
-      write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                               trim(plant_func_ancil_path)
-      call files_list%insert_item( lfric_xios_file_type( ancil_fname,                &
-                                                         xios_id="plant_func_ancil", &
-                                                         io_mode=FILE_MODE_READ ) )
-
-      ! Set sea chlorophyll ancil filename from namelist
-      if ( sea_alb_var_chl ) then
-        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                                 trim(sea_ancil_path)
-        call files_list%insert_item( lfric_xios_file_type( ancil_fname,         &
-                                                           xios_id="sea_ancil", &
-                                                           io_mode=FILE_MODE_READ ) )
-      end if
-
-      ! Set sea surface temperature ancil filename from namelist
-      if (sst_source /= sst_source_start_dump) then
-        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                                 trim(sst_ancil_path)
-        call files_list%insert_item( lfric_xios_file_type( ancil_fname,       &
-                                                         xios_id="sst_ancil", &
-                                                         io_mode=FILE_MODE_READ ) )
-      end if
-
-      ! Set sea ice ancil filename from namelist
-      if (.not. l_esm_couple) then
-        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                                 trim(sea_ice_ancil_path)
-        call files_list%insert_item( lfric_xios_file_type( ancil_fname,           &
-                                                         xios_id="sea_ice_ancil", &
-                                                         io_mode=FILE_MODE_READ ) )
-      end if
-
-      if ( albedo_obs ) then
-        ! Set albedo_vis ancil filename from namelist
-        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                                 trim(albedo_vis_ancil_path)
-        call files_list%insert_item( lfric_xios_file_type( ancil_fname,              &
-                                                         xios_id="albedo_vis_ancil", &
-                                                         io_mode=FILE_MODE_READ ) )
-
-        ! Set albedo_nir ancil filename from namelist
-        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                                 trim(albedo_nir_ancil_path)
-        call files_list%insert_item( lfric_xios_file_type( ancil_fname,              &
-                                                         xios_id="albedo_nir_ancil", &
-                                                         io_mode=FILE_MODE_READ ) )
-      end if
-
-      ! Set topmodel hydrology filename from namelist
-      write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                               trim(hydtop_ancil_path)
-      call files_list%insert_item( lfric_xios_file_type( ancil_fname,            &
-                                                         xios_id="hydtop_ancil", &
-                                                         io_mode=FILE_MODE_READ ) )
-
-      ! Set ozone filename from namelist
-      write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                               trim(ozone_ancil_path)
-      call files_list%insert_item( lfric_xios_file_type( ancil_fname,           &
-                                                         xios_id="ozone_ancil", &
-                                                         io_mode=FILE_MODE_READ ) )
-
-      ! Set surface fraction ancil filename from namelist
-      write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                               trim(surface_frac_ancil_path)
-      call files_list%insert_item( lfric_xios_file_type( ancil_fname,                  &
+                                 trim(surface_frac_ancil_path)
+        call files_list%insert_item( lfric_xios_file_type( ancil_fname,        &
                                                          xios_id="surface_frac_ancil", &
                                                          io_mode=FILE_MODE_READ ) )
 
-    end if
+        ! Set soil ancil filename from namelist
+        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                 trim(soil_ancil_path)
+        call files_list%insert_item( lfric_xios_file_type( ancil_fname,        &
+                                                         xios_id="soil_ancil", &
+                                                         io_mode=FILE_MODE_READ ) )
 
-    if ( ( ( glomap_mode == glomap_mode_dust_and_clim ) .or.    &
-           ( glomap_mode == glomap_mode_climatology   ) ) .and. &
-         ( ( ancil_option == ancil_option_fixed       ) .or.    &
-           ( ancil_option == ancil_option_updating    ) ) ) then
+        if (l_vary_z0m_soil) then
+          ! Set soil roughness ancil filename from namelist
+          write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                   trim(soil_rough_ancil_path)
+          call files_list%insert_item( lfric_xios_file_type( ancil_fname,      &
+                                                           xios_id="soil_rough_ancil", &
+                                                           io_mode=FILE_MODE_READ ) )
+        end if
 
-      ! Set aerosol ancil filename from namelist
-      if ( coarse_aerosol_ancil ) then
-        aerosol_ancil_directory = coarse_ancil_directory
-      else
-        aerosol_ancil_directory = ancil_directory
+        ! Set topmodel hydrology filename from namelist
+        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                 trim(hydtop_ancil_path)
+        call files_list%insert_item( lfric_xios_file_type( ancil_fname,        &
+                                                         xios_id="hydtop_ancil", &
+                                                         io_mode=FILE_MODE_READ ) )
+
+        if ( ( glomap_mode == glomap_mode_dust_and_clim ).or. &
+             ( glomap_mode == glomap_mode_ukca   ) ) then
+
+          ! Set aerosol emission ancil filenames from namelist
+          write(ancil_fname,'(A)') trim(ancil_directory)//'/'//                &
+                                   trim(soil_dust_ancil_path)
+          call files_list%insert_item( lfric_xios_file_type( ancil_fname,      &
+                                                         xios_id="soil_dust_ancil", &
+                                                         io_mode=FILE_MODE_READ ) )
+        end if
+
+      end if ! static ancils on cold start
+
+      ! Only read updating ancils on new run, if updating or using surf
+      if (ancil_option == ancil_option_updating .or. &
+           .not. checkpoint_read) then
+        ! need to add .or. use_surf_analysis here
+
+        ! Set sea surface temperature ancil filename from namelist
+        if (sst_source /= sst_source_start_dump) then
+          write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                   trim(sst_ancil_path)
+          call files_list%insert_item( lfric_xios_file_type( ancil_fname,      &
+                                                         xios_id="sst_ancil", &
+                                                         io_mode=FILE_MODE_READ ) )
+        end if
+
+        ! Set sea ice ancil filename from namelist
+        if (.not. l_esm_couple) then
+          write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                   trim(sea_ice_ancil_path)
+          call files_list%insert_item( lfric_xios_file_type( ancil_fname,      &
+                                                         xios_id="sea_ice_ancil", &
+                                                         io_mode=FILE_MODE_READ ) )
+        end if
+
       end if
-      write(ancil_fname,'(A)') trim(aerosol_ancil_directory)//'/'// &
-                               trim(aerosols_ancil_path)
-      call files_list%insert_item( lfric_xios_file_type( ancil_fname,              &
+
+      ! Only read updating ancils on new run or if updating
+      if (ancil_option == ancil_option_updating .or. &
+           .not. checkpoint_read) then
+
+        ! Set plant functional type ancil filename from namelist
+        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                 trim(plant_func_ancil_path)
+        call files_list%insert_item( lfric_xios_file_type( ancil_fname,        &
+                                                         xios_id="plant_func_ancil", &
+                                                         io_mode=FILE_MODE_READ ) )
+
+        ! Set sea chlorophyll ancil filename from namelist
+        if ( sea_alb_var_chl ) then
+          write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                   trim(sea_ancil_path)
+          call files_list%insert_item( lfric_xios_file_type( ancil_fname,      &
+                                                           xios_id="sea_ancil", &
+                                                           io_mode=FILE_MODE_READ ) )
+        end if
+
+        if ( albedo_obs ) then
+          ! Set albedo_vis ancil filename from namelist
+          write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                   trim(albedo_vis_ancil_path)
+          call files_list%insert_item( lfric_xios_file_type( ancil_fname,      &
+                                                         xios_id="albedo_vis_ancil", &
+                                                         io_mode=FILE_MODE_READ ) )
+
+          ! Set albedo_nir ancil filename from namelist
+          write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                   trim(albedo_nir_ancil_path)
+          call files_list%insert_item( lfric_xios_file_type( ancil_fname,      &
+                                                         xios_id="albedo_nir_ancil", &
+                                                         io_mode=FILE_MODE_READ ) )
+        end if
+
+        ! Set ozone filename from namelist
+        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                 trim(ozone_ancil_path)
+        call files_list%insert_item( lfric_xios_file_type( ancil_fname,        &
+                                                         xios_id="ozone_ancil", &
+                                                         io_mode=FILE_MODE_READ ) )
+
+        if ( ( glomap_mode == glomap_mode_dust_and_clim ) .or.    &
+             ( glomap_mode == glomap_mode_climatology   ) ) then
+
+          ! Set aerosol ancil filename from namelist
+          if ( coarse_aerosol_ancil ) then
+            aerosol_ancil_directory = coarse_ancil_directory
+          else
+            aerosol_ancil_directory = ancil_directory
+          end if
+          write(ancil_fname,'(A)') trim(aerosol_ancil_directory)//'/'// &
+                                   trim(aerosols_ancil_path)
+          call files_list%insert_item( lfric_xios_file_type( ancil_fname,      &
                                                          xios_id="aerosols_ancil", &
                                                          io_mode=FILE_MODE_READ ) )
-    end if
+        end if
+
+      end if ! updating or a new run
+
+    end if ! fixed or updating ancils
 
     ! Chemistry ancils
     if ( (chem_scheme == chem_scheme_strattrop    .or.        &
@@ -422,7 +454,7 @@ module gungho_setup_io_mod
                                                          io_mode=FILE_MODE_READ ) )
 
 
-    endif
+    endif !chemistry ancils
 
     if ( glomap_mode == glomap_mode_ukca   .and.            &
          ancil_option == ancil_option_updating ) then
@@ -524,11 +556,15 @@ module gungho_setup_io_mod
                                                            io_mode=FILE_MODE_READ ) )
       end if
 
-      write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
-                               trim(emiss_so2_nat_ancil_path)
-      call files_list%insert_item( lfric_xios_file_type( ancil_fname,                   &
+      ! single time file only needs reading on cold start
+      if (init_option == init_option_fd_start_dump .and. &
+           .not. checkpoint_read) then
+        write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
+                                 trim(emiss_so2_nat_ancil_path)
+        call files_list%insert_item( lfric_xios_file_type( ancil_fname,        &
                                                          xios_id="emiss_so2_nat_ancil", &
                                                          io_mode=FILE_MODE_READ ) )
+      end if
 
       ! Setup Offline oxidants ancillary files
       write(ancil_fname,'(A)') trim(ancil_directory)//'/'// &
@@ -561,20 +597,8 @@ module gungho_setup_io_mod
                                                          xios_id="oh_ancil", &
                                                          io_mode=FILE_MODE_READ ) )
 
-    end if
+    end if !ukca ancils
 
-    if ( ( ( glomap_mode == glomap_mode_dust_and_clim ).or. &
-           ( glomap_mode == glomap_mode_ukca   ) ) .and.    &
-         ( ( ancil_option == ancil_option_fixed ) .or.      &
-           ( ancil_option == ancil_option_updating ) ) ) then
-
-      ! Set aerosol emission ancil filenames from namelist
-      write(ancil_fname,'(A)') trim(ancil_directory)//'/'//                    &
-                               trim(soil_dust_ancil_path)
-      call files_list%insert_item( lfric_xios_file_type( ancil_fname,               &
-                                                         xios_id="soil_dust_ancil", &
-                                                         io_mode=FILE_MODE_READ ) )
-    end if
 
    ! Easy Aerosols
    if ( easyaerosol_cdnc .and. ancil_option == ancil_option_updating )  then
@@ -671,6 +695,18 @@ module gungho_setup_io_mod
                                                          xios_id="lfric_checkpoint_read", &
                                                          io_mode=FILE_MODE_READ,          &
                                                          freq=ts_start - 1,               &
+                                                         field_group_id="checkpoint_fields" ) )
+    end if
+
+    ! Read checkpoint file as though it were start dump
+    if ( init_option == init_option_checkpoint_dump .and. &
+         .not. checkpoint_read ) then
+      ! Create dump filename from stem
+      write(dump_fname,'(A)') trim(start_dump_directory)//'/'// &
+                              trim(start_dump_filename)
+      call files_list%insert_item( lfric_xios_file_type( dump_fname,           &
+                                                         xios_id="lfric_checkpoint_read", &
+                                                         io_mode=FILE_MODE_READ,          &
                                                          field_group_id="checkpoint_fields" ) )
     end if
 
