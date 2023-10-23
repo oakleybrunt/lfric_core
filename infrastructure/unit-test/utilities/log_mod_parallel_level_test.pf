@@ -35,7 +35,9 @@ module log_mod_parallel_level_test
          log_output_test_info, log_output_test_warning,               &
          setUp, tearDown
 
-  integer(i_def), parameter  :: log_unit = 11
+  integer(i_def), parameter :: log_unit   = 11
+  integer(i_def), parameter :: info_unit  = 12
+  integer(i_def), parameter :: alert_unit = 13
 
   @testCase
   type, public, extends(MpiTestCase) :: log_test_type
@@ -105,8 +107,6 @@ contains
   @test(npes=[1])
   subroutine log_output_test_single_trace( this )
 
-    use log_mod_serial_level_test, only : log_output_test_serial
-
     implicit none
 
     class(log_test_type), intent(inout) :: this
@@ -121,8 +121,6 @@ contains
 
   @test(npes=[1])
   subroutine log_output_test_single_debug( this )
-
-    use log_mod_serial_level_test, only : log_output_test_serial
 
     implicit none
 
@@ -139,8 +137,6 @@ contains
   @test(npes=[1])
   subroutine log_output_test_single_info( this )
 
-    use log_mod_serial_level_test, only : log_output_test_serial
-
     implicit none
 
     class(log_test_type), intent(inout) :: this
@@ -155,8 +151,6 @@ contains
 
   @test(npes=[1])
   subroutine log_output_test_single_warning( this )
-
-    use log_mod_serial_level_test, only : log_output_test_serial
 
     implicit none
 
@@ -299,10 +293,177 @@ contains
   end subroutine log_output_test
 
 
+  !> Test the default behaviour of the logger.
+  !>
+  !> As part of the test system redirecting the output to alternate units is
+  !> also tested.
+  !>
+  subroutine log_output_test_serial( level, expected_tag )
+
+    use, intrinsic :: iso_fortran_env, only : iostat_end
+
+    implicit none
+
+    integer(i_def), intent(in) :: level
+    character(*),      intent(in) :: expected_tag
+
+    integer(i_def), parameter :: date_kind = selected_int_kind( 14 )
+
+    integer( kind=date_kind ) :: current_stamp
+    character(28)             :: current_date_string
+    integer(i_def)            :: current_subseconds
+    integer(i_def)            :: current_zone
+    integer( kind=date_kind)  :: found_stamp
+    character(1)              :: found_point
+    integer(i_def)            :: found_subseconds
+    integer(i_def)            :: found_zone
+    character(8)              :: found_tag
+    character(80)             :: found_message
+    integer(i_def)         :: status
+
+    open( INFO_UNIT, status='scratch', action='readwrite', iostat=status )
+    @assertEqual( 0, status )
+
+    open( ALERT_UNIT, status='scratch', action='readwrite', iostat=status )
+    @assertEqual( 0, status )
+
+    call date_and_time( date=current_date_string(1:8), &
+                        time=current_date_string(9:18), &
+                        zone=current_date_string(19:) )
+    read( current_date_string, "(I14,1X,I3,I5)" ) current_stamp, &
+                                                  current_subseconds, &
+                                                  current_zone
+
+    call log_set_info_stream(INFO_UNIT)
+    call log_set_alert_stream(ALERT_UNIT)
+
+    call log_set_level( log_level_info )
+
+    call log_event('cheese', level)
+
+    rewind(INFO_UNIT)
+    read( INFO_UNIT, '(I14,A1,I3,I5,A8,A)', iostat = status ) &
+        found_stamp, found_point, found_subseconds, found_zone, &
+        found_tag, found_message
+    if ( ( level >= LOG_LEVEL_INFO ) &
+         .and. ( level < LOG_LEVEL_WARNING ) ) then
+      @assertEqual( 0,            status )
+      @assertEqual( '.',          found_point )
+      @assertEqual( expected_tag, found_tag )
+      @assertEqual( 'cheese',     found_message )
+      @assertTrue( current_stamp <= found_stamp )
+      @assertEqual( current_zone, found_zone )
+    else
+      @assertEqual( iostat_end,        status )
+    end if
+
+    rewind( ALERT_UNIT )
+    read( ALERT_UNIT, '(I14,A1,I3,I5,A8,A)', iostat = status ) &
+        found_stamp, found_point, found_subseconds, found_zone, &
+        found_tag, found_message
+    if ( level >= LOG_LEVEL_WARNING ) then
+      @assertEqual( 0,            status )
+      @assertEqual( '.',          found_point )
+      @assertEqual( expected_tag, found_tag )
+      @assertEqual( 'cheese',     found_message )
+      @assertTrue( current_stamp <= found_stamp )
+      @assertEqual( current_zone, found_zone )
+    else
+      @assertEqual( iostat_end,        status )
+    end if
+
+    close( ALERT_UNIT, iostat=status )
+    @assertEqual( 0, status )
+    close( INFO_UNIT, iostat=status )
+    @assertEqual( 0, status )
+
+  end subroutine log_output_test_serial
+
+
+  !> Test the correct things are logged for each log level.
+  !>
+  subroutine log_level_test_serial( level )
+
+    use, intrinsic :: iso_fortran_env, only : iostat_end
+
+    implicit none
+
+    integer(i_def), intent(in) :: level
+
+    integer(i_def), parameter :: number_of_levels = 4
+
+    integer(i_def)    :: levels( number_of_levels )
+    character( 22 )   :: messages( number_of_levels )
+    integer(i_def)    :: level_index
+    character(  8 )   :: info_tag, alert_tag
+    character( 80 )   :: info_message, alert_message
+    integer(i_def)    :: info_status, alert_status
+    integer(i_def) :: condition
+
+    levels  = [ LOG_LEVEL_TRACE, LOG_LEVEL_DEBUG, &
+                LOG_LEVEL_INFO, LOG_LEVEL_WARNING ]
+    messages  = [ 'kraft cheeselike slice', &
+                  'generic cheddar       ', &
+                  'wensleydale           ', &
+                  'double gloucester     ']
+
+    open( INFO_UNIT, status='scratch', action='readwrite', &
+          iostat=condition )
+    @assertEqual( 0, condition )
+
+    open( ALERT_UNIT, status='scratch', action='readwrite', &
+          iostat=condition )
+    @assertEqual( 0, condition )
+
+    call log_set_info_stream( INFO_UNIT )
+    call log_set_alert_stream( ALERT_UNIT )
+
+    call log_set_level( level )
+
+    log_loop: do level_index = 1, number_of_levels
+      call log_event( trim( messages(level_index) ), levels(level_index) )
+    end do log_loop
+
+    rewind( INFO_UNIT )
+    rewind( ALERT_UNIT )
+    read_loop: do level_index = 1, number_of_levels
+      if ( levels(level_index) >= level ) then
+        info_tag = ""
+        info_message = ""
+        read( INFO_UNIT,  '(23X,A8,A)', iostat = info_status ) info_tag, &
+                                                              info_message
+        read( ALERT_UNIT, '(23X,A8,A)', iostat = alert_status ) alert_tag, &
+                                                                alert_message
+
+        select case (levels(level_index))
+          case (LOG_LEVEL_TRACE)
+            @assertEqual( ':TRACE:', info_tag )
+            @assertEqual( messages(level_index), info_message )
+          case (LOG_LEVEL_DEBUG)
+            @assertEqual( ':DEBUG:', info_tag )
+            @assertEqual( messages(level_index), info_message )
+          case (LOG_LEVEL_INFO)
+            @assertEqual( ':INFO :', info_tag )
+            @assertEqual( messages(level_index), info_message )
+          case (LOG_LEVEL_WARNING)
+            @assertEqual( ':WARN :', alert_tag )
+            @assertEqual( messages(level_index), alert_message )
+          case default
+            @assertTrue( .false. )
+        end select
+      end if
+    end do read_loop
+
+    close( ALERT_UNIT, iostat=condition )
+    @assertEqual( 0, condition )
+    close( INFO_UNIT, iostat=condition )
+    @assertEqual( 0, condition )
+
+  end subroutine log_level_test_serial
+
+
   @test(npes=[1])
   subroutine log_level_test_single_trace( this )
-
-    use log_mod_serial_level_test, only : log_level_test_serial
 
     implicit none
 
@@ -319,8 +480,6 @@ contains
   @test(npes=[1])
   subroutine log_level_test_single_debug( this )
 
-    use log_mod_serial_level_test, only : log_level_test_serial
-
     implicit none
 
     class(log_test_type), intent(inout) :: this
@@ -336,8 +495,6 @@ contains
   @test(npes=[1])
   subroutine log_level_test_single_info( this )
 
-    use log_mod_serial_level_test, only : log_level_test_serial
-
     implicit none
 
     class(log_test_type), intent(inout) :: this
@@ -352,8 +509,6 @@ contains
 
   @test(npes=[1])
   subroutine log_level_test_single_warning( this )
-
-    use log_mod_serial_level_test, only : log_level_test_serial
 
     implicit none
 

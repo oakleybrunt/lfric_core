@@ -191,6 +191,7 @@ function halo_routing_constructor( global_dof_id, &
 
 #ifdef NO_MPI
   self%redist(:) = 0
+  idepth=0 ! Set local variables to avoid unused variable errors
 #else
   do idepth = 1, max_depth
     ! Get the redistribution map objects for doing halo exchanges later

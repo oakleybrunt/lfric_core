@@ -79,6 +79,10 @@ ifdef PE_ENV
   export CRAY_ENVIRONMENT
 endif
 
+ifdef NO_MPI
+  export PRE_PROCESS_MACROS += NO_MPI=no_mpi
+endif
+
 # Set the default precision for reals
 RDEF_PRECISION ?= 64
 export PRE_PROCESS_MACROS += RDEF_PRECISION=$(RDEF_PRECISION)

@@ -25,9 +25,10 @@ module log_mod
                               str_long,   &
                               str_max_filename
 #ifdef NO_MPI
-  ! No "parallel_abort()" calls in a non-mpi build
+  ! No uses of the mpi library and no calls to parallel_abort a non-mpi build
 #else
   use lfric_abort_mod, only : parallel_abort
+  use mpi, only : mpi_comm_rank, mpi_comm_size
 #endif
 
   implicit none
@@ -73,55 +74,28 @@ module log_mod
   character(len=:),    private, allocatable :: petno
   integer(i_timestep), private, allocatable :: timestep
 
-  interface initialise_logging
-    procedure initialise_serial_logging
-#ifdef NO_MPI
-    ! No parallel logging in non-mpi build
-#else
-    procedure initialise_parallel_logging
-#endif
-  end interface initialise_logging
-
 contains
 
-  !> @brief Sets up logging for operation in a serial regime.
-  !>
-  !> @param[in] trace_on_warnings Output a backtrace on warnings.
-  !>
-  subroutine initialise_serial_logging( trace_on_warnings )
-
-    implicit none
-
-    logical, optional, intent(in) :: trace_on_warnings
-
-    call base_initialise( trace_on_warnings )
-
-  end subroutine initialise_serial_logging
-
-
-#ifdef NO_MPI
-  ! No parallel logging in non-mpi build
-#else
   !> @brief Sets up logging for operation in a parallel regime.
   !>
   !> @param[in] communicator MPI communicator to operate in.
   !> @param[in] file_name Appears in output filename.
   !> @param[in] trace_on_warnings Output a backtrace on warnings.
   !>
-  subroutine initialise_parallel_logging( communicator, &
-                                          file_name,    &
-                                          trace_on_warnings )
-
-    use mpi, only : mpi_comm_rank, mpi_comm_size
-
+  subroutine initialise_logging( communicator, &
+                                 file_name,    &
+                                 trace_on_warnings )
     implicit none
 
     integer(i_def),    intent(in) :: communicator
     character(*),      intent(in) :: file_name
     logical, optional, intent(in) :: trace_on_warnings
 
-    integer(i_def)                :: status
-    integer(i_def)                :: ilen
+#ifdef NO_MPI
+    ! The logging is running with no MPI communications
+#else
+    integer(i_def) :: status
+    integer(i_def) :: ilen
     character(len=:), allocatable :: logfilename
     character(len=12)             :: fmt
     integer(i_def)                :: this_rank
@@ -158,11 +132,11 @@ contains
         call abort_model()
       end if
     end if
+#endif
 
     call base_initialise( trace_on_warnings )
 
-  end subroutine initialise_parallel_logging
-#endif
+  end subroutine initialise_logging
 
   !> @brief Initialisation common to all regimes.
   !>

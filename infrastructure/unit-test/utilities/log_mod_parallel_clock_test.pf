@@ -15,13 +15,19 @@ module log_mod_parallel_clock_test
                             log_level_info,       &
                             log_set_timestep,     &
                             log_forget_timestep,  &
-                            log_set_level
+                            log_set_level,        &
+                            log_set_info_stream,  &
+                            log_set_alert_stream
   use pFUnit_Mod
 
   implicit none
 
   private
   public :: log_clock_single_test, log_clock_parallel_test
+
+  integer(i_def), parameter :: log_unit   = 11
+  integer(i_def), parameter :: info_unit  = 12
+  integer(i_def), parameter :: alert_unit = 13
 
   @testCase
   type, public, extends(MpiTestCase) :: log_test_clock_parallel_type
@@ -36,8 +42,6 @@ contains
 
   @test([npes=1])
   subroutine log_clock_single_test( this )
-
-    use log_mod_serial_clock_test, only : log_clock_serial_test
 
     implicit none
 
@@ -59,8 +63,6 @@ contains
     implicit none
 
     class(log_test_clock_parallel_type), intent(inout) :: this
-
-    integer, parameter  :: log_unit = 11
 
     integer(i_def)      :: condition
     character(40)       :: filename
@@ -178,5 +180,98 @@ contains
     close( log_unit, status='delete' )
 
   end subroutine log_clock_parallel_test
+
+  subroutine log_clock_serial_test
+
+    implicit none
+
+    integer(i_def)   :: condition
+    character(8)        :: info_tag, alert_tag
+    character(80)       :: info_message, alert_message
+    character(1)        :: info_field, alert_field
+    integer(i_timestep) :: info_step, alert_step
+
+    open( info_unit, status='scratch', action='readwrite', &
+          iostat=condition )
+    @assertEqual( 0, condition )
+    open( alert_unit, status='scratch', action='readwrite', &
+          iostat=condition )
+    @assertEqual( 0, condition )
+
+    call log_set_level( log_level_info )
+    call log_set_info_stream( info_unit )
+    call log_set_alert_stream( alert_unit )
+    call log_forget_timestep()
+
+    call log_event( "No clock", log_level_info )
+    call log_event( "Clock none", log_level_warning )
+
+    call log_set_timestep( 1 )
+
+    call log_event( "First step", log_level_info )
+    call log_event( "Step the first", log_level_warning )
+
+    call log_set_timestep( 2 )
+
+    call log_event( "Second step", log_level_info )
+    call log_event( "Step the second", log_level_warning )
+
+    call log_forget_timestep()
+
+    call log_event( "No clock", log_level_info )
+    call log_event( "Clock none", log_level_warning )
+
+    rewind( info_unit )
+    rewind( alert_unit )
+    read( info_unit,  '(23X,A8,A)' ) info_tag, info_message
+    read( alert_unit, '(23X,A8,A)' ) alert_tag, alert_message
+
+    @assertEqual( ':INFO :', info_tag )
+    @assertEqual( "No clock", info_message )
+    @assertEqual( ':WARN :', alert_tag )
+    @assertEqual( "Clock none", alert_message )
+
+    read( info_unit,  &
+          '(24X,A1,I1,A8,A)' ) info_field, info_step, info_tag, info_message
+    read( alert_unit, &
+          '(24X,A1,I1,A8,A)' ) alert_field, alert_step, alert_tag, alert_message
+
+    @assertEqual( 'S', info_field )
+    @assertEqual( 1, info_step )
+    @assertEqual( ':INFO :', info_tag )
+    @assertEqual( "First step", info_message )
+    @assertEqual( 'S', alert_field )
+    @assertEqual( 1, alert_step )
+    @assertEqual( ':WARN :', alert_tag )
+    @assertEqual( "Step the first", alert_message )
+
+    read( info_unit,  &
+          '(24X,A1,I1,A8,A)' ) info_field, info_step, info_tag, info_message
+    read( alert_unit, &
+          '(24X,A1,I1,A8,A)' ) alert_field, alert_step, alert_tag, alert_message
+
+    @assertEqual( 'S', info_field )
+    @assertEqual( 2, info_step )
+    @assertEqual( ':INFO :', info_tag )
+    @assertEqual( "Second step", info_message )
+    @assertEqual( 'S', alert_field )
+    @assertEqual( 2, alert_step )
+    @assertEqual( ':WARN :', alert_tag )
+    @assertEqual( "Step the second", alert_message )
+
+    read( info_unit,  '(23X,A8,A)' ) info_tag, info_message
+    read( alert_unit, '(23X,A8,A)' ) alert_tag, alert_message
+
+    @assertEqual( ':INFO :', info_tag )
+    @assertEqual( "No clock", info_message )
+    @assertEqual( ':WARN :', alert_tag )
+    @assertEqual( "Clock none", alert_message )
+
+    close( alert_unit, iostat=condition )
+    @assertEqual( 0, condition )
+    close( info_unit, iostat=condition )
+    @assertEqual( 0, condition )
+
+  end subroutine log_clock_serial_test
 
 end module log_mod_parallel_clock_test

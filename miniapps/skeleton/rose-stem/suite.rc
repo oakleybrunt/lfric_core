@@ -3,3 +3,7 @@
 %include inc/common_miniapp_macros.rc
 %include suite_control.rc
 %include inc/common_suite.rc
+[runtime]
+    [[root]]
+        [[[environment]]]
+            NO_MPI = 1

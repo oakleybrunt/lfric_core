@@ -95,6 +95,7 @@ contains
 #ifdef NO_MPI
     ! Don't initialise mpi in non-mpi build.
     out_comm = 0
+    ierr=0 ! Set local variable to avoid unused variable errors
 #else
     call mpi_init(ierr)
     if (ierr /= mpi_success) &
@@ -112,6 +113,7 @@ contains
 
 #ifdef NO_MPI
     ! Don't finalise mpi in non-mpi build
+    ierr=0 ! Set local variable to avoid unused variable errors
 #else
     call mpi_finalize(ierr)
     if (ierr /= mpi_success) &
@@ -193,6 +195,7 @@ contains
     ! Set default values for number of ranks and local rank in non-mpi build
     self%comm_size = 1
     self%comm_rank = 0
+    ierr=0 ! Set local variable to avoid unused variable errors
 #else
     call mpi_comm_size(self%comm,self%comm_size,ierr)
     call mpi_comm_rank(self%comm,self%comm_rank,ierr)
@@ -248,6 +251,7 @@ contains
 #ifdef NO_MPI
     ! Global sum and local sum are the same thing in a non-mpi build
     g_sum = l_sum
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       ! Generate global sum
@@ -282,6 +286,7 @@ contains
 #ifdef NO_MPI
     ! Global sum and local sum are the same thing in a non-mpi build
     g_sum = l_sum
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       ! Generate global sum
@@ -316,6 +321,7 @@ contains
 #ifdef NO_MPI
     ! Global sum and local sum are the same thing in a non-mpi build
     g_sum = l_sum
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       ! Generate global sum
@@ -350,6 +356,7 @@ contains
 #ifdef NO_MPI
     ! Global minimum and local minimum are the same thing in a non-mpi build
     g_min = l_min
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       ! Generate global min
@@ -383,6 +390,7 @@ contains
 #ifdef NO_MPI
     ! Global minimum and local minimum are the same thing in a non-mpi build
     g_min = l_min
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       ! Generate global min
@@ -417,6 +425,7 @@ contains
 #ifdef NO_MPI
     ! Global minimum and local minimum are the same thing in a non-mpi build
     g_min = l_min
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       ! Generate global min
@@ -451,6 +460,7 @@ contains
 #ifdef NO_MPI
     ! Global maximum and local maximum are the same thing in a non-mpi build
     g_max = l_max
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       ! Generate global max
@@ -485,6 +495,7 @@ contains
 #ifdef NO_MPI
     ! Global maximum and local maximum are the same thing in a non-mpi build
     g_max = l_max
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       ! Generate global max
@@ -519,6 +530,7 @@ contains
 #ifdef NO_MPI
     ! Global maximum and local maximum are the same thing in a non-mpi build
     g_max = l_max
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       ! Generate global max
@@ -556,6 +568,7 @@ contains
 #ifdef NO_MPI
     ! Send and recv buffers in a gather are the same thing in a non-mpi build
     recv_buffer = send_buffer
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       call mpi_allgather(send_buffer, count, get_mpi_datatype( integer_type, i_def ), &
@@ -593,6 +606,7 @@ contains
 
 #ifdef NO_MPI
     ! In a non-mpi build there is nowhere to broadcast to - so do nothing
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       call mpi_bcast( buffer, count, MPI_LOGICAL, root, self%comm, err )
@@ -626,6 +640,7 @@ contains
 
 #ifdef NO_MPI
     ! In a non-mpi build there is nowhere to broadcast to - so do nothing
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       call mpi_bcast( buffer, count, get_mpi_datatype( integer_type, i_def ), &
@@ -660,6 +675,7 @@ contains
 
 #ifdef NO_MPI
     ! In a non-mpi build there is nowhere to broadcast to - so do nothing
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       call mpi_bcast( buffer, count, &
@@ -695,6 +711,7 @@ contains
 
 #ifdef NO_MPI
     ! In a non-mpi build there is nowhere to broadcast to - so do nothing
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       call mpi_bcast( buffer, count, &
@@ -730,6 +747,7 @@ contains
 
 #ifdef NO_MPI
     ! In a non-mpi build there is nowhere to broadcast to - so do nothing
+    err=0 ! Set local variable to avoid unused variable errors
 #else
     if(self%comm_set)then
       call mpi_bcast( buffer, count, MPI_CHARACTER, root, self%comm, err )
