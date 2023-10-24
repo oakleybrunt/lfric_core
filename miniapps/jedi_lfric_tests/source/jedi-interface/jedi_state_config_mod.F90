@@ -34,6 +34,8 @@ type, public :: jedi_state_config_type
   type( jedi_datetime_type )         :: state_time
   !> File prefix for read
   character( len=str_def )           :: read_file_prefix
+  !> File prefix for write
+  character( len=str_def )           :: write_file_prefix
   !> A logical that if true indicates that the state should include a
   !> model_data instance because it will be used with the non-linear model
   logical( kind=l_def )              :: use_pseudo_model
@@ -73,6 +75,7 @@ subroutine initialise( self, use_pseudo_model )
   ! Configuration inputs
   call self%state_time%init_lfric_calendar_start()
   self%read_file_prefix = "read_"
+  self%write_file_prefix = "write_"
   self%use_pseudo_model = use_pseudo_model
 
   ! Setup arrays required for field_meta_data

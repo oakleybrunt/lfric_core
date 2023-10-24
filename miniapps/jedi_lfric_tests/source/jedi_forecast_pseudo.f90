@@ -88,13 +88,17 @@ program jedi_forecast_pseudo
   call jedi_geometry%initialise()
 
   ! Create state
-  call jedi_state%initialise( program_name, jedi_geometry, jedi_state_config )
+  call jedi_state%initialise( jedi_geometry, jedi_state_config )
 
   ! Model
   call jedi_psuedo_model%initialise( jedi_pseudo_model_config )
 
   ! Run non-linear model forecast
   call jedi_psuedo_model%forecast( jedi_state, forecast_length, jedi_pp_empty )
+
+  ! Write a netCDF via XIOS at the last time step.
+  ! Passing state%datetime to state to be consistent with the implementation in JEDI.
+  call jedi_state%write_file( jedi_state%valid_time(), jedi_state_config%write_file_prefix )
 
   call log_event( 'Finalising ' // program_name // ' ...', LOG_LEVEL_ALWAYS )
   ! To provide KGO

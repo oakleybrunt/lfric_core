@@ -91,7 +91,7 @@ program jedi_forecast
   call jedi_geometry%initialise()
 
   ! Create state
-  call jedi_state%initialise( program_name, jedi_geometry, jedi_state_config )
+  call jedi_state%initialise( jedi_geometry, jedi_state_config )
 
   ! Create non-linear model
   call jedi_model%initialise( time_step )

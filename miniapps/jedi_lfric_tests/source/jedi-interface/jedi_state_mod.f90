@@ -95,8 +95,8 @@ contains
   !> Read model fields from file into fields
   procedure, public :: read_file
 
-  !> @todo Write model fields to file from the fields
-  !> procedure, public :: write_file
+  !> Write model fields to file
+  procedure, public :: write_file
 
   !> Create the model_data
   procedure, public :: create_model_data
@@ -131,12 +131,11 @@ contains
 !> @param [in] config   The configuration object including the required
 !>                      information to construct a state and read a file to
 !>                      initialise the fields
-subroutine state_initialiser_read( self, program_name, geometry, config )
+subroutine state_initialiser_read( self, geometry, config )
 
   implicit none
 
   class( jedi_state_type ),           intent(inout) :: self
-  character(len=*),                   intent(in)    :: program_name
   type( jedi_geometry_type ), target, intent(in)    :: geometry
   type( jedi_state_config_type ),     intent(inout) :: config
 
@@ -270,7 +269,7 @@ end function valid_time
 
 !> @brief    A method to update the internal Atlas field emulators
 !>
-!> @param [in] read_time   The time to be read
+!> @param [in] read_time   The datetime to be read from the file
 !> @param [in] file_prefix Character array that specifies the file to read from
 subroutine read_file( self, read_time, file_prefix )
 
@@ -285,14 +284,19 @@ subroutine read_file( self, read_time, file_prefix )
 
   ! Local
   character( len=str_def ), allocatable :: variable_names(:)
+  character( len=str_def )              :: current_datetime
 
   ! Set the clock to the desired read time
   call set_clock(self, read_time)
 
+  call read_time%to_string( current_datetime )
+  call log_event( "jedi_state_mod: reading file at &
+                & " // current_datetime, LOG_LEVEL_INFO )
+
   ! Ensure the io_collection contains the variables defined in the list
   ! stored in the type
-  call update_io_field_collection(self%io_collection, mesh, twod_mesh, &
-                                  self%field_meta_data)
+  call update_io_field_collection( self%io_collection, mesh, twod_mesh, &
+                                   self%field_meta_data )
 
   ! Read the state into the io_collection
   call read_state( self%io_collection, prefix=file_prefix )
@@ -304,14 +308,47 @@ subroutine read_file( self, read_time, file_prefix )
 
 end subroutine read_file
 
-!> Write fields stored in this state from file
-!subroutine write_file()
-! TBD ...
-!end subroutine write_file
 
-!------------------------------------------------------------------------------
-! Local methods to support LFRic-JEDI implementation
-!------------------------------------------------------------------------------
+!> Write model fields to file
+!>
+!> @param [in] write_time  The datetime to be write to the file
+!> @param [in] file_prefix Character array that specifies the file to write to
+subroutine write_file( self, write_time, file_prefix )
+
+  use jedi_lfric_io_update_mod, only : update_io_field_collection
+  use lfric_xios_write_mod,     only : write_state
+
+  implicit none
+
+  class( jedi_state_type ),   intent(inout) :: self
+  type( jedi_datetime_type ),    intent(in) :: write_time
+  character(len=*),              intent(in) :: file_prefix
+
+  ! Local
+  character( len=str_def ), allocatable :: variable_names(:)
+  character( len=str_def )              :: current_datetime
+
+  ! Set the clock to the desired write time
+  call set_clock( self, write_time )
+  call write_time%to_string( current_datetime )
+  call log_event( "jedi_state_mod: writing file at &
+                & " // current_datetime, LOG_LEVEL_INFO )
+
+  ! Ensure the io_collection contains only the required data for writing,
+  ! e.g. remove redundant fields.
+  call update_io_field_collection( self%io_collection, mesh, twod_mesh, &
+                                   self%field_meta_data )
+  ! Copy the Atlas field emulators to the io_collection fields
+  call self%field_meta_data%get_variable_names(variable_names)
+
+  call self%to_lfric_field_collection(variable_names, self%io_collection)
+
+  ! Write the state into the io_collection
+  call write_state( self%io_collection, prefix=file_prefix )
+
+  call log_event( "jedi_state_mod: write_file: finished", LOG_LEVEL_INFO )
+
+end subroutine write_file
 
 !> @brief    Create an instance of the model_data for jedi_state_type
 !>

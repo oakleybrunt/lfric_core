@@ -106,7 +106,7 @@ program jedi_tlm_forecast_tl
   call jedi_geometry%initialise()
 
   ! Create state
-  call jedi_state%initialise( program_name, jedi_geometry, jedi_state_config )
+  call jedi_state%initialise( jedi_geometry, jedi_state_config )
 
   ! Create increment
   call jedi_increment%initialise( jedi_geometry, jedi_increment_config )
