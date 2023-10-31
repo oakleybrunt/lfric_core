@@ -156,8 +156,8 @@ end type  coupler_external_field_type
   integer(i_def)                               :: ncpl
   ! Coupling frequency of each model
   integer(i_def)                               :: cpl_freqs(self%max_num_models)
-  ! Number of steps between coupling
-  real(r_def)                                  :: cpl_step
+  ! Reciprolcal of Number of steps between coupling
+  real(r_def)                                  :: r_cpl_step
   ! Min,max used for printing to screen
   real(r_def)                                  :: min_value, max_value
   !Ice sheet mass scalar
@@ -194,18 +194,24 @@ end type  coupler_external_field_type
         ! components
         if (maxval(cpl_freqs(1:ncpl)) == minval(cpl_freqs(1:ncpl))) then
 
-          ! Calculate the number of timesteps over which the accumulations
-          ! have been calculated. On the first exchange following a restart
-          ! the averaging has already been done so in that case set to 1.0
+          ! Calculate reciprocal of number of timesteps over which the
+          ! accumulations have been calculated. On the first exchange
+          ! following a restart the averaging has already been done so
+          ! in that case set to 1.0
           if (self%is_first_step) then
-            cpl_step = 1.0_r_def
+            r_cpl_step = 1.0_r_def
           else
-            cpl_step = real(cpl_freqs(1), r_def) / self%dt
+            r_cpl_step = 1.0_r_def/(real(cpl_freqs(1), r_def) / self%dt)
           endif
 
           ! Get just the category we are sending
+          ! and divide by cpl_step. To maintain bit comparison after checkpoints
+          ! this must be done:
+          !  - before the division by ice fraction
+          !  - as a multiplication by the reciprocal of cpl_step.
           call invoke(multi_extract_kernel_type(sfield_onecat, &
-                                                sfield, k, 1_i_def))
+                                                sfield, k, 1_i_def), &
+                      inc_a_times_X( r_cpl_step, sfield_onecat ))
 
           ! Some fields will need to be divided by ice fraction that has
           ! just been passed from the sea ice model before being coupled
@@ -245,9 +251,8 @@ end type  coupler_external_field_type
              sfield_proxy = sfield_onecat%get_proxy()
 
              ! Reorder the LFRic data into the outgoing Oasis send buffer
-             ! and convert accumulations to means
              do i = 1, self%icpl_size
-               sdata(i) = sfield_proxy%data(self%slocal_index(i))/cpl_step
+               sdata(i) = sfield_proxy%data(self%slocal_index(i))
              enddo
 
              min_value = minval(sdata)
