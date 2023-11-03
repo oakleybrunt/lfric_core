@@ -15,22 +15,22 @@
 # dependent changes should be updated to the revision at which those
 # changes were committed to the project's trunk
 
-export casim_rev=10515
+export casim_rev=um13.4
 export casim_sources=
 #******************************************************************************
 # Please ensure that JULES_SOURCE_VN in the Rivers build
 # miniapps/lfric_coupled/rose-stem/app/fcm_make_river/rose-app.conf
 # is consistent with jules_rev below.
 #******************************************************************************
-export jules_rev=26806
+export jules_rev=um13.4
 export jules_sources=
-export shumlib_rev=um13.3
+export shumlib_rev=um13.4
 export shumlib_sources=
-export socrates_rev=1469
+export socrates_rev=um13.4
 export socrates_sources=
-export ukca_rev=2263
+export ukca_rev=um13.4
 export ukca_sources=
-export um_rev=120528
+export um_rev=vn13.4
 export um_sources=
 
 #### Do not edit the definitions below this line without
