@@ -1,18 +1,18 @@
 ###############################################################################
 #
 #      Input file for OASIS3
-# 
+#
 #      This version is for use with ECHAM5 fluxes and
 #      surface conditions computed in mpi-om.
 #
-#      The file will be edited in the run-script to update it for the 
+#      The file will be edited in the run-script to update it for the
 #      actual integration period and grid dimensions.
 #
 #      Modified : S. Legutke    DKRZ             29.12.02
 #                 - updated from 2.4.t version
 #
 ###############################################################################
-#  
+#
 #      Input delimiters have to occupy position 1 to 9 !
 #      No blank lines allowed !
 #      Length of input lines <= 80 !
@@ -26,7 +26,7 @@
  $END
 #
 ###############################################################################
-# 
+#
 # RUNTIME (<I8)
 #         total simulated time for the actual run in seconds
 #         the value will be set before the actual integration
@@ -318,9 +318,9 @@ T
  R  0  R  0
 #
  BLASOLD
-#   
+#
  1.0 0
-#    
+#
 #############################################################################
   lf_antarctic OAntmass 466 3600 1 atmos_restart.nc   EXPORTED
   1 1 1 1  lfric tor1 SEQ=+2
@@ -399,7 +399,7 @@ T
 #
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################ 
+############################################################################
  OIceFrc_cat05 lf_icefrc_cat05 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 atm3 SEQ=+1
  P  2  P 0
@@ -408,7 +408,7 @@ T
 #
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OIceTck_cat01 lf_icetck_cat01 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -417,7 +417,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OIceTck_cat02 lf_icetck_cat02 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -426,7 +426,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OIceTck_cat03 lf_icetck_cat03 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -444,7 +444,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OIceTck_cat05 lf_icetck_cat05 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -452,7 +452,7 @@ T
  MAPPING
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
-############################################################################# 
+#############################################################################
  O_TtiLyr_cat01 lf_icelayert_cat01 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -461,7 +461,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  O_TtiLyr_cat02 lf_icelayert_cat02 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -470,7 +470,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  O_TtiLyr_cat03 lf_icelayert_cat03 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -488,7 +488,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  O_TtiLyr_cat05 lf_icelayert_cat05 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -497,7 +497,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OIceKn_cat01 lf_conductivity_cat01 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -506,7 +506,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OIceKn_cat02 lf_conductivity_cat02 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -515,7 +515,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OIceKn_cat03 lf_conductivity_cat03 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -533,7 +533,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OIceKn_cat05 lf_conductivity_cat05 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -542,7 +542,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OSnwTck_cat01 lf_snow_depth_cat01 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -551,7 +551,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OSnwTck_cat02 lf_snow_depth_cat02 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -560,7 +560,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OSnwTck_cat03 lf_snow_depth_cat03 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -578,7 +578,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OSnwTck_cat05 lf_snow_depth_cat05 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -587,7 +587,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OPndFrc_cat01 lf_pond_frac_cat01 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -596,7 +596,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OPndFrc_cat02 lf_pond_frac_cat02 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -605,7 +605,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OPndFrc_cat03 lf_pond_frac_cat03 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -614,7 +614,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OPndFrc_cat04 lf_pond_frac_cat04 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -623,7 +623,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OPndFrc_cat05 lf_pond_frac_cat05 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -632,7 +632,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OPndTck_cat01 lf_pond_depth_cat01 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -641,7 +641,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OPndTck_cat02 lf_pond_depth_cat02 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -650,7 +650,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OPndTck_cat03 lf_pond_depth_cat03 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -659,7 +659,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OPndTck_cat04 lf_pond_depth_cat04 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -668,7 +668,7 @@ T
 ##
  rmp_tor1_to_lfric_CONSERVE_FRACAREA.nc
 #
-############################################################################# 
+#############################################################################
  OPndTck_cat05 lf_pond_depth_cat05 466 3600 1 atmos_restart.nc   EXPOUT
  1442 1207 13824 1 tor1 lfric SEQ=+1
  P  2  P 0
@@ -701,14 +701,14 @@ T
 ############### RIVER TO OCEAN #######################
 ######################################################
 # River runoff
- rflow_outflow ORunff1D 466 3600 1 atmos_restart.nc  EXPOUT 
+ outflow_per_river ORunff1D 466 3600 1 atmos_restart.nc  EXPOUT
  1676 1 1676 1 riv3 riv3 SEQ=+4
- R  0  R  0 
-# 
- BLASOLD 
-## 
- 1.0 0 
-############################################################################# 
-############################################################################# 
+ R  0  R  0
+#
+ BLASOLD
+##
+ 1.0 0
+#############################################################################
+#############################################################################
 #
 $END
