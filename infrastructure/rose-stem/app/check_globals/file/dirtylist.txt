@@ -1,15 +1,19 @@
 # Files should only ever be removed or renamed in this file, never added.
 #
 source/field/halo_routing_collection_mod.f90
+source/function_space/dofmap/stencil_dofmap_helper_functions_mod.f90
 source/function_space/function_space_chain_mod.F90
 source/function_space/function_space_collection_mod.F90
 source/io/io_utility_mod.f90
+source/io/lfric_ncdf_field_mod.F90
+source/io/ncdf_quad_mod.F90
 source/mesh/global_mesh_collection_mod.F90
 source/mesh/global_mesh_mod.F90
 source/mesh/local_mesh_collection_mod.f90
 source/mesh/local_mesh_mod.f90
 source/mesh/mesh_collection_mod.F90
 source/mesh/mesh_mod.F90
+source/utilities/coord_transform_mod.F90
 source/utilities/count_mod.f90
 source/utilities/log_mod.F90
 source/utilities/mpi_mod.F90

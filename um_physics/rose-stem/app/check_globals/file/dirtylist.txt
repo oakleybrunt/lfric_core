@@ -17,7 +17,9 @@ source/diagnostics/electric_main_diags_mod.x90
 source/diagnostics/mphys_diagnostics_mod.x90
 source/diagnostics/orographic_drag_diags_mod.x90
 source/diagnostics/spectral_gwd_diags_mod.x90
+source/kernel/conv_gr_kernel_mod.F90
 source/kernel/methox_kernel_mod.F90
 source/support/um_physics_init_mod.f90
+source/support/um_read_radaer_lut_mod.f90
 source/support/um_ukca_init_mod.f90
 source/um_utils/umprintmgr.f90

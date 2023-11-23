@@ -50,7 +50,8 @@ if __name__ == '__main__':
         if arguments.dirtylist.exists():
             for line in arguments.dirtylist.read_text().splitlines():
                 if line.strip() and not line.strip().startswith('#'):
-                    expected_dirty_list.append(arguments.directory / Path(line))
+                    expected_dirty_list.append(arguments.directory
+                                               / Path(line))
     else:
         arguments.dirtylist = Path() / 'dirtylist.txt'
 
@@ -96,7 +97,8 @@ if __name__ == '__main__':
     stale_set = expected_dirty_set - dirty_set
     message = f"Found {len(new_files)} new files with global variables."
     getLogger('occupyfortran').info(message)
-    message = f"Ignored {len(ignored_set)} files already known to contain globals."
+    message = f"Ignored {len(ignored_set)} files already known to contain" \
+              "globals."
     getLogger('occupyfortran').info(message)
     message = f"Missed {len(stale_set)} expected files not found."
     getLogger('occupyfortran').info(message)

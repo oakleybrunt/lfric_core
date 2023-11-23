@@ -18,6 +18,7 @@ source/algorithm/transport/common/transport_runtime_collection_mod.F90
 source/algorithm/transport/mol/reconstruct_w3_field_alg_mod.x90
 source/algorithm/transport/mol/wt_advective_update_alg_mod.x90
 source/configuration/derived_config_mod.F90
+source/diagnostics/diagnostics_calc_mod.F90
 source/diagnostics/empty_data_mod.f90
 source/diagnostics/initialise_diagnostics_mod.F90
 source/diagnostics/minmax_tseries_mod.F90
@@ -32,7 +33,10 @@ source/kernel/external_forcing/earth_like_forcings_mod.F90
 source/kernel/external_forcing/shallow_hot_jupiter_forcings_mod.F90
 source/kernel/external_forcing/tidally_locked_earth_forcings_mod.F90
 source/kernel/profile_interp_kernel_mod.F90
+source/kernel/transport/fem/rtheta_bd_kernel_mod.F90
 source/kernel/transport/mol/poly1d_vert_w3_reconstruction_kernel_mod.F90
+source/kernel/transport/mol/polyh_w3_koren_kernel_mod.F90
+source/kernel/transport/mol/polyh_wtheta_koren_kernel_mod.F90
 source/orography/analytic_orography_mod.F90
 source/orography/orography_helper_functions_mod.F90
 source/physics/mr_indices_mod.f90

@@ -7,6 +7,7 @@
 Crufty tool to detect global variables in Fortran source. This is a stop-gap
 to aid the eradication of globals until Stylist can do it properly.
 """
+from dataclasses import dataclass
 from errno import ENOENT
 from logging import getLogger
 from os import strerror
@@ -18,6 +19,8 @@ from fparser.common.readfortran import FortranFileReader  # type: ignore
 from fparser.two.Fortran2003 import (Attr_Spec,  # type: ignore
                                      Declaration_Type_Spec,
                                      Entity_Decl,
+                                     Function_Reference,
+                                     Initialization,
                                      Intrinsic_Type_Spec,
                                      Main_Program,
                                      Module,
@@ -57,7 +60,8 @@ class DirtyFile:
         This is done based on filename.
         """
         if not isinstance(other, DirtyFile):
-            message = "Can only compare DirtyFile against other DirtyFile objects."
+            message = "Can only compare DirtyFile against other DirtyFile " \
+                      "objects."
             raise ValueError(message)
         return self.filename < other.filename
 
@@ -69,39 +73,66 @@ class DirtyFile:
         self.dirt.append(Dirt(line_number, fortran_type, variable_name))
 
 
+@dataclass
+class Entity:
+    """
+    Information about a single declared entity.
+    """
+    name: str
+    initialised: Initialization
+
+
+@dataclass
+class Declaration:
+    """
+    Information about a declaration.
+    """
+    line_number: int
+    fortran_type: str
+    attributes: List[str]
+    entities: List[Entity]
+
+
 def __find_declarations(root: Program,
                         dirty_file: DirtyFile,
-                        handlers: Sequence[Callable[[DirtyFile,
-                                                     Program,
-                                                     int,
-                                                     Sequence[str],
-                                                     str,
-                                                     Sequence[str]], None]]) \
-        -> None:
+                        handlers: Sequence[
+                            Callable[
+                                [
+                                    DirtyFile,
+                                    Program,
+                                    Declaration
+                                ],
+                                None
+                            ]
+                        ]) -> None:
     for declaration in walk(root, Type_Declaration_Stmt):
         if isinstance(declaration.parent.parent, Main_Program):
             continue
 
-        line_number = declaration.item.span[0]
-        attributes = [str(attribute).lower()
-                      for attribute in walk(declaration, Attr_Spec)]
+        entities = [Entity(str(get_child(entity, Name)),
+                           get_child(entity, Initialization))
+                    for entity in walk(declaration, Entity_Decl)]
+
         intrinsic_type = get_child(declaration, Intrinsic_Type_Spec)
         user_type = get_child(declaration, Declaration_Type_Spec)
         actual_type = intrinsic_type or get_child(user_type, Name)
-        names = [str(entity) for entity in walk(declaration, Entity_Decl)]
+
+        declaration_info = Declaration(
+            line_number=declaration.item.span[0],
+            fortran_type=str(actual_type),
+            attributes=[str(attribute).lower()
+                        for attribute in walk(declaration, Attr_Spec)],
+            entities=entities
+        )
 
         for handler in handlers:
-            handler(dirty_file, declaration.parent.parent,
-                    line_number, attributes, str(actual_type), names)
+            handler(dirty_file, declaration.parent.parent, declaration_info)
 
 
 def __process_file(filename: Path,
                    tree_handler: Sequence[Callable[[DirtyFile,
                                                     Program,
-                                                    int,
-                                                    Sequence[str],
-                                                    str,
-                                                    Sequence[str]], None]]) \
+                                                    Declaration], None]]) \
         -> Optional[DirtyFile]:
     file_tally = DirtyFile(filename)
 
@@ -120,34 +151,62 @@ def __process_file(filename: Path,
 
 def __find_globals(dirty_file: DirtyFile,
                    parent: Program,
-                   line_number: int,
-                   attributes: Sequence[str],
-                   fortran_type: str,
-                   names: Sequence[str]) -> None:
+                   declaration: Declaration) -> None:
     if not isinstance(parent, Module):
         return
 
-    if 'parameter' in attributes:
+    if 'parameter' in declaration.attributes:
         return
 
-    for variable_name in names:
-        dirty_file.dirt.append(Dirt(line_number, fortran_type, variable_name))
+    for entity in declaration.entities:
+        dirty_file.dirt.append(Dirt(declaration.line_number,
+                                    declaration.fortran_type,
+                                    entity.name))
 
 
-def __find_saved(dirty_file: DirtyFile,
-                 parent: Program,
-                 line_number: int,
-                 attributes: Sequence[str],
-                 fortran_type: str,
-                 names: Sequence[str]) -> None:
+def __find_explicit_saved(dirty_file: DirtyFile,
+                          parent: Program,
+                          declaration: Declaration) -> None:
     if isinstance(parent, (Module, Main_Program)):
         return
 
-    if 'save' not in attributes:
+    if 'save' not in declaration.attributes:
         return
 
-    for variable_name in names:
-        dirty_file.dirt.append(Dirt(line_number, fortran_type, variable_name))
+    for entity in declaration.entities:
+        dirty_file.dirt.append(Dirt(declaration.line_number,
+                                    declaration.fortran_type,
+                                    entity.name))
+
+
+def __find_implicit_saved(dirty_file: DirtyFile,
+                          parent: Program,
+                          declaration: Declaration) -> None:
+    if isinstance(parent, (Module, Main_Program)):
+        return
+
+    # No need to check these as they are immutable and so intrinsically
+    # global.
+    #
+    if 'parameter' in declaration.attributes:
+        return
+
+    # No need to check these as they are explicitly saved
+    #
+    if 'save' in declaration.attributes:
+        return
+
+    # todo: Currently we ignore pointer initialisation as we haven't decided
+    #       what to do about it.
+    #
+    for entity in declaration.entities:
+        if entity.initialised is None:
+            continue
+
+        if get_child(entity.initialised, Function_Reference) is None:
+            dirty_file.dirt.append(Dirt(declaration.line_number,
+                                        declaration.fortran_type,
+                                        entity.name))
 
 
 __LOG_MESSAGE = "{filename}: {fortran_type}: {names}"
@@ -175,7 +234,9 @@ def entry(file_objects: List[Path]) \
             if __FORTRAN_EXTENSION_PATTERN.match(file_object.suffix):
                 getLogger('occupyfortran').debug("Processing %s", file_object)
                 report = __process_file(file_object,
-                                        [__find_globals, __find_saved])
+                                        [__find_globals,
+                                         __find_explicit_saved,
+                                         __find_implicit_saved])
                 if report is None:
                     clean_list.append(file_object)
                 else:  # File has dirt
