@@ -26,6 +26,8 @@ module runtime_constants_mod
   use mesh_mod,                only: mesh_type
   use model_clock_mod,         only: model_clock_type
   use multigrid_config_mod,    only: chain_mesh_tags
+  use multires_coupling_config_mod, &
+                               only: multires_coupling_mesh_tags
   use runtime_tools_mod,       only: primary_mesh_label,      &
                                      shifted_mesh_label,      &
                                      double_level_mesh_label, &
@@ -83,13 +85,14 @@ contains
 
     ! Internal variables
     character(str_def),  allocatable :: all_mesh_names(:)
-    integer(kind=i_def)              :: num_meshes, i, j
+    integer(kind=i_def)              :: num_meshes, i, j, k
     integer(kind=i_def), allocatable :: mesh_id_list(:)
     integer(kind=i_def), allocatable :: mg_mesh_ids(:)
     integer(kind=i_def), allocatable :: label_list(:)
     type(field_type),    allocatable :: chi_list(:,:)
     type(field_type),    allocatable :: panel_id_list(:)
     logical(kind=l_def)              :: is_multigrid_mesh
+    logical(kind=l_def)              :: is_multires_mesh
     integer(kind=i_def)              :: num_mg_meshes
     logical(kind=l_def)              :: create_rdef_div_operators
 
@@ -144,10 +147,25 @@ contains
         else if (l_multigrid) then
           ! Search through chain mesh tags for matching mesh name
           is_multigrid_mesh = .false.
+          is_multires_mesh = .false.
           do j = 1, SIZE(chain_mesh_tags)
             if (all_mesh_names(i) == chain_mesh_tags(j)) then
-              is_multigrid_mesh = .true.
-              label_list(i) = multigrid_mesh_label
+              ! Now check if it is used in multires-coupling: then it should
+              ! be an "extra" mesh
+              if (use_multires_coupling) then
+                do k = 1, SIZE(multires_coupling_mesh_tags)
+                  if (all_mesh_names(i) == multires_coupling_mesh_tags(k)) then
+                    is_multires_mesh = .true.
+                    exit
+                  end if
+                end do
+              end if
+              if (is_multires_mesh) then
+                label_list(i) = extra_mesh_label
+              else
+                is_multigrid_mesh = .true.
+                label_list(i) = multigrid_mesh_label
+              end if
               exit
             end if
           end do

@@ -488,7 +488,8 @@ contains
                                                 panel_id_list(i), qr) )
       end if
       if ( label_list(i) == primary_mesh_label .or. &
-           label_list(i) == multigrid_mesh_label ) then
+           label_list(i) == multigrid_mesh_label .or. &
+           label_list(i) == extra_mesh_label ) then
         call div_r_solver_inventory%add_operator(div_r_solver, w3_fs, w2_fs, mesh)
         call invoke( operator_setval_x_kernel_type(div_r_solver, div) )
         nullify(div_r_solver)
@@ -535,7 +536,8 @@ contains
       end if
 
       if ( label_list(i) == primary_mesh_label .or. &
-           label_list(i) == multigrid_mesh_label ) then
+           label_list(i) == multigrid_mesh_label .or. &
+           label_list(i) == extra_mesh_label ) then
         call mm_w3_inv_r_solver_inventory%add_operator(mm_w3_inv_r_solver, w3_fs, w3_fs, mesh)
         call invoke( operator_setval_x_kernel_type( mm_w3_inv_r_solver, mm_w3_inv ) )
         nullify( mm_w3_inv_r_solver )
@@ -591,7 +593,8 @@ contains
       !========================= Special mass matrices ========================!
 
       if ( label_list(i) == primary_mesh_label .or.    &
-           label_list(i) == multigrid_mesh_label ) then
+           label_list(i) == multigrid_mesh_label .or.  &
+           label_list(i) == extra_mesh_label ) then
 
         if ( label_list(i) == primary_mesh_label ) then
           ! Need to store mm_w2_plus_dl
@@ -697,7 +700,8 @@ contains
                      mm_diagonal_kernel_type(mmtheta_diag, mm_wtheta) )
         nullify(mmtheta_diag)
 
-      else if ( label_list(i) == shifted_mesh_label ) then
+      else if ( label_list(i) == shifted_mesh_label .or. &
+                label_list(i) == multigrid_mesh_label ) then
         call mm3_diag_inventory%add_field(mm3_diag, w3_fs, mesh)
         call invoke ( setval_c(mm3_diag,       0.0_r_def),         &
                       mm_diagonal_kernel_type(mm3_diag, mm_w3)  )
@@ -744,7 +748,8 @@ contains
         call nodal_multiplicity_w2%initialise( vector_space = w2_fs )
 
         if ( label_list(i) == shifted_mesh_label .or. &
-             (label_list(i) == multigrid_mesh_label .and. .not. limited_area) ) then
+             (label_list(i) == multigrid_mesh_label .and. .not. limited_area) .or. &
+             (label_list(i) == extra_mesh_label .and. .not. limited_area) ) then
           ! Don't need to store nodal_rmultiplicity
           call invoke( setval_c(nodal_multiplicity_w2, 0.0_r_def),     &
                        multiplicity_kernel_type(nodal_multiplicity_w2) )
@@ -798,7 +803,8 @@ contains
       !============================ Normalisations ============================!
 
       if ( label_list(i) == primary_mesh_label .or. &
-           label_list(i) == multigrid_mesh_label ) then
+           label_list(i) == multigrid_mesh_label .or. &
+           label_list(i) == extra_mesh_label ) then
         ! Need to store w2_normalisation on primary mesh
         if ( label_list(i) == primary_mesh_label ) then
           call w2_normalisation_inventory%add_field(w2_normalisation, w2_fs, mesh)
@@ -823,7 +829,8 @@ contains
       !================ Create Det(J) values at W3 dof locations ==============!
 
       if ( (label_list(i) == primary_mesh_label .or.  &
-           (label_list(i) == multigrid_mesh_label) .and. &
+           (label_list(i) == multigrid_mesh_label .or. &
+            label_list(i) == extra_mesh_label) .and. &
            eliminate_variables == eliminate_variables_analytic .and. &
            eos_method == eos_method_sampled) ) then
         call detj_at_w3_r_solver_inventory%add_field(detj_at_w3_r_solver, w3_fs, mesh)
