@@ -17,12 +17,14 @@ module end_of_transport_step_alg_mod
   use extrusion_mod,                  only: SHIFTED
   use fem_constants_mod,              only: get_directional_im3_div_r_tran, &
                                             get_directional_im3_div,        &
-                                            get_mass_matrix_diagonal
+                                            get_mass_matrix_diagonal,       &
+                                            get_rmultiplicity
   use field_mod,                      only: field_type
   use finite_element_config_mod,      only: element_order
   use fs_continuity_mod,              only: W3, Wtheta, W2, W2H, W2V
   use function_space_mod,             only: function_space_type
   use function_space_collection_mod,  only: function_space_collection
+  use geometric_constants_mod,        only: get_height
   use iterate_min_flux_kernel_mod,    only: iterate_min_flux_kernel_type
   use io_config_mod,                  only: subroutine_timers
   use limited_area_lbc_alg_mod,       only: overwrite_blending_zone_rtran
@@ -37,9 +39,13 @@ module end_of_transport_step_alg_mod
                                             invoke_rtran_field_min_max
   use r_tran_field_mod,               only: r_tran_field_type
   use r_tran_operator_mod,            only: r_tran_operator_type
-  use transport_config_mod,           only: dry_field_name,  &
-                                            min_val_abs_tol, &
-                                            min_val_max_iterations
+  use timer_mod,                      only: timer
+  use transport_config_mod,           only: dry_field_name,           &
+                                            min_val_abs_tol,          &
+                                            min_val_max_iterations,   &
+                                            min_val_method,           &
+                                            min_val_method_iterative, &
+                                            theta_dispersion_correction
   use transport_enumerated_types_mod, only: direction_3d, &
                                             direction_h,  &
                                             direction_v,  &
@@ -84,6 +90,8 @@ contains
     ! Internal variables
     real(kind=r_tran) :: min_value
 
+    if ( subroutine_timers ) call timer('end_of_transport')
+
     ! Enforce a min value if required
     if ( transport_metadata%get_enforce_min_value() ) then
        min_value = transport_metadata%get_min_value()
@@ -103,6 +111,8 @@ contains
       call overwrite_blending_zone_rtran(field_np1, field_in, &
                                          depth=transport_boundary_depth)
     end if
+
+    if ( subroutine_timers ) call timer('end_of_transport')
 
   end subroutine end_of_advective_step_alg
 
@@ -157,6 +167,8 @@ contains
     real(kind=r_tran)                     :: field_min, field_max
     integer(kind=i_def)                   :: direction
 
+    if ( subroutine_timers ) call timer('end_of_transport')
+
     ! Extract transport runtime
     mesh => field_np1%get_mesh()
     transport_runtime => get_transport_runtime(mesh)
@@ -192,7 +204,7 @@ contains
       ! Conservative clipping by limiting flux, if specified
       ! ---------------------------------------------------------------------- !
 
-      if ( enforce_min_value ) then
+      if (enforce_min_value .and. min_val_method == min_val_method_iterative) then
 
         min_value = transport_metadata%get_min_value()
         acceptable_min = real(min_val_abs_tol, r_tran)
@@ -317,6 +329,8 @@ contains
     nullify(mesh, div, div_r_def, transport_runtime, field_start, &
             conservative_field_n)
 
+    if ( subroutine_timers ) call timer('end_of_transport')
+
   end subroutine end_of_conservative_step_alg
 
   !> @brief Common end-of-step code for consistent transport schemes
@@ -337,8 +351,12 @@ contains
   !!                                   transporting the field
   subroutine end_of_consistent_step_alg(field_np1, flux, transport_metadata)
 
-    use inject_sh_w3_to_wt_kernel_mod, only: inject_sh_w3_to_wt_kernel_type
-    use inject_wt_to_sh_w3_kernel_mod, only: inject_wt_to_sh_w3_kernel_type
+    use consistent_dispersion_kernel_mod, only: consistent_dispersion_kernel_type
+    use inject_sh_w3_to_wt_kernel_mod,    only: inject_sh_w3_to_wt_kernel_type
+    use inject_wt_to_sh_w3_kernel_mod,    only: inject_wt_to_sh_w3_kernel_type
+    use theta_dispersion_factor_kernel_mod, &
+                                          only: theta_dispersion_factor_kernel_type
+    use w3_to_w2_average_kernel_mod,      only: w3_to_w2_average_kernel_type
 
     implicit none
 
@@ -349,19 +367,27 @@ contains
 
     ! Internal variables
     integer(kind=i_def)                   :: prime_extrusion_mesh_id
-    integer(kind=i_def)                   :: last_step
+    integer(kind=i_def)                   :: step, last_step
     integer(kind=i_def)                   :: limit_iteration
     integer(kind=i_def)                   :: num_limiting_steps
     integer(kind=i_def)                   :: mr_function_space
+    integer(kind=i_def)                   :: flux_function_space
     type(mesh_type),              pointer :: prime_extrusion_mesh => null()
     type(mesh_type),              pointer :: shifted_mesh => null()
     type(r_tran_field_type)               :: increment
     type(r_tran_field_type)               :: rho_X_start, rho_X_np1
     type(r_tran_field_type)               :: mr_sh_w3_start, mr_sh_w3_np1
     type(r_tran_field_type),      pointer :: mr_start => null()
+    type(r_tran_field_type),      pointer :: dry_flux => null()
     type(r_tran_field_type),      pointer :: rho_d_start => null()
     type(r_tran_field_type),      pointer :: rho_d_np1 => null()
+    type(field_type),             pointer :: height_wt => null()
+    type(field_type),             pointer :: rmultiplicity_shifted => null()
     type(r_tran_field_type)               :: sum_flux
+    type(r_tran_field_type)               :: theta_factor_wt
+    type(r_tran_field_type)               :: theta_factor_w2_shifted
+    type(r_tran_field_type)               :: theta_factor_w3_shifted
+    type(r_tran_field_type)               :: flux_correction
     type(function_space_type),    pointer :: w3_fs => null()
     type(function_space_type),    pointer :: w2_fs => null()
     type(function_space_type),    pointer :: sh_w3_fs => null()
@@ -372,10 +398,13 @@ contains
     type(transport_runtime_type), pointer :: transport_runtime => null()
     logical(kind=l_def)                   :: enforce_min_value
     logical(kind=l_def)                   :: final_split_step
+    logical(kind=l_def)                   :: logspace
     real(kind=r_tran)                     :: min_value
     real(kind=r_tran)                     :: adv_dt
     real(kind=r_tran)                     :: acceptable_min
     real(kind=r_tran)                     :: field_min, field_max
+
+    if ( subroutine_timers ) call timer('end_of_transport')
 
     ! Extract transport runtime
     prime_extrusion_mesh => field_np1%get_mesh()
@@ -383,10 +412,55 @@ contains
     prime_extrusion_mesh_id = prime_extrusion_mesh%get_id()
     enforce_min_value = transport_metadata%get_enforce_min_value()
     mr_function_space = field_np1%which_function_space()
+    flux_function_space = flux%which_function_space()
+    mr_start => transport_runtime%get_field_n()
 
     ! Determine whether this is the final split step
     final_split_step = ( transport_runtime%get_tracer_step_ctr() &
                          == transport_runtime%get_num_dry_steps() )
+
+    ! ------------------------------------------------------------------------ !
+    ! Compute consistent dispersion relation correction, if required
+    ! ------------------------------------------------------------------------ !
+
+    if (theta_dispersion_correction .and. mr_function_space == Wtheta .and.    &
+        (flux_function_space == W2 .or. flux_function_space == W2H) .and.      &
+        (trim(transport_metadata%get_name()) == 'potential_temperature' .or.   &
+         trim(transport_metadata%get_name()) == 'theta')) then
+
+      shifted_mesh => mesh_collection%get_mesh(prime_extrusion_mesh, SHIFTED)
+      sh_w3_fs => function_space_collection%get_fs(shifted_mesh, 0, W3)
+      step = transport_runtime%get_tracer_step_ctr()
+      rmultiplicity_shifted => get_rmultiplicity(flux_function_space, shifted_mesh%get_id())
+      dry_flux => transport_runtime%get_dry_flux(prime_extrusion_mesh_id, step)
+      height_wt => get_height(Wtheta, prime_extrusion_mesh_id)
+      logspace = transport_metadata%get_log_space()
+
+      call theta_factor_wt%initialise( mr_start%get_function_space() )
+      call theta_factor_w2_shifted%initialise( flux%get_function_space() )
+      call theta_factor_w3_shifted%initialise( sh_w3_fs )
+      call flux_correction%initialise( flux%get_function_space() )
+
+      ! Compute theta factor
+      call invoke( name="theta_factor",                                        &
+                   theta_dispersion_factor_kernel_type(theta_factor_wt,        &
+                                                       mr_start,               &
+                                                       height_wt,              &
+                                                       logspace) )
+      ! Separate invokes as on different meshes
+      call invoke( inject_wt_to_sh_w3_kernel_type(theta_factor_w3_shifted,     &
+                                                  theta_factor_wt),            &
+                   setval_c(theta_factor_w2_shifted, 0.0_r_tran),              &
+                   w3_to_w2_average_kernel_type(theta_factor_w2_shifted,       &
+                                                theta_factor_w3_shifted,       &
+                                                rmultiplicity_shifted) )
+      ! Can't combine these invokes as the W2 fields are on different meshes
+      call invoke( setval_c(flux_correction, 0.0_r_tran),                      &
+                   consistent_dispersion_kernel_type(flux_correction,          &
+                                                     dry_flux,                 &
+                                                     theta_factor_w2_shifted), &
+                   inc_X_plus_Y(flux, flux_correction) )
+    end if
 
     ! ------------------------------------------------------------------------ !
     ! Store flux
@@ -397,8 +471,6 @@ contains
     ! ------------------------------------------------------------------------ !
     ! Compute increment from all split steps
     ! ------------------------------------------------------------------------ !
-
-    mr_start => transport_runtime%get_field_n()
 
     if ( final_split_step ) then
 
@@ -453,7 +525,7 @@ contains
 
       call build_up_flux(sum_flux, flux, transport_runtime)
 
-      if ( enforce_min_value ) then
+      if (enforce_min_value .and. min_val_method == min_val_method_iterative) then
         min_value = transport_metadata%get_min_value()
         adv_dt = 1.0_r_tran  ! dt hidden inside of flux already
         acceptable_min = real(min_val_abs_tol, r_tran)
@@ -548,6 +620,8 @@ contains
 
     nullify(prime_extrusion_mesh, shifted_mesh, mr_start, transport_runtime,  &
             rho_d_start, rho_d_np1, w3_fs, w2_fs, sh_w3_fs, sh_w2_fs, div, div_r_def)
+
+    if ( subroutine_timers ) call timer('end_of_transport')
 
   end subroutine end_of_consistent_step_alg
 

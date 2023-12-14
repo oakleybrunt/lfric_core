@@ -62,20 +62,21 @@ contains
   !> @param[in] number_of_meshes Number of meshes to transport on
   subroutine transport_prerun_setup( number_of_meshes )
 
-    use transport_config_mod,    only: profile_size,         &
-                                       field_names,          &
-                                       equation_form,        &
-                                       scheme,               &
-                                       splitting,            &
-                                       horizontal_method,    &
-                                       vertical_method,      &
-                                       log_space,            &
-                                       enforce_min_value,    &
-                                       min_value,            &
-                                       reversible,           &
-                                       horizontal_monotone,  &
-                                       vertical_monotone,    &
-                                       vertical_monotone_order
+    use transport_config_mod,    only: profile_size,            &
+                                       field_names,             &
+                                       equation_form,           &
+                                       scheme,                  &
+                                       splitting,               &
+                                       horizontal_method,       &
+                                       vertical_method,         &
+                                       log_space,               &
+                                       enforce_min_value,       &
+                                       min_value,               &
+                                       reversible,              &
+                                       horizontal_monotone,     &
+                                       vertical_monotone,       &
+                                       vertical_monotone_order, &
+                                       consistent_ffsl_splitting
 
 
     use initial_wind_config_mod, only: profile,                      &
@@ -149,7 +150,8 @@ contains
                                                     enforce_min_value(config),       &
                                                     min_value(config),               &
                                                     log_space(config),               &
-                                                    reversible(config) )
+                                                    reversible(config),              &
+                                                    consistent_ffsl_splitting(config) )
 
       call transport_metadata_collection%set_transport_metadata(transport_metadata)
 
@@ -363,6 +365,7 @@ contains
     ! Compute anything required for consistency
     dynamics_transport_runtime => get_transport_runtime(primary_mesh)
     call dynamics_transport_runtime%shift_dry_fields()
+    call dynamics_transport_runtime%compute_consistent_quantities(shifted_mesh)
 
     ! Transport conservative W3 tracer
     call log_event( "Transporting conservative tracer...", LOG_LEVEL_INFO)
@@ -437,6 +440,7 @@ contains
     if (use_w3_aerosol) then
       call log_event( "Transporting coarse W3 tracer...", LOG_LEVEL_INFO)
       transport_metadata => transport_metadata_collection%get_transport_metadata('w3_aerosol')
+      call aerosol_transport_runtime%compute_consistent_quantities(aerosol_prime_mesh)
       call w3_aerosol%copy_field_properties(w3_aerosol_n)
       call invoke( setval_X(w3_aerosol_n, w3_aerosol) )
       call transport_field( w3_aerosol, w3_aerosol_n, cast_dt, transport_metadata )
@@ -446,6 +450,7 @@ contains
     if (use_wt_aerosol) then
       call log_event( "Transporting coarse Wtheta tracer...", LOG_LEVEL_INFO)
       transport_metadata => transport_metadata_collection%get_transport_metadata('wt_aerosol')
+      call aerosol_transport_runtime%compute_consistent_quantities(aerosol_shifted_mesh)
       call wt_aerosol%copy_field_properties(wt_aerosol_n)
       call invoke( setval_X(wt_aerosol_n, wt_aerosol) )
       call transport_field( wt_aerosol, wt_aerosol_n, cast_dt, transport_metadata )

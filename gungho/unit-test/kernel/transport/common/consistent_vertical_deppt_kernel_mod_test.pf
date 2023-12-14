@@ -1,0 +1,136 @@
+!-----------------------------------------------------------------------------
+! (C) Crown copyright 2023 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-----------------------------------------------------------------------------
+
+module consistent_vertical_deppt_kernel_mod_test
+
+  use pFUnit_Mod
+  use constants_mod,      only : i_def, r_tran
+
+  implicit none
+
+  private
+  public :: consistent_vertical_deppt_test_type , test_all
+
+  @TestCase
+  type, extends(TestCase) :: consistent_vertical_deppt_test_type
+    private
+  contains
+    procedure test_all
+  end type consistent_vertical_deppt_test_type
+
+
+contains
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  @Test
+  subroutine test_all( this )
+
+    use consistent_vertical_deppt_kernel_mod, only : consistent_vertical_deppt_code
+
+    implicit none
+
+    class(consistent_vertical_deppt_test_type), intent(inout) :: this
+
+    real(kind=r_tran),   parameter   :: tol = 1.0e-6_r_tran
+    real(kind=r_tran),   parameter   :: area = 4000.0_r_tran
+
+    integer(kind=i_def)              :: nlayers
+    integer(kind=i_def)              :: ndf_w2v, ndf_w3, k
+    integer(kind=i_def)              :: undf_w2v, undf_w3
+    integer(kind=i_def), allocatable :: map_w2v(:)
+    integer(kind=i_def), allocatable :: map_w3(:)
+    real(kind=r_tran),   allocatable :: rho_d(:)
+    real(kind=r_tran),   allocatable :: dry_flux(:)
+    real(kind=r_tran),   allocatable :: height_w2v(:)
+    real(kind=r_tran),   allocatable :: detj_at_w3(:)
+    real(kind=r_tran),   allocatable :: dep_pts_z(:)
+    real(kind=r_tran),   allocatable :: frac_dry_flux(:)
+    real(kind=r_tran),   allocatable :: true_dep_pts_answer(:)
+    real(kind=r_tran),   allocatable :: true_frac_flux_answer(:)
+
+    ! Set integer values to describe mesh (single column)
+    nlayers = 9
+    undf_w2v = nlayers + 1
+    ndf_w2v = 2
+    undf_w3 = nlayers
+    ndf_w3 = 1
+
+    allocate(map_w2v(ndf_w2v))
+    allocate(map_w3(ndf_w3))
+    allocate(rho_d(undf_w3))
+    allocate(dry_flux(undf_w2v))
+    allocate(height_w2v(undf_w2v))
+    allocate(detj_at_w3(undf_w3))
+    allocate(dep_pts_z(undf_w2v))
+    allocate(frac_dry_flux(undf_w2v))
+    allocate(true_dep_pts_answer(undf_w2v))
+    allocate(true_frac_flux_answer(undf_w2v))
+
+    ! DoF maps
+    map_w3 = (/ 1 /)
+    map_w2v = (/ 1, 2 /)
+
+    ! Set up non-uniform vertical grid
+    height_w2v = (/ 0.0_r_tran, 50.0_r_tran, 160.0_r_tran, 320.0_r_tran,       &
+                   600.0_r_tran, 1000.0_r_tran, 1500.0_r_tran, 2000.0_r_tran,  &
+                   2750.0_r_tran, 3000.0_r_tran /)
+    rho_d = (/ 2.0_r_tran, 1.5_r_tran, 1.1_r_tran, 1.2_r_tran, 1.0_r_tran,     &
+               0.8_r_tran, 0.8_r_tran, 0.5_r_tran, 0.2_r_tran /)
+    ! Computed by considering the mass flow to match the departure points
+    dry_flux = (/ 0.0_r_tran, 320000.0_r_tran, 740000.0_r_tran,                &
+                 281600.0_r_tran, -800000.0_r_tran, -1920000.0_r_tran,         &
+                 -3120000.0_r_tran, -1600000.0_r_tran, -120000.0_r_tran,       &
+                 0.0_r_tran /)
+
+    ! Calculate this as area*height_difference
+    do k = 1, undf_w3
+      detj_at_w3(k) = area*(height_w2v(k+1) - height_w2v(k))
+    end do
+
+    true_dep_pts_answer = (/ 0.0_r_tran, 0.8_r_tran, 1.2_r_tran,               &
+                            0.4_r_tran, -0.5_r_tran, -1.2_r_tran,              &
+                            -2.1_r_tran, -1.5_r_tran, -0.6_r_tran, 0.0_r_tran /)
+    true_frac_flux_answer = (/ 0.0_r_tran, 320000.0_r_tran, 80000.0_r_tran,    &
+                              281600.0_r_tran, -800000.0_r_tran,               &
+                              -320000.0_r_tran, -20000.0_r_tran,               &
+                              -100000.0_r_tran, -120000.0_r_tran, 0.0_r_tran /)
+
+
+    ! Set initial values of output fields to be zero
+    dep_pts_z(:) = 0.0_r_tran
+    frac_dry_flux(:) = 0.0_r_tran
+
+    call consistent_vertical_deppt_code( nlayers,             &
+                                         dep_pts_z,           &
+                                         frac_dry_flux,       &
+                                         dry_flux,            &
+                                         rho_d,               &
+                                         detj_at_w3,          &
+                                         ndf_w2v,             &
+                                         undf_w2v,            &
+                                         map_w2v,             &
+                                         ndf_w3,              &
+                                         undf_w3,             &
+                                         map_w3 )
+
+    ! Check values!
+    @assertEqual( dep_pts_z, true_dep_pts_answer, tol )
+    @assertEqual( frac_dry_flux, true_frac_flux_answer, tol )
+
+    deallocate(map_w2v)
+    deallocate(map_w3)
+    deallocate(frac_dry_flux)
+    deallocate(dep_pts_z)
+    deallocate(height_w2v)
+    deallocate(detj_at_w3)
+    deallocate(dry_flux)
+    deallocate(rho_d)
+    deallocate(true_dep_pts_answer)
+    deallocate(true_frac_flux_answer)
+
+  end subroutine test_all
+
+end module consistent_vertical_deppt_kernel_mod_test

@@ -16,7 +16,8 @@ module transport_metadata_test
                                              split_method_sl,              &
                                              horizontal_monotone_none,     &
                                              vertical_monotone_none,       &
-                                             vertical_monotone_order_high
+                                             vertical_monotone_order_high, &
+                                             consistent_ffsl_splitting_swift
   use transport_metadata_mod,         only : transport_metadata_type
   use pFUnit_Mod
 
@@ -81,23 +82,25 @@ contains
     logical(kind=l_def)           :: logspace = .true.
     real(kind=r_tran)             :: min_value = 1.9_r_tran
     logical(kind=l_def)           :: reversible = .false.
+    integer(kind=i_def)           :: consistent_ffsl_splitting = consistent_ffsl_splitting_swift
     type(transport_metadata_type) :: our_metadata
 
 
     ! Set up metadata object and then get them
-    our_metadata = transport_metadata_type(fname,                &
-                                           equation_form,        &
-                                           splitting,            &
-                                           scheme,               &
-                                           horizontal_method,    &
-                                           vertical_method,      &
-                                           horizontal_monotone,  &
-                                           vertical_monotone,    &
-                                           monotone_order,       &
-                                           enforce_min_value,    &
-                                           min_value,            &
-                                           logspace,             &
-                                           reversible)
+    our_metadata = transport_metadata_type(fname,                   &
+                                           equation_form,           &
+                                           splitting,               &
+                                           scheme,                  &
+                                           horizontal_method,       &
+                                           vertical_method,         &
+                                           horizontal_monotone,     &
+                                           vertical_monotone,       &
+                                           monotone_order,          &
+                                           enforce_min_value,       &
+                                           min_value,               &
+                                           logspace,                &
+                                           reversible,              &
+                                           consistent_ffsl_splitting)
 
     ! Check all properties of metadata object
     @assertEqual(fname, our_metadata%get_name())
@@ -112,6 +115,7 @@ contains
     @assertEqual(enforce_min_value, our_metadata%get_enforce_min_value())
     @assertEqual(min_value, our_metadata%get_min_value())
     @assertEqual(logspace, our_metadata%get_log_space())
+    @assertEqual(consistent_ffsl_splitting, our_metadata%get_consistent_ffsl_splitting())
 
   end subroutine test_all
 

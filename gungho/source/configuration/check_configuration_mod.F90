@@ -7,56 +7,61 @@
 module check_configuration_mod
 
   use constants_mod,        only: i_def, l_def
-  use mixing_config_mod,    only: viscosity,              &
+  use mixing_config_mod,    only: viscosity,                       &
                                   viscosity_mu
-  use subgrid_config_mod,   only: dep_pt_stencil_extent, &
-                                  inner_order,           &
-                                  outer_order,           &
+  use subgrid_config_mod,   only: dep_pt_stencil_extent,           &
+                                  inner_order,                     &
+                                  outer_order,                     &
                                   vertical_order
-  use transport_config_mod, only: operators,                   &
-                                  operators_fv,                &
-                                  operators_fem,               &
-                                  consistent_metric,           &
-                                  fv_horizontal_order,         &
-                                  fv_vertical_order,           &
-                                  profile_size,                &
-                                  scheme,                      &
-                                  splitting,                   &
-                                  horizontal_method,           &
-                                  vertical_method,             &
-                                  reversible,                  &
-                                  log_space,                   &
-                                  max_vert_cfl_calc,           &
-                                  max_vert_cfl_calc_dep_point, &
-                                  equation_form,               &
-                                  extended_mesh,               &
-                                  dry_field_name,              &
-                                  field_names,                 &
-                                  use_density_predictor,       &
-                                  enforce_min_value,           &
-                                  horizontal_monotone,         &
-                                  vertical_monotone
-  use transport_enumerated_types_mod,                          &
-                            only: scheme_mol_3d,               &
-                                  scheme_ffsl_3d,              &
-                                  scheme_split,                &
-                                  split_method_mol,            &
-                                  split_method_ffsl,           &
-                                  split_method_sl,             &
-                                  equation_form_advective,     &
-                                  equation_form_conservative,  &
-                                  equation_form_consistent,    &
-                                  splitting_strang_hvh,        &
-                                  splitting_strang_vhv,        &
-                                  splitting_none,              &
-                                  vertical_monotone_koren,     &
-                                  vertical_monotone_relaxed,   &
-                                  vertical_monotone_strict,    &
-                                  vertical_monotone_clipping,  &
-                                  horizontal_monotone_koren,   &
-                                  horizontal_monotone_relaxed, &
-                                  horizontal_monotone_strict,  &
-                                  horizontal_monotone_clipping
+  use transport_config_mod, only: operators,                       &
+                                  operators_fv,                    &
+                                  operators_fem,                   &
+                                  consistent_metric,               &
+                                  fv_horizontal_order,             &
+                                  fv_vertical_order,               &
+                                  profile_size,                    &
+                                  scheme,                          &
+                                  splitting,                       &
+                                  horizontal_method,               &
+                                  vertical_method,                 &
+                                  reversible,                      &
+                                  log_space,                       &
+                                  max_vert_cfl_calc,               &
+                                  max_vert_cfl_calc_dep_point,     &
+                                  equation_form,                   &
+                                  extended_mesh,                   &
+                                  dry_field_name,                  &
+                                  field_names,                     &
+                                  use_density_predictor,           &
+                                  enforce_min_value,               &
+                                  horizontal_monotone,             &
+                                  vertical_monotone,               &
+                                  consistent_ffsl_splitting,       &
+                                  min_val_method,                  &
+                                  min_val_method_low_order_correction
+  use transport_enumerated_types_mod,                              &
+                            only: scheme_mol_3d,                   &
+                                  scheme_ffsl_3d,                  &
+                                  scheme_split,                    &
+                                  split_method_mol,                &
+                                  split_method_ffsl,               &
+                                  split_method_sl,                 &
+                                  equation_form_advective,         &
+                                  equation_form_conservative,      &
+                                  equation_form_consistent,        &
+                                  splitting_strang_hvh,            &
+                                  splitting_strang_vhv,            &
+                                  splitting_none,                  &
+                                  vertical_monotone_koren,         &
+                                  vertical_monotone_relaxed,       &
+                                  vertical_monotone_strict,        &
+                                  vertical_monotone_clipping,      &
+                                  horizontal_monotone_koren,       &
+                                  horizontal_monotone_relaxed,     &
+                                  horizontal_monotone_strict,      &
+                                  horizontal_monotone_clipping,    &
+                                  consistent_ffsl_splitting_swift, &
+                                  consistent_ffsl_splitting_cosmic
 
   implicit none
 
@@ -74,6 +79,8 @@ module check_configuration_mod
   public :: check_any_reversible_sl
   public :: check_any_splitting_hvh
   public :: check_any_splitting_vhv
+  public :: check_any_consistent_swift
+  public :: check_any_consistent_cosmic
   public :: check_any_shifted
   public :: check_any_eqn_consistent
   public :: check_any_wt_eqn_conservative
@@ -141,7 +148,7 @@ contains
     implicit none
 
       logical(kind=l_def) :: any_scheme_mol, any_horz_dep_pts
-      integer(kind=i_def) :: i
+      integer(kind=i_def) :: i, dry_field_splitting
 
       call log_event( 'Checking gungho configuration...', LOG_LEVEL_INFO )
 
@@ -296,6 +303,22 @@ contains
           call log_event( log_scratch_space, LOG_LEVEL_ERROR )
         end if
       end if
+
+      ! Find splitting used by dry field
+      dry_field_splitting = -1
+      do i = 1, profile_size
+        if ( trim(field_names(i)) == trim(dry_field_name) ) then
+          dry_field_splitting = splitting(i)
+          if ( equation_form(i) /= equation_form_conservative ) then
+            write( log_scratch_space, '(A)') trim(field_names(i)) // ' variable ' // &
+              'is the specified dry field, but is not using the conservative ' // &
+              'form of the transport equation'
+            call log_event(log_scratch_space, LOG_LEVEL_ERROR)
+          end if
+          exit
+        end if
+      end do
+
       ! Check some combinations of options, variable-by-variable
       do i = 1, profile_size
         if ( splitting(i) /= splitting_none .AND. scheme(i) /= scheme_split ) then
@@ -387,6 +410,32 @@ contains
           write( log_scratch_space, '(A)') trim(field_names(i)) // ' variable ' // &
             'is set to use Koren/clipping horizontal monotonicity, but this is ' // &
             'incompatible with the choice of horizontal method'
+          call log_event(log_scratch_space, LOG_LEVEL_ERROR)
+        end if
+
+        if ( equation_form(i) == equation_form_consistent .and. &
+             splitting(i) /= dry_field_splitting ) then
+          write( log_scratch_space, '(A)') trim(field_names(i)) // ' variable ' // &
+            'is set to use consistent transport, but it is using a different ' // &
+            'transport splitting to the specified dry field.'
+          call log_event(log_scratch_space, LOG_LEVEL_ERROR)
+        end if
+
+        if ( equation_form(i) == equation_form_consistent .and. &
+             scheme(i) == scheme_ffsl_3d ) then
+          write( log_scratch_space, '(A)') trim(field_names(i)) //  &
+            'variable is set to use consistent transport, but this is ' // &
+            'not yet implemented with 3D FFSL.'
+          call log_event(log_scratch_space, LOG_LEVEL_ERROR)
+        end if
+
+        if ( consistent_ffsl_splitting(i) /= consistent_ffsl_splitting_swift   &
+              .and. equation_form(i) == equation_form_consistent               &
+              .and. enforce_min_value(i)                                       &
+              .and. min_val_method == min_val_method_low_order_correction ) then
+          write( log_scratch_space, '(A)') trim(field_names(i)) // ' variable ' // &
+            'is set to use COSMIC splitting and low-order flux correction to ' // &
+            'obtain positivity. This is not a valid combination of options.'
           call log_event(log_scratch_space, LOG_LEVEL_ERROR)
         end if
 
@@ -756,6 +805,56 @@ contains
     end do
 
   end function check_any_splitting_vhv
+
+  !> @brief   Determine whether SWIFT splitting is being used
+  !> @details Loops through the transport schemes specified for different
+  !>          variables and determines whether any are using SWIFT
+  !> @return  Logical for whether SWIFT splitting is being used
+  function check_any_consistent_swift() result(any_swift)
+
+    implicit none
+
+    logical(kind=l_def) :: any_swift
+    integer(kind=i_def) :: i
+
+    any_swift = .false.
+
+    do i = 1, profile_size
+      if ( equation_form(i) == equation_form_consistent .and. &
+           horizontal_method(i) == split_method_ffsl    .and. &
+           scheme(i) == scheme_split                    .and. &
+           consistent_ffsl_splitting(i) == consistent_ffsl_splitting_swift ) then
+        any_swift = .true.
+        exit
+      end if
+    end do
+
+  end function check_any_consistent_swift
+
+  !> @brief   Determine whether consistent COSMIC splitting is being used
+  !> @details Loops through the transport schemes specified for different
+  !>          variables and determines whether any are using COSMIC splitting
+  !> @return  Logical for whether consistent COSMIC splitting is being used
+  function check_any_consistent_cosmic() result(any_cosmic)
+
+    implicit none
+
+    logical(kind=l_def) :: any_cosmic
+    integer(kind=i_def) :: i
+
+    any_cosmic = .false.
+
+    do i = 1, profile_size
+      if ( equation_form(i) == equation_form_consistent .and. &
+           horizontal_method(i) == split_method_ffsl    .and. &
+           scheme(i) == scheme_split                    .and. &
+           consistent_ffsl_splitting(i) == consistent_ffsl_splitting_cosmic ) then
+        any_cosmic = .true.
+        exit
+      end if
+    end do
+
+  end function check_any_consistent_cosmic
 
   !> @brief   Determine whether any of the transport schemes need shifted mesh
   !> @details Loops through the transport schemes specified for different

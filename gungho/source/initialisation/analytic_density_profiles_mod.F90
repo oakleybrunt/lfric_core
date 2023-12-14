@@ -154,7 +154,7 @@ function analytic_density(chi, choice, time) result(density)
                                   ZC_cold = 3000.0_r_def, &
                                   ZR = 2000.0_r_def
   real(kind=r_def)             :: long, lat, radius
-  real(kind=r_def)             :: l1, l2
+  real(kind=r_def)             :: l1, l2, h1, h2
   real(kind=r_def)             :: pressure, temperature, mr_v
   real(kind=r_def)             :: t0, g
   real(kind=r_def)             :: u, v, w
@@ -201,11 +201,24 @@ function analytic_density(chi, choice, time) result(density)
 
   ! For planar or horizontal transport miniapp tests we set background constant density
   case( test_eternal_fountain, test_rotational, test_cos_phi,                  &
-        test_curl_free_reversible, test_translational, test_cosine_hill,       &
+        test_curl_free_reversible, test_translational,                         &
         test_div_free_reversible, test_vertical_cylinder, test_yz_cosine_hill, &
         test_constant_field, test_slotted_cylinder )
 
     density = density_background
+
+  case( test_cosine_hill )
+    if ( l1 < r1 ) then
+      h1 = density_background + (density_max - density_background)*(1.0_r_def+cos((l1/r1)*PI))
+    else
+      h1 = density_background
+    end if
+    if (l2 < r2) then
+      h2 = density_background + (density_max - density_background)*(1.0_r_def+cos((l2/r2)*PI))
+    else
+      h2 = density_background
+    end if
+    density = 0.5_r_def*(h1 + h2)
 
   ! For 3D spherical transport miniapp tests we set height based density
   case( test_cosine_bell, test_hadley_like_dcmip, &

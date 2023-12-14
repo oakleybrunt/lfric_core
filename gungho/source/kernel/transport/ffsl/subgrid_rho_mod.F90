@@ -540,7 +540,7 @@ contains
         recon = field(2)
       else
         p0 = (-field(3) + 5.0_r_tran * field(2) + 2.0_r_tran * field(1)) / 6.0_r_tran
-        p1 = (2.0_r_tran*field(3) + 5.0_r_tran * field(2) -  field(2)) / 6.0_r_tran
+        p1 = (2.0_r_tran*field(3) + 5.0_r_tran * field(2) -  field(1)) / 6.0_r_tran
         pmin0 = min( field(1), field(2))
         pmax0 = max( field(1), field(2))
         pmin1 = min( field(3), field(2))

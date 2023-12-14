@@ -1,0 +1,227 @@
+!-----------------------------------------------------------------------------
+! (C) Crown copyright 2023 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-----------------------------------------------------------------------------
+
+!> Test the w3_to_w2 averaging kernel
+
+module w3_to_w2_average_kernel_mod_test
+
+  use constants_mod, only : i_def, r_def, r_single, r_double
+  use pFUnit_Mod
+
+  implicit none
+
+  private
+  public :: test_real64, test_real32
+
+  @TestCase
+  type, extends(TestCase), public :: w3_to_w2_average_kernel_test_type
+    private
+    integer(kind=i_def) :: nlayers
+    integer(kind=i_def) :: ncells
+    integer(kind=i_def) :: undf_w3, undf_w2
+    integer(kind=i_def) :: ndf_w3, ndf_w2
+    integer(kind=i_def), allocatable :: map_w3(:,:)
+    integer(kind=i_def), allocatable :: map_w2(:,:)
+    real(kind=r_def),    allocatable :: rmultiplicity(:)
+  contains
+    procedure SetUp
+    procedure tearDown
+    procedure test_real64
+    procedure test_real32
+  end type w3_to_w2_average_kernel_test_type
+
+  contains
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  subroutine setUp( this )
+
+    use get_unit_test_m3x3_dofmap_mod,       only : get_w2_m3x3_dofmap, &
+                                                    get_w3_m3x3_dofmap
+    use get_unit_test_m3x3_q3x3x3_sizes_mod, only : get_w2_m3x3_q3x3x3_size, &
+                                                    get_w3_m3x3_q3x3x3_size
+
+    implicit none
+
+    class(w3_to_w2_average_kernel_test_type), intent(inout) :: this
+
+    ! Quadrature (not used)
+    integer(kind=i_def) :: nqp_h, nqp_v
+
+    ! Dimensions (not used)
+    integer(kind=i_def) :: dim_space, dim_space_diff
+
+    ! Mesh
+    this%nlayers = 3
+
+    ! Setup W3 fields
+    call get_w3_m3x3_q3x3x3_size(this%ndf_w3, this%undf_w3, this%ncells, &
+                                 dim_space, dim_space_diff, &
+                                 nqp_h, nqp_v, this%nlayers)
+
+    allocate(this%map_w3(this%ndf_w3,this%ncells))
+
+    call get_w3_m3x3_dofmap(this%map_w3, this%nlayers)
+
+    ! Setup W2 fields
+    call get_w2_m3x3_q3x3x3_size(this%ndf_w2, this%undf_w2, this%ncells, &
+                                 dim_space, dim_space_diff, &
+                                 nqp_h, nqp_v, this%nlayers)
+
+    allocate(this%map_w2(this%ndf_w2,this%ncells))
+    allocate(this%rmultiplicity(this%undf_w2))
+
+    call get_w2_m3x3_dofmap(this%map_w2, this%nlayers)
+
+    this%rmultiplicity(:) = 0.5_r_def
+
+  end subroutine setUp
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  subroutine tearDown( this )
+
+    implicit none
+
+    class(w3_to_w2_average_kernel_test_type), intent(inout) :: this
+
+    deallocate(this%map_w3)
+    deallocate(this%map_w2)
+    deallocate(this%rmultiplicity)
+
+  end subroutine tearDown
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  @test
+  subroutine test_real32( this )
+
+    use w3_to_w2_average_kernel_mod, only : w3_to_w2_average_kernel_code
+
+    implicit none
+
+    class(w3_to_w2_average_kernel_test_type), intent(inout) :: this
+
+    real(kind=r_single), parameter :: tol = 1.0e-9_r_single
+    real(kind=r_single), parameter :: factor = -12.9e-4_r_single
+    real(kind=r_single)            :: answer(this%undf_w2)
+    real(kind=r_single)            :: field_w2(this%undf_w2)
+    real(kind=r_single)            :: field_w3(this%undf_w2)
+
+    integer(kind=r_def) :: cell, df, k
+
+    do cell = 1, this%ncells
+      do k = 0, this%nlayers - 1
+        field_w3(this%map_w3(1,cell)+k) = factor*real(k+1, r_single)
+      end do
+    end do
+
+    ! Define answer, only do this for central cell
+    cell = 5
+    do df = 1, 4
+      do k = 0, this%nlayers - 1
+        answer(this%map_w2(df,cell)+k) = factor*real(k+1, r_single)
+      end do
+    end do
+    df = 5
+    k = 0
+    answer(this%map_w2(df,cell)+k) = factor*real(k+1, r_single)
+    do k = 1, this%nlayers - 1
+      answer(this%map_w2(df,cell)+k) = &
+        0.5_r_single*factor*(real(k+1, r_single) + real(k, r_single))
+    end do
+    k = this%nlayers
+    answer(this%map_w2(df,cell)+k) = factor*real(k, r_single)
+
+    field_w2(:) = 0.0_r_single
+    do cell = 1, this%ncells
+      call w3_to_w2_average_kernel_code( this%nlayers,         &
+                                         field_w2,             &
+                                         field_w3,             &
+                                         this%rmultiplicity,   &
+                                         this%ndf_w2,          &
+                                         this%undf_w2,         &
+                                         this%map_w2(:,cell),  &
+                                         this%ndf_w3,          &
+                                         this%undf_w3,         &
+                                         this%map_w3(:,cell)   &
+                                       )
+    end do
+
+    ! Only check answer in central cell
+    cell = 5
+    do df = 1, this%ndf_w2
+      do k = 0, this%nlayers - 1
+        @assertEqual(field_w2(this%map_w2(df,cell)+k), answer(this%map_w2(df,cell)+k), tol)
+      end do
+    end do
+
+  end subroutine test_real32
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  @test
+  subroutine test_real64( this )
+
+    use w3_to_w2_average_kernel_mod, only : w3_to_w2_average_kernel_code
+
+    implicit none
+
+    class(w3_to_w2_average_kernel_test_type), intent(inout) :: this
+
+    real(kind=r_double), parameter :: tol = 1.0e-9_r_double
+    real(kind=r_double), parameter :: factor = -12.9e-4_r_double
+    real(kind=r_double)            :: answer(this%undf_w2)
+    real(kind=r_double)            :: field_w2(this%undf_w2)
+    real(kind=r_double)            :: field_w3(this%undf_w2)
+
+    integer(kind=r_def) :: cell, df, k
+
+    do cell = 1, this%ncells
+      do k = 0, this%nlayers - 1
+        field_w3(this%map_w3(1,cell)+k) = factor*real(k+1, r_double)
+      end do
+    end do
+
+    ! Define answer, only do this for central cell
+    cell = 5
+    do df = 1, 4
+      do k = 0, this%nlayers - 1
+        answer(this%map_w2(df,cell)+k) = factor*real(k+1, r_double)
+      end do
+    end do
+    df = 5
+    k = 0
+    answer(this%map_w2(df,cell)+k) = factor*real(k+1, r_double)
+    do k = 1, this%nlayers - 1
+      answer(this%map_w2(df,cell)+k) = &
+        0.5_r_double*factor*(real(k+1, r_double) + real(k, r_double))
+    end do
+    k = this%nlayers
+    answer(this%map_w2(df,cell)+k) = factor*real(k, r_double)
+
+    field_w2(:) = 0.0_r_double
+    do cell = 1, this%ncells
+      call w3_to_w2_average_kernel_code( this%nlayers,         &
+                                         field_w2,             &
+                                         field_w3,             &
+                                         this%rmultiplicity,   &
+                                         this%ndf_w2,          &
+                                         this%undf_w2,         &
+                                         this%map_w2(:,cell),  &
+                                         this%ndf_w3,          &
+                                         this%undf_w3,         &
+                                         this%map_w3(:,cell)   &
+                                       )
+    end do
+
+    ! Only check answer in central cell
+    cell = 5
+    do df = 1, this%ndf_w2
+      do k = 0, this%nlayers - 1
+        @assertEqual(field_w2(this%map_w2(df,cell)+k), answer(this%map_w2(df,cell)+k), tol)
+      end do
+    end do
+
+  end subroutine test_real64
+
+end module w3_to_w2_average_kernel_mod_test

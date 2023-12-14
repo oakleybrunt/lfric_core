@@ -81,10 +81,10 @@ def make_figures(filein, plotpath, field_list, slice_list,
 
     elif testname in ['baroclinic', 'aquaplanet', 'spherical', 'lam_gw',
                       'sbr', 'dcmip101', 'vert_def', 'hadley', 'cos_phi',
-                      'four_part_sbr']:
+                      'four_part_sbr', 'deformation']:
         spherical = True
 
-        if testname in ['spherical', 'cos_phi', 'four_part_sbr']:
+        if testname in ['spherical', 'cos_phi', 'four_part_sbr', 'deformation']:
             # This is a special 2D spherical shell
             zmin = 0.0
             zmax = 1.0

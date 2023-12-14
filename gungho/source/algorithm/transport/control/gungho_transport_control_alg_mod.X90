@@ -24,7 +24,7 @@ module gungho_transport_control_alg_mod
   use mesh_mod,                          only: mesh_type
   use multires_coupling_config_mod,      only: coarse_aerosol_transport, &
                                                aerosol_mesh_name
-  use transport_enumerated_types_mod,    only: scheme_mol_3d
+  use transport_config_mod,              only: transport_ageofair
   use transport_metadata_mod,            only: transport_metadata_type
   use transport_runtime_collection_mod,  only: init_transport_runtime_collection, &
                                                set_transport_runtime,             &
@@ -54,20 +54,21 @@ contains
 
     use reconstruct_w3_field_alg_mod, only: reconstruct_w3_field_alg_init
     use wt_advective_update_alg_mod,  only: wt_advective_update_alg_init
-    use transport_config_mod,         only: profile_size,          &
-                                            field_names,           &
-                                            equation_form,         &
-                                            scheme,                &
-                                            splitting,             &
-                                            horizontal_method,     &
-                                            vertical_method,       &
-                                            enforce_min_value,     &
-                                            min_value,             &
-                                            log_space,             &
-                                            reversible,            &
-                                            horizontal_monotone,   &
-                                            vertical_monotone,     &
-                                            vertical_monotone_order
+    use transport_config_mod,         only: profile_size,            &
+                                            field_names,             &
+                                            equation_form,           &
+                                            scheme,                  &
+                                            splitting,               &
+                                            horizontal_method,       &
+                                            vertical_method,         &
+                                            enforce_min_value,       &
+                                            min_value,               &
+                                            log_space,               &
+                                            reversible,              &
+                                            horizontal_monotone,     &
+                                            vertical_monotone,       &
+                                            vertical_monotone_order, &
+                                            consistent_ffsl_splitting
 
     implicit none
 
@@ -109,7 +110,8 @@ contains
                                                     enforce_min_value(config),       &
                                                     real(min_value(config), r_tran), &
                                                     log_space(config),               &
-                                                    reversible(config) )
+                                                    reversible(config),              &
+                                                    consistent_ffsl_splitting(config) )
 
       call transport_metadata_collection%set_transport_metadata(transport_metadata)
 
@@ -325,6 +327,7 @@ contains
     if ( check_any_shifted() ) then
       dynamics_transport_runtime => get_transport_runtime(primary_mesh)
       call dynamics_transport_runtime%shift_dry_fields()
+      call dynamics_transport_runtime%compute_consistent_quantities(shifted_mesh)
     end if
 
     ! ------------------------------------------------------------------------ !
@@ -413,6 +416,10 @@ contains
             aerosol_transport_runtime => get_transport_runtime(aerosol_primary_mesh)
             call aerosol_transport_runtime%restrict_dry_fields(dynamics_transport_runtime)
             call aerosol_transport_runtime%shift_dry_fields()
+            call aerosol_transport_runtime%compute_consistent_quantities(aerosol_shifted_mesh)
+            if (transport_ageofair) then
+              call aerosol_transport_runtime%compute_consistent_quantities(aerosol_primary_mesh)
+            end if
 
             nullify(aerosol_primary_mesh, aerosol_shifted_mesh, aerosol_w2_fs, &
                     dynamics_transport_runtime, aerosol_transport_runtime)
@@ -438,7 +445,11 @@ contains
                           'yet fully implemented with the cheap_update scheme'
             call log_event(log_scratch_space, LOG_LEVEL_ERROR)
 
+          end if
 
+          if ( transport_ageofair .and. &
+               .not. (use_multires_coupling .and. coarse_aerosol_transport) )  then
+            call dynamics_transport_runtime%compute_consistent_quantities(primary_mesh)
           end if
 
           ! Transport of tracers -----------------------------------------------

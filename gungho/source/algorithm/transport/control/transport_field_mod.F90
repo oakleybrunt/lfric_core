@@ -132,6 +132,9 @@ contains
         call ffsl_control(field_np1, field_n, direction_3d, &
                           model_dt, transport_metadata)
 
+      case ( equation_form_consistent )
+        call log_event('Consistent 3D FFSL not implemented', LOG_LEVEL_ERROR)
+
       case default
         call log_event('Trying to solve unrecognised form of transport equation', &
                         LOG_LEVEL_ERROR)

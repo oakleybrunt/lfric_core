@@ -64,7 +64,7 @@ contains
     map_w3(1)= 1
     map_w2v(:) = (/ 1, 2 /)
 
-    ! Set constant grid spacing for first Nirvana tests
+    ! Set constant grid spacing for tests
     dz   = (/ 1.0_r_tran, 1.0_r_tran, 1.0_r_tran, 1.0_r_tran, 1.0_r_tran /)
     detj = (/ 1.0_r_tran, 1.0_r_tran, 1.0_r_tran, 1.0_r_tran, 1.0_r_tran, 1.0_r_tran /)
     dt   = 1.0_r_tran

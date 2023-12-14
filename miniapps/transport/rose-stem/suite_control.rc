@@ -49,6 +49,7 @@
                                     'constant_wind_xy_ffsl',
                                     'deformation_yz_ffsl',
                                     'deformation_2d_ffsl',
+                                    'deformation_2d_ffsl_bigcfl',
                                     'sbr_gaussian_equator_ffsl',
                                     'sbr_gaussian_corner_ffsl',
                                     'sbr_gaussian_pole_ffsl',
@@ -335,6 +336,12 @@
                           "directives":{"default":{"mpi_parts":12,"threads":1,"wallclock":"01:00:00","use_xios":"True"} } },
                      plotstr="spherical_and_vertical_slice_ugrid_plot.py $NODAL_DATA_DIR/lfric_diag.nc $PLOT_DIR theta:tracer_con:tracer_adv:constant:m_v yz all linear hadley",
                      checkkgo=False )',
+    'run_application("transport", "deformation_2d_ffsl_bigcfl",
+                     resolutions=[("C32",0.1)],
+                     env={"nrun":50,
+                          "directives":{"default":{"mpi_parts":6,"use_xios":"True"} } },
+                     plotstr="spherical_and_vertical_slice_ugrid_plot.py $NODAL_DATA_DIR/lfric_diag.nc $PLOT_DIR theta:tracer_con:tracer_adv:constant:m_v xy -1 linear deformation",
+                     checkkgo=False )'
 ],
 
 'nightly': [

@@ -52,6 +52,9 @@ module transport_enumerated_types_mod
   integer(kind=i_def), parameter :: vertical_monotone_order_linear   = 2_i_def
   integer(kind=i_def), parameter :: vertical_monotone_order_high     = 3_i_def
 
+  integer(kind=i_def), parameter :: consistent_ffsl_splitting_swift  = 1_i_def
+  integer(kind=i_def), parameter :: consistent_ffsl_splitting_cosmic = 2_i_def
+
 contains
 
 end module transport_enumerated_types_mod

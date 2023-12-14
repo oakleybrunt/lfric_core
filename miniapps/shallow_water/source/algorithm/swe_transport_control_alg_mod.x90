@@ -73,20 +73,21 @@ contains
 
     use reconstruct_w3_field_alg_mod, only: reconstruct_w3_field_alg_init
     use wt_advective_update_alg_mod,  only: wt_advective_update_alg_init
-    use transport_config_mod,         only: profile_size,          &
-                                            field_names,           &
-                                            equation_form,         &
-                                            scheme,                &
-                                            splitting,             &
-                                            horizontal_method,     &
-                                            vertical_method,       &
-                                            enforce_min_value,     &
-                                            min_value,             &
-                                            log_space,             &
-                                            reversible,            &
-                                            horizontal_monotone,   &
-                                            vertical_monotone,     &
-                                            vertical_monotone_order
+    use transport_config_mod,         only: profile_size,            &
+                                            field_names,             &
+                                            equation_form,           &
+                                            scheme,                  &
+                                            splitting,               &
+                                            horizontal_method,       &
+                                            vertical_method,         &
+                                            enforce_min_value,       &
+                                            min_value,               &
+                                            log_space,               &
+                                            reversible,              &
+                                            horizontal_monotone,     &
+                                            vertical_monotone,       &
+                                            vertical_monotone_order, &
+                                            consistent_ffsl_splitting
 
     implicit none
 
@@ -119,7 +120,8 @@ contains
                                                     enforce_min_value(config),       &
                                                     min_value(config),               &
                                                     log_space(config),               &
-                                                    reversible(config) )
+                                                    reversible(config),              &
+                                                    consistent_ffsl_splitting(config) )
 
       call transport_metadata_collection%set_transport_metadata(transport_metadata)
 

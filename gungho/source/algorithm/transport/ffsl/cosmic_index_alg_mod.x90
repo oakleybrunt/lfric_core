@@ -20,7 +20,6 @@ module cosmic_index_alg_mod
   use field_mod,                          only: field_type
   use integer_field_mod,                  only: integer_field_type
   use geometric_constants_mod,            only: get_panel_id
-  use subgrid_config_mod,                 only: outer_order
 
   ! Kernels
   use cosmic_index_kernel_mod, only: cosmic_index_kernel_type
@@ -48,14 +47,14 @@ contains
   !!                                     for a field advected in the y direction
   !> @param[in,out] index_end_y          End index for orientation change in stencil
   !!                                     for a field advected in the y direction
-  !> @param[in]     dep_stencil_extent_x The stencil extent due to the departure points in x
-  !> @param[in]     dep_stencil_extent_y The stencil extent due to the departure points in y
+  !> @param[in]     full_stencil_ext_x   The full stencil extent in x
+  !> @param[in]     full_stencil_ext_y   The full stencil extent in y
   subroutine cosmic_index_alg( index_start_x,        &
                                index_end_x,          &
                                index_start_y,        &
                                index_end_y,          &
-                               dep_stencil_extent_x, &
-                               dep_stencil_extent_y )
+                               full_stencil_ext_x,   &
+                               full_stencil_ext_y )
 
     implicit none
 
@@ -64,33 +63,25 @@ contains
     type( integer_field_type ), intent(inout) :: index_end_x
     type( integer_field_type ), intent(inout) :: index_start_y
     type( integer_field_type ), intent(inout) :: index_end_y
-    integer(kind=i_def),        intent(in)    :: dep_stencil_extent_x
-    integer(kind=i_def),        intent(in)    :: dep_stencil_extent_y
+    integer(kind=i_def),        intent(in)    :: full_stencil_ext_x
+    integer(kind=i_def),        intent(in)    :: full_stencil_ext_y
 
     ! Panel ID pointers
     type(field_type), pointer :: panel_id_x => null()
     type(field_type), pointer :: panel_id_y => null()
 
-    ! Stencil extent
-    integer(kind=i_def) :: stencil_extent_x
-    integer(kind=i_def) :: stencil_extent_y
-
     ! Panel ID is required for both x and y stencils
     panel_id_x => get_panel_id(index_start_x%get_mesh_id())
     panel_id_y => get_panel_id(index_start_x%get_mesh_id())
 
-    ! Get correct stencil extent size
-    stencil_extent_x = dep_stencil_extent_x + 1_i_def + outer_order
-    stencil_extent_y = dep_stencil_extent_y + 1_i_def + outer_order
-
-    call invoke( cosmic_index_kernel_type( index_start_x,    &
-                                           index_end_x,      &
-                                           index_start_y,    &
-                                           index_end_y,      &
-                                           panel_id_x,       &
-                                           stencil_extent_x, &
-                                           panel_id_y,       &
-                                           stencil_extent_y) )
+    call invoke( cosmic_index_kernel_type( index_start_x,      &
+                                           index_end_x,        &
+                                           index_start_y,      &
+                                           index_end_y,        &
+                                           panel_id_x,         &
+                                           full_stencil_ext_x, &
+                                           panel_id_y,         &
+                                           full_stencil_ext_y) )
 
   end subroutine cosmic_index_alg
 
