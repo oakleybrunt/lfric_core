@@ -15,7 +15,8 @@ LFRic Core documentation!
    pages/applications/applications
 
    pages/tools/index
- 
+   pages/io/io
+
    pages/lfric_datamodel/lfric_datamodel.rst
    pages/lfric_distmem_impl/lfric_distmem_impl.rst
 
