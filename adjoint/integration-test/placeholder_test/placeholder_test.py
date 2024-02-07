@@ -20,12 +20,14 @@ class PlaceHolderTest(LFRicLoggingTest):
     '''
     Run a placeholder integration test
     '''
-    _RESULT_PATTERN = re.compile( r'\bResult\s*=\s*([-0-9.]+\b)', re.IGNORECASE)
+    _RESULT_PATTERN = re.compile(r'\bResult\s*=\s*([-0-9.]+\b)', re.IGNORECASE)
+
     def __init__(self):
         if 'MPIEXEC_BROKEN' in os.environ:
             PlaceHolderTest.set_mpiexec_broken()
+        config_name = 'placeholder_test_configuration.nml'
         super(PlaceHolderTest, self).__init__([sys.argv[1],
-                                              'placeholder_test_configuration.nml'],
+                                              config_name],
                                               processes=1,
                                               name='PlaceholderTest.Log')
 
@@ -45,12 +47,13 @@ class PlaceHolderTest(LFRicLoggingTest):
                 expected = 0.0
                 if (float(match.group(1)) - expected) < 0.001:
                     return 'Science and tech worked together'
-                else:
-                    raise TestFailed('Expected >{}< but found >{}<' \
-                                     .format(expected, match.group(1)))
+
+                raise TestFailed('Expected >{}< but found >{}<'
+                                 .format(expected, match.group(1)))
 
         # Case for when there is no match
         raise TestFailed('Unable to find result in output: ' + out)
 
+
 if __name__ == '__main__':
-    TestEngine.run( PlaceHolderTest() )
+    TestEngine.run(PlaceHolderTest())

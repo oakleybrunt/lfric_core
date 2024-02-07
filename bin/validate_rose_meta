@@ -64,7 +64,7 @@ default_app_names=( \
     mesh_tools:mesh                   \
     linear:none                       \
     linear_model:linear_model         \
-    adjoint:adjoint                   \
+    adjoint:none                      \
     simple_diffusion:simple_diffusion \
     skeleton:skeleton                 \
     jedi_lfric_tests:jedi_lfric_tests \
