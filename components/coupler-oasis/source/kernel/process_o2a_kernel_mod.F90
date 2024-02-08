@@ -29,7 +29,7 @@ private
 !> The type declaration for the kernel. Contains the metadata needed by the Psy layer
 type, public, extends(kernel_type) :: process_o2a_kernel_type
   private
-  type(arg_type) :: meta_args(13) = (/                    &
+  type(arg_type) :: meta_args(12) = (/                    &
        arg_type(GH_FIELD, GH_REAL, GH_READWRITE, ANY_DISCONTINUOUS_SPACE_1), &
        arg_type(GH_FIELD, GH_REAL, GH_READWRITE, ANY_DISCONTINUOUS_SPACE_2), &
        arg_type(GH_FIELD, GH_REAL, GH_READWRITE, ANY_DISCONTINUOUS_SPACE_2), &
@@ -38,7 +38,6 @@ type, public, extends(kernel_type) :: process_o2a_kernel_type
        arg_type(GH_FIELD, GH_REAL, GH_READWRITE, ANY_DISCONTINUOUS_SPACE_2), &
        arg_type(GH_FIELD, GH_REAL, GH_READWRITE, ANY_DISCONTINUOUS_SPACE_2), &
        arg_type(GH_FIELD, GH_REAL, GH_READWRITE, ANY_DISCONTINUOUS_SPACE_2), &
-       arg_type(GH_FIELD, GH_INTEGER, GH_READWRITE, ANY_DISCONTINUOUS_SPACE_1), &
        arg_type(GH_SCALAR, GH_INTEGER, GH_READ),                             &
        arg_type(GH_SCALAR, GH_REAL, GH_READ),                                &
        arg_type(GH_SCALAR, GH_REAL, GH_READ),                                &
@@ -65,7 +64,6 @@ contains
 !! @param[in,out] sea_ice_snow_depth   the amount of snow on sea ice
 !! @param[in,out] melt_pond_fraction   the fraction of melt ponds on the sea ice
 !! @param[in,out] melt_pond_depth      the depth of the melt ponds on the sea ice
-!! @param[in,out] ocn_cpl_point        the mask to determine whether coupled
 !! @param[in] n_sea_ice_tile Number of sea ice tiles
 !! @param[in] T_freeze_h2o_sea Temperature at which sea water freezes, [K]
 !! @param[in] therm_cond_sice Thermal conductivity of sea-ice (W/m/K)
@@ -77,13 +75,11 @@ contains
 !! @param[in] undf_ice Number of unique degrees of freedom  for the sea ice
 !! @param[in] map_ice Dofmap for the cell at the base of the column for the sea ice
 
-
 subroutine process_o2a_code(nlayers, sea_surf_temp,                  &
                               sea_ice_fraction, sea_ice_thickness,   &
                               sea_ice_layer_t, sea_ice_conductivity, &
                               sea_ice_snow_depth,                    &
                               melt_pond_fraction, melt_pond_depth,   &
-                              ocn_cpl_point,                         &
                               n_sea_ice_tile,                        &
                               T_freeze_h2o_sea,                      &
                               therm_cond_sice,                       &
@@ -109,7 +105,6 @@ subroutine process_o2a_code(nlayers, sea_surf_temp,                  &
   real(kind=r_def), dimension(undf_ice), intent(inout) :: sea_ice_snow_depth
   real(kind=r_def), dimension(undf_ice), intent(inout) :: melt_pond_fraction
   real(kind=r_def), dimension(undf_ice), intent(inout) :: melt_pond_depth
-  integer(kind=i_def), dimension(undf_ocn), intent(inout) :: ocn_cpl_point
   integer(kind=i_def), intent(in) :: n_sea_ice_tile
   real(kind=r_def), intent(in) :: T_freeze_h2o_sea
   real(kind=r_def), intent(in) :: therm_cond_sice
@@ -130,11 +125,6 @@ subroutine process_o2a_code(nlayers, sea_surf_temp,                  &
   real(kind=r_def)    :: total_sea_ice_fraction
   real(kind=r_def)    :: recip_sea_ice_fraction
 
-  if (sea_surf_temp(map_ocn(1))>1.0_r_def) then
-    ocn_cpl_point(map_ocn(1))=1_i_def
-  else
-    ocn_cpl_point(map_ocn(1))=0_i_def
-  end if
 
 
   total_sea_ice_fraction = 0.0_r_def

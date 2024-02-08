@@ -40,7 +40,7 @@ module jules_imp_kernel_mod
   !>
   type, public, extends(kernel_type) :: jules_imp_kernel_type
     private
-    type(arg_type) :: meta_args(70) = (/                                         &
+    type(arg_type) :: meta_args(69) = (/                                         &
          arg_type(GH_SCALAR, GH_INTEGER, GH_READ),                                &! outer
          arg_type(GH_SCALAR, GH_INTEGER, GH_READ),                                &! loop
          arg_type(GH_FIELD,  GH_REAL,    GH_READ,      W3),                       &! wetrho_in_w3
@@ -109,8 +109,7 @@ module jules_imp_kernel_mod
          arg_type(GH_FIELD,  GH_REAL,    GH_WRITE,     ANY_DISCONTINUOUS_SPACE_2),&! surf_sw_net
          arg_type(GH_FIELD,  GH_REAL,    GH_WRITE,     ANY_DISCONTINUOUS_SPACE_2),&! surf_radnet
          arg_type(GH_FIELD,  GH_REAL,    GH_WRITE,     ANY_DISCONTINUOUS_SPACE_2),&! surf_lw_up
-         arg_type(GH_FIELD,  GH_REAL,    GH_WRITE,     ANY_DISCONTINUOUS_SPACE_2),&! surf_lw_down
-         arg_type(GH_FIELD,  GH_INTEGER, GH_WRITE,     ANY_DISCONTINUOUS_SPACE_1) &! ocn_cpl_point
+         arg_type(GH_FIELD,  GH_REAL,    GH_WRITE,     ANY_DISCONTINUOUS_SPACE_2) &! surf_lw_down
          /)
 
     integer :: operates_on = DOMAIN
@@ -191,7 +190,6 @@ contains
   !> @param[in,out] surf_radnet          Diagnostic: Net surface radiation
   !> @param[in,out] surf_lw_up           Diagnostic: Upward surface longtwave radiation
   !> @param[in,out] surf_lw_down         Diagnostic: Downward surface longwave radiation
-  !> @param[in,out] ocn_cpl_point        Diagnostic: Coupling point mask
   !> @param[in]     ndf_wth              Number of DOFs per cell for potential temperature space
   !> @param[in]     undf_wth             Number of unique DOFs for potential temperature space
   !> @param[in]     map_wth              Dofmap for the cell at the base of the column for potential temperature space
@@ -276,7 +274,6 @@ contains
                             soil_surf_ht_flux,                  &
                             surf_sw_net, surf_radnet,           &
                             surf_lw_up, surf_lw_down,           &
-                            ocn_cpl_point,                      &
                             ndf_w3,                             &
                             undf_w3,                            &
                             map_w3,                             &
@@ -432,7 +429,6 @@ contains
     real(kind=r_def), intent(inout) :: sea_ice_temperature(undf_sice)
 
     real(kind=r_def), intent(in) :: sw_down_surf(undf_2d)
-    integer(kind=i_def), intent(in) :: ocn_cpl_point(undf_2d)
     real(kind=r_def), intent(in) :: lw_down_surf(undf_2d)
     real(kind=r_def), intent(in) :: skyview(undf_2d)
     real(kind=r_def), intent(in) :: tile_lw_grey_albedo(undf_tile)
@@ -983,15 +979,16 @@ contains
 
     else ! loop=2
 
-      ! Ocean coupling point 
-      do i = 1, seg_len
-        if (ocn_cpl_point(map_2d(1,i)) == 1_i_def) then
-          ainfo%ocn_cpl_point(i,1) = .true.
-        else
-          ainfo%ocn_cpl_point(i,1) = .false.
-        end if
-      end do
-      
+      ! Ocean coupling point
+      ! Temporarily set to true for all points in coupled models.
+      ! This will need to be fed from ocn_cpl_point lfric variable
+      ! as part of LFRIC#3250
+      if ( l_esm_couple ) then
+        ainfo%ocn_cpl_point = .true.
+      else
+        ainfo%ocn_cpl_point = .false.
+      end if
+
       ! Sea-ice bulk temperature and thickness
       do i = 1, seg_len
         if (ainfo%ice_fract_ij(i, 1) > 0.0_r_um) then

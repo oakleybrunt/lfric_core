@@ -777,8 +777,6 @@ contains
         mult='surface_tiles', twod=.true., ckp=checkpoint_couple))
 
     ! 2D fields, don't need checkpointing
-    call processor%apply(make_spec('ocn_cpl_point', main%surface, W3,           &
-        twod=.true., is_int=.true.))
     call processor%apply(make_spec('z0m_eff', main%surface, W3, twod=.true.))
     call processor%apply(make_spec('net_prim_prod', main%surface, W3, twod=.true.))
     call processor%apply(make_spec('taux_ssi', main%surface, W3, twod=.true.))

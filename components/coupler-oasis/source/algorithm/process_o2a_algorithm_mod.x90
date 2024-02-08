@@ -11,7 +11,6 @@ module process_o2a_algorithm_mod
   use coupler_external_field_mod,    only: set_r_sea_ice_frac_raw
   use field_mod,                     only: field_type
   use field_collection_mod,          only: field_collection_type
-  use integer_field_mod,             only: integer_field_type
   use process_o2a_kernel_mod,        only: process_o2a_kernel_type
   use geometric_constants_mod,       only: get_da_at_w2
   use map_fd_to_prognostics_alg_mod, only: set_wind
@@ -57,7 +56,7 @@ module process_o2a_algorithm_mod
    type( field_type ), pointer        :: sea_current_w2_ptr => null()
    type( field_type ), pointer        :: dA => null()
    type( field_type ), pointer        :: theta_ptr => null()
-   type( integer_field_type ), pointer        :: ocn_cpl_point_ptr => null()
+
    type(mesh_type), pointer :: mesh => null()
 
    ! Get the pointers to the fields
@@ -76,7 +75,6 @@ module process_o2a_algorithm_mod
    call depository%get_field("sea_w_3d",sea_w_w3_ptr)
    call depository%get_field("sea_current_w2",sea_current_w2_ptr)
    call depository%get_field("theta",theta_ptr)
-   call depository%get_field("ocn_cpl_point",ocn_cpl_point_ptr)
 
    mesh => theta_ptr%get_mesh()
    dA => get_da_at_w2( mesh%get_id() )
@@ -117,7 +115,6 @@ module process_o2a_algorithm_mod
                                         sea_ice_snow_depth_ptr,   &
                                         melt_pond_fraction_ptr,   &
                                         melt_pond_depth_ptr,      &
-                                        ocn_cpl_point_ptr,        &
                                         n_sea_ice_tile,           &
                                         T_freeze_h2o_sea,         &
                                         therm_cond_sice,          &
