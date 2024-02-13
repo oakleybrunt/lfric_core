@@ -309,7 +309,7 @@ contains
         l_separate_process_rain, l_mcr_qcf2,                                 &
         l_mcr_qgraup, casim_max_sed_length, fixed_number, wvarfac,           &
         l_orograin, l_orogrime, l_orograin_block,                            &
-        fcrit, nsigmasf, nscalesf, l_progn_tnuc
+        fcrit, nsigmasf, nscalesf, l_progn_tnuc, mp_czero, mp_tau_lim
     use mphys_psd_mod, only: x1g, x2g, x4g, x1gl, x2gl, x4gl
     use mphys_switches, only: set_mphys_switches,            &
         max_step_length, max_sed_length,                     &
@@ -889,6 +889,8 @@ contains
     bi             = 2.00_r_um
     cx(84)         = 1.0_r_um
     constp(35)     = 1.0_r_um
+    mp_czero       = 10.0_r_um
+    mp_tau_lim     = 1200.0_r_um
     ! The following are needed for the visibility diagnostic, hence we
     ! initialise them even when microphysics isn't used.  They are used in
     ! beta_precip which can still have convective rain/snow.
