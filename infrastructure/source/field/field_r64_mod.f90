@@ -15,33 +15,34 @@ module field_r64_mod
 
   use, intrinsic :: iso_fortran_env, only : real64
 
-  use constants_mod,      only: i_def, i_halo_index, l_def, &
-                                str_def, real_type
-  use field_parent_mod,   only: field_parent_type, &
-                                field_parent_proxy_type, &
-                                write_interface, read_interface, &
-                                checkpoint_write_interface, &
-                                checkpoint_read_interface, &
-                                name_none
-  use function_space_mod, only: function_space_type
+  use constants_mod,        only: i_def, i_halo_index, l_def, &
+                                  str_def, real_type
+  use field_parent_mod,     only: field_parent_type, &
+                                  field_parent_proxy_type, &
+                                  write_interface, read_interface, &
+                                  checkpoint_write_interface, &
+                                  checkpoint_read_interface, &
+                                  name_none
+  use function_space_mod,   only: function_space_type
   use halo_routing_collection_mod, &
-                          only: halo_routing_collection_type, &
-                                halo_routing_collection
-  use halo_comms_mod,     only: halo_routing_type, &
-                                halo_exchange_id_type, &
-                                perform_halo_exchange, &
-                                perform_halo_exchange_start, &
-                                perform_halo_exchange_finish
+                            only: halo_routing_collection_type, &
+                                  halo_routing_collection
+  use halo_comms_mod,       only: halo_routing_type, &
+                                  halo_exchange_id_type, &
+                                  perform_halo_exchange, &
+                                  perform_halo_exchange_start, &
+                                  perform_halo_exchange_finish
 
-  use log_mod,            only: log_event, &
-                                log_scratch_space, &
-                                log_level, &
-                                LOG_LEVEL_INFO, &
-                                LOG_LEVEL_ERROR
-  use scalar_r64_mod,     only: scalar_r64_type
+  use log_mod,              only: log_event, &
+                                  log_scratch_space, &
+                                  log_level, &
+                                  LOG_LEVEL_INFO, &
+                                  LOG_LEVEL_ERROR
+  use scalar_r64_mod,       only: scalar_r64_type
+  use signalling_value_mod, only: get_signalling_value
 
   use pure_abstract_field_mod, &
-                          only: pure_abstract_field_type
+                            only: pure_abstract_field_type
 
   implicit none
 
@@ -265,7 +266,7 @@ contains
                                name, &
                                override_data)
 
-    use, intrinsic :: ieee_arithmetic, only: ieee_value, IEEE_SIGNALING_NAN, IEEE_INVALID
+    use, intrinsic :: ieee_arithmetic, only: IEEE_INVALID
     use, intrinsic :: ieee_exceptions, only: ieee_set_halting_mode, ieee_get_halting_mode
 
     implicit none
@@ -277,10 +278,10 @@ contains
 
     character(str_def) :: local_name
 
-    ! Defines whether to halt when invalid floating point numbers are experienced
+    ! Defines whether to halt when signalling numbers are experienced
     logical :: halt_mode
-    ! To be set to an invalid floating point number
-    real(real64) :: NaN
+    ! The signalling number
+    real(real64) :: signalling_value
 
     if ( present(name) ) then
       local_name = name
@@ -304,15 +305,16 @@ contains
     else
       ! Create space for holding field data
 
-      ! If run-time checking for NaNs is on then initialise data with NaN
+      ! If run-time checking is on then initialise data with a signalling value
       call ieee_get_halting_mode(IEEE_INVALID, halt_mode)
 
       if (halt_mode) then
         ! Temporarily turn off halting mode to safely set invalid value
         call ieee_set_halting_mode(IEEE_INVALID, .false.)
 
+        signalling_value = get_signalling_value(signalling_value)
         allocate( self%data(vector_space%get_last_dof_halo()), &
-             source=ieee_value(NaN, IEEE_SIGNALING_NAN))
+                  source=signalling_value)
 
         call ieee_set_halting_mode(IEEE_INVALID, .true.)
       else

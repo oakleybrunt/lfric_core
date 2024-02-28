@@ -31,6 +31,7 @@ module integer_field_mod
                                 write_interface, read_interface, &
                                 checkpoint_write_interface, &
                                 checkpoint_read_interface
+  use signalling_value_mod, only: get_signalling_value
   use pure_abstract_field_mod, &
                           only: pure_abstract_field_type
 
@@ -253,6 +254,9 @@ contains
                                name, &
                                override_data)
 
+    use, intrinsic :: ieee_arithmetic, only: IEEE_INVALID
+    use, intrinsic :: ieee_exceptions, only: ieee_set_halting_mode, ieee_get_halting_mode
+
     implicit none
 
     class(integer_field_type), intent(inout)       :: self
@@ -262,13 +266,18 @@ contains
 
     character(str_def) :: local_name
 
+    ! Defines whether to halt when signalling numbers are experienced
+    logical :: halt_mode
+    ! The signalling number
+    integer(i_def) :: signalling_value
+
     if ( present(name) ) then
       local_name = name
     else
       local_name = 'none'
     end if
 
-   ! In case the field is already initialised, destruct it ready for
+    ! In case the field is already initialised, destruct it ready for
     ! re-initialisation
     call field_destructor_scalar(self)
 
@@ -283,7 +292,24 @@ contains
       self%override_data => override_data
     else
       ! Create space for holding field data
-      allocate( self%data(vector_space%get_last_dof_halo()) )
+
+      ! If run-time checking is on then initialise data with a signalling value
+      call ieee_get_halting_mode(IEEE_INVALID, halt_mode)
+
+      if (halt_mode) then
+        ! Temporarily turn off halting mode to safely set invalid value
+        call ieee_set_halting_mode(IEEE_INVALID, .false.)
+
+        signalling_value = get_signalling_value(signalling_value)
+        allocate( self%data(vector_space%get_last_dof_halo()), &
+                  source=signalling_value)
+
+        call ieee_set_halting_mode(IEEE_INVALID, .true.)
+      else
+        ! Normal field allocation
+        allocate( self%data(vector_space%get_last_dof_halo()))
+      end if
+
       self%override_data => null()
     end if
 
