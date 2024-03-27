@@ -12,7 +12,7 @@ module init_gungho_prognostics_alg_mod
                                              LOG_LEVEL_INFO
   use constants_mod,                   only: r_def, i_def, radians_to_degrees
   use domain_mod,                      only: domain_type
-  use mass_matrix_solver_alg_mod,      only: mass_matrix_solver_alg
+  use sci_mass_matrix_solver_alg_mod,  only: mass_matrix_solver_alg
   use sample_init_u_alg_mod,           only: sample_init_u_alg
   use geometric_constants_mod,         only: get_coordinates, &
                                              get_panel_id,    &

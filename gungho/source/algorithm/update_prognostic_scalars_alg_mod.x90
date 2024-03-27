@@ -36,7 +36,8 @@ contains
                                             get_inverse_w3_mass_matrix
     use geometric_constants_mod,      only: get_coordinates, &
                                             get_panel_id
-    use mass_matrix_solver_alg_mod,   only: mass_matrix_solver_alg
+    use sci_mass_matrix_solver_alg_mod, &
+                                      only: mass_matrix_solver_alg
     use project_eos_pressure_kernel_mod, &
                                       only: project_eos_pressure_kernel_type
     use sample_eos_pressure_kernel_mod,  &

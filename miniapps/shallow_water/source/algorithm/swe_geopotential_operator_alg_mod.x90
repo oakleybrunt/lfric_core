@@ -21,15 +21,15 @@ module swe_geopot_operator_alg_mod
                                                 get_div
   use field_mod,                          only: field_type
   use field_indices_mod,                  only: isw_u, isw_g
-  use field_vector_mod,                   only: field_vector_type
   use fs_continuity_mod,                  only: W1, W2, W3
-  use linear_operator_mod,                only: abstract_linear_operator_type
   use log_mod,                            only: log_event,       &
                                                 LOG_LEVEL_ERROR, &
                                                 LOG_LEVEL_INFO,  &
                                                 log_scratch_space
   use mesh_mod,                           only: mesh_type
   use operator_mod,                       only: operator_type
+  use sci_field_vector_mod,               only: field_vector_type
+  use sci_linear_operator_mod,            only: abstract_linear_operator_type
   use shallow_water_settings_config_mod,  only: ref_gp, &
                                                 thermal_swe
   use timestepping_config_mod,            only: dt

@@ -13,17 +13,17 @@ module init_solver_miniapp_mod
 
   use constants_mod,                  only : i_def, r_def
   use field_mod,                      only : field_type
-  use field_vector_mod,               only : field_vector_type
   use finite_element_config_mod,      only : element_order
   use function_space_collection_mod,  only : function_space_collection_type, &
                                              function_space_collection
   use fs_continuity_mod,              only : W0, W3
+  use init_solver_fields_alg_mod,     only : init_solver_fields_alg
   use log_mod,                        only : log_event,         &
                                              LOG_LEVEL_INFO, &
                                              LOG_LEVEL_ERROR, &
                                              log_scratch_space
   use mesh_mod,                       only : mesh_type
-  use init_solver_fields_alg_mod,     only : init_solver_fields_alg
+  use sci_field_vector_mod,           only : field_vector_type
 
   implicit none
 

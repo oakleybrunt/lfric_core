@@ -278,9 +278,9 @@ contains
     use formulation_config_mod,           only: use_multires_coupling
     use init_gungho_prognostics_alg_mod,  only: init_u_field
     use intermesh_mappings_alg_mod,       only: map_w2_intermesh
-    use mass_matrix_solver_alg_mod,       only: mass_matrix_solver_alg
     use model_clock_mod,                  only: model_clock_type
     use moist_mr_transport_alg_mod,       only: moist_mr_transport_alg
+    use sci_mass_matrix_solver_alg_mod,   only: mass_matrix_solver_alg
     use theta_transport_alg_mod,          only: theta_transport_alg
     use transport_enumerated_types_mod,   only: equation_form_conservative
     use transport_field_mod,              only: transport_field

@@ -78,7 +78,7 @@ module skeb_ndisp_alg_mod
   use dg_matrix_vector_kernel_mod,        only: dg_matrix_vector_kernel_type
   use transpose_matrix_vector_kernel_mod, only: transpose_matrix_vector_kernel_type
   use strong_curl_kernel_mod,             only: strong_curl_kernel_type
-  use mass_matrix_solver_alg_mod,         only: mass_matrix_solver_alg
+  use sci_mass_matrix_solver_alg_mod,     only: mass_matrix_solver_alg
   use dg_convert_hdiv_field_kernel_mod,   only: dg_convert_hdiv_field_kernel_type
 
   ! kernels to compute norm in different spaces

@@ -99,7 +99,7 @@ module gungho_init_fields_mod
                                           only : compute_column_integral_kernel_type
   use geometric_constants_mod,            only : get_height
   use planet_config_mod,                  only : radius
-  use field_to_scalar_alg_mod,            only : field_to_scalar_alg
+  use sci_field_to_scalar_alg_mod,        only : field_to_scalar_alg
   use fs_continuity_mod,                  only : W1, W2
 
   implicit none

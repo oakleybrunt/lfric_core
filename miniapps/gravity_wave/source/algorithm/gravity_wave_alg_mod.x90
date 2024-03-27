@@ -31,12 +31,12 @@ module gravity_wave_alg_mod
 
   ! Derived Types
   use field_mod,                      only: field_type
-  use field_vector_mod,               only: field_vector_type
-  use r_solver_field_vector_mod,      only: r_solver_field_vector_type
   use derived_config_mod,             only: bundle_size
   use function_space_mod,             only: function_space_type
   use operator_mod,                   only: operator_type
   use mesh_mod,                       only: mesh_type
+  use sci_field_vector_mod,           only: field_vector_type
+  use sci_r_solver_field_vector_mod,  only: r_solver_field_vector_type
 
   ! Algorithms
   use gw_mixed_operator_alg_mod,      only: gw_mixed_operator_type
@@ -44,12 +44,14 @@ module gravity_wave_alg_mod
   use gw_mixed_diag_precon_alg_mod,   only: gw_mixed_diag_preconditioner_type
   use gw_pressure_operator_alg_mod,   only: gw_pressure_operator_type
   use gw_pressure_precon_alg_mod,     only: gw_pressure_preconditioner_type
-  use null_preconditioner_alg_mod,    only: null_preconditioner_type
-  use multigrid_preconditioner_alg_mod, only: multigrid_preconditioner_type
+  use sci_null_preconditioner_alg_mod, &
+                                      only: null_preconditioner_type
+  use sci_multigrid_preconditioner_alg_mod, &
+                                      only: multigrid_preconditioner_type
 
   ! Preconditioner and solver
-  use preconditioner_mod,             only: abstract_preconditioner_type
-  use iterative_solver_mod,           only: abstract_iterative_solver_type, &
+  use sci_preconditioner_mod,         only: abstract_preconditioner_type
+  use sci_iterative_solver_mod,       only: abstract_iterative_solver_type, &
                                             bicgstab_type,                  &
                                             gmres_type,                     &
                                             fgmres_type,                    &
@@ -474,7 +476,7 @@ contains
     use enforce_bc_kernel_mod,              only: enforce_bc_kernel_type
     use fs_continuity_mod,                  only: W0, W2, W3, Wtheta
     use boundaries_config_mod,              only: limited_area
-    use psykal_lite_mod,                    only: invoke_copy_to_rdef, &
+    use sci_psykal_light_mod,               only: invoke_copy_to_rdef, &
                                                   invoke_copy_to_rsolver
 
     implicit none

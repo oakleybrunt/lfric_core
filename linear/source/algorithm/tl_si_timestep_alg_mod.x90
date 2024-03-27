@@ -62,7 +62,8 @@ module tl_si_timestep_alg_mod
   use operator_mod,                only: operator_type
 
   ! Algorithms
-  use mass_matrix_solver_alg_mod,  only: mass_matrix_solver_alg
+  use sci_mass_matrix_solver_alg_mod, &
+                                   only: mass_matrix_solver_alg
   use rhs_alg_mod,                 only: rhs_alg
   use tl_rhs_alg_mod,              only: tl_rhs_alg
   use gungho_transport_control_alg_mod, &

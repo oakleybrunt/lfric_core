@@ -75,17 +75,17 @@ module swe_mixed_schur_precon_alg_mod
                                                 get_div
   use field_mod,                          only: field_type
   use field_indices_mod,                  only: isw_u, isw_g, isw_b
-  use field_vector_mod,                   only: field_vector_type
   use fs_continuity_mod,                  only: W1, W2, W3
   use io_config_mod,                      only: subroutine_timers
-  use iterative_solver_mod,               only: abstract_iterative_solver_type
   use log_mod,                            only: log_event,       &
                                                 LOG_LEVEL_ERROR, &
                                                 LOG_LEVEL_INFO,  &
                                                 LOG_LEVEL_DEBUG, &
                                                 log_scratch_space
   use operator_mod,                       only: operator_type
-  use preconditioner_mod,                 only: abstract_preconditioner_type
+  use sci_field_vector_mod,               only: field_vector_type
+  use sci_iterative_solver_mod,           only: abstract_iterative_solver_type
+  use sci_preconditioner_mod,             only: abstract_preconditioner_type
   use shallow_water_settings_config_mod,  only: ref_gp, &
                                                 thermal_swe
   use timestepping_config_mod,            only: dt

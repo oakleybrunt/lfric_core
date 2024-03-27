@@ -36,17 +36,17 @@ module swe_mixed_operator_alg_mod
                                                get_curl
   use field_mod,                         only: field_type
   use field_indices_mod,                 only: isw_u, isw_g, isw_b
-  use field_vector_mod,                  only: field_vector_type
   use fs_continuity_mod,                 only: W1, W2, W3
   use geometric_constants_mod,           only: get_coordinates, &
                                                get_panel_id
-  use linear_operator_mod,               only: abstract_linear_operator_type
   use log_mod,                           only: log_event,       &
                                                LOG_LEVEL_ERROR, &
                                                log_scratch_space
   use mesh_mod,                          only: mesh_type
   use operator_mod,                      only: operator_type
   use physical_op_constants_mod,         only: get_coriolis
+  use sci_field_vector_mod,              only: field_vector_type
+  use sci_linear_operator_mod,           only: abstract_linear_operator_type
   use vector_mod,                        only: abstract_vector_type
 
   implicit none

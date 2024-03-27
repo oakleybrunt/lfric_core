@@ -42,7 +42,7 @@ module limited_area_constants_mod
   use timer_mod,                         only: timer
 
 
-  use psykal_lite_mod,                   only: invoke_copy_to_rsolver
+  use sci_psykal_light_mod,              only: invoke_copy_to_rsolver
   ! Configuration
   use base_mesh_config_mod,              only: geometry, geometry_spherical
   use boundaries_config_mod,             only: normal_only, lbc_method, &

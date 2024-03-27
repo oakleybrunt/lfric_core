@@ -14,7 +14,6 @@
 module psykal_lite_mod
 
   use field_mod,                    only : field_type, field_proxy_type
-  use r_solver_field_mod,           only : r_solver_field_type, r_solver_field_proxy_type
   use r_tran_field_mod,             only : r_tran_field_type, r_tran_field_proxy_type
   use integer_field_mod,            only : integer_field_type, integer_field_proxy_type
   use scalar_mod,                   only : scalar_type
@@ -30,6 +29,8 @@ module psykal_lite_mod
                                            quadrature_xyoz_proxy_type
   use quadrature_face_mod,          only : quadrature_face_type, &
                                            quadrature_face_proxy_type
+  use r_solver_field_mod,           only : r_solver_field_type, &
+                                           r_solver_field_proxy_type
 
   implicit none
   public
@@ -604,294 +605,287 @@ contains
     !
   end subroutine invoke_elim_helmholtz_operator_kernel_type
 
-  !-------------------------------------------------------------------------------
-  !> This PSyKAl-lite code is required because, currently, PSYclone does not support
-  !> the output of scalar variables from kernels.(See PSyclone issue #1818)
-  !> This subroutine recovers a scalar value from a field. This is required
-  !> as scalars can't currently be written to checkpoint files. The workaround is to
-  !> copy the scalar to a field, which may then be checkpointed. On a restart the
-  !> scalar value needs to be recovered from the checkpointed field.
-    subroutine invoke_getvalue(field, val)
-      implicit none
-      real(r_def), intent(out)     :: val
-      type(field_type), intent(in) :: field
-      type(field_proxy_type)       :: field_proxy
-      field_proxy = field%get_proxy()
-      val = field_proxy%data(1)
-    end subroutine invoke_getvalue
+    !>@brief Remap a scalar field from the standard cubed sphere mesh onto an extended
+    !!       mesh
+    !!       This routine loops only over halo cells (and always to the full
+    !!       depth of the halo). It is not clear if this functionality will ever
+    !!       be supported by psyclone or if it should be treated as a special
+    !!       case (as with computation of coordinate fields). Issue 2300 has been
+    !!       opened to investigate this.
+    subroutine invoke_init_remap_on_extended_mesh_kernel_type(remap_weights, remap_indices, &
+                                                              chi_ext, chi, chi_stencil_depth, &
+                                                              panel_id, pid_stencil_depth, &
+                                                              linear_remap, ndata)
 
-    ! Psyclone does not currently have native support for builtins with mixed
-    ! precision, this will be addressed in https://github.com/stfc/PSyclone/issues/1786
-    ! Perform innerproduct of a r_solver precision field in r_double precision
-    subroutine invoke_rdouble_X_innerproduct_X(field_norm, field)
-
-      use scalar_mod,         only: scalar_type
-      use omp_lib,            only: omp_get_thread_num
-      use omp_lib,            only: omp_get_max_threads
-      use mesh_mod,           only: mesh_type
-      use r_solver_field_mod, only: r_solver_field_type, r_solver_field_proxy_type
+      use init_remap_on_extended_mesh_kernel_mod, only: init_remap_on_extended_mesh_code
+      use function_space_mod,                     only: BASIS, DIFF_BASIS
+      use mesh_mod,                               only: mesh_type
+      use stencil_2D_dofmap_mod,                  only: stencil_2D_dofmap_type, STENCIL_2D_CROSS
 
       implicit none
 
-      real(kind=r_def), intent(out) :: field_norm
-      type(r_solver_field_type), intent(in) :: field
+      type(r_tran_field_type), intent(in) :: remap_weights
+      type(field_type), intent(in) :: chi_ext(3), chi(3), panel_id
+      type(integer_field_type), intent(in) :: remap_indices
+      logical(kind=l_def), intent(in) :: linear_remap
+      integer(kind=i_def), intent(in) :: ndata
+      integer(kind=i_def), intent(in) :: chi_stencil_depth, pid_stencil_depth
+      integer(kind=i_def) :: cell
+      integer(kind=i_def) :: df_nodal, df_wchi
+      real(kind=r_def), allocatable :: basis_wchi(:,:,:)
+      integer(kind=i_def) :: dim_wchi
+      real(kind=r_def), pointer :: nodes_remap(:,:) => null()
+      integer(kind=i_def) :: nlayers
+      type(r_tran_field_proxy_type) :: remap_weights_proxy
+      type(integer_field_proxy_type) :: remap_indices_proxy
+      type(field_proxy_type) :: chi_ext_proxy(3), chi_proxy(3), panel_id_proxy
+      integer(kind=i_def), pointer :: map_remap(:,:) => null(), map_panel_id(:,:) => null(), map_wchi(:,:) => null()
+      integer(kind=i_def) :: ndf_remap, undf_remap, ndf_wchi, undf_wchi, ndf_panel_id, undf_panel_id
+      type(mesh_type), pointer :: mesh => null()
+      type(stencil_2d_dofmap_type), pointer :: stencil_map => null()
+      integer(kind=i_def), pointer :: wchi_stencil_size(:,:) => null()
+      integer(kind=i_def), pointer :: wchi_stencil_dofmap(:,:,:,:) => null()
+      integer(kind=i_def)          :: wchi_stencil_max_branch_length
+      integer(kind=i_def), pointer :: pid_stencil_size(:,:) => null()
+      integer(kind=i_def), pointer :: pid_stencil_dofmap(:,:,:,:) => null()
+      integer(kind=i_def)          :: pid_stencil_max_branch_length
+      integer(kind=i_def)          :: cell_start, cell_end
 
-      type(scalar_type)                           :: global_sum
-      integer(kind=i_def)                         :: df
-      real(kind=r_double), allocatable, dimension(:) :: l_field_norm
-      integer(kind=i_def)                         :: th_idx
-      integer(kind=i_def)                         :: loop0_start, loop0_stop
-      integer(kind=i_def)                         :: nthreads
-      type(r_solver_field_proxy_type)             :: field_proxy
-      integer(kind=i_def)                         :: max_halo_depth_mesh
-      type(mesh_type), pointer                    :: mesh => null()
-      !
-      ! Determine the number of OpenMP threads
-      !
-      nthreads = omp_get_max_threads()
-      !
       ! Initialise field and/or operator proxies
-      !
-      field_proxy = field%get_proxy()
-      !
+      remap_weights_proxy = remap_weights%get_proxy()
+      remap_indices_proxy = remap_indices%get_proxy()
+      chi_ext_proxy(1) = chi_ext(1)%get_proxy()
+      chi_ext_proxy(2) = chi_ext(2)%get_proxy()
+      chi_ext_proxy(3) = chi_ext(3)%get_proxy()
+      chi_proxy(1) = chi(1)%get_proxy()
+      chi_proxy(2) = chi(2)%get_proxy()
+      chi_proxy(3) = chi(3)%get_proxy()
+      panel_id_proxy = panel_id%get_proxy()
+
+      ! Initialise number of layers
+      nlayers = remap_weights_proxy%vspace%get_nlayers()
+
       ! Create a mesh object
-      !
-      mesh => field_proxy%vspace%get_mesh()
-      max_halo_depth_mesh = mesh%get_halo_depth()
-      !
-      ! Set-up all of the loop bounds
-      !
-      loop0_start = 1
-      loop0_stop = field_proxy%vspace%get_last_dof_owned()
-      !
-      ! Call kernels and communication routines
-      !
-      !
-      ! Zero summation variables
-      !
-      field_norm = 0.0_r_def
-      ALLOCATE (l_field_norm(nthreads))
-      l_field_norm = 0.0_r_double
-      !
-      !$omp parallel default(shared), private(df,th_idx)
-      th_idx = omp_get_thread_num()+1
-      !$omp do schedule(static)
-      DO df=loop0_start,loop0_stop
-        l_field_norm(th_idx) = l_field_norm(th_idx) + real(field_proxy%data(df),r_double)**2
-      END DO
-      !$omp end do
-      !$omp end parallel
-      !
-      ! sum the partial results sequentially
-      !
-      DO th_idx=1,nthreads
-        field_norm = field_norm+real(l_field_norm(th_idx),r_def)
-      END DO
-      DEALLOCATE (l_field_norm)
-      global_sum%value = field_norm
-      field_norm = global_sum%get_sum()
-      !
-    end subroutine invoke_rdouble_X_innerproduct_X
+      mesh => remap_weights_proxy%vspace%get_mesh()
 
-    ! Psyclone does not currently have native support for builtins with mixed
-    ! precision, this will be addressed in https://github.com/stfc/PSyclone/issues/1786
-    ! Perform innerproduct of a r_solver precision field in r_def precision
-    subroutine invoke_rdouble_X_innerproduct_Y(field_norm, field1, field2)
-
-      use scalar_mod,         only: scalar_type
-      use omp_lib,            only: omp_get_thread_num
-      use omp_lib,            only: omp_get_max_threads
-      use mesh_mod,           only: mesh_type
-      use r_solver_field_mod, only: r_solver_field_type, r_solver_field_proxy_type
-
-      implicit none
-
-      real(kind=r_def), intent(out) :: field_norm
-      type(r_solver_field_type), intent(in) :: field1, field2
-
-      type(scalar_type)                           :: global_sum
-      integer(kind=i_def)                         :: df
-      real(kind=r_double), allocatable, dimension(:) :: l_field_norm
-      integer(kind=i_def)                         :: th_idx
-      integer(kind=i_def)                         :: loop0_start, loop0_stop
-      integer(kind=i_def)                         :: nthreads
-      type(r_solver_field_proxy_type)             :: field1_proxy, field2_proxy
-      integer(kind=i_def)                         :: max_halo_depth_mesh
-      type(mesh_type), pointer                    :: mesh => null()
-      !
-      ! Determine the number of OpenMP threads
-      !
-      nthreads = omp_get_max_threads()
-      !
-      ! Initialise field and/or operator proxies
-      !
-      field1_proxy = field1%get_proxy()
-      field2_proxy = field2%get_proxy()
-      !
-      ! Create a mesh object
-      !
-      mesh => field1_proxy%vspace%get_mesh()
-      max_halo_depth_mesh = mesh%get_halo_depth()
-      !
-      ! Set-up all of the loop bounds
-      !
-      loop0_start = 1
-      loop0_stop = field1_proxy%vspace%get_last_dof_owned()
-      !
-      ! Call kernels and communication routines
-      !
-      !
-      ! Zero summation variables
-      !
-      field_norm = 0.0_r_def
-      ALLOCATE (l_field_norm(nthreads))
-      l_field_norm = 0.0_r_double
-      !
-      !$omp parallel default(shared), private(df,th_idx)
-      th_idx = omp_get_thread_num()+1
-      !$omp do schedule(static)
-      DO df=loop0_start,loop0_stop
-        l_field_norm(th_idx) = l_field_norm(th_idx) + real(field1_proxy%data(df),r_double)*real(field2_proxy%data(df),r_double)
-      END DO
-      !$omp end do
-      !$omp end parallel
-      !
-      ! sum the partial results sequentially
-      !
-      DO th_idx=1,nthreads
-        field_norm = field_norm+real(l_field_norm(th_idx),r_def)
-      END DO
-      DEALLOCATE (l_field_norm)
-      global_sum%value = field_norm
-      field_norm = global_sum%get_sum()
-      !
-    end subroutine invoke_rdouble_X_innerproduct_Y
-
-    ! Psyclone does not currently have native support for builtins with mixed
-    ! precision, this will be addressed in https://github.com/stfc/PSyclone/issues/1786
-    ! Copy a field_type to a r_solver_field_type
-    subroutine invoke_copy_to_rsolver(rsolver_field, field)
-
-      use omp_lib,            only: omp_get_thread_num
-      use omp_lib,            only: omp_get_max_threads
-      use mesh_mod,           only: mesh_type
-      use r_solver_field_mod, only: r_solver_field_type, r_solver_field_proxy_type
-      use field_mod,          only: field_type, field_proxy_type
-
-      implicit none
-
-      type(r_solver_field_type), intent(inout) :: rsolver_field
-      type(field_type),          intent(in)    :: field
-
-      integer(kind=i_def)             :: df
-      integer(kind=i_def)             :: loop0_start, loop0_stop
-      type(r_solver_field_proxy_type) :: rsolver_field_proxy
-      type(field_proxy_type)          :: field_proxy
-      integer(kind=i_def)             :: max_halo_depth_mesh
-      type(mesh_type), pointer        :: mesh => null()
-      !
       ! Initialise stencil dofmaps
-      !
-      rsolver_field_proxy = rsolver_field%get_proxy()
-      field_proxy = field%get_proxy()
-      !
-      ! Create a mesh object
-      !
-      mesh => rsolver_field_proxy%vspace%get_mesh()
-      max_halo_depth_mesh = mesh%get_halo_depth()
-      !
-      ! Set-up all of the loop bounds
-      !
-      loop0_start = 1
-      IF (field_proxy%is_dirty(depth=1)) THEN
-        ! only copy the owned dofs
-        loop0_stop = rsolver_field_proxy%vspace%get_last_dof_annexed()
-      ELSE
-        ! copy the 1st halo row as well
-        loop0_stop = rsolver_field_proxy%vspace%get_last_dof_halo(1)
-      END IF
-      !
+      stencil_map => chi_ext_proxy(1)%vspace%get_stencil_2d_dofmap(STENCIL_2D_CROSS, chi_stencil_depth)
+      wchi_stencil_max_branch_length = chi_stencil_depth + 1_i_def
+      wchi_stencil_dofmap => stencil_map%get_whole_dofmap()
+      wchi_stencil_size => stencil_map%get_stencil_sizes()
+
+      stencil_map => panel_id_proxy%vspace%get_stencil_2d_dofmap(STENCIL_2D_CROSS, pid_stencil_depth)
+      pid_stencil_max_branch_length = pid_stencil_depth + 1_i_def
+      pid_stencil_dofmap => stencil_map%get_whole_dofmap()
+      pid_stencil_size => stencil_map%get_stencil_sizes()
+
+      ! Look-up dofmaps for each function space
+      map_remap => remap_weights_proxy%vspace%get_whole_dofmap()
+      map_wchi => chi_ext_proxy(1)%vspace%get_whole_dofmap()
+      map_panel_id => panel_id_proxy%vspace%get_whole_dofmap()
+
+      ! Initialise number of DoFs for remap
+      ndf_remap = remap_weights_proxy%vspace%get_ndf()
+      undf_remap = remap_weights_proxy%vspace%get_undf()
+
+      ! Initialise number of DoFs for wchi
+      ndf_wchi = chi_ext_proxy(1)%vspace%get_ndf()
+      undf_wchi = chi_ext_proxy(1)%vspace%get_undf()
+
+      ! Initialise number of DoFs for panel_id
+      ndf_panel_id = panel_id_proxy%vspace%get_ndf()
+      undf_panel_id = panel_id_proxy%vspace%get_undf()
+
+      ! Initialise evaluator-related quantities for the target function spaces
+      nodes_remap => remap_weights_proxy%vspace%get_nodes()
+
+      ! Allocate basis/diff-basis arrays
+      dim_wchi = chi_ext_proxy(1)%vspace%get_dim_space()
+      allocate (basis_wchi(dim_wchi, ndf_wchi, ndf_remap))
+
+      ! Compute basis/diff-basis arrays
+      do df_nodal = 1,ndf_remap
+        do df_wchi = 1,ndf_wchi
+          basis_wchi(:,df_wchi,df_nodal) = chi_ext_proxy(1)%vspace%call_function(BASIS,df_wchi,nodes_remap(:,df_nodal))
+        end do
+      end do
+
       ! Call kernels and communication routines
-      !
-      !$omp parallel default(shared), private(df)
+      if (panel_id_proxy%is_dirty(depth=mesh%get_halo_depth())) THEN
+        call panel_id_proxy%halo_exchange(depth=mesh%get_halo_depth())
+      end if
+
+      cell_start = mesh%get_last_edge_cell() + 1
+      cell_end   = mesh%get_last_halo_cell(mesh%get_halo_depth())
+
+      !$omp parallel default(shared), private(cell)
       !$omp do schedule(static)
-      DO df=loop0_start,loop0_stop
-        rsolver_field_proxy%data(df) = real(field_proxy%data(df), r_solver)
-      END DO
+      do cell = cell_start, cell_end
+        call init_remap_on_extended_mesh_code(nlayers, &
+                                         remap_weights_proxy%data, &
+                                         remap_indices_proxy%data, &
+                                         chi_ext_proxy(1)%data, &
+                                         chi_ext_proxy(2)%data, &
+                                         chi_ext_proxy(3)%data, &
+                                         chi_proxy(1)%data, &
+                                         chi_proxy(2)%data, &
+                                         chi_proxy(3)%data, &
+                                         wchi_stencil_size(:,cell), &
+                                         wchi_stencil_dofmap(:,:,:,cell), &
+                                         wchi_stencil_max_branch_length, &
+                                         panel_id_proxy%data, &
+                                         pid_stencil_size(:,cell), &
+                                         pid_stencil_dofmap(:,:,:,cell), &
+                                         pid_stencil_max_branch_length, &
+                                         linear_remap, &
+                                         ndata, &
+                                         ndf_remap, &
+                                         undf_remap, &
+                                         map_remap(:,cell), &
+                                         ndf_wchi, &
+                                         undf_wchi,&
+                                         map_wchi(:,cell), &
+                                         basis_wchi, &
+                                         ndf_panel_id, &
+                                         undf_panel_id, map_panel_id(:,cell))
+      end do
       !$omp end do
-      !$omp end parallel
-      !
+
       ! Set halos dirty/clean for fields modified in the above loop
+      !$omp master
+      call remap_weights_proxy%set_clean(mesh%get_halo_depth())
+      call remap_indices_proxy%set_clean(mesh%get_halo_depth())
+      !$omp end master
       !
-      CALL rsolver_field_proxy%set_dirty()
-      IF (.not. field_proxy%is_dirty(depth=1)) THEN
-        CALL rsolver_field_proxy%set_clean(1)
-      END IF
-      !
-    end subroutine invoke_copy_to_rsolver
+      !$omp end parallel
 
-    ! Psyclone does not currently have native support for builtins with mixed
-    ! precision, this will be addressed in https://github.com/stfc/PSyclone/issues/1786
-    ! Copy a r_solver_field_type to a field_type
-    subroutine invoke_copy_to_rdef(rdef_field, field)
+      ! Deallocate basis arrays
+      deallocate (basis_wchi)
 
-      use omp_lib,            only: omp_get_thread_num
-      use omp_lib,            only: omp_get_max_threads
-      use mesh_mod,           only: mesh_type
-      use r_solver_field_mod, only: r_solver_field_type, r_solver_field_proxy_type
-      use field_mod,          only: field_type, field_proxy_type
+    end subroutine invoke_init_remap_on_extended_mesh_kernel_type
 
+
+   !>@brief Remap a scalar field from the standard cubed sphere mesh onto an extended
+    !!       mesh
+    !!       This routine loops only over halo cells (and always to the full
+    !!       depth of the halo). It is not clear if this functionality will ever
+    !!       be supported by psyclone or if it should be treated as a special
+    !!       case (as with computation of coordinate fields). Issue 2300 has been
+    !!       opened to investigate this.
+    subroutine invoke_remap_on_extended_mesh_kernel_type(remap_field, field, stencil_depth, &
+                                                         remap_weights, remap_indices, &
+                                                         panel_id, &
+                                                         ndata, &
+                                                         monotone, enforce_minvalue, minvalue, &
+                                                         halo_compute_depth )
+
+      use remap_on_extended_mesh_kernel_mod, only: remap_on_extended_mesh_code
+      use mesh_mod,                          only: mesh_type
+      use stencil_2D_dofmap_mod,             only: stencil_2D_dofmap_type, STENCIL_2D_CROSS
       implicit none
 
-      type(field_type),          intent(inout) :: rdef_field
-      type(r_solver_field_type), intent(in)    :: field
+      type(r_tran_field_type), intent(in) :: remap_field, field, remap_weights
+      type(integer_field_type), intent(in) :: remap_indices
+      type(field_type), intent(in) :: panel_id
+      integer(kind=i_def), intent(in) :: ndata
+      logical(kind=l_def), intent(in) :: monotone
+      logical(kind=l_def), intent(in) :: enforce_minvalue
+      real(kind=r_tran),   intent(in) :: minvalue
+      integer(kind=i_def), intent(in) :: halo_compute_depth
+      integer(kind=i_def) :: cell, stencil_depth
+      integer(kind=i_def) :: nlayers
+      type(r_tran_field_proxy_type) :: remap_field_proxy, field_proxy, remap_weights_proxy
+      type(integer_field_proxy_type) :: remap_indices_proxy
+      type(field_proxy_type) :: panel_id_proxy
+      integer(kind=i_def), pointer :: map_remap_field(:,:) => null(), map_panel_id(:,:) => null(), map_remap(:,:) => null()
+      integer(kind=i_def) :: ndf_remap_field, undf_remap_field, ndf_remap, undf_remap, ndf_panel_id, undf_panel_id
+      type(mesh_type), pointer :: mesh => null()
+      type(stencil_2d_dofmap_type), pointer :: stencil_map => null()
+      integer(kind=i_def), pointer :: stencil_size(:,:) => null()
+      integer(kind=i_def), pointer :: stencil_dofmap(:,:,:,:) => null()
+      integer(kind=i_def)          :: stencil_max_branch_length
+      integer(kind=i_def)          :: cell_start, cell_end
 
-      integer(kind=i_def)             :: df
-      integer(kind=i_def)             :: loop0_start, loop0_stop
-      type(r_solver_field_proxy_type) :: field_proxy
-      type(field_proxy_type)          :: rdef_field_proxy
-      integer(kind=i_def)             :: max_halo_depth_mesh
-      type(mesh_type), pointer        :: mesh => null()
-      !
       ! Initialise field and/or operator proxies
-      !
-      rdef_field_proxy = rdef_field%get_proxy()
+      remap_field_proxy = remap_field%get_proxy()
       field_proxy = field%get_proxy()
-      !
+      remap_weights_proxy = remap_weights%get_proxy()
+      remap_indices_proxy = remap_indices%get_proxy()
+      panel_id_proxy = panel_id%get_proxy()
+
+      ! Initialise number of layers
+      nlayers = remap_field_proxy%vspace%get_nlayers()
+
       ! Create a mesh object
-      !
-      mesh => rdef_field_proxy%vspace%get_mesh()
-      max_halo_depth_mesh = mesh%get_halo_depth()
-      !
-      ! Set-up all of the loop bounds
-      !
-      loop0_start = 1
-      IF (field_proxy%is_dirty(depth=1)) THEN
-        ! only copy the owned dofs
-        loop0_stop = rdef_field_proxy%vspace%get_last_dof_annexed()
-      ELSE
-        ! copy the 1st halo row as well
-        loop0_stop = rdef_field_proxy%vspace%get_last_dof_halo(1)
-      END IF
-      !
+      mesh => remap_field_proxy%vspace%get_mesh()
+
+      ! Initialise stencil dofmaps
+      stencil_map => field_proxy%vspace%get_stencil_2d_dofmap(STENCIL_2D_CROSS, stencil_depth)
+      stencil_max_branch_length = stencil_depth + 1_i_def
+      stencil_dofmap => stencil_map%get_whole_dofmap()
+      stencil_size => stencil_map%get_stencil_sizes()
+
+      ! Look-up dofmaps for each function space
+      map_remap_field => remap_field_proxy%vspace%get_whole_dofmap()
+      map_remap => remap_weights_proxy%vspace%get_whole_dofmap()
+      map_panel_id => panel_id_proxy%vspace%get_whole_dofmap()
+
+      ! Initialise number of DoFs for remap_field
+      ndf_remap_field = remap_field_proxy%vspace%get_ndf()
+      undf_remap_field = remap_field_proxy%vspace%get_undf()
+
+      ! Initialise number of DoFs for interpolation fields
+      ndf_remap = remap_weights_proxy%vspace%get_ndf()
+      undf_remap = remap_weights_proxy%vspace%get_undf()
+
+      ! Initialise number of DoFs for panel_id
+      ndf_panel_id = panel_id_proxy%vspace%get_ndf()
+      undf_panel_id = panel_id_proxy%vspace%get_undf()
+
       ! Call kernels and communication routines
-      !
-      !$omp parallel default(shared), private(df)
+      if (field_proxy%is_dirty(depth=mesh%get_halo_depth())) THEN
+        call field_proxy%halo_exchange(depth=mesh%get_halo_depth())
+      end if
+      if (panel_id_proxy%is_dirty(depth=halo_compute_depth)) THEN
+        call panel_id_proxy%halo_exchange(depth=halo_compute_depth)
+      end if
+      cell_start = mesh%get_last_edge_cell() + 1
+      cell_end   = mesh%get_last_halo_cell(halo_compute_depth)
+
+      !$omp parallel default(shared), private(cell)
       !$omp do schedule(static)
-      DO df=loop0_start,loop0_stop
-        rdef_field_proxy%data(df) = real(field_proxy%data(df), r_def)
-      END DO
+      do cell = cell_start, cell_end
+        call remap_on_extended_mesh_code(nlayers, &
+                                         remap_field_proxy%data, &
+                                         field_proxy%data, &
+                                         stencil_size(:,cell), &
+                                         stencil_dofmap(:,:,:,cell), &
+                                         stencil_max_branch_length, &
+                                         remap_weights_proxy%data, &
+                                         remap_indices_proxy%data, &
+                                         panel_id_proxy%data, &
+                                         ndata, &
+                                         monotone, &
+                                         enforce_minvalue, &
+                                         minvalue, &
+                                         ndf_remap_field, &
+                                         undf_remap_field, &
+                                         map_remap_field(:,cell), &
+                                         ndf_remap, &
+                                         undf_remap, &
+                                         map_remap(:,cell), &
+                                         ndf_panel_id, &
+                                         undf_panel_id, map_panel_id(:,cell))
+      end do
       !$omp end do
-      !$omp end parallel
-      !
+
       ! Set halos dirty/clean for fields modified in the above loop
+      !$omp master
+      call remap_field_proxy%set_clean(halo_compute_depth)
+      !$omp end master
       !
-      CALL rdef_field_proxy%set_dirty()
-      IF (.not. field_proxy%is_dirty(depth=1)) THEN
-        CALL rdef_field_proxy%set_clean(1)
-      END IF
-      !
-    end subroutine invoke_copy_to_rdef
+      !$omp end parallel
+    end subroutine invoke_remap_on_extended_mesh_kernel_type
 
 
     ! Psyclone does not currently have native support for builtins with mixed
@@ -1421,56 +1415,6 @@ stencil_dofmap(:,:,cell), ndf_adspc1_target_field, &
     !
   end subroutine invoke_r64_field_min_max
   !-------------------------------------------------------------------------------
-  subroutine invoke_inc_rdefX_plus_rsolverY(X, Y)
-
-    use mesh_mod, only: mesh_type
-
-    implicit none
-
-    type(field_type),          intent(inout) :: X
-    type(r_solver_field_type), intent(in)    :: Y
-    integer(kind=i_def) :: df
-    integer(kind=i_def) :: loop0_start, loop0_stop
-    type(field_proxy_type) :: X_proxy
-    type(r_solver_field_proxy_type) :: Y_proxy
-    integer(kind=i_def) :: max_halo_depth_mesh
-    type(mesh_type), pointer :: mesh => null()
-    !
-    ! Initialise field and/or operator proxies
-    !
-    X_proxy = X%get_proxy()
-    Y_proxy = Y%get_proxy()
-    !
-    ! Create a mesh object
-    !
-    mesh => X_proxy%vspace%get_mesh()
-    max_halo_depth_mesh = mesh%get_halo_depth()
-    !
-    ! Set-up all of the loop bounds
-    !
-    loop0_start = 1
-    loop0_stop = X_proxy%vspace%get_last_dof_annexed()
-    !
-    ! Call kernels and communication routines
-    !
-    !$omp parallel default(shared), private(df)
-    !$omp do schedule(static)
-    DO df=loop0_start,loop0_stop
-      X_proxy%data(df) = X_proxy%data(df) + real(Y_proxy%data(df),r_def)
-    END DO
-    !$omp end do
-    !$omp end parallel
-    !
-    ! Set halos dirty/clean for fields modified in the above loop(s)
-    !
-    CALL X_proxy%set_dirty()
-    !
-    ! End of set dirty/clean section for above loop(s)
-    !
-    !
-  end subroutine invoke_inc_rdefX_plus_rsolverY
-
-!-------------------------------------------------------------------------------
 !> Routine to perform injection of a multidata field on a fine mesh to
 !> a coarse mesh. Intermesh kernels cannot currently take in integer arguments,
 !> this has been raised as an issue https://github.com/stfc/PSyclone/issues/2504

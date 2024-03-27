@@ -1,8 +1,7 @@
 # Files should only ever be removed or renamed in this file, never added.
 #
-source/algorithm/cma_test_algorithm_mod.x90
-source/algorithm/iterative_solvers/semi_implicit_solver_alg_mod.x90
-source/algorithm/iterative_solvers/si_operators_alg_mod.x90
+source/algorithm/solver/semi_implicit_solver_alg_mod.x90
+source/algorithm/solver/si_operators_alg_mod.x90
 source/algorithm/limited_area/limited_area_masks_alg_mod.x90
 source/algorithm/rk_alg_timestep_mod.x90
 source/algorithm/runtime_constants/fem_constants_mod.x90

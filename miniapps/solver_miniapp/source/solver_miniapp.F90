@@ -31,7 +31,7 @@ program solver_miniapp
   use mpi_mod,                 only: global_mpi, &
                                      create_comm, destroy_comm
   use field_mod,               only: field_type
-  use field_vector_mod,        only: field_vector_type
+  use sci_field_vector_mod,    only: field_vector_type
   use solver_miniapp_alg_mod,  only: solver_miniapp_alg
   use configuration_mod,       only: final_configuration
   use solver_miniapp_mod,      only: solver_required_namelists

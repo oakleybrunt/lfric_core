@@ -210,7 +210,7 @@ contains
     use dg_matrix_vector_kernel_mod,     only: dg_matrix_vector_kernel_type
     use dg_inc_matrix_vector_kernel_mod, only: dg_inc_matrix_vector_kernel_type
     use enforce_bc_kernel_mod,           only: enforce_bc_kernel_type
-    use mass_matrix_solver_alg_mod,      only: mass_matrix_solver_alg
+    use sci_mass_matrix_solver_alg_mod,  only: mass_matrix_solver_alg
     use matrix_vector_kernel_mod,        only: matrix_vector_kernel_type
     use average_w2b_to_w2_kernel_mod,    only: average_w2b_to_w2_kernel_type
     use w3_to_w2_average_kernel_mod,     only: w3_to_w2_average_kernel_type
@@ -332,7 +332,7 @@ contains
     use dg_convert_hdiv_field_kernel_mod,  only : dg_convert_hdiv_field_kernel_type
     use nodal_xyz_coordinates_kernel_mod,  only : nodal_xyz_coordinates_kernel_type
     use psykal_builtin_light_mod,          only : invoke_convert_cart2sphere_vector
-    use mass_matrix_solver_alg_mod,        only : mass_matrix_solver_alg
+    use sci_mass_matrix_solver_alg_mod,    only : mass_matrix_solver_alg
 
     implicit none
 

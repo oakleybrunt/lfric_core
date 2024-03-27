@@ -14,7 +14,6 @@ module swe_transport_control_alg_mod
   use enforce_bc_kernel_mod,             only: enforce_bc_kernel_type
   use field_mod,                         only: field_type
   use field_indices_mod,                 only: isw_u, isw_g, isw_b, isw_q
-  use field_vector_mod,                  only: field_vector_type
   use finite_element_config_mod,         only: element_order, nqp_exact
   use fs_continuity_mod,                 only: W1, W3, W2v
   use function_space_mod,                only: function_space_type
@@ -36,6 +35,7 @@ module swe_transport_control_alg_mod
   use quadrature_rule_gaussian_mod,      only: quadrature_rule_gaussian_type
   use quadrature_xyoz_mod,               only: quadrature_xyoz_type
   use runtime_tools_mod,                 only: find_mesh_index
+  use sci_field_vector_mod,              only: field_vector_type
   use shallow_water_settings_config_mod, only: thermal_swe,            &
                                                momentum_form,          &
                                                momentum_form_momentum, &

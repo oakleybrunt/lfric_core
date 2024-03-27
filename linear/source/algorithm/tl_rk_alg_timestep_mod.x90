@@ -69,7 +69,7 @@ module tl_rk_alg_timestep_mod
   use reference_element_mod,              only: reference_element_type
   use mesh_mod,                           only: mesh_type
   ! Algorithm
-  use mass_matrix_solver_alg_mod,         only: mass_matrix_solver_alg
+  use sci_mass_matrix_solver_alg_mod,     only: mass_matrix_solver_alg
   use gungho_transport_control_alg_mod,   only: gungho_transport_control_alg, &
                                                 gungho_transport_control_alg_init
   use compute_vorticity_alg_mod,          only: compute_vorticity_alg

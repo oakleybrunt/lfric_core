@@ -18,14 +18,15 @@
 
 module gw_pressure_operator_alg_mod
 
-  use hierarchical_linear_operator_mod,   only: abstract_hierarchical_linear_operator_type
+  use sci_hierarchical_linear_operator_mod, &
+                               only: abstract_hierarchical_linear_operator_type
   use vector_mod,                         only: abstract_vector_type
   use r_solver_field_mod,                 only: r_solver_field_type
-  use r_solver_field_vector_mod,          only: r_solver_field_vector_type
   use constants_mod,                      only: i_def, r_solver, l_def
   use fem_constants_mod,                  only: get_mass_matrix,     &
                                                 get_inverse_w3_mass_matrix_r_solver
   use fs_continuity_mod,                  only: W0, W2, W3, Wtheta
+  use sci_r_solver_field_vector_mod,      only: r_solver_field_vector_type
   use timestepping_config_mod,            only: dt, &
                                                 alpha
 

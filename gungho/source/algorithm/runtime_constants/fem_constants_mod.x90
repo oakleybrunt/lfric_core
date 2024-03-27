@@ -86,10 +86,10 @@ module fem_constants_mod
   use project_ws_to_w2_operator_kernel_mod,   only: project_ws_to_w2_operator_kernel_type
   use project_w3_to_w2b_operator_kernel_mod,  only: project_w3_to_w2b_operator_kernel_type
   use w2_normalisation_kernel_mod,            only: w2_normalisation_kernel_type
-  use psykal_lite_mod,                        only: invoke_copy_to_rsolver, &
-                                                    invoke_copy_to_rtran,   &
-                                                    invoke_operator_setval_x_rtran
-  use psykal_lite_transport_mod,              only: invoke_extended_detj_at_w3_kernel_type
+  use psykal_lite_mod,           only: invoke_copy_to_rtran, &
+                                       invoke_operator_setval_x_rtran
+  use psykal_lite_transport_mod, only: invoke_extended_detj_at_w3_kernel_type
+  use sci_psykal_light_mod,      only: invoke_copy_to_rsolver
 
   use compute_mass_matrix_kernel_w_scalar_mod, only: compute_mass_matrix_kernel_w_scalar_type
 

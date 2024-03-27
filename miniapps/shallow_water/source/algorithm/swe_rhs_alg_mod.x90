@@ -29,9 +29,9 @@ module swe_rhs_alg_mod
   ! Derived Types
   use derived_config_mod,             only: bundle_size
   use field_mod,                      only: field_type
-  use field_vector_mod,               only: field_vector_type
   use mesh_mod,                       only: mesh_type
   use operator_mod,                   only: operator_type
+  use sci_field_vector_mod,           only: field_vector_type
 
   ! Quadrature and Psykal Lite
   use quadrature_face_mod,            only: quadrature_face_type

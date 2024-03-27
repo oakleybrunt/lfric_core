@@ -14,7 +14,6 @@ module swe_init_fields_alg_mod
   use domain_mod,                         only: domain_type
   use field_mod,                          only: field_type
   use field_collection_mod,               only: field_collection_type
-  use field_vector_mod,                   only: field_vector_type
   use fs_continuity_mod,                  only: W1
   use function_space_collection_mod,      only: function_space_collection
   use function_space_mod,                 only: function_space_type
@@ -25,6 +24,7 @@ module swe_init_fields_alg_mod
                                                 LOG_LEVEL_INFO,    &
                                                 LOG_LEVEL_ERROR
   use mesh_mod,                           only: mesh_type
+  use sci_field_vector_mod,               only: field_vector_type
 
   ! Configuration options
   use finite_element_config_mod,          only: element_order
@@ -42,7 +42,7 @@ module swe_init_fields_alg_mod
   use initial_swe_tracer_kernel_mod,      only: initial_swe_tracer_kernel_type
   use initial_swe_u_kernel_mod,           only: initial_swe_u_kernel_type
   use initial_vorticity_v2_kernel_mod,    only: initial_vorticity_v2_kernel_type
-  use mass_matrix_solver_alg_mod,         only: mass_matrix_solver_alg
+  use sci_mass_matrix_solver_alg_mod,     only: mass_matrix_solver_alg
   use strong_curl_kernel_mod,             only: strong_curl_kernel_type
   use w2_to_w1_projection_kernel_mod,     only: w2_to_w1_projection_kernel_type
 

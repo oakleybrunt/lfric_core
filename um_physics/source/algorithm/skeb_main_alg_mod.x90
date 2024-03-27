@@ -154,7 +154,7 @@ module skeb_main_alg_mod
   use physical_op_constants_mod,     only: get_rdz_w3, get_dx_at_w2
 
   ! algorithms to derive the rotational and divergent wind increments
-  use mass_matrix_solver_alg_mod,         only: mass_matrix_solver_alg
+  use sci_mass_matrix_solver_alg_mod, only: mass_matrix_solver_alg
 
   ! Kernels to derive the rotational and divergent wind increments
   use matrix_vector_kernel_mod,           only: matrix_vector_kernel_type
