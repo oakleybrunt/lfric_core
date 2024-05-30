@@ -1,0 +1,94 @@
+{# ########################################################################### #}
+{# (c) Crown copyright 2024 Met Office. All rights reserved. #}
+{# The file LICENCE, distributed with this code, contains details of the terms #}
+{# under which the code may be used. #}
+{# ########################################################################### #}
+{% do LOG.debug("Entered templates/runtime/generate_runtime_control.cylc") %}
+
+{# Generate runtime section for control tasks #}
+{# export_source and housekeeping for now #}
+{# gatekeeper tasks will potentially be added here if required #}
+
+{% if task == "export-source" %}
+{# First export-source task. Runs locally to the launch platform #}
+{# Exports the lfric_core sources to the #}
+{# cylc-run/share/source directory #}
+
+    [[{{task}}]]
+        inherit = EXPORT-SOURCE, {{SITE|upper}}_ORIG
+        script  = """
+                  mkdir -p `dirname $SOURCE_ROOT`
+
+                  echo Source lfric_core: $SOURCE_LFRIC_CORE
+
+                  fcm export --force $SOURCE_LFRIC_CORE $SOURCE_ROOT
+                  """
+        [[[environment]]]
+            SOURCE_DIRECTORY = $SOURCE_ROOT
+            SOURCE_LFRIC_CORE = {{SOURCE_LFRIC}}
+
+{% elif task.startswith("export-source") %}
+{# 2nd export-source task specific to each platform #}
+{# Rsyncs source to remote platforms if required #}
+{# If PLATFORM_SYNC set to false in PLATFORM_EXPORT_SOURCE family #}
+{# the rsync will be skipped #}
+
+    {% set platform = task.split('_')[1] %}
+
+    [[{{task}}]]
+        inherit = EXPORT-SOURCE, {{platform|upper}}_EXPORT-SOURCE
+        script  = """
+                  if [[ "$PLATFORM_SYNC" = true ]] ; then
+                    RELATIVE_SOURCE_DIRECTORY=`echo $SOURCE_DIRECTORY | sed "s|$HOME/||"`
+                    ssh $hostname mkdir -p $RELATIVE_SOURCE_DIRECTORY
+                    rsync -avz --exclude=".*" $SOURCE_DIRECTORY/* $hostname:$RELATIVE_SOURCE_DIRECTORY/
+                    sleep 5
+                  else
+                    echo "PLATFORM_SYNC = false, nothing to do"
+                  fi
+                  """
+        [[[environment]]]
+            SOURCE_DIRECTORY = $SOURCE_ROOT
+            SOURCE_LFRIC = {{SOURCE_LFRIC}}
+
+{% elif task.startswith("export-weights") %}
+{# Task to rsync generated weights files from platform where they are generated #}
+{# to remote platforms which have lfricinputs tasks #}
+{# Only runs once all weights tasks have finished #}
+
+    {% set platform = task.split('_')[1] %}
+
+    [[{{task}}]]
+        inherit = GENERATE_WEIGHTS, {{platform|upper}}_EXPORT-SOURCE
+
+    {% if platform == site_vars["scripts_platform"] %}
+        script=echo "Running on weight generation platform - nothing to do"
+    {% else %}
+        script="""
+               RELATIVE_DIR=`echo $CYLC_WORKFLOW_WORK_DIR | sed "s|$HOME/||"`
+               rsync -avz $CYLC_WORKFLOW_WORK_DIR/1/generate_weights_* $hostname:$RELATIVE_DIR/1/
+               sleep 5
+               """
+
+    {% endif %}
+
+{% elif task.startswith("housekeep") %}
+
+    {% set platform = task.split('_')[1] %}
+
+    [[{{task}}]]
+        inherit = HOUSEKEEPING, {{platform|upper}}_HOUSEKEEPING
+        script = rose task-run --app-key=housekeeping
+
+{% elif task.startswith("remote-init") %}
+
+    {% set platform = task.split('_')[1] %}
+
+    [[{{task}}]]
+        inherit = EXPORT-SOURCE, {{platform|upper}}_BASE
+        script = true
+        execution time limit = PT1M
+
+{% endif %}
+
+{% do LOG.debug("Finished in templates/runtime/generate_runtime_control.cylc") %}

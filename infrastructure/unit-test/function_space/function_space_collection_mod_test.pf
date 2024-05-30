@@ -88,8 +88,6 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine tearDown( this )
 
-    use configuration_mod, only: final_configuration
-
     implicit none
 
     class(function_space_collection_test_type), intent(inout) :: this

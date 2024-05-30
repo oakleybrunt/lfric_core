@@ -1,0 +1,74 @@
+{# ########################################################################### #}
+{# (c) Crown copyright 2024 Met Office. All rights reserved. #}
+{# The file LICENCE, distributed with this code, contains details of the terms #}
+{# under which the code may be used. #}
+{# ########################################################################### #}
+{% do LOG.debug("Entered site/meto/variables.cylc") %}
+
+{% do site_vars.update({"known_applications": ["mesh",
+                                               "skeleton"]}) %}
+
+{% do site_vars.update({"site_platforms": ["spice",
+                                           "xc40",
+                                           "ex1a"]}) %}
+
+{% do site_vars.update({"scripts_platform": "spice"}) %}
+
+{# Note intel unavailable on ex1a hence using gnu #}
+{% do site_vars.update({"mesh_build": {"spice": "intel_fast-debug-64bit",
+                                       "xc40": "intel_fast-debug-64bit",
+                                       "ex1a": "gnu_fast-debug-64bit"} }) %}
+
+{# If running on Monsoon TRUSTZONE will be collaboration #}
+{% if "TRUSTZONE" in environ %}
+    {% set trustzone = environ["TRUSTZONE"] %}
+{% else %}
+    {% set trustzone = "research" %}
+{% endif %}
+
+{# Set xc40 host #}
+{% do site_vars.update({"meto_xc40": "xc"}) %}
+{% if not METO_USE_XCS is defined %}
+    {% set METO_USE_XCS = false %}
+{% endif %}
+{% if trustzone == "collaboration" %}
+    {% do LOG.info("Running on Monsoon") %}
+    {% do site_vars.update({"meto_xc40": "xcsc"}) %}
+    {% do site_vars.update({"scripts_platform": "xc40"}) %}
+{% elif METO_USE_XCS %}
+    {% do LOG.info("Running on the xcs") %}
+    {% do site_vars.update({"meto_xc40": "xcs"}) %}
+{% endif %}
+
+{# Set xc40 queue - only high if on xcs #}
+{% do site_vars.update({"meto_xc40_queue": "shared"}) %}
+{% if not METO_XC40_HIGH is defined %}
+    {% set METO_XC40_HIGH = false %}
+{% endif %}
+{% if METO_XC40_HIGH and site_vars.meto_xc40 == "xcs" %}
+    {% do site_vars.update({"meto_xc40_queue": "high"}) %}
+    {% do site_vars.update({"meto_xc40_subproject": "lfric_opt"}) %}
+{% else %}
+    {% do site_vars.update({"meto_xc40_queue": "normal"}) %}
+{% endif %}
+
+{# Choose EX Host - default of exz #}
+{% if USE_EXZ is defined and USE_EXZ %}
+    {% do site-vars.update({"host_ex" : "exz"}) %}
+{% elif USE_EX is defined and USE_EX %}
+    {# Should choose between ab or cd eventually #}
+    {# Hardcoded to ab for now #}
+    {% do site_vars.update({"host_ex": "exab"}) %}
+{% elif USE_EXAB is defined and USE_EXAB %}
+    {% do site_vars.update({"host_ex": "exab"}) %}
+{% else %}
+    {# Currently default to the EXZ #}
+    {% do site_vars.update({"host_ex" : "exz"}) %}
+{% endif %}
+
+{# Set fixed release version the KGO corresponds to #}
+{% set BASE = "vn1.0" %}
+{% include "site/meto/variables_spice.cylc" %}
+{% include "site/meto/variables_xc40.cylc" %}
+
+{% do LOG.debug("Finished in site/meto/variables.cylc") %}

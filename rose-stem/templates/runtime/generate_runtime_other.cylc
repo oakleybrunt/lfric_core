@@ -1,0 +1,86 @@
+{# ########################################################################### #}
+{# (c) Crown copyright 2024 Met Office. All rights reserved. #}
+{# The file LICENCE, distributed with this code, contains details of the terms #}
+{# under which the code may be used. #}
+{# ########################################################################### #}
+{% do LOG.debug("Entered templates/runtime/generate_runtime_other.cylc") %}
+
+{# Generate runtime section for tasks not included elsewhere #}
+{# Currently plot, checksum and phystest #}
+
+{# Set the family inheritance for this task #}
+{% set inherit = namespace(str="") %}
+{% set inherit.str = task_family|upper %}
+
+{% if task.startswith("plot") %}
+{# Plotting Tasks #}
+
+    {% for family in task_values["plot_families"] %}
+        {% set inherit.str = inherit.str~","~family|upper %}
+    {% endfor %}
+
+    [[{{task}}]]
+        inherit={{inherit.str|upper}}
+        script = 'rose task-run --app-key=plot'
+        [[[environment]]]
+            NODAL_DATA_DIR = {{task_output_dir}}/results
+            PLOT_DIR       = {{task_output_dir}}/plots
+            PLOT_CONFIG    = {{task_values["plot_str"]}}
+
+{% elif task.startswith("check") %}
+{# Check KGO Checksum tasks #}
+
+    {% for family in task_values["checksum_families"] %}
+        {% set inherit.str = inherit.str~","~family|upper %}
+    {% endfor %}
+
+    {# Default kgo locations #}
+    {# current is in rose-stem/site/SITE/kgos, #}
+    {# new is in the task output dir #}
+    {# Can overwrite this per task, eg for nrun_vs_crun comparisons #}
+    {% set current_kgo = "$SOURCE_ROOT/rose-stem/site/"~
+                          SITE~"/kgos/"~
+                          task_ns.application~"/"~
+                          task_ns.platform~
+                          "/checksum_"~task_family~".txt" %}
+    {% set new_kgo = task_output_dir~"/checksum.txt" %}
+
+    {% if "nrun-v-crun" in task %}
+        {# Work out the directories if comparing nrun-v-crun #}
+        {# "Current KGO" is the nrun task #}
+        {# "New KGO" is the restarted task #}
+        {% set crun_num = task_values["crun"] - 1 %}
+        {% set current_kgo = "$OUTPUT_ROOT/"~
+                              task_ns.application~"/"~
+                              task_values["task_family"] %}
+        {% set new_kgo = current_kgo~"-crun"~crun_num~"/checksum.txt" %}
+        {% set current_kgo = current_kgo~"/checksum.txt" %}
+    {% else %}
+        {# Inherit KGO_CHECKS family for triggering the check_groups_coverage task #}
+        {% set inherit.str = inherit.str~",KGO_CHECKS" %}
+    {% endif %}
+
+    [[{{task}}]]
+        inherit={{inherit.str|upper}}
+        script = 'rose task-run --app-key=check_kgo'
+        [[[environment]]]
+            CURRENT_KGO = {{current_kgo}}
+            NEW_KGO = {{new_kgo}}
+
+{% elif task.startswith("phystest") %}
+{# Phystest Tasks #}
+
+    {% for family in task_values["phystest_families"] %}
+        {% set inherit.str = inherit.str~","~family|upper %}
+    {% endfor %}
+
+    [[{{task}}]]
+        inherit={{inherit.str|upper}}
+        script = rose task-run --app-key=phystest
+        [[[environment]]]
+            PHYSTEST_DIR = {{task_output_dir}}
+            PHYSTEST_SCRIPT = {{task_values["phystest_str"]}}
+
+{% endif %}
+
+{% do LOG.debug("Finished in templates/runtime/generate_runtime_other.cylc") %}

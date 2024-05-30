@@ -14,16 +14,20 @@ export CONFIG_DIR=$(WORKING_DIR)/configuration
 configuration_files: $(WORKING_DIR)/configuration_mod.f90 \
                      $(WORKING_DIR)/feign_config_mod.f90
 
-export APPS_ROOT_DIR ?= CORE_ROOT_DIR
-
 .INTERMEDIATE: $(CONFIG_DIR)/rose-meta.json $(CONFIG_DIR)/config_namelists.txt
 $(CONFIG_DIR)/rose-meta.json $(CONFIG_DIR)/config_namelists.txt: $(META_FILE_DIR)/rose-meta.conf
 	$(call MESSAGE,Generating namelist configuration file.)
 	$(Q)mkdir -p $(dir $@)
+ifdef APPS_ROOT_DIR
 	$(Q)rose_picker $(META_FILE_DIR)/rose-meta.conf    \
 	                -directory $(CONFIG_DIR)           \
 	                -include_dirs $(APPS_ROOT_DIR)     \
 	                -include_dirs $(CORE_ROOT_DIR)
+else
+	$(Q)rose_picker $(META_FILE_DIR)/rose-meta.conf    \
+	                -directory $(CONFIG_DIR)           \
+	                -include_dirs $(CORE_ROOT_DIR)
+endif
 	# It's not clear why this is needed but as of 5/2/20 the diagnostic
 	# application test suite fails without it.
 	$(Q)sleep 20

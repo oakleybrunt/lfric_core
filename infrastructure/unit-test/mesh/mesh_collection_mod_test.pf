@@ -81,14 +81,11 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine tearDown( this )
 
-    use configuration_mod, only: final_configuration
-
     implicit none
 
     class(mesh_collection_test_type), intent(inout) :: this
 
     call global_mesh_collection%clear()
-    call final_configuration()
 
     ! Finalise halo functionality
     call finalise_halo_comms()

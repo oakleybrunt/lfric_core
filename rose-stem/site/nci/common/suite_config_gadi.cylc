@@ -1,0 +1,103 @@
+{% set gadi_base = 'module load /g/data/access/ngm/modules/envs/lfric/202404/intel-openmpi' %}
+
+{% set gadi_plot = 'module load /g/data/access/ngm/modules/analysis3/21.10' %}
+
+[runtime]
+    [[GADI_BASE]]
+        platform=gadi
+        [[[environment]]]
+            BUILD_ROOT      = ${CYLC_TASK_WORK_DIR}/${CYLC_WORKFLOW_NAME_BASE}_${USER}
+            HYPERTHREADS    = 1
+            CORES_PER_NODE  = 48
+            NUMA_REGIONS_PER_NODE = 2
+            PROJECT         = \$PROJECT
+            SITE            = 'nci'
+            ROSE_LAUNCHER   = mpiexec
+
+    [[GADI_BUILD_INTEL]]
+        inherit=GADI_BASE
+        {{ generate_script("pre-script", [gadi_base]) }}
+        [[[directives]]]
+          -l ncpus=6
+          -l mem=12GB
+          -l jobfs=2GB
+          -l walltime=02:00:00
+          -q=normal
+          -W umask=0022
+          -l storage=gdata/access+gdata/hr22+gdata/ki32+scratch/access+gdata/{{environ.get('PROJECT','NO_PROJECT')}}
+
+    [[GADI_RUN_INTEL]]
+        inherit=GADI_BASE
+        {{ generate_script("pre-script", [gadi_base]) }}
+        [[[directives]]]
+            -l ncpus=6
+            -l mem=12GB
+            -l jobfs=2GB
+            -l walltime=02:00:00
+            -q=normal
+            -W umask=0022
+            -l storage=gdata/access+gdata/hr22+gdata/ki32+scratch/access+gdata/{{environ.get('PROJECT','NO_PROJECT')}}
+        [[[environment]]]
+            RUN_METHOD      = mpiexec
+            BIG_DATA_DIR    = '/g/data/access/projects/access/lfric/data'
+            TARGET_PLATFORM = 'nci-gadi'
+
+    [[GADI_MESH_INTEL]]
+        inherit=GADI_BASE
+        {{ generate_script("pre-script", [gadi_base]) }}
+        [[[directives]]]
+            -l ncpus=4
+            -l mem=3GB
+            -l walltime=00:20:00
+            -q=normal
+            -W umask=0022
+            -l storage=gdata/access+gdata/hr22+gdata/ki32+scratch/access+gdata/{{environ.get('PROJECT','NO_PROJECT')}}
+
+    [[GADI_PLOT]]
+        inherit=GADI_BASE
+        {{ generate_script("pre-script", [gadi_plot]) }}
+        [[[directives]]]
+            -l ncpus=1
+            -l mem=3GB
+            -l walltime=00:20:00
+            -q=normal
+            -W umask=0022
+            -l storage=gdata/access+gdata/hr22+gdata/ki32+scratch/access+gdata/{{environ.get('PROJECT','NO_PROJECT')}}
+
+    [[GADI_PLOT_INTEL]]
+        inherit=GADI_PLOT
+
+    [[GADI_CHECK]]
+        inherit=GADI_BASE
+        [[[directives]]]
+            -l ncpus=1
+            -l mem=3GB
+            -l walltime=00:20:00
+            -q=normal
+            -W umask=0022
+            -l storage=gdata/access+gdata/hr22+gdata/ki32+scratch/access+gdata/{{environ.get('PROJECT','NO_PROJECT')}}
+
+    [[GADI_EXPORT-SOURCE]]
+        platform=localhost
+        [[[environment]]]
+            hostname = 'gadi.nci.org.au'
+            SITE = 'nci'
+            PLATFORM_SYNC = false
+
+    [[GADI_SCRIPTS]]
+        inherit=GADI_BASE
+
+    [[GADI_TECH_TESTS_INTEL]]
+        inherit=GADI_BASE
+        {{ generate_script("pre-script", [gadi_base]) }}
+        [[[directives]]]
+            -l mem=4GB
+            -l storage=gdata/access+gdata/hr22+gdata/ki32+scratch/access+gdata/{{environ.get('PROJECT','NO_PROJECT')}}
+
+    [[GADI_HOUSEKEEPING]]
+
+    [[SCRIPTS]]
+        {{ generate_script("pre-script", [gadi_base]) }}
+        [[[directives]]]
+            -l mem=4GB
+            -l storage=gdata/access+gdata/hr22+gdata/ki32+scratch/access+gdata/{{environ.get('PROJECT','NO_PROJECT')}}

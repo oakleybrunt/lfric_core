@@ -1,0 +1,124 @@
+{# ########################################################################### #}
+{# (c) Crown copyright 2024 Met Office. All rights reserved. #}
+{# The file LICENCE, distributed with this code, contains details of the terms #}
+{# under which the code may be used. #}
+{# ########################################################################### #}
+{% do LOG.debug("Entered templates/runtime/generate_runtime_application.cylc") %}
+
+{# Generate the runtime section for application run tasks #}
+
+{# Define a family for this task #}
+    [[{{task_family|upper}}]]
+        inherit={{task_ns.application|upper}}_{{task_ns.platform|upper}}
+
+{# Set the family inheritance for this task #}
+{% set inherit = namespace(str="") %}
+{% set inherit.str = task_family|upper %}
+{% for family in task_values["run_families"] %}
+    {% set inherit.str = inherit.str~","~family|upper %}
+{% endfor %}
+
+{# Generate the script command #}
+{% set script_str = namespace(name="") %}
+{% set script_str.name = "$CYLC_WORKFLOW_RUN_DIR/bin/application_results_setup.sh ; " %}
+{% set script_str.name = script_str.name~"rose task-run --app-key="~task_values["app_name"] %}
+{% if task_values["app_name"] == "canned_test" %}
+    {% set script_str.name = script_str.name~" --command-key=$RUN_METHOD" %}
+{% else %}
+    {% for opt_conf in task_values["opt_confs"] %}
+        {% set script_str.name = script_str.name~" --opt-conf-key="~opt_conf %}
+    {% endfor %}
+    {% set script_str.name = script_str.name~" --opt-conf-key="~task_values["resolution"] %}
+    {% if task_values["use_xios"] %}
+        {% set script_str.name = script_str.name~" --opt-conf-key=xios_server" %}
+    {% endif %}
+    {% set script_str.name = script_str.name~" --opt-conf-key=suite_controlled" %}
+{% endif %}
+
+{# The PANEL_DECOMP variable expects it to be quoted #}
+{% set panel_decomp = "'"~task_values["panel_decomp"]~"'" %}
+
+{# Set the read/write filenames for restarts #}
+{% set restart_stem_name = checkpoint_dir~"/restart_"~task_family~"_tstep" %}
+
+{# Set the pre-script command for canned tests #}
+{% set canned_prescript = "cp -r $SOURCE_DIRECTORY/"~task_values["example_dir"]~"/* "~
+                          "$CYLC_TASK_WORK_DIR" %}
+
+{# Set the post script command - should be a list of strings #}
+{% set post_script_commands = [
+    '# Create results directory, if not already created.',
+    'mkdir -p $TASK_OUTPUT_DIR/results/',
+    'RELATIVE_LOG_ROOT=$(echo $CYLC_TASK_LOG_ROOT | sed "s|$HOME/||")',
+    'echo $RELATIVE_LOG_ROOT > $TASK_OUTPUT_DIR/run.log.path',
+    'find . -regex ".*PET0+\..+\.Log" -exec cp {} $ROSE_TASK_LOG_DIR \;',
+    'find . -regex ".*PET0+\..+\.Log" -exec cp {} $TASK_OUTPUT_DIR \;',
+    'find . -regex ".*PET0+\..+\.Log" -exec cat {} \;',
+    'test -f '~task_values["app_name"]~
+        '-checksums.txt && cp $CYLC_TASK_WORK_DIR/'~
+        task_values["app_name"]~'-checksums.txt $TASK_OUTPUT_DIR/checksum.txt',
+    'touch $CYLC_TASK_WORK_DIR/tmp.m',
+    'mv $CYLC_TASK_WORK_DIR/*.m $TASK_OUTPUT_DIR/results',
+    'test -f $CYLC_TASK_WORK_DIR/timer.txt && '~
+        'cp $CYLC_TASK_WORK_DIR/timer.txt $TASK_OUTPUT_DIR || true'
+    ] %}
+
+
+{# Define the task runtime section #}
+    [[{{task}}]]
+        inherit={{inherit.str|upper}}
+        script = {{script_str.name}}
+        {{ generate_script("post-script", post_script_commands) }}
+        [[[environment]]]
+            DESTINATION_DIRECTORY = {{destination_dir}}
+            CORE_ROOT_DIR         = $SOURCE_ROOT
+            SOURCE_DIRECTORY      = $SOURCE_ROOT/{{task_values["application_dir"]}}
+            BIN_DIR               = {{bin_dir}}
+            LIB_DIR               = {{lib_dir}}
+            MOD_DIR               = {{mod_dir}}
+            MESH_DIR              = {{mesh_dir}}
+            TASK_OUTPUT_DIR       = {{task_output_dir}}
+            APP_NAME              = {{task_values["app_name"]}}
+            APPLICATION           = {{task_ns.application}}
+            LOG_LEVEL             = {{task_values["log_level"]}}
+            RESOLUTION            = {{task_values["resolution"]|replace("_MG","")}}
+            DT                    = {{task_values["DT"]}}
+            USE_XIOS_IO           = {{task_values["use_xios_io"]}}
+            NODAL_OUTPUT_ON_W3    = {{task_values["nodal_output_on_w3"]}}
+            OMP_NUM_THREADS       = {{task_values["threads"]}}
+            TOTAL_RANKS           = {{task_values["mpi_parts"]}}
+            XPROC                 = {{task_values["xproc"]}}
+            YPROC                 = {{task_values["yproc"]}}
+            PANEL_DECOMP          = {{panel_decomp}}
+            RESTART_NTS           = {{task_values["tsteps"]}}
+            RESTART_NO            = {{task_values["restart_no"]}}
+            RESTART               = {{task_values["restart"]}}
+            RESTART_START         = {{task_values["init_tstep"]}}
+            RESTART_STOP          = {{task_values["last_tstep"]}}
+            RESTART_READ          = {{task_values["restart_read"]}}
+            RESTART_WRITE         = {{task_values["restart_write"]}}
+            CHECKPOINT_STEM_FILE  = {{restart_stem_name}}
+            CANNED_PRESCRIPT      = {{canned_prescript}}
+            XIOS_SERVER_MODE      = {{task_values["xios_server_mode"]}}
+            XIOS_SERVER_RANKS     = {{task_values["xios_server_ranks"]}}
+            xios_nodes            = {{task_values["xios_nodes"]}}
+            mpi_parts_xios        = {{task_values["mpi_parts_xios"]}}
+
+
+{# Set any directives using macros imported in generate_runtime for this platform #}
+        [[[directives]]]
+
+{{ set_task_cores(task_values["mpi_parts"],
+                  threads=task_values["threads"],
+                  xios_nodes=task_values["xios_nodes"]) }}
+
+
+{% if "wallclock" in task_values %}
+    {{ set_wallclock(task_values["wallclock"]) }}
+{% endif %}
+
+{% if "memory" in task_values %}
+    {{ set_memory(task_values["memory"]) }}
+{% endif %}
+
+{% do LOG.debug("Finished in templates/runtime/generate_runtime_application.cylc") %}

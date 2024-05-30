@@ -24,7 +24,7 @@
 {%- endif %}
 
 {%- if miniappFlag == True %}
-{%-   set appPathFragment = 'miniapps/' %}
+{%-   set appPathFragment = 'applications/' %}
 {%- else  %}
 {%-   set appPathFragment = '' %}
 {%- endif %}
@@ -248,10 +248,6 @@
 
 #############################################################################
 # TECHNICAL
-
-{%- for app in projectApps %}
-{{ validate_rose_meta_task( projectName, 'TECHNICAL', appName=app ) }}
-{%- endfor %}
 
 {{ check_config_dump_task('TECHNICAL', SECONDARY_TARGET) }}
 

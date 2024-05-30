@@ -1,0 +1,28 @@
+{% do LOG.debug("Entered site/nci/variables.cylc") %}
+
+{% do site_vars.update({"known_applications": ["adjoint_tests",
+                                               "gungho_model",
+                                               "lfric_atm",
+                                               "mesh",
+                                               "gravity_wave",
+                                               "jedi_lfric_tests",
+                                               "shallow_water",
+                                               "lfricinputs",
+                                               "linear_model",
+                                               "gungho",
+                                               "socrates_interface",
+                                               "um_physics_interface",
+                                               "linear",
+                                               "jedi_lfric_interface",
+                                               "transport",
+                                               "solver"]}) %}
+
+{% do site_vars.update({"site_platforms": ["gadi"]}) %}
+
+{% do site_vars.update({"mesh_build": {"gadi": "intel_fast-debug-64bit"} }) %}
+
+{% do site_vars.update({"lfricinputs_kgo_base": "$UMDIR/standard_jobs/lfricinputs/kgo"}) %}
+
+{% include "site/nci/kgo_variables.cylc" %}
+
+{% do LOG.debug("Finished in site/nci/variables.cylc") %}

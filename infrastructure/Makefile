@@ -111,7 +111,6 @@ document-api: api-documentation
 # Unit tests
 #
 unit-tests/%: export BIN_DIR      ?= $(PROJECT_DIR)/test
-unit-tests/%: export META_FILE_DIR = rose-meta/lfric-infrastructure/HEAD
 unit-tests/%: export PROGRAMS      = infrastructure_unit_tests
 unit-tests/%: export PROJECT       = infrastructure
 unit-tests/%: export SOURCE_DIR    = source

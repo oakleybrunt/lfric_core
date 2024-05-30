@@ -24,7 +24,7 @@
 {%- endif %}
 
 {%- if miniappFlag == True %}
-{%-   set appPathFragment = 'miniapps/' %}
+{%-   set appPathFragment = 'applications/' %}
 {%- else  %}
 {%-   set appPathFragment = '' %}
 {%- endif %}

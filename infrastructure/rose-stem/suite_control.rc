@@ -15,8 +15,7 @@
 {%- set mesh_compiler = "intel" %}
 {%- set MAXRUNAHEAD     = 1 %}
 
-{%- set groups = {'developer': ['validate_rose_meta_graph("infrastructure")',
-                                'check_compilers("fast-debug", publish=False)',
+{%- set groups = {'developer': ['check_compilers("fast-debug", publish=False)',
                                 'api_documentation_graph(publish=False)',
                                 'uml_documentation_graph(publish=False)',
                                 'design_documentation_graph(publish=False)',

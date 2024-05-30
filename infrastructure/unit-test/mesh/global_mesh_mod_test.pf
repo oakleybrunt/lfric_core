@@ -60,15 +60,11 @@ contains
 
   subroutine tearDown( this )
 
-    use configuration_mod, only: final_configuration
-
     implicit none
 
     class( global_mesh_test_type ), intent( inout ) :: this
 
     call global_mesh_collection%clear()
-
-    call final_configuration()
 
   end subroutine tearDown
 
@@ -348,7 +344,6 @@ contains
   @test
   subroutine test_cubedsphere_single_file_intergrid(this)
 
-    use configuration_mod, only: final_configuration
     use ncdf_quad_mod,     only: ncdf_quad_type
 
     implicit none
@@ -468,7 +463,6 @@ contains
   @test
   subroutine test_cubedsphere_adding_intergrid_map(this)
 
-    use configuration_mod, only: final_configuration
     use ncdf_quad_mod,     only: ncdf_quad_type
 
     implicit none

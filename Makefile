@@ -14,15 +14,15 @@
 # Operate only on this list of sub-projects. May be overridden from the
 # terminal.
 #
-OPERATE_ON ?= infrastructure             \
-              components/science         \
-              components/driver          \
-              components/lfric-xios      \
-              components/inventory       \
-              mesh_tools                 \
-              miniapps/skeleton          \
-              miniapps/simple_diffusion  \
-              miniapps/io_dev            
+OPERATE_ON ?= infrastructure                \
+              components/science            \
+              components/driver             \
+              components/lfric-xios         \
+              components/inventory          \
+              mesh_tools                    \
+              applications/skeleton         \
+              applications/simple_diffusion \
+              applications/io_dev
 
 export SUITE_GROUP ?= developer
 export SUITE_GROUP_NAME ?= $(notdir $(realpath $(shell pwd)))-.*

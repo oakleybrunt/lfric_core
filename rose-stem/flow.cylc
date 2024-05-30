@@ -1,0 +1,109 @@
+#!Jinja2
+{# ########################################################################### #}
+{# (c) Crown copyright 2024 Met Office. All rights reserved. #}
+{# The file LICENCE, distributed with this code, contains details of the terms #}
+{# under which the code may be used. #}
+{# ########################################################################### #}
+{% from "cylc.flow" import LOG %}
+
+{# Include the site variables file #}
+{# Contains some settings used for the workflow #}
+{% set site_vars = {} %}
+{% set kgo_vars = {} %}
+{% include "site/"~SITE~"/variables.cylc" %}
+{# Default the scripts platform to the first platform listed if not already given #}
+{% if "scripts_platform" not in site_vars %}
+    {% do site_vars.update({
+        "scripts_platform": site_vars["site_platforms"][0]
+    }) %}
+{% endif %}
+
+{# Import macros #}
+{# Need the above lists defined before we can import split_task_name #}
+{% from "templates/common_macros.cylc" import
+    set_add,
+    expand_task_list,
+    generate_script,
+    split_task_name
+    with context %}
+
+{# Load defined groups into dictionary #}
+{% set site_groups = {} %}
+{% include "site/"+SITE+"/groups.cylc" %}
+
+{% set lfric_source = SOURCE_LFRIC %}
+
+{# Generate list of tasks given by --group= #}
+{# Expand any groups included so list is only tasks #}
+{% set expanded_task_list = [] %}
+{{ expand_task_list(site_groups, RUN_NAMES, true, expanded_task_list) }}
+
+{# Generate a list of all scripts - used to determine if a task is a script #}
+{% set scripts_list = [] %}
+{{ expand_task_list(site_groups, ["scripts"], false, scripts_list) }}
+{% do set_add(scripts_list, "export_simsys_scripts") %}
+
+{# Load the task definitions for each application requested at current site #}
+{% set requested_tasks = {} %}
+{% set requested_applications = [] %}
+{% set requested_platforms = [] %}
+{% set first_parse = true %}
+{% for task in expanded_task_list %}
+    {% set task_dict = {} %}
+    {% include "templates/populate_task_definitions.cylc" %}
+{% endfor %}
+{% set first_parse = false %}
+
+[scheduler]
+    UTC mode = True
+    install = site/, templates/
+    [[events]]
+        mail events = timeout
+        abort on stall timeout = True
+        stall timeout = PT3H
+        shutdown handlers = "suite_report.py"
+        stall handlers = "suite_report.py"
+
+[scheduling]
+    [[graph]]
+{% set tasks_to_run = {} %}
+{% include "templates/graph/generate_graph.cylc" %}
+
+{# For tasks added during the graph generation, populate their definitions #}
+{# Don't do it if it's an export task, a script or already defined #}
+{% set tasks_to_run_list = tasks_to_run.keys() %}
+{% for task in tasks_to_run_list %}
+    {% if not task.startswith("export-") and
+            not task.startswith("remote-init") and
+            not task.startswith("housekeep") and
+            not tasks_to_run[task] %}
+        {% set task_dict = {} %}
+        {% include "templates/populate_task_definitions.cylc" %}
+        {% do tasks_to_run.update({task: task_dict}) %}
+    {% endif %}
+{% endfor %}
+
+[runtime]
+    [[root]]
+        env-script = "eval $(rose task-env)"
+        script = "rose task-run"
+
+        [[[environment]]]
+            SOURCE_ROOT    = $CYLC_WORKFLOW_SHARE_DIR/source
+            OUTPUT_ROOT    = $CYLC_WORKFLOW_SHARE_DIR/output
+            LAUNCH_SCRIPT  = $SOURCE_ROOT/rose-stem/site/{{SITE}}/common/bin
+            INFRASTRUCTURE_ROSESTEM = $SOURCE_ROOT/infrastructure/rose-stem/
+
+        [[[events]]]
+            submission timeout = PT5H
+
+    [[LOCAL]]
+        platform = localhost
+
+{% include "site/"~SITE~"/suite_config.cylc" %}
+{% include "templates/runtime/set_task_families.cylc" %}
+{% for task in tasks_to_run %}
+    {% include "templates/runtime/generate_runtime.cylc" %}
+{% endfor %}
+
+{% do LOG.debug("End of flow.cylc") %}

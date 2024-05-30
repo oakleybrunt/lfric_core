@@ -99,7 +99,7 @@ finite element formulation and the unstructured mesh, and defines some
 terms. Section~\ref{sec:psykal} describes the PSyKAl architecture of
 the core science code within the model, and illustrates how scientists
 will typically contribute new science to existing models. Having
-explained the high level architecture, Section~\ref{sec:miniapps}
+explained the high level architecture, Section~\ref{sec:applications}
 moves on to describes the the broad structure of a typical LFRic-based
 application. Code examples derived from LFRic atmosphere model
 illustrate the descriptions.
@@ -1454,7 +1454,7 @@ types of function space but are also useful in these scenarios. By
 using an any-space function space, it ensures that PSyclone extracts a
 separate dof-map for these fields.
 
-\section{Building LFRic applications\label{sec:miniapps}}
+\section{Building LFRic applications\label{sec:applications}}
 
 This section provides an overview of how a whole LFRic application is
 constructed, configured and controlled. It uses the GungHo dynamics

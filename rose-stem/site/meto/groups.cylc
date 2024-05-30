@@ -1,0 +1,66 @@
+{# ########################################################################### #}
+{# (c) Crown copyright 2024 Met Office. All rights reserved. #}
+{# The file LICENCE, distributed with this code, contains details of the terms #}
+{# under which the code may be used. #}
+{# ########################################################################### #}
+{% do LOG.debug("Entered site/meto/groups.cylc") %}
+
+{%- do site_groups.update({
+    "developer" : [
+        "spice_developer",
+        "xc40_developer",
+        "scripts",
+    ],
+    "all": [
+        "spice",
+        "xc40",
+    ],
+    "scripts": [
+        "config_dump_checker",
+        "style_checker",
+        "site_validator",
+        "validate_rose_meta",
+        "rose-stem_lint_checker",
+        "global_variables_checker",
+        "python_unit_tests"
+    ],
+    "build": [
+        "spice_build",
+        "xc40_build",
+    ],
+    "unit_tests": [
+        "spice_unit_tests",
+        "xc40_unit_tests"
+    ],
+    "integration_tests": [
+        "spice_integration_tests",
+        "xc40_integration_tests",
+    ],
+    "monsoon": [
+        "gungho_model_xc40",
+        "lfric_atm_xc40",
+    ],
+    "performance": [
+        "xc40_performance",
+    ],
+    "spice_developer": [],
+    "spice": ["spice_developer"],
+    "xc40_developer": [],
+    "xc40": ["xc40_developer"],
+    "ex1a_developer": [],
+    "ex1a": ["ex1a_developer"],
+    "spice_build": [],
+    "xc40_build": [],
+    "ex1a_build": [],
+    "spice_unit_tests": [],
+    "xc40_unit_tests": [],
+    "ex1a_unit_tests": [],
+    "spice_integration_tests": [],
+    "xc40_integration_tests": [],
+    "ex1a_integration_tests": [],
+    "xc40_performance": [],
+    }) %}
+
+{% include "site/meto/groups/group_skeleton.cylc" %}
+
+{% do LOG.debug("Finished in site/meto/groups.cylc") %}

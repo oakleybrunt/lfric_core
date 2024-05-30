@@ -136,8 +136,6 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine tearDown( this )
 
-    use configuration_mod, only: final_configuration
-
     implicit none
 
     class( mesh_map_collection_test_type ), intent( inout ) :: this

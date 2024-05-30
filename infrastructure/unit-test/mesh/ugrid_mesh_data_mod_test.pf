@@ -48,13 +48,9 @@ contains
 
   subroutine tearDown( this )
 
-    use configuration_mod, only: final_configuration
-
     implicit none
 
     class( ugrid_mesh_data_test_type ), intent( inout ) :: this
-
-    call final_configuration()
 
     ! Clear the stored MPI communicator
     call global_mpi%finalise()
