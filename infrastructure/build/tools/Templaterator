@@ -11,8 +11,8 @@ Command-line interface to templating functionality.
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
-from templaterator.cli import parse_kv
-from templaterator.engine import main
+from fortran_template.cli import parse_kv
+from fortran_template.engine import main
 
 
 def parse_arguments() -> Namespace:

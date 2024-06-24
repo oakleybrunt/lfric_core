@@ -22,7 +22,7 @@ test: pytest
 pytest: mypy
 	pytest $(VERBOSE_ARG) $(DEBUG_ARG)
 
-STYLED_FILES = configurator templaterator
+STYLED_FILES = configurator fortran_template
 STYLED_APPS = GenerateFeigns GenerateLoader GenerateNamelist Templaterator
 
 # We pass the applications to mypy separately as they fight with each other to
