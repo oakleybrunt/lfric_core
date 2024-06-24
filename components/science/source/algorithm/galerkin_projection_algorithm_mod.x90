@@ -17,8 +17,7 @@ module galerkin_projection_algorithm_mod
   use gp_rhs_kernel_mod,               only: gp_rhs_kernel_type
   use gp_vector_rhs_kernel_mod,        only: gp_vector_rhs_kernel_type
   use log_mod,                         only: log_event, log_scratch_space, &
-                                             log_level_debug
-  use mesh_mod,                        only: mesh_type
+                                             log_level_debug, log_level_error
   use operator_mod,                    only: operator_type
   use quadrature_xyoz_mod,             only: quadrature_xyoz_type
   use sci_mass_matrix_solver_alg_mod,  only: mass_matrix_solver_alg
@@ -48,17 +47,15 @@ contains
   !> @param[in]  f_in      Field to project.
   !> @param[in]  chi       Field entity co-ordinates.
   !> @param[in]  panel_id  Cell orientation.
-  !> @param[in]  mesh      Operating on this mesh.
   !> @param[in]  qr        Quadrature rule to perform integrations.
   !>
-  !> @todo Why is mesh passed all the way down here given that it is always
-  !>       available from the fields we are working on. See lfric_apps:#118
+  !> @todo Ideally this function would not take chi and panel_id, these would
+  !>       be available through the input field. That is some way off though.
   !>
   subroutine galerkin_projection_algorithm( f_out,    &
                                             f_in,     &
                                             chi,      &
                                             panel_id, &
-                                            mesh,     &
                                             qr)
 
     implicit none
@@ -72,7 +69,6 @@ contains
     ! Coordinate fields
     type(field_type),           intent(in)    :: chi(:)
     type(field_type),           intent(in)    :: panel_id
-    type(mesh_type), pointer,   intent(in)    :: mesh
 
     type(quadrature_xyoz_type), intent(in)    :: qr
 
@@ -84,6 +80,15 @@ contains
     ! Create continuous fields to project data into
     out_fs = f_out(1)%which_function_space()
     do idx = 1, size(f_out)
+      ! A Galerkin projection doesn't make sense between meshes.
+      ! This check could usefully be an assertion if Fortran gains support
+      ! for them.
+      !
+      if (.not. associated(f_in%get_mesh(), f_out(idx)%get_mesh())) then
+        call log_event( "Galerkin cannot project between meshes", &
+                        log_level_error )
+      end if
+
       call rhs(idx)%initialise( vector_space = f_out(1)%get_function_space() )
       call invoke( setval_c(rhs(idx), 0.0_r_def) )
     end do
@@ -107,7 +112,7 @@ contains
         ! Create dummy W2 field for kernel to perform check again
         call w2_field%initialise(                          &
           vector_space = function_space_collection%get_fs( &
-            mesh, element_order, W2                        &
+            f_in%get_mesh(), element_order, W2             &
           )                                                &
         )
 

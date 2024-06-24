@@ -3,9 +3,9 @@
 ! The file LICENCE, distributed with this code, contains details of the terms
 ! under which the code may be used.
 !-----------------------------------------------------------------------------
-
-!> A module to do a projection of a field from one function space to
-!> another for output
+!> Creates a new field of one function space and projects an existing field on
+!> a different function space to it.
+!>
 module project_output_mod
 
   implicit none
@@ -15,8 +15,7 @@ module project_output_mod
 
 contains
 
-  !> @brief An procedure to project a field from one function space to another
-  !>        for output
+  !> @brief Project a field to a new field.
   !>
   !> @details This procedure uses the galerkin projection and a precomputed
   !>          mass matrix to project a field
@@ -25,14 +24,10 @@ contains
   !> @param[inout] projected_field  Receives projection.
   !> @param[in]    chi              Field entity co-ordinates.
   !> @param[in]    panel_id         Cell orientation map.
-  !> @param[in]    mesh             Operating on this mesh.
   !> @param[in]    output_fs        Desired output function space.
   !>
-  !> @todo Is it necessary to pass mesh all the way down here given that it is
-  !>       always available from the fields we have? See lfric_apps:#118
-  !>
   subroutine project_output( field, projected_field, &
-                             chi, panel_id, mesh,    &
+                             chi, panel_id,          &
                              output_fs )
 
     use constants_mod,             only: r_def, str_max_filename, i_def
@@ -42,7 +37,6 @@ contains
     use finite_element_config_mod, only: element_order
     use function_space_collection_mod,  only: function_space_collection
     use fs_continuity_mod,         only: W0, W1, W2, W3
-    use mesh_mod,                  only: mesh_type
     use quadrature_xyoz_mod,               only: quadrature_xyoz_type
     use quadrature_rule_gaussian_mod,      only: quadrature_rule_gaussian_type
     use galerkin_projection_algorithm_mod, only: galerkin_projection_algorithm
@@ -56,7 +50,6 @@ contains
     ! Co-ordinate system
     type(field_type),         intent(in)    :: chi(:)
     type(field_type),         intent(in)    :: panel_id
-    type(mesh_type), pointer, intent(in)    :: mesh
     ! Output function space
     integer(i_def),           intent(in)    :: output_fs
 
@@ -76,7 +69,7 @@ contains
     do idx = 1, size(projected_field)
       call projected_field(idx)%initialise( &
         vector_space = function_space_collection%get_fs( &
-          mesh, element_order, output_fs &
+          field%get_mesh(), element_order, output_fs &
         ) &
       )
       !
@@ -87,8 +80,8 @@ contains
     end do
 
     ! do the projection
-    call galerkin_projection_algorithm(               &
-      projected_field, field, chi, panel_id, mesh, qr &
+    call galerkin_projection_algorithm(         &
+      projected_field, field, chi, panel_id, qr &
     )
 
   end subroutine project_output
