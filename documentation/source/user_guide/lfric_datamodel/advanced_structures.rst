@@ -7,7 +7,19 @@
 Advanced Data Structures
 ========================
 
-Overview of other first-order data structures used in LFRic models.
+Overview of first-order data structures used in LFRic models.
+
+.. _section field:
+
+Fields
+------
+
+.. _section field proxy:
+
+Field Proxies
+-------------
+
+.. _section field collection:
 
 .. toctree::
    :maxdepth: 1
@@ -17,8 +29,17 @@ Overview of other first-order data structures used in LFRic models.
 Field collections
 -----------------
 
+.. _section multidata field:
+
 Multidata fields
 ----------------
+
+.. _section operator:
+
+Operator
+--------
+
+.. _section mixed precision support:
 
 Mixed Precision Support
 -----------------------
