@@ -1,0 +1,83 @@
+!-----------------------------------------------------------------------------
+! (C) Crown copyright 2024 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-----------------------------------------------------------------------------
+
+!>@brief Test the code for time-interpolation and analytical time-varying
+!!       functions
+module sci_time_interp_mod_test
+
+  use constants_mod, only: r_def, i_def, PI
+  use pFUnit_Mod
+
+  implicit none
+
+  private
+  public :: test_interp, test_sine, test_diurnal
+
+contains
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  @Test
+  subroutine test_interp( )
+
+    use sci_time_interp_mod, only: time_interpolate_list
+
+    real(r_def), parameter :: time_now = 2.8_r_def
+    real(r_def), parameter, dimension(5) :: times = [1,2,3,4,5]
+    real(r_def), parameter, dimension(5) :: prof_vary = [5,10,15,20,25]
+    real(r_def) :: profile_now, answer
+
+    ! 0.2* 2 + 0.8* 3 = 2.8 so 0.2*10 + 0.8 * 15 = 14
+    answer = 14.0_r_def
+    call time_interpolate_list( profile_now, times, &
+                                prof_vary, time_now )
+    @assertEqual( answer, profile_now, 1.0e-8_r_def )
+
+  end subroutine test_interp
+
+ @Test
+  subroutine test_sine( )
+
+    use sci_time_interp_mod, only: sinusoidal_function
+
+    real(r_def), parameter :: time_now = 2.0_r_def
+    real(r_def), parameter :: amplitude = 3.0_r_def
+    real(r_def), parameter :: period = 2.0_r_def
+    real(r_def), parameter :: phase = PI
+    real(r_def) :: profile_now, answer
+
+    ! sin ( 2* PI / 2 * 2 + PI) = sin(3 PI) = 0
+    answer = 0.0_r_def
+
+    call sinusoidal_function( profile_now, time_now, &
+                              amplitude, period, phase )
+
+    @assertEqual( answer, profile_now, 1.0e-8_r_def )
+
+  end subroutine test_sine
+
+@Test
+  subroutine test_diurnal( )
+
+    use sci_time_interp_mod, only: diurnal_function
+
+    real(r_def), parameter :: time_now = 2.0_r_def
+    real(r_def), parameter :: amplitude = 3.0_r_def
+    real(r_def), parameter :: time_of_max_value = 2.0_r_def
+    real(r_def), parameter :: length_of_day = PI
+    real(r_def) :: profile_now, answer
+
+    ! 3 *  cos (PI (2 - 2)/ PI) = 3 * cos(0) = 3
+    answer = 3.0_r_def
+
+    call diurnal_function( profile_now, time_now,        &
+                           amplitude, time_of_max_value, &
+                           length_of_day )
+
+    @assertEqual( answer, profile_now, 1.0e-8_r_def )
+
+  end subroutine test_diurnal
+
+end module sci_time_interp_mod_test
