@@ -273,6 +273,25 @@ subroutine clear(self)
   implicit none
 
   class(halo_routing_collection_type), intent(inout) :: self
+  type(linked_list_item_type), pointer :: loop
+
+  ! Point to head of the function space linked list
+  loop => self%halo_routing_list%get_head()
+
+  ! Loop through the linked list and clear
+  ! each redistribution structure
+  do
+    if ( .not. associated(loop) ) then
+      exit
+    end if
+    select type(listhalo_routing => loop%payload)
+      type is (halo_routing_type)
+        call listhalo_routing%clear()
+    end select
+    loop => loop%next
+  end do
+
+  nullify(loop)
 
   call self%halo_routing_list%clear()
 

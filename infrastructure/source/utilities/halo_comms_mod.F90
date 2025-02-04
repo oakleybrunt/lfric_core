@@ -18,16 +18,19 @@ module halo_comms_mod
   use log_mod,               only: log_event, LOG_LEVEL_ERROR
   use mpi_mod,               only: global_mpi, get_mpi_datatype
 #ifdef NO_MPI
-  ! If this is a non-mpi build - Yaxt won't work - so don't "use" it
+  ! If this is a non-mpi build - YAXT won't work - so don't "use" it
 #else
   use yaxt,                  only: xt_initialize, xt_finalize, &
                                    xt_redist, xt_idxlist, xt_xmap, &
-                                   xt_idxvec_new, xt_xmap_dist_dir_new, &
+                                   xt_idxvec_new, &
+                                   xt_xmap_dist_dir_new, &
                                    xt_redist_p2p_off_new, &
-                                   xt_xmap_delete, xt_idxlist_delete, &
-                                   xt_request, &
+                                   xt_redist_delete, &
+                                   xt_idxlist_delete, &
+                                   xt_xmap_delete, &
                                    xt_redist_s_exchange, &
-                                   xt_redist_a_exchange, xt_request_wait
+                                   xt_redist_a_exchange, &
+                                   xt_request, xt_request_wait
 #endif
   implicit none
 
@@ -37,7 +40,7 @@ module halo_comms_mod
          perform_halo_exchange, perform_halo_exchange_start, &
          perform_halo_exchange_finish
 
-  !> @details A wrapper type for a Yaxt xt_redist object (which holds a halo
+  !> @details A wrapper type for a YAXT xt_redist object (which holds a halo
   !> routing table), along with metadata that describes the fields for which
   !> that routing table is valid
   !
@@ -62,6 +65,8 @@ module halo_comms_mod
     integer(i_def) :: fortran_kind
     !> Depth of halo this routing is computed to
     integer(i_def) :: halo_depth
+    !> Number of redistribution map objects
+    integer(i_def) :: max_depth
     !> YAXT redistribution map
 #ifdef NO_MPI
     ! If this is a non-mpi, serial build, redistribution maps are meaningless
@@ -94,6 +99,8 @@ module halo_comms_mod
     procedure, public :: get_redist
     !> Get halo depth
     procedure, public :: get_halo_depth
+    !> Clear all the redistribution structures
+    procedure, public :: clear
   end type halo_routing_type
   !---------------------------------------------------------------------
 
@@ -101,7 +108,7 @@ module halo_comms_mod
     module procedure halo_routing_constructor
   end interface
 
-  !> @details A wrapper type for a Yaxt xt_request object (which holds an
+  !> @details A wrapper type for a YAXT xt_request object (which holds an
   !> id for a halo exchange). This is used to identify asynchronous halo
   !> exchanges when we want to see if they have completed
   !
@@ -179,7 +186,6 @@ function halo_routing_constructor( global_dof_id,   &
   integer(i_def), intent(in) :: last_owned_dof
   integer(i_def), intent(in) :: halo_start(:)
   integer(i_def), intent(in) :: halo_finish(:)
-
   integer(i_def), intent(in) :: mesh_id
   integer(i_def), intent(in) :: element_order_h
   integer(i_def), intent(in) :: element_order_v
@@ -193,6 +199,7 @@ function halo_routing_constructor( global_dof_id,   &
   integer(i_def) :: max_depth
   integer(i_def) :: idepth
 
+  max_depth = size(halo_start)
 
   self%mesh_id = mesh_id
   self%element_order_h = element_order_h
@@ -202,8 +209,8 @@ function halo_routing_constructor( global_dof_id,   &
   self%fortran_type = fortran_type
   self%fortran_kind = fortran_kind
   self%halo_depth = halo_depth
+  self%max_depth = max_depth
 
-  max_depth = size(halo_start)
   allocate( self%redist(max_depth) )
 
 #ifdef NO_MPI
@@ -303,6 +310,25 @@ function get_halo_depth(self) result (halo_depth)
   return
 end function get_halo_depth
 
+!> @brief Clear all the redistribution structures
+!> by calling the (YAXT) destructor
+subroutine clear(self)
+  implicit none
+  class(halo_routing_type), intent(inout) :: self
+  integer(i_def) :: max_depth
+  integer(i_def) :: idepth
+
+#ifdef NO_MPI
+  ! No finalization step is needed
+#else
+  max_depth = self%max_depth
+  do idepth = 1, max_depth
+    call xt_redist_delete(self%redist(idepth))
+  end do
+#endif
+  if (allocated(self%redist)) deallocate(self%redist)
+end subroutine clear
+
 !> @brief Gets a YAXT redistribution map for halo swapping
 !> @param [in] depth The depth of halo exchange that the redistribution map
 !>                   will be used for
@@ -311,16 +337,17 @@ end function get_halo_depth
 function get_redist(self, depth) result (redist)
 
   implicit none
-  class(halo_routing_type) :: self
-  integer(i_def) , intent(in) :: depth
+
+  class(halo_routing_type), intent(in), target :: self
+  integer(i_def), intent(in) :: depth
 
 #ifdef NO_MPI
-  integer(i_def) :: redist
+  integer(i_def), pointer :: redist
 #else
-  type(xt_redist) :: redist
+  type(xt_redist), pointer :: redist
 #endif
 
-  redist = self%redist(depth)
+  redist => self%redist(depth)
 
   return
 end function get_redist
@@ -370,17 +397,17 @@ subroutine perform_halo_exchange_real32( data_with_halos, &
 
   implicit none
 
-  real(kind=real32),       intent(inout), pointer :: data_with_halos( : )
+  real(kind=real32),       intent(inout), pointer :: data_with_halos(:)
   type(halo_routing_type), intent(in),    pointer :: halo_routing
   integer(i_def), intent(in)                      :: depth
-#ifdef NO_MPI
 
+#ifdef NO_MPI
   ! Don't need to do anything to the halos in a serial, non-mpi build.
 #else
-  type(xt_redist) :: redist
+  type(xt_redist), pointer :: redist
 
   ! Start a blocking (synchronous) halo exchange
-  redist = halo_routing%get_redist(depth)
+  redist => halo_routing%get_redist(depth)
   call xt_redist_s_exchange(redist, data_with_halos, data_with_halos)
 #endif
 
@@ -397,17 +424,17 @@ subroutine perform_halo_exchange_real64( data_with_halos, &
                                          depth )
   implicit none
 
-  real(kind=real64),       intent(inout), pointer :: data_with_halos( : )
+  real(kind=real64),       intent(inout), pointer :: data_with_halos(:)
   type(halo_routing_type), intent(in),    pointer :: halo_routing
   integer(i_def), intent(in)                      :: depth
-#ifdef NO_MPI
 
+#ifdef NO_MPI
   ! Don't need to do anything to the halos in a serial, non-mpi build.
 #else
-  type(xt_redist) :: redist
+  type(xt_redist), pointer :: redist
 
   ! Start a blocking (synchronous) halo exchange
-  redist = halo_routing%get_redist(depth)
+  redist => halo_routing%get_redist(depth)
   call xt_redist_s_exchange(redist, data_with_halos, data_with_halos)
 #endif
 
@@ -425,17 +452,17 @@ subroutine perform_halo_exchange_int32( data_with_halos, &
 
   implicit none
 
-  integer(kind=int32),     intent(inout), pointer :: data_with_halos( : )
+  integer(kind=int32),     intent(inout), pointer :: data_with_halos(:)
   type(halo_routing_type), intent(in),    pointer :: halo_routing
   integer(i_def), intent(in)                      :: depth
-#ifdef NO_MPI
 
+#ifdef NO_MPI
   ! Don't need to do anything to the halos in a serial, non-mpi build.
 #else
-  type(xt_redist) :: redist
+  type(xt_redist), pointer :: redist
 
   ! Start a blocking (synchronous) halo exchange
-  redist = halo_routing%get_redist(depth)
+  redist => halo_routing%get_redist(depth)
   call xt_redist_s_exchange(redist, data_with_halos, data_with_halos)
 #endif
 
@@ -455,7 +482,7 @@ subroutine perform_halo_exchange_start_real32( data_with_halos, &
                                                halo_id )
   implicit none
 
-  real(kind=real32),       intent(inout), pointer :: data_with_halos( : )
+  real(kind=real32),       intent(inout), pointer :: data_with_halos(:)
   type(halo_routing_type), intent(in),    pointer :: halo_routing
   integer(i_def), intent(in)                      :: depth
   type(halo_exchange_id_type), intent(out)        :: halo_id
@@ -465,10 +492,10 @@ subroutine perform_halo_exchange_start_real32( data_with_halos, &
   ! so just set the intent(out) variable to a dummy value
   halo_id%halo_request = 0
 #else
-  type(xt_redist) :: redist
+  type(xt_redist), pointer :: redist
 
   ! Start a non-blocking (asynchronous) halo exchange
-  redist = halo_routing%get_redist(depth)
+  redist => halo_routing%get_redist(depth)
   call xt_redist_a_exchange(redist, &
                             data_with_halos, &
                             data_with_halos, &
@@ -491,7 +518,7 @@ subroutine perform_halo_exchange_start_real64( data_with_halos, &
                                                halo_id )
   implicit none
 
-  real(kind=real64),       intent(inout), pointer :: data_with_halos( : )
+  real(kind=real64),       intent(inout), pointer :: data_with_halos(:)
   type(halo_routing_type), intent(in),    pointer :: halo_routing
   integer(i_def), intent(in)                      :: depth
   type(halo_exchange_id_type), intent(out)        :: halo_id
@@ -501,10 +528,10 @@ subroutine perform_halo_exchange_start_real64( data_with_halos, &
   ! so just set the intent(out) variable to a dummy value
   halo_id%halo_request = 0
 #else
-  type(xt_redist) :: redist
+  type(xt_redist), pointer :: redist
 
   ! Start a non-blocking (asynchronous) halo exchange
-  redist = halo_routing%get_redist(depth)
+  redist => halo_routing%get_redist(depth)
   call xt_redist_a_exchange(redist, &
                             data_with_halos, &
                             data_with_halos, &
@@ -527,7 +554,7 @@ subroutine perform_halo_exchange_start_int32( data_with_halos, &
                                               halo_id )
   implicit none
 
-  integer(kind=int32),     intent(inout), pointer :: data_with_halos( : )
+  integer(kind=int32),     intent(inout), pointer :: data_with_halos(:)
   type(halo_routing_type), intent(in),    pointer :: halo_routing
   integer(i_def), intent(in)                      :: depth
   type(halo_exchange_id_type), intent(out)        :: halo_id
@@ -537,10 +564,10 @@ subroutine perform_halo_exchange_start_int32( data_with_halos, &
   ! so just set the intent(out) variable to a dummy value
   halo_id%halo_request = 0
 #else
-  type(xt_redist) :: redist
+  type(xt_redist), pointer :: redist
 
   ! Start a non-blocking (asynchronous) halo exchange
-  redist = halo_routing%get_redist(depth)
+  redist => halo_routing%get_redist(depth)
   call xt_redist_a_exchange(redist, &
                             data_with_halos, &
                             data_with_halos, &
@@ -582,6 +609,7 @@ end subroutine perform_halo_exchange_finish
 function generate_redistribution_map(src_indices, tgt_indices, datatype) &
                                      result(redist)
   implicit none
+
   integer(i_halo_index), intent(in) :: src_indices(:), tgt_indices(:)
   integer(i_def),        intent(in) :: datatype
 #ifdef NO_MPI
@@ -591,7 +619,6 @@ function generate_redistribution_map(src_indices, tgt_indices, datatype) &
   redist = 0
 #else
   type(xt_redist) :: redist
-
   type(xt_idxlist) :: src_idxlist, tgt_idxlist
   type(xt_xmap) :: xmap
   integer(i_def), allocatable :: src_offsets(:)
@@ -626,7 +653,7 @@ function generate_redistribution_map(src_indices, tgt_indices, datatype) &
     deallocate(tgt_offsets)
   else
     call log_event( &
-    'Call to generate_redistribution_map failed. Must initialise mpi first',&
+    'Call to generate_redistribution_map failed. Must initialise mpi first', &
     LOG_LEVEL_ERROR )
   end if
 #endif

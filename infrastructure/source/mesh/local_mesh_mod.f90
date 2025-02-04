@@ -25,7 +25,7 @@ module local_mesh_mod
   use linked_list_data_mod,           only: linked_list_data_type
   use local_mesh_map_collection_mod,  only: local_mesh_map_collection_type
   use local_mesh_map_mod,             only: local_mesh_map_type
-  use log_mod,                        only: log_event, log_scratch_space,     &
+  use log_mod,                        only: log_event, log_scratch_space, &
                                             LOG_LEVEL_ERROR, LOG_LEVEL_TRACE, &
                                             LOG_LEVEL_INFO, LOG_LEVEL_DEBUG
   use partition_mod,                  only: partition_type
@@ -100,7 +100,7 @@ module local_mesh_mod
   ! A List of global cell IDs known to this local mesh, ordered with inner
   ! cells first followed by the edge cells and finally the halo cells ordered
   ! by depth of halo.
-    integer(i_def), allocatable :: global_cell_id( : )
+    integer(i_def), allocatable :: global_cell_id(:)
   ! Global IDs of vertices connected to local 2D cell.
     integer(i_def), allocatable :: vert_on_cell_gid(:,:)
   ! Global IDs of edges connected to local 2D cell.
@@ -116,10 +116,10 @@ module local_mesh_mod
     integer(i_def), allocatable :: cell_owner( : )
   ! The number of "inner" cells in the <code>global_cell_id</code> list -
   ! one entry for each depth of inner halo.
-    integer(i_def), allocatable :: num_inner( : )
+    integer(i_def), allocatable :: num_inner(:)
   ! The index of the last "inner" cell in the <code>global_cell_id</code> list -
   ! one entry for each depth of inner halo.
-    integer(i_def), allocatable :: last_inner_cell( : )
+    integer(i_def), allocatable :: last_inner_cell(:)
   ! The depth to which inner halos are generated.
     integer(i_def)              :: inner_depth
   ! The number of "edge" cells in the <code>global_cell_id</code> list.
@@ -128,10 +128,10 @@ module local_mesh_mod
     integer(i_def)              :: last_edge_cell
   ! The number of "halo" cells in the <code>global_cell_id</code> list -
   ! one entry for each depth of halo.
-    integer(i_def), allocatable :: num_halo( : )
+    integer(i_def), allocatable :: num_halo(:)
   ! The index of the last "halo" cell in the <code>global_cell_id</code> list -
   ! one entry for each depth of halo.
-    integer(i_def), allocatable :: last_halo_cell( : )
+    integer(i_def), allocatable :: last_halo_cell(:)
   ! The depth to which halos are generated.
     integer(i_def)              :: halo_depth
   ! The number of "ghost" cells in the <code>global_cell_id</code> list.
@@ -1462,6 +1462,8 @@ contains
     call perform_halo_exchange( cell_owner_ptr, &
                                 halo_routing, &
                                 1_i_def )
+
+    call halo_routing%clear()
     deallocate(halo_routing)
 
   end subroutine init_cell_owner
