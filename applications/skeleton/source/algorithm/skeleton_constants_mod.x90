@@ -34,7 +34,8 @@ module skeleton_constants_mod
   ! Configuration
   use finite_element_config_mod,          only: element_order_h, &
                                                 element_order_v, &
-                                                nqp_exact
+                                                nqp_h_exact,     &
+                                                nqp_v_exact
 
   ! Kernels
   use sci_compute_derham_matrices_kernel_mod, only: compute_derham_matrices_kernel_type
@@ -114,7 +115,8 @@ contains
 
     !======================== Create quadrature object ========================!
 
-    qr = quadrature_xyoz_type(nqp_exact, quadrature_rule)
+    qr = quadrature_xyoz_type(nqp_h_exact, nqp_h_exact, nqp_v_exact, &
+                              quadrature_rule)
 
     !======================== Initialise inventories ==========================!
 

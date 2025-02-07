@@ -35,7 +35,8 @@ module sci_fem_constants_mod
   ! Configuration
   use finite_element_config_mod,          only: element_order_h, &
                                                 element_order_v, &
-                                                nqp_exact
+                                                nqp_h_exact,     &
+                                                nqp_v_exact
 
   ! Other algorithms
   use sci_geometric_constants_mod,        only: get_coordinates,               &
@@ -122,7 +123,8 @@ contains
     type(quadrature_xyoz_type), pointer :: qr_obj
 
     if (.not. qr_set) then
-      qr = quadrature_xyoz_type(nqp_exact, quadrature_rule)
+      qr = quadrature_xyoz_type(nqp_h_exact, nqp_h_exact, nqp_v_exact, &
+                                quadrature_rule)
       qr_set = .true.
     end if
 

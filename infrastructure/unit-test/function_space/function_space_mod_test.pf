@@ -11,49 +11,53 @@ module function_space_mod_test
   use constants_mod,         only : i_def, l_def, r_def, str_long
   use fs_continuity_mod,     only : W0, W1, W2, W3, Wtheta, W2V, W2H, Wchi, &
                                     W2trace, W2Htrace, W2Vtrace
-  use fs_test_data_mod,      only : fs0k0_nodal_coords,         &
-                                    fs0k0_dofmap,               &
-                                    fs0k0_basis_function,       &
-                                    fs0k0_basis_diff_function,  &
-                                    fs1k0_nodal_coords,         &
-                                    fs1k0_dofmap,               &
-                                    fs1k0_basis_function,       &
-                                    fs1k0_basis_diff_function,  &
-                                    fs2k0_nodal_coords,         &
-                                    fs2k0_dofmap,               &
-                                    fs2k0_basis_function,       &
-                                    fs2k0_basis_diff_function,  &
-                                    fs3k0_nodal_coords,         &
-                                    fs3k0_dofmap,               &
-                                    fs3k0_basis_function,       &
-                                    fs3k0_basis_diff_function,  &
-                                    fstk0_nodal_coords,         &
-                                    fstk0_dofmap,               &
-                                    fstk0_basis_function,       &
-                                    fstk0_basis_diff_function,  &
-                                    fs2vk0_nodal_coords,        &
-                                    fs2vk0_dofmap,              &
-                                    fs2vk0_basis_function,      &
-                                    fs2vk0_basis_diff_function, &
-                                    fs2hk0_nodal_coords,        &
-                                    fs2hk0_dofmap,              &
-                                    fs2hk0_basis_function,      &
-                                    fs2hk0_basis_diff_function, &
-                                    fsck0_nodal_coords,         &
-                                    fsck0_dofmap,               &
-                                    fsck0_basis_function,       &
-                                    fsck0_basis_diff_function,  &
-                                    fs2tk0_nodal_coords,        &
-                                    fs2tk0_dofmap,              &
-                                    fs2tk0_basis_function,      &
-                                    fs2tk0_basis_diff_function, &
-                                    fs2vtk0_nodal_coords,       &
-                                    fs2vtk0_dofmap,             &
-                                    fs2vtk0_basis_function,     &
-                                    fs2vtk0_basis_diff_function,&
-                                    fs2htk0_nodal_coords,       &
-                                    fs2htk0_dofmap,             &
-                                    fs2htk0_basis_function,     &
+  use fs_test_data_mod,      only : fs0k0_nodal_coords,            &
+                                    fs0k0_dofmap,                  &
+                                    fs0k0_basis_function,          &
+                                    fs0k0_basis_diff_function,     &
+                                    fs1k0_nodal_coords,            &
+                                    fs1k0_dofmap,                  &
+                                    fs1k0_basis_function,          &
+                                    fs1k0_basis_diff_function,     &
+                                    fs2k0_nodal_coords,            &
+                                    fs2k0_dofmap,                  &
+                                    fs2k0_basis_function,          &
+                                    fs2k0_basis_diff_function,     &
+                                    fs2kh0kv1_nodal_coords,        &
+                                    fs2kh0kv1_dofmap,              &
+                                    fs2kh0kv1_basis_function,      &
+                                    fs2kh0kv1_basis_diff_function, &
+                                    fs3k0_nodal_coords,            &
+                                    fs3k0_dofmap,                  &
+                                    fs3k0_basis_function,          &
+                                    fs3k0_basis_diff_function,     &
+                                    fstk0_nodal_coords,            &
+                                    fstk0_dofmap,                  &
+                                    fstk0_basis_function,          &
+                                    fstk0_basis_diff_function,     &
+                                    fs2vk0_nodal_coords,           &
+                                    fs2vk0_dofmap,                 &
+                                    fs2vk0_basis_function,         &
+                                    fs2vk0_basis_diff_function,    &
+                                    fs2hk0_nodal_coords,           &
+                                    fs2hk0_dofmap,                 &
+                                    fs2hk0_basis_function,         &
+                                    fs2hk0_basis_diff_function,    &
+                                    fsck0_nodal_coords,            &
+                                    fsck0_dofmap,                  &
+                                    fsck0_basis_function,          &
+                                    fsck0_basis_diff_function,     &
+                                    fs2tk0_nodal_coords,           &
+                                    fs2tk0_dofmap,                 &
+                                    fs2tk0_basis_function,         &
+                                    fs2tk0_basis_diff_function,    &
+                                    fs2vtk0_nodal_coords,          &
+                                    fs2vtk0_dofmap,                &
+                                    fs2vtk0_basis_function,        &
+                                    fs2vtk0_basis_diff_function,   &
+                                    fs2htk0_nodal_coords,          &
+                                    fs2htk0_dofmap,                &
+                                    fs2htk0_basis_function,        &
                                     fs2htk0_basis_diff_function
 
   use function_space_mod,    only : function_space_type
@@ -98,6 +102,7 @@ module function_space_mod_test
     integer(i_def) :: ndof_glob
     integer(i_def) :: dim_space
     integer(i_def) :: dim_space_diff
+    logical(l_def) :: test_dofmap
   contains
     procedure :: toString
   end type function_space_parameter_type
@@ -112,6 +117,7 @@ module function_space_mod_test
     integer(i_def) :: ndof_glob
     integer(i_def) :: dim_space
     integer(i_def) :: dim_space_diff
+    logical(l_def) :: test_dofmap
 
     type(local_mesh_type)    :: unit_test_local_mesh
     integer(i_def)           :: mesh_id
@@ -122,12 +128,6 @@ module function_space_mod_test
     procedure tearDown
     procedure get_local_mesh_ptr
   end type test_function_space_type
-
-  integer(i_def), parameter :: element_order_h = 0
-  integer(i_def), parameter :: element_order_v = 0
-
-  integer(i_def), parameter :: nqp_h = 9
-  integer(i_def), parameter :: nqp_v = 3
 
 contains
 
@@ -146,6 +146,7 @@ contains
     new_test%ndof_glob        = testParameter%ndof_glob
     new_test%dim_space        = testParameter%dim_space
     new_test%dim_space_diff   = testParameter%dim_space_diff
+    new_test%test_dofmap      = testParameter%test_dofmap
 
   end function test_function_space_constructor
 
@@ -171,26 +172,58 @@ contains
 
     implicit none
 
-    type(function_space_parameter_type) :: parameters(11)
+    type(function_space_parameter_type) :: parameters(44)
 
     ! function_space_parameter_type extends MPITestParameter
     ! The following calls to the constructor require numProcessesRequested from
     ! MPITestParameter to be set (here set to 1 for all cases) followed by the
-    ! parameters defined in function_space_parameter_type. undf values have been computed
-    ! for a 3x3x3 biperiodic mesh
-    ! mesh
+    ! parameters defined in function_space_parameter_type. undf values have been
+    ! computed for a 3x3x3 biperiodic mesh
     parameters = (/ &
-               function_space_parameter_type(1, W0,       0, 0,  8, 36, 1, 3), &
-               function_space_parameter_type(1, W1,       0, 0, 12, 99, 3, 3), &
-               function_space_parameter_type(1, W2,       0, 0,  6, 90, 3, 1), &
-               function_space_parameter_type(1, W3,       0, 0,  1, 27, 1, 3), &
-               function_space_parameter_type(1, Wtheta,   0, 0,  2, 36, 1, 3), &
-               function_space_parameter_type(1, W2V,      0, 0,  2, 36, 3, 1), &
-               function_space_parameter_type(1, W2H,      0, 0,  4, 54, 3, 1), &
-               function_space_parameter_type(1, Wchi,     0, 0,  1, 27, 1, 3), &
-               function_space_parameter_type(1, W2trace,  0, 0,  6, 90, 1, 3), &
-               function_space_parameter_type(1, W2Vtrace, 0, 0,  2, 36, 1, 3), &
-               function_space_parameter_type(1, W2Htrace, 0, 0,  4, 54, 1, 3)  &
+               function_space_parameter_type(1, W0,       0, 0,  8,  36, 1, 3, .true. ), &
+               function_space_parameter_type(1, W0,       1, 0, 18, 144, 1, 3, .false.), &
+               function_space_parameter_type(1, W0,       0, 1, 12,  63, 1, 3, .false.), &
+               function_space_parameter_type(1, W0,       1, 1, 27, 252, 1, 3, .false.), &
+               function_space_parameter_type(1, W1,       0, 0, 12,  99, 3, 3, .true. ), &
+               function_space_parameter_type(1, W1,       1, 0, 33, 396, 3, 3, .false.), &
+               function_space_parameter_type(1, W1,       0, 1, 20, 180, 3, 3, .false.), &
+               function_space_parameter_type(1, W1,       1, 1, 54, 720, 3, 3, .false.), &
+               function_space_parameter_type(1, W2,       0, 0,  6,  90, 3, 1, .true. ), &
+               function_space_parameter_type(1, W2,       1, 0, 20, 360, 3, 1, .false.), &
+               function_space_parameter_type(1, W2,       0, 1, 11, 171, 3, 1, .true. ), &
+               function_space_parameter_type(1, W2,       1, 1, 36, 684, 3, 1, .false.), &
+               function_space_parameter_type(1, W3,       0, 0,  1,  27, 1, 3, .true. ), &
+               function_space_parameter_type(1, W3,       1, 0,  4, 108, 1, 3, .false.), &
+               function_space_parameter_type(1, W3,       0, 1,  2,  54, 1, 3, .false.), &
+               function_space_parameter_type(1, W3,       1, 1,  8, 216, 1, 3, .false.), &
+               function_space_parameter_type(1, Wtheta,   0, 0,  2,  36, 1, 3, .true. ), &
+               function_space_parameter_type(1, Wtheta,   1, 0,  8, 144, 1, 3, .false.), &
+               function_space_parameter_type(1, Wtheta,   0, 1,  3,  63, 1, 3, .false.), &
+               function_space_parameter_type(1, Wtheta,   1, 1, 12, 252, 1, 3, .false.), &
+               function_space_parameter_type(1, W2V,      0, 0,  2,  36, 3, 1, .true. ), &
+               function_space_parameter_type(1, W2V,      1, 0,  8, 144, 3, 1, .false.), &
+               function_space_parameter_type(1, W2V,      0, 1,  3,  63, 3, 1, .false.), &
+               function_space_parameter_type(1, W2V,      1, 1, 12, 252, 3, 1, .false.), &
+               function_space_parameter_type(1, W2H,      0, 0,  4,  54, 3, 1, .true. ), &
+               function_space_parameter_type(1, W2H,      1, 0, 12, 216, 3, 1, .false.), &
+               function_space_parameter_type(1, W2H,      0, 1,  8, 108, 3, 1, .false.), &
+               function_space_parameter_type(1, W2H,      1, 1, 24, 432, 3, 1, .false.), &
+               function_space_parameter_type(1, Wchi,     0, 0,  1,  27, 1, 3, .true. ), &
+               function_space_parameter_type(1, Wchi,     1, 0,  4, 108, 1, 3, .false.), &
+               function_space_parameter_type(1, Wchi,     0, 1,  2,  54, 1, 3, .false.), &
+               function_space_parameter_type(1, Wchi,     1, 1,  8, 216, 1, 3, .false.), &
+               function_space_parameter_type(1, W2trace,  0, 0,  6,  90, 1, 3, .true. ), &
+               function_space_parameter_type(1, W2trace,  1, 0, 16, 252, 1, 3, .false.), &
+               function_space_parameter_type(1, W2trace,  0, 1, 10, 144, 1, 3, .false.), &
+               function_space_parameter_type(1, W2trace,  1, 1, 24, 360, 1, 3, .false.), &
+               function_space_parameter_type(1, W2Vtrace, 0, 0,  2,  36, 1, 3, .true. ), &
+               function_space_parameter_type(1, W2Vtrace, 1, 0,  8, 144, 1, 3, .false.), &
+               function_space_parameter_type(1, W2Vtrace, 0, 1,  2,  36, 1, 3, .false.), &
+               function_space_parameter_type(1, W2Vtrace, 1, 1,  8, 144, 1, 3, .false.), &
+               function_space_parameter_type(1, W2Htrace, 0, 0,  4,  54, 1, 3, .true. ), &
+               function_space_parameter_type(1, W2Htrace, 1, 0,  8, 108, 1, 3, .false.), &
+               function_space_parameter_type(1, W2Htrace, 0, 1,  8, 108, 1, 3, .false.), &
+               function_space_parameter_type(1, W2Htrace, 1, 1, 16, 216, 1, 3, .false.)  &
                  /)
 
   end function getParameters
@@ -220,13 +253,6 @@ contains
     unit_test_mesh = mesh_type( PLANE_BI_PERIODIC, unit_test_local_mesh_ptr )
     this%mesh_id = mesh_collection%add_new_mesh( unit_test_mesh )
 
-    allocate( this%test_basis ( this%dim_space, &
-                                this%ndof_cell, &
-                                nqp_h, nqp_v) )
-    allocate( this%test_diff_basis( this%dim_space_diff, &
-                                    this%ndof_cell,      &
-                                    nqp_h, nqp_v) )
-
   end subroutine setUp
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -235,9 +261,6 @@ contains
     implicit none
 
     class(test_function_space_type), intent(inout) :: this
-
-    deallocate(this%test_basis)
-    deallocate(this%test_diff_basis)
 
     call mesh_collection%clear()
 
@@ -299,6 +322,9 @@ contains
 
     integer(i_def) :: i
 
+    integer(i_def) :: nqp_h
+    integer(i_def) :: nqp_v
+
 #if (RDEF_PRECISION == 64)
     real(real64), parameter :: margin = 1.0e-14_real64
 #elif (RDEF_PRECISION == 32)
@@ -307,7 +333,18 @@ contains
     @assertFail("Unsupported default precision")
 #endif
 
-    qr = quadrature_xyoz_type(3, quadrature_rule)
+    nqp_h = (this%element_order_h + 3)**2
+    nqp_v = this%element_order_v + 3
+
+    allocate( this%test_basis ( this%dim_space, &
+                                this%ndof_cell, &
+                                nqp_h, nqp_v) )
+    allocate( this%test_diff_basis( this%dim_space_diff, &
+                                    this%ndof_cell,      &
+                                    nqp_h, nqp_v) )
+
+    qr = quadrature_xyoz_type(this%element_order_h+3, this%element_order_h+3, &
+                              this%element_order_v+3, quadrature_rule)
     qr_proxy = qr%get_quadrature_proxy()
     xp=>qr_proxy%points_xy
     zp=>qr_proxy%points_z
@@ -327,10 +364,18 @@ contains
         basis_function => fs1k0_basis_function
         basis_diff_function => fs1k0_basis_diff_function
       case (W2)
-        nodal_coords   => fs2k0_nodal_coords
-        dofmap         => fs2k0_dofmap
-        basis_function => fs2k0_basis_function
-        basis_diff_function => fs2k0_basis_diff_function
+        select case(this%element_order_h + 10*this%element_order_v)
+          case(0)
+            nodal_coords   => fs2k0_nodal_coords
+            dofmap         => fs2k0_dofmap
+            basis_function => fs2k0_basis_function
+            basis_diff_function => fs2k0_basis_diff_function
+          case(10)
+            nodal_coords   => fs2kh0kv1_nodal_coords
+            dofmap         => fs2kh0kv1_dofmap
+            basis_function => fs2kh0kv1_basis_function
+            basis_diff_function => fs2kh0kv1_basis_diff_function
+        end select
       case (W3)
         nodal_coords   => fs3k0_nodal_coords
         dofmap         => fs3k0_dofmap
@@ -373,9 +418,9 @@ contains
         basis_diff_function => fs2htk0_basis_diff_function
     end select
 
-    test_fs = function_space_type( this%mesh_id,  &
-                                   element_order_h, &
-                                   element_order_v, &
+    test_fs = function_space_type( this%mesh_id,         &
+                                   this%element_order_h, &
+                                   this%element_order_v, &
                                    this%function_space )
 
     @assertEqual( this%function_space, test_fs%which() )
@@ -389,39 +434,49 @@ contains
     @assertEqual( 3,              test_fs%get_nlayers() )
     @assertEqual( this%ndof_glob, test_fs%get_undf()    )
     @assertEqual( this%ndof_cell, test_fs%get_ndf()     )
-    @assertEqual( nodal_coords,   test_fs%get_nodes()   )
 
     test_dim_space      = test_fs%get_dim_space()
     test_dim_space_diff = test_fs%get_dim_space_diff()
     @assertEqual( this%dim_space,      test_dim_space      )
     @assertEqual( this%dim_space_diff, test_dim_space_diff )
 
-    do cell=1, test_ncells
-      @assertEqual( dofmap(:,cell), test_fs%get_cell_dofmap(cell) )
-    end do
-
     @assertFalse ( test_fs%is_ndata_first() )
 
-    call test_fs%compute_basis_function( this%test_basis, &
-                                         test_ndof_cell,  &
-                                         nqp_h, nqp_v,    &
-                                         xp, zp )
+    ! For now, only test dofmap, nodal coordinates, basis functions and
+    ! diff basis functions for lowest order spaces and specific higher
+    ! order spaces
+    if (this%test_dofmap) then
 
-    @assertEqual(basis_function, this%test_basis, margin)
+      do cell=1, test_ncells
+        @assertEqual( dofmap(:,cell), test_fs%get_cell_dofmap(cell) )
+      end do
 
-    call test_fs%compute_diff_basis_function( this%test_diff_basis, &
-                                              test_ndof_cell,       &
-                                              nqp_h, nqp_v,         &
-                                              xp, zp )
-    @assertEqual(basis_diff_function, this%test_diff_basis, margin)
+      @assertEqual( nodal_coords,   test_fs%get_nodes()   )
+
+      call test_fs%compute_basis_function( this%test_basis, &
+                                           test_ndof_cell,  &
+                                           nqp_h, nqp_v,    &
+                                           xp, zp )
+
+      @assertEqual(basis_function, this%test_basis, margin)
+
+      call test_fs%compute_diff_basis_function( this%test_diff_basis, &
+                                                test_ndof_cell,       &
+                                                nqp_h, nqp_v,         &
+                                                xp, zp )
+      @assertEqual(basis_diff_function, this%test_diff_basis, margin)
+    end if
 
     ! check unique 2d dof ids are as expected - for cell volumes
     known_global_cell_dof_id_2d=[0,1,2,3,4,5,6,7,8]
     call  test_fs%get_global_cell_dof_id_2d(global_cell_dof_id_2d)
     @assertEqual(known_global_cell_dof_id_2d, global_cell_dof_id_2d)
 
-    ! check unique 2d dof ids are as expected - for edges
-    if(this%function_space == W2H)then
+    ! check unique 2d dof ids are as expected - for edges (only calculated
+    ! for lowest order W2H function space)
+    if (this%function_space == W2H .and. &
+        this%element_order_h == 0  .and. &
+        this%element_order_v == 0 ) then
       known_global_edge_dof_id_2d=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
       call  test_fs%get_global_edge_dof_id_2d(global_edge_dof_id_2d)
       @assertEqual(known_global_edge_dof_id_2d, global_edge_dof_id_2d)
@@ -431,8 +486,11 @@ contains
       @assertEqual(known_global_edge_dof_id_2d, global_edge_dof_id_2d)
     end if
 
-    ! check unique 2d dof ids are as expected - for vertices
-    if(this%function_space == W0)then
+    ! check unique 2d dof ids are as expected - for vertices (only calculated
+    ! for lowest order W0 function space)
+    if (this%function_space == W0 .and. &
+        this%element_order_h == 0 .and. &
+        this%element_order_v == 0 ) then
       known_global_vert_dof_id_2d=[0,1,2,3,4,5,6,7,8]
       call  test_fs%get_global_vert_dof_id_2d(global_vert_dof_id_2d)
       @assertEqual(known_global_vert_dof_id_2d, global_vert_dof_id_2d)
@@ -446,11 +504,11 @@ contains
 
     ! Now test multidata function spaces
     ndat = 4
-    test_fs = function_space_type( this%mesh_id,        &
-                                   element_order_h,     &
-                                   element_order_v,     &
-                                   this%function_space, &
-                                   ndata=ndat,          &
+    test_fs = function_space_type( this%mesh_id,             &
+                                   this%element_order_h,     &
+                                   this%element_order_v,     &
+                                   this%function_space,      &
+                                   ndata=ndat,               &
                                    ndata_first=.true. )
 
     @assertEqual( ndat, test_fs%get_ndata() )
@@ -463,6 +521,9 @@ contains
     call test_fs%clear()
     nullify( xp, zp, nodal_coords, dofmap, basis_function,&
              basis_diff_function )
+
+    deallocate(this%test_basis)
+    deallocate(this%test_diff_basis)
 
   end subroutine test_space
 
@@ -485,9 +546,9 @@ contains
     integer(i_def)          :: cell_counter,dof_counter
     logical                 :: identical
 
-    test_fs = function_space_type( this%mesh_id,  &
-                                   element_order_h, &
-                                   element_order_v, &
+    test_fs = function_space_type( this%mesh_id,         &
+                                   this%element_order_h, &
+                                   this%element_order_v, &
                                    this%function_space )
 
     test_ncells    = test_fs%get_ncell()
@@ -528,9 +589,9 @@ contains
     integer(i_def),            pointer :: stencil_map(:,:) => null()
     integer(i_def),            pointer :: map(:)           => null()
 
-    test_fs = function_space_type( this%mesh_id,    &
-                                   element_order_h, &
-                                   element_order_v, &
+    test_fs = function_space_type( this%mesh_id,         &
+                                   this%element_order_h, &
+                                   this%element_order_v, &
                                    this%function_space )
 
     stencil_dofmap => test_fs%get_stencil_dofmap(STENCIL_POINT,0)
@@ -560,9 +621,9 @@ contains
     integer(i_def),            pointer :: map(:)           => null()
     type(mesh_type),           pointer :: mesh             => null()
 
-    test_fs = function_space_type( this%mesh_id,    &
-                                   element_order_h, &
-                                   element_order_v, &
+    test_fs = function_space_type( this%mesh_id,         &
+                                   this%element_order_h, &
+                                   this%element_order_v, &
                                    this%function_space )
 
     stencil_dofmap => test_fs%get_stencil_dofmap( STENCIL_1DX, 1 )
@@ -599,9 +660,9 @@ contains
     integer(i_def),            pointer :: map(:)           => null()
     type(mesh_type),           pointer :: mesh             => null()
 
-    test_fs = function_space_type( this%mesh_id,    &
-                                   element_order_h, &
-                                   element_order_v, &
+    test_fs = function_space_type( this%mesh_id,         &
+                                   this%element_order_h, &
+                                   this%element_order_v, &
                                    this%function_space )
 
     stencil_dofmap => test_fs%get_stencil_dofmap( STENCIL_1DY, 1 )
@@ -640,9 +701,9 @@ contains
 
     integer :: i
 
-    test_fs = function_space_type( this%mesh_id,    &
-                                   element_order_h, &
-                                   element_order_v, &
+    test_fs = function_space_type( this%mesh_id,         &
+                                   this%element_order_h, &
+                                   this%element_order_v, &
                                    this%function_space )
 
     stencil_dofmap => test_fs%get_stencil_dofmap(STENCIL_CROSS,1)
@@ -673,9 +734,9 @@ contains
     type(function_space_type) :: test_fs
     type(mesh_type),  pointer :: mesh_out => null()
 
-    test_fs = function_space_type( this%mesh_id,    &
-                                   element_order_h, &
-                                   element_order_v, &
+    test_fs = function_space_type( this%mesh_id,         &
+                                   this%element_order_h, &
+                                   this%element_order_v, &
                                    this%function_space )
 
     mesh_out => test_fs%get_mesh()
@@ -713,64 +774,237 @@ contains
     type(mesh_type),               pointer :: mesh           => null()
     integer(i_def),                pointer :: entity_dofs(:) => null()
 
-    integer(i_def) :: reference(12)
-    integer(i_def) :: ndf
+    integer(i_def) :: reference(this%ndof_cell)
+    integer(i_def) :: edge_array(12)
+    integer(i_def) :: face_array(6)
+    integer(i_def) :: vert_array(8)
+    integer(i_def) :: ndf, k_h, k_v, idx1, idx2
+    integer(i_def) :: edge, face, vert
+    integer(i_def) :: ndof_vol,                 &
+                      ndof_face_h, ndof_face_v, &
+                      ndof_edge_h, ndof_edge_v, &
+                      ndof_vert
+
+    ! Initialise internal variables for entity tests:
+    k_h = this%element_order_h
+    k_v = this%element_order_v
+
+    ndof_vol    = 0
+    ndof_face_h = 0
+    ndof_face_v = 0
+    ndof_edge_h = 0
+    ndof_edge_v = 0
+    ndof_vert   = 0
+
+    edge_array = (/ WB, SB, EB, NB, SW, SE, NE, NW, WT, ST, ET, NT /)
+    face_array = (/ W, S, E, N, B, T /)
+    vert_array = (/ SWB, SEB, NEB, NWB, SWT, SET, NET, NWT /)
 
     reference(:) = 0
-    test_fs = function_space_type( this%mesh_id,    &
-                                   element_order_h, &
-                                   element_order_v, &
+    test_fs = function_space_type( this%mesh_id,         &
+                                   this%element_order_h, &
+                                   this%element_order_v, &
                                    this%function_space )
 
-    mesh              => mesh_collection%get_mesh( this%mesh_id )
-    entity_dofs       => test_fs%get_entity_dofs()
+    ndf = this%ndof_cell
 
-    ndf = test_fs%get_ndf()
-
-    ! Might be a good idea to eventually make this test work for general order
-    ! elements.
     select case ( this%function_space )
       case (W0)
-        ! Lowest order W0 space has dofs only on each vertex.
-        reference(1:ndf) = (/ SWB, SEB, NEB, NWB, SWT, SET, NET, NWT /) &
-                         + VERTEX_OFFSET
+        ndof_vol    = k_h*k_h*k_v
+        ndof_edge_h = k_h
+        ndof_edge_v = k_v
+        ndof_face_h = k_h*k_v
+        ndof_face_v = k_h*k_h
+        ndof_vert   = 1
+
+        idx1 = 1
+        idx2 = ndof_vol
+        if (idx1 <= idx2) then
+          reference(idx1:idx2) = V
+        end if
+
+        do face = 1, 6
+          idx1 = idx2 + 1
+          if (face <= 4) then
+            idx2 = idx1 + ndof_face_h - 1
+          else
+            idx2 = idx1 + ndof_face_v - 1
+          end if
+          if (idx1 <= idx2) then
+            reference(idx1:idx2) = face_array(face) + FACE_OFFSET
+          end if
+        end do
+
+        do edge = 1, 12
+          idx1 = idx2 + 1
+          if (edge <= 4 .or. edge > 8) then
+            idx2 = idx1 + ndof_edge_h - 1
+          else
+            idx2 = idx1 + ndof_edge_v - 1
+          end if
+          if (idx1 <= idx2) then
+            reference(idx1:idx2) = edge_array(edge) + EDGE_OFFSET
+          end if
+        end do
+
+        idx1 = idx2 + 1
+        idx2 = idx1 + 8*ndof_vert - 1
+        reference(idx1:idx2) = vert_array + VERTEX_OFFSET
+
       case (W1)
-        ! Lowest order W1 space has dofs on each edge.
-        reference(1:ndf) = (/ WB, SB, EB, NB, SW, SE, NE, NW, WT, ST, ET, NT /) &
-                         + EDGE_OFFSET
+        ndof_edge_h = (k_h + 1)
+        ndof_edge_v = (k_v + 1)
+        ndof_face_h = (k_h + 1)*k_v + k_h*(k_v + 1)
+        ndof_face_v = 2*(k_h + 1)*k_h
+        ndof_vol    = 2*k_h*(k_h + 1)*k_v &
+                    + k_h*k_h*(k_v + 1)
+
+        idx1 = 1
+        idx2 = ndof_vol
+        if (idx1 <= idx2) then
+          reference(idx1:idx2) = V
+        end if
+
+        do face = 1, 6
+          idx1 = idx2 + 1
+          if (face <= 4) then
+            idx2 = idx1 + ndof_face_h - 1
+          else
+            idx2 = idx1 + ndof_face_v - 1
+          end if
+          if (idx1 <= idx2) then
+            reference(idx1:idx2) = face_array(face) + FACE_OFFSET
+          end if
+        end do
+
+        do edge = 1, 12
+          idx1 = idx2 + 1
+          if (edge <= 4 .or. edge > 8) then
+            idx2 = idx1 + ndof_edge_h - 1
+          else
+            idx2 = idx1 + ndof_edge_v - 1
+          end if
+          reference(idx1:idx2) = edge_array(edge) + EDGE_OFFSET
+        end do
+
       case (W2)
-        ! Lowest order W2 space has dofs on all faces.
-        reference(1:ndf) = (/ W, S, E, N, B, T /) &
-                         + FACE_OFFSET
+        ndof_face_h = (k_h + 1)*(k_v + 1)
+        ndof_face_v = (k_h + 1)*(k_h + 1)
+        ndof_vol    = 2*k_h*(k_h + 1)*(k_v + 1) &
+                    + (k_h + 1)*(k_h + 1)*k_v
+
+        idx1 = 1
+        idx2 = ndof_vol
+        if (idx1 <= idx2) then
+          reference(idx1:idx2) = V
+        end if
+
+        do face = 1, 6
+          idx1 = idx2 + 1
+          if (face <= 4) then
+            idx2 = idx1 + ndof_face_h - 1
+          else
+            idx2 = idx1 + ndof_face_v - 1
+          end if
+          reference(idx1:idx2) = face_array(face) + FACE_OFFSET
+        end do
+
       case (W3)
-        ! Lowest order W3 has a single cell-volume dof
-        reference(1) = V
+        ! W3 has only volume dofs at any order
+        reference(1:ndf) = V
+
       case (Wtheta)
-        ! Lowest order theta space has dofs only on the top
-        ! and bottom faces.
-        reference(1:ndf) = (/ B, T /) + FACE_OFFSET
-      case (W2V)
-        ! Same as Wtheta
-        reference(1:ndf) = (/ B, T /) + FACE_OFFSET
+        ndof_face_v     = (k_h + 1)*(k_h + 1)
+        ndof_vol        = (k_h + 1)*(k_h + 1)*k_v
+
+        idx1 = 1
+        idx2 = ndof_vol
+        if (idx1 <= idx2) then
+          reference(idx1:idx2) = V
+        end if
+
+        do face = B, T
+          idx1 = idx2 + 1
+          idx2 = idx1 + ndof_face_v - 1
+          reference(idx1:idx2) = face + FACE_OFFSET
+        end do
+
       case (W2H)
-        ! Only horizontal faces
-        reference(1:ndf) = (/ W, S, E, N /) + FACE_OFFSET
+        ndof_face_h = (k_h + 1)*(k_v + 1)
+        ndof_vol    = 2*k_h*(k_h + 1)*(k_v + 1)
+
+        idx1 = 1
+        idx2 = ndof_vol
+        if (idx1 <= idx2) then
+          reference(idx1:idx2) = V
+        end if
+
+        do face = 1, 4
+          idx1 = idx2 + 1
+          idx2 = idx1 + ndof_face_h - 1
+          reference(idx1:idx2) = face_array(face) + FACE_OFFSET
+        end do
+
+      case (W2V)
+        ndof_face_v = (k_h + 1)*(k_h + 1)
+        ndof_vol    = (k_h + 1)*(k_h + 1)*k_v
+
+        idx1 = 1
+        idx2 = ndof_vol
+        if (idx1 <= idx2) then
+          reference(idx1:idx2) = V
+        end if
+
+        do face = B, T
+          idx1 = idx2 + 1
+          idx2 = idx1 + ndof_face_v - 1
+          reference(idx1:idx2) = face + FACE_OFFSET
+        end do
+
       case (Wchi)
-         reference(1) = V
+         reference(1:ndf) = V
+
       case (W2trace)
-        ! Lowest order W2trace space has dofs on all faces.
-        reference(1:ndf) = (/ W, S, E, N, B, T /) &
-             + FACE_OFFSET
-      case (W2Vtrace)
-        ! Only vertical faces
-        reference(1:ndf) = (/ B, T /) + FACE_OFFSET
+        ndof_face_h = (k_h + 1)*(k_v + 1)
+        ndof_face_v = (k_h + 1)*(k_h + 1)
+
+        idx2 = 0
+        do face = 1, 6
+          idx1 = idx2 + 1
+          if (face <= 4) then
+            idx2 = idx1 + ndof_face_h - 1
+          else
+            idx2 = idx1 + ndof_face_v - 1
+          end if
+          reference(idx1:idx2) = face_array(face) + FACE_OFFSET
+        end do
+
       case (W2Htrace)
-        ! Only horizontal faces
-        reference(1:ndf) = (/ W, S, E, N /) + FACE_OFFSET
+        ndof_face_h = (k_h + 1)*(k_v + 1)
+
+        idx2 = 0
+        do face = 1, 4
+          idx1 = idx2 + 1
+          idx2 = idx1 + ndof_face_h - 1
+          reference(idx1:idx2) = face_array(face) + FACE_OFFSET
+        end do
+
+      case (W2Vtrace)
+        ndof_face_v     = (k_h + 1)*(k_h + 1)
+
+        idx2 = 0
+        do face = B, T
+          idx1 = idx2 + 1
+          idx2 = idx1 + ndof_face_v - 1
+          reference(idx1:idx2) = face + FACE_OFFSET
+        end do
 
     end select
 
-    @assertEqual( entity_dofs(1:ndf), reference(1:ndf) )
+    mesh        => mesh_collection%get_mesh( this%mesh_id )
+    entity_dofs => test_fs%get_entity_dofs()
+
+    @assertEqual( entity_dofs(1:test_fs%get_ndf()), reference(1:ndf) )
 
     call test_fs%clear()
     nullify( mesh )
@@ -789,9 +1023,9 @@ contains
 
     integer(i_def) :: undf, last_dof_owned, last_dof_halo
 
-    test_fs = function_space_type( this%mesh_id,  &
-                                   element_order_h, &
-                                   element_order_v, &
+    test_fs = function_space_type( this%mesh_id,         &
+                                   this%element_order_h, &
+                                   this%element_order_v, &
                                    this%function_space )
 
     ! Get the total number of unique dofs in this function space
@@ -844,9 +1078,9 @@ contains
       is_writable_expected=.false.
     end if
 
-    test_fs = function_space_type( this%mesh_id,  &
-                                   element_order_h, &
-                                   element_order_v, &
+    test_fs = function_space_type( this%mesh_id,         &
+                                   this%element_order_h, &
+                                   this%element_order_v, &
                                    this%function_space )
 
     is_readonly_returned=test_fs%is_readonly()

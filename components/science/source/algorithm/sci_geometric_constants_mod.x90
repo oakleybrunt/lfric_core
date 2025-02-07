@@ -373,7 +373,8 @@ contains
     use sci_compute_mass_matrix_kernel_w_scalar_mod, &
                                       only: compute_mass_matrix_kernel_w_scalar_type
     use sci_mm_diagonal_kernel_mod,   only: mm_diagonal_kernel_type
-    use finite_element_config_mod,    only: nqp_exact
+    use finite_element_config_mod,    only: nqp_h_exact, &
+                                            nqp_v_exact
     use operator_mod,                 only: operator_type
     use quadrature_xyoz_mod,          only: quadrature_xyoz_type
     use quadrature_rule_gaussian_mod, only: quadrature_rule_gaussian_type
@@ -417,7 +418,8 @@ contains
       ! The proper method is preserved in the comment here
       ! call invoke( calc_detj_at_w3_kernel_type(detj_at_w3, chi, panel_id) )
       call mm_w3%initialise( w3_fs, w3_fs )
-      qr = quadrature_xyoz_type(nqp_exact, quadrature_rule)
+      qr = quadrature_xyoz_type(nqp_h_exact, nqp_h_exact, nqp_v_exact, &
+                                quadrature_rule)
       extended_mesh = .false.
       call invoke( compute_mass_matrix_kernel_w_scalar_type(mm_w3,             &
                                                             chi,               &

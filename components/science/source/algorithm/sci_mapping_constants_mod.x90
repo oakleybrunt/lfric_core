@@ -41,8 +41,7 @@ module sci_mapping_constants_mod
 
   ! Configuration
   use finite_element_config_mod,         only: element_order_h, &
-                                               element_order_v, &
-                                               nqp_exact
+                                               element_order_v
   use io_config_mod,                     only: subroutine_timers
 
   ! Other algorithms
