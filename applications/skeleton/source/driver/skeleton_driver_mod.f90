@@ -19,7 +19,6 @@ module skeleton_driver_mod
   use driver_mesh_mod,            only : init_mesh
   use driver_modeldb_mod,         only : modeldb_type
   use driver_fem_mod,             only : init_fem, final_fem
-  use driver_io_mod,              only : init_io, final_io
   use extrusion_mod,              only : extrusion_type,         &
                                          uniform_extrusion_type, &
                                          PRIME_EXTRUSION, TWOD
@@ -97,7 +96,7 @@ contains
     integer(i_def), parameter :: one_layer = 1_i_def
 
     ! -------------------------------
-    ! 0.0 Extract namelist variables
+    ! Extract namelist variables
     ! -------------------------------
     base_mesh_nml => modeldb%configuration%get_namelist('base_mesh')
     planet_nml    => modeldb%configuration%get_namelist('planet')
@@ -113,17 +112,17 @@ contains
     extrusion_nml => null()
 
     !=======================================================================
-    ! 1.0 Mesh
+    ! Mesh
     !=======================================================================
 
     !-----------------------------------------------------------------------
-    ! 1.1 Determine the required meshes
+    ! Determine the required meshes
     !-----------------------------------------------------------------------
     allocate(base_mesh_names(1))
     base_mesh_names(1) = prime_mesh_name
 
     !-----------------------------------------------------------------------
-    ! 1.2 Create the required extrusions
+    ! Create the required extrusions
     !-----------------------------------------------------------------------
     select case (geometry)
     case (GEOMETRY_PLANAR)
@@ -145,7 +144,7 @@ contains
                                            one_layer, TWOD )
 
     !-----------------------------------------------------------------------
-    ! 1.3 Create the required meshes
+    ! Create the required meshes
     !-----------------------------------------------------------------------
     stencil_depth = 1
     apply_partition_check = .false.
@@ -165,20 +164,13 @@ contains
 
 
     !=======================================================================
-    ! 2.0 Build the FEM function spaces and coordinate fields
+    ! Build the FEM function spaces and coordinate fields
     !=======================================================================
     ! Create FEM specifics (function spaces and chi field)
     call init_fem( mesh_collection, chi_inventory, panel_id_inventory )
 
     !=======================================================================
-    ! 3.0 Setup I/O system.
-    !=======================================================================
-    ! Initialise I/O context
-    call init_io( program_name, prime_mesh_name, modeldb, &
-                  chi_inventory, panel_id_inventory)
-
-    !=======================================================================
-    ! 4.0 Create and initialise prognostic fields
+    ! Create and initialise prognostic fields
     !=======================================================================
     mesh => mesh_collection%get_mesh(prime_mesh_name)
     call chi_inventory%get_field_array(mesh, chi)
@@ -213,11 +205,6 @@ contains
     ! Write out output file
     call log_event(program_name//": Writing diagnostic output", LOG_LEVEL_INFO)
 
-    if (write_diag ) then
-      ! Calculation and output of diagnostics
-      call field_1%write_field('skeleton_field')
-    end if
-
   end subroutine step
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -249,7 +236,6 @@ contains
     !-------------------------------------------------------------------------
     ! Driver layer finalise
     !-------------------------------------------------------------------------
-    call final_io(modeldb)
     call final_fem()
 
   end subroutine finalise

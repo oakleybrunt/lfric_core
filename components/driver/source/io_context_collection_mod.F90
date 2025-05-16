@@ -19,7 +19,6 @@ module io_context_collection_mod
 
   ! Types which can be stored in collection
   use empty_io_context_mod, only : empty_io_context_type
-  use lfric_xios_context_mod, only : lfric_xios_context_type
 
   implicit none
   private
@@ -37,10 +36,15 @@ module io_context_collection_mod
     procedure, public :: initialise
     procedure, public :: add_context
     procedure, public :: remove_context
+#ifdef USE_XIOS
     procedure, public :: get_empty_io_context
     procedure, public :: get_lfric_xios_context
     generic           :: get_io_context => get_empty_io_context, &
                                            get_lfric_xios_context
+#else
+    procedure, public :: get_empty_io_context
+    generic           :: get_io_context => get_empty_io_context
+#endif
     procedure, public :: context_exists
     procedure, public :: get_table_len
     procedure, public :: clear
@@ -134,7 +138,9 @@ contains
 
   end subroutine remove_context
 
+#ifdef USE_XIOS
   subroutine get_lfric_xios_context(this, context_name, context)
+    use lfric_xios_context_mod, only : lfric_xios_context_type
     implicit none
     class(io_context_collection_type), intent(in) :: this
     type(lfric_xios_context_type), pointer, intent(out) :: context
@@ -177,6 +183,7 @@ contains
     end do
 
   end subroutine get_lfric_xios_context
+#endif
 
   subroutine get_empty_io_context(this, context_name, context)
     implicit none

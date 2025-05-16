@@ -25,8 +25,8 @@ coord_system='native'
 /
 
 &io
-  use_xios_io           = .true.
-  write_diag            = .true.
+  use_xios_io           = .false.
+  write_diag            = .false.
   diagnostic_frequency  = 1
   subroutine_timers     = .false.
   timer_output_path     = 'timer.txt'
