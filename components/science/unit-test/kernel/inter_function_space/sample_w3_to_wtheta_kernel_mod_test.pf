@@ -99,7 +99,7 @@ contains
 #elif (RDEF_PRECISION == 32)
     real(real32), parameter :: tol = 1.0e-4_real32
 #else
-    @assertFail("Unsupported default precission")
+    @assertFail("Unsupported default precision")
 #endif
 
     nlayers = 3

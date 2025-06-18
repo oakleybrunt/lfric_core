@@ -47,7 +47,7 @@ contains
 #elif (RDEF_PRECISION == 32)
     epsilon = 1.0e-7_real32
 #else
-    @assertFail("Unsupported default precission")
+    @assertFail("Unsupported default precision")
 #endif
 
     ! Define expected data
@@ -140,7 +140,7 @@ contains
 #elif (RDEF_PRECISION == 32)
     epsilon = 1.0e-7_real32
 #else
-    @assertFail("Unsupported default precission")
+    @assertFail("Unsupported default precision")
 #endif
 
     ! Define expected data

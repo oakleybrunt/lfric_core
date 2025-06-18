@@ -9,6 +9,7 @@
 module quadrature_rule_mod_test
 
   use, intrinsic :: iso_fortran_env, only : real32, real64
+  use funit
 
   implicit none
 
@@ -16,49 +17,58 @@ contains
 
   @test
   subroutine test_quadrature_rule_mod
-    use funit
-    use quadrature_rule_gaussian_mod,      only: quadrature_rule_gaussian_type
-    use quadrature_rule_gauss_lobatto_mod, only: quadrature_rule_gauss_lobatto_type
-    use quadrature_rule_newton_cotes_mod,  only: quadrature_rule_newton_cotes_type
-    use constants_mod,                     only: r_def, i_def
+    use quadrature_rule_gaussian_mod,       only: quadrature_rule_gaussian_type
+    use quadrature_rule_gauss_lobatto_mod,  only: quadrature_rule_gauss_lobatto_type
+    use quadrature_rule_newton_cotes_mod,   only: quadrature_rule_newton_cotes_type
+    use quadrature_rule_segment_centre_mod, only: quadrature_rule_segment_centre_type
+    use constants_mod,                      only: r_def, i_def
     implicit none
 
+    real(kind=r_def),    parameter    :: tol = 1.0e-12_r_def
     integer(kind=i_def), parameter    :: nq = 3
+
     real(kind=r_def), dimension(nq,2) :: xwq, xw
+    real(kind=r_def)                  :: use_tol
 
-    type(quadrature_rule_gaussian_type)      :: gl
-    type(quadrature_rule_gauss_lobatto_type) :: gll
-    type(quadrature_rule_newton_cotes_type)  :: nc
+    type(quadrature_rule_gaussian_type)       :: gl
+    type(quadrature_rule_gauss_lobatto_type)  :: gll
+    type(quadrature_rule_newton_cotes_type)   :: nc
+    type(quadrature_rule_segment_centre_type) :: sc
 
-#if (RDEF_PRECISION == 64)
-    real(real64), parameter :: tol = 1.0e-14_real64
-#elif (RDEF_PRECISION == 32)
-    real(real32), parameter :: tol = 2.0e-7_real32
-#else
-    @assertFail("Unsupported default precission")
-#endif
-
+    if (r_def == real64) then
+      use_tol = tol
+    else
+      use_tol = 10.0_r_def*spacing(1.0_r_def)
+    end if
 
     ! Test the Gaussian Quadrature
     xwq = gl%quadrature_rule( nq )
     ! Exact weights and points
     xw(:,1) = 0.5_r_def + 0.5_r_def*(/ -sqrt(3.0_r_def/5.0_r_def), 0.0_r_def, sqrt(3.0_r_def/5.0_r_def) /)
     xw(:,2) = (/5.0_r_def, 8.0_r_def, 5.0_r_def /)/18.0_r_def
-    @assertEqual( xw, xwq, tol)
+    @assertEqual( xw, xwq, use_tol)
 
     ! Test the Gaussian-Lobatto Quadrature
     xwq = gll%quadrature_rule( nq )
     ! Exact weights and points
     xw(:,1) = 0.5_r_def + 0.5_r_def*(/ -1.0_r_def, 0.0_r_def, 1.0_r_def /)
     xw(:,2) = (/1.0_r_def, 4.0_r_def, 1.0_r_def /)/6.0_r_def
-    @assertEqual( xw, xwq, tol)
+    @assertEqual( xw, xwq, use_tol)
 
-    ! Test the Newton-Cotes Quadrature (for 3 points this is the same as Gaussian-Lobatto)
+    ! Test the Newton-Cotes Quadrature (for 3 points this is the same
+    ! as Gaussian-Lobatto)
     xwq = nc%quadrature_rule( nq )
     ! Exact weights and points
     xw(:,1) = 0.5_r_def + 0.5_r_def*(/ -1.0_r_def, 0.0_r_def, 1.0_r_def /)
     xw(:,2) = (/ 1.0_r_def, 4.0_r_def, 1.0_r_def /)/6.0_r_def
-    @assertEqual( xw, xwq, tol)
+    @assertEqual( xw, xwq, use_tol)
+
+    ! Test the segment centre quadrature
+    xwq = sc%quadrature_rule( nq )
+    ! Exact weights and points
+    xw(:,1) = (/ 1.0_r_def, 3.0_r_def, 5.0_r_def /)/6.0_r_def
+    xw(:,2) = (/ 3.0_r_def, 2.0_r_def, 3.0_r_def /)/8.0_r_def
+    @assertEqual( xw, xwq, use_tol)
 
   end subroutine test_quadrature_rule_mod
 

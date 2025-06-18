@@ -1,0 +1,159 @@
+!-----------------------------------------------------------------------------
+! (C) Crown copyright 2025 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-----------------------------------------------------------------------------
+!> Test the mapping of a higher order W2 space to a lower order space on a
+!! finer mesh.
+module map_w2_fe_to_fv_kernel_mod_test
+
+  use, intrinsic :: iso_fortran_env,     only: real64
+  use funit
+  use constants_mod,                     only: i_def, r_def
+  use inter_element_order_test_data_mod, only: w2_map_fv,           &
+                                               w2_map_fe,           &
+                                               w2_fv,             &
+                                               w2_fe_to_fv_weights, &
+                                               w2_fv_to_fe_weights
+
+  implicit none
+
+contains
+
+  @test
+  subroutine test_all
+    use sci_map_w2_fe_to_fv_kernel_mod, only: map_w2_fe_to_fv_code
+
+    implicit none
+
+    ! Scalars
+    integer(kind=i_def) :: lp_x, lp_y, df, k
+    integer(kind=i_def) :: nlayers
+    integer(kind=i_def) :: ncell_f_per_c_x ! Number of fine cells per coarse in x
+    integer(kind=i_def) :: ncell_f_per_c_y ! Number of fine cells per coarse in y
+    integer(kind=i_def) :: ncell_f         ! Number of fine cells
+    integer(kind=i_def) :: ndf_f           ! Number of dofs per fine cell
+    integer(kind=i_def) :: ndf_c           ! Number of dofs per coarse cell
+    integer(kind=i_def) :: undf_f, undf_c  ! Number of dofs on the mesh
+    integer(kind=i_def) :: undf_weights    ! Number of dofs on the weights field
+    integer(kind=i_def) :: ndata           ! Number of data points per dof in weights field
+    integer(kind=i_def) :: undf_w3_2d      ! Number of dofs per coarse cell in W3
+    real(kind=r_def)    :: use_tol
+
+    ! Integer Arrays
+    integer(kind=i_def), allocatable, dimension(:,:) :: cell_map
+    integer(kind=i_def), allocatable, dimension(:)   :: map_weights
+    integer(kind=i_def), allocatable, dimension(:)   :: map_w3_2d
+    integer(kind=i_def), allocatable, dimension(:)   :: face_selector_ew
+    integer(kind=i_def), allocatable, dimension(:)   :: face_selector_ns
+
+    ! Real Arrays
+    real(kind=r_def), allocatable, dimension(:)   :: coarse_field
+    real(kind=r_def), allocatable, dimension(:)   :: fine_field
+
+    ! Pointers
+    real(kind=r_def),    pointer :: answer(:)
+    real(kind=r_def),    pointer :: weights(:)
+    integer(kind=i_def), pointer :: map_f(:,:)
+    integer(kind=i_def), pointer :: map_c(:)
+
+    ! Parameters
+    real(kind=r_def), parameter :: tol = 1.0e-12_r_def
+
+    if (r_def == real64) then
+      use_tol = tol
+    else
+      use_tol = 10.0_r_def*spacing(1.0_r_def)
+    end if
+
+    ! Set scalars
+    nlayers = 3
+    ncell_f_per_c_x = 2
+    ncell_f_per_c_y = 2
+    ndf_f = 6 ! W2
+    ncell_f = ncell_f_per_c_x * ncell_f_per_c_y
+    ndf_c = 20 ! a single, element_order_h=1 element_order_v=0 cell with no
+               ! periodicity
+    undf_f = 52
+    undf_c = 52
+    ndata = 20
+    undf_weights = ndata*ndf_c ! One layer, ndata data points per dof
+    undf_w3_2d = 1
+
+    allocate( cell_map(ncell_f_per_c_x, ncell_f_per_c_y), &
+              map_weights(ndf_c),                         &
+              coarse_field(undf_c),                       &
+              fine_field(undf_f),                         &
+              map_w3_2d(undf_w3_2d),                      &
+              face_selector_ew(undf_w3_2d),               &
+              face_selector_ns(undf_w3_2d) )
+
+    ! Set simple values for index sets
+    do lp_y = 1, ncell_f_per_c_y
+      do lp_x = 1, ncell_f_per_c_x
+        cell_map(lp_x, lp_y) = lp_x + (lp_y - 1)*ncell_f_per_c_y
+      end do
+    end do
+    map_f => w2_map_fv
+    map_c => w2_map_fe
+    do df = 1, ndf_c
+      map_weights(df) = 1 + ndata*(df-1)
+    end do
+    map_w3_2d(1) = 1
+
+    ! Set simple values for the fields
+    do k = 0, nlayers - 1
+      do df = 1, ndf_c
+        coarse_field(map_c(df) + k) = real(df + 20*k, r_def)
+      end do
+    end do
+    fine_field(:) = 0.0_r_def
+    face_selector_ew(map_w3_2d(1)) = 2
+    face_selector_ns(map_w3_2d(1)) = 2
+
+    ! Get weights
+    weights => w2_fe_to_fv_weights
+
+    ! Test mapping
+    answer => w2_fv
+
+    call map_w2_fe_to_fv_code( nlayers,          &
+                               cell_map,         &
+                               ncell_f_per_c_x,  &
+                               ncell_f_per_c_y,  &
+                               ncell_f,          &
+                               fine_field,       &
+                               coarse_field,     &
+                               weights,          &
+                               face_selector_ew, &
+                               face_selector_ns, &
+                               ndf_f,            &
+                               undf_f,           &
+                               map_f,            &
+                               ndf_c,            &
+                               undf_c,           &
+                               map_c,            &
+                               undf_weights,     &
+                               map_weights,      &
+                               undf_w3_2d,       &
+                               map_w3_2d)
+
+    @assertEqual( answer, fine_field, use_tol)
+
+
+    deallocate( cell_map,         &
+                map_weights,      &
+                coarse_field,     &
+                fine_field,       &
+                map_w3_2d,        &
+                face_selector_ew, &
+                face_selector_ns )
+
+    nullify( weights, &
+             answer,  &
+             map_f,   &
+             map_c )
+
+  end subroutine test_all
+
+end module map_w2_fe_to_fv_kernel_mod_test

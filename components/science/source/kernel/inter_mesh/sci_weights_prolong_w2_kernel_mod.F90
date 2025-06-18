@@ -45,7 +45,7 @@ private
 type, public, extends(kernel_type) :: weights_prolong_w2_kernel_type
   private
   type(arg_type) :: meta_args(2) = (/                                           &
-       arg_type(GH_FIELD, GH_REAL, GH_WRITE,   ANY_DISCONTINUOUS_SPACE_1,          mesh_arg=GH_FINE   ), &
+       arg_type(GH_FIELD, GH_REAL, GH_WRITE, ANY_DISCONTINUOUS_SPACE_1, mesh_arg=GH_FINE   ), &
        arg_type(GH_FIELD, GH_REAL, GH_READ,  ANY_DISCONTINUOUS_SPACE_2, mesh_arg=GH_COARSE )  &
        /)
   integer :: operates_on = CELL_COLUMN

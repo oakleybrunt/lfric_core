@@ -18,12 +18,14 @@ module sci_mapping_constants_mod
   use constants_mod,                     only: i_def, r_def, l_def, str_def
   use copy_field_alg_mod,                only: copy_field
   use extrusion_mod,                     only: PRIME_EXTRUSION, &
-                                               DOUBLE_LEVEL
+                                               DOUBLE_LEVEL,    &
+                                               TWOD
   use sci_fem_constants_mod,             only: get_qr
   use field_mod,                         only: field_type
   use function_space_mod,                only: function_space_type
   use function_space_collection_mod,     only: function_space_collection
-  use fs_continuity_mod,                 only: W1, W2, W2H, W3, Wtheta
+  use fs_continuity_mod,                 only: W1, W2, W2H, W3, Wtheta,        &
+                                               W2broken
   use inventory_by_local_mesh_mod,       only: inventory_by_local_mesh_type
   use inventory_by_mesh_mod,             only: inventory_by_mesh_type
   use local_mesh_mod,                    only: local_mesh_type
@@ -89,6 +91,10 @@ module sci_mapping_constants_mod
   type(inventory_by_mesh_type) :: project_lat_dot_to_w1_inventory
   type(inventory_by_mesh_type) :: project_r_dot_to_w1_inventory
 
+  ! Constants for mapping between fields of different element orders
+  type(inventory_by_mesh_type) :: scalar_inter_element_order_weights_inventory
+  type(inventory_by_mesh_type) :: w2_inter_element_order_weights_inventory
+
   ! Correction factor for mapping from W3 DoFs to W2 DoFs
   type(inventory_by_local_mesh_type) :: w3_to_w2_displacement_inventory
 
@@ -114,11 +120,18 @@ module sci_mapping_constants_mod
   public :: get_project_lat_dot_to_w1
   public :: get_project_r_dot_to_w1
   public :: get_w3_to_w2_displacement
+  public :: get_weights_scalar_fe_to_fv
+  public :: get_weights_scalar_fv_to_fe
+  public :: get_weights_w2_fe_to_fv
+  public :: get_weights_w2_fv_to_fe
 
   ! Private routines for creating constants
   private :: create_cartesian_components_to_w2_matrices
   private :: create_spherical_components_to_w2_projection
   private :: create_spherical_components_to_w2_sample
+  private :: create_scalar_inter_element_order_weights
+  private :: create_w2_inter_element_order_weights
+
 
 contains
 
@@ -299,6 +312,188 @@ contains
     if ( subroutine_timers ) call timer('runtime_constants.mapping')
 
   end subroutine create_spherical_components_to_w2_sample
+
+  !> @brief Creates the weights for mapping between a higher order scalar space
+  !!        on a coarse mesh to a lowest order scalar space on a fine mesh
+  !> @param[in] coarse_mesh_id The ID of the coarse mesh to get the object for
+  !> @param[in] fine_mesh_id   The ID of the fine mesh to get the object for
+  subroutine create_scalar_inter_element_order_weights(coarse_mesh, fine_mesh)
+
+    use sci_psykal_light_mod, only: invoke_weights_scalar_inter_element_order_kernel_type
+    use quadrature_rule_segment_centre_mod, &
+                              only: quadrature_rule_segment_centre_type
+
+    implicit none
+
+    type(mesh_type),  pointer, intent(in)     :: coarse_mesh
+    type(mesh_type),  pointer, intent(in)     :: fine_mesh
+    integer(kind=i_def)                       :: ndata, k_h, k_v
+    type(field_type), pointer                 :: weights_high_low
+    type(field_type), pointer                 :: weights_low_high
+    type(field_type)                          :: dummy_coarse, dummy_fine
+    type(mesh_type),  pointer                 :: coarse_mesh_2d
+    type(function_space_type), pointer        :: fs, coarse_fs, fine_fs
+    type(quadrature_rule_segment_centre_type) :: quadrature_rule_sc
+    type(quadrature_xyoz_type)                :: qr
+
+    if (.not. scalar_inter_element_order_weights_inventory%is_initialised()) then
+      call scalar_inter_element_order_weights_inventory%initialise(            &
+              name='scalar_inter_element_order_weights'                        &
+      )
+    end if
+
+    if ( subroutine_timers ) call timer('runtime_constants.mapping')
+
+    k_h = element_order_h
+    k_v = element_order_v
+
+    ! Get 2D mesh
+    coarse_mesh_2d => mesh_collection%get_mesh(coarse_mesh, TWOD)
+
+    ! Use the segment centre quadrature rule to evaluate the higher order
+    ! basis functions at the lowest order dof locations (embedded in the coarse
+    ! mesh)
+    qr = quadrature_xyoz_type(                                                 &
+           k_h + 1, k_h + 1, k_v + 1, quadrature_rule_sc                       &
+    )
+
+    ! We want to store an ndof x ndof matrix, so use ndata = ndof_W3
+    ndata = (k_h + 1)**2
+
+    fs => function_space_collection%get_fs(                                    &
+            coarse_mesh_2d, k_h, k_v, W3, ndata = ndata                        &
+    )
+
+    ! Weights are stored in W3 even if used to map between Wtheta spaces
+    coarse_fs => function_space_collection%get_fs(coarse_mesh, k_h, k_v, W3)
+    fine_fs => function_space_collection%get_fs(fine_mesh, 0, 0, W3)
+
+    ! Dummy spaces required by the PSy layer:
+    !   Higher order coarse space
+    call dummy_coarse%initialise(vector_space = coarse_fs)
+    !   Lowest order fine space
+    call dummy_fine%initialise(vector_space = fine_fs)
+
+    call invoke( setval_c(dummy_coarse, 0.0_r_def),                            &
+                 setval_c(dummy_fine, 0.0_r_def)                               &
+    )
+
+    call scalar_inter_element_order_weights_inventory%add_field(               &
+           weights_high_low, fs, coarse_mesh, fine_mesh                        &
+    )
+    call scalar_inter_element_order_weights_inventory%add_field(               &
+           weights_low_high, fs, fine_mesh, coarse_mesh                        &
+    )
+
+    call invoke_weights_scalar_inter_element_order_kernel_type(                &
+           dummy_fine, dummy_coarse, weights_high_low, weights_low_high, qr    &
+    )
+
+    if ( subroutine_timers ) call timer('runtime_constants.mapping')
+
+  end subroutine create_scalar_inter_element_order_weights
+
+  !> @brief Creates the weights for mapping between a higher order W2 space
+  !!        on a coarse mesh to a lowest order W2 space on a fine mesh
+  !> @param[in] coarse_mesh_id The ID of the coarse mesh to get the object for
+  !> @param[in] fine_mesh_id   The ID of the fine mesh to get the object for
+  subroutine create_w2_inter_element_order_weights(coarse_mesh, fine_mesh)
+
+    use sci_psykal_light_mod, only: invoke_weights_w2_inter_element_order_kernel_type
+    use quadrature_rule_newton_cotes_mod, &
+                              only: quadrature_rule_newton_cotes_type
+
+    implicit none
+
+    type(mesh_type),  pointer, intent(in)     :: coarse_mesh
+    type(mesh_type),  pointer, intent(in)     :: fine_mesh
+    integer(kind=i_def)                       :: ndata, k_h, k_v
+    type(field_type), pointer                 :: weights_high_low
+    type(field_type), pointer                 :: weights_low_high
+    type(field_type)                          :: dummy_coarse, dummy_fine
+    type(mesh_type),  pointer                 :: coarse_mesh_2d
+    type(function_space_type), pointer        :: fs, coarse_fs, fine_fs
+    type(quadrature_rule_newton_cotes_type)   :: quadrature_rule_newton_cotes
+    type(quadrature_xyoz_type)                :: qr
+
+    if (.not. w2_inter_element_order_weights_inventory%is_initialised()) then
+      call w2_inter_element_order_weights_inventory%initialise(                &
+              name='w2_inter_element_order_weights'                            &
+      )
+    end if
+
+    if ( subroutine_timers ) call timer('runtime_constants.mapping')
+
+    k_h = element_order_h
+    k_v = element_order_v
+
+    ! Get 2D mesh
+    coarse_mesh_2d => mesh_collection%get_mesh(coarse_mesh, TWOD)
+
+    ! Use the Newton-Cotes quadrature rule (evenly spaced points inclusive of
+    ! 0 and 1) to evaluate the higher order basis functions at the lowest order
+    ! dof locations.
+
+    ! We use np_x = np_y = 2*(k_h + 1) + 1, np_z = 3, as the following
+    ! picture explains:
+    !
+    !   1    2    3    4    5
+    !             N                    For k_h = 1, we have 2 embedded cells
+    !   -----^---------^----- 1        per coarse cell. We need a grid of
+    !   |         |         |          size 5x5x3 to evaluate the basis
+    !   >    *    >    *    > 2        functions at every point.
+    !   |         |         |
+    ! W -----^---------^----- 3        "^" represents a dof in the South to
+    !   |         |         |          North direction, ">" represents a dof in
+    !   >    *    >    *    > 4        the West to East direction, and "*"
+    !   |         |         |          represents a stack of two dofs in the
+    !   -----^---------^----- 5        Bottom to Top direction.
+    !             S
+    !
+    ! We can then select the basis points required, for example if we want the
+    ! basis evaluated at the West of the top left cell, we use quadrature point
+    ! (1, 2, 2).
+
+    qr = quadrature_xyoz_type(                                                 &
+           2*(k_h + 1) + 1, 2*(k_h + 1) + 1, 3, quadrature_rule_newton_cotes   &
+    )
+
+    ! We want to store an ndof x ndof matrix, so use ndata = ndof_W2
+    ndata = 2*(k_h + 2)*(k_h + 1) + 2*(k_h + 1)*(k_h + 1)
+
+    ! Store the weights in W2broken
+    fs => function_space_collection%get_fs(                                    &
+            coarse_mesh_2d, k_h, k_v, W2broken, ndata = ndata                  &
+    )
+
+    coarse_fs => function_space_collection%get_fs(coarse_mesh, k_h, k_v, W2)
+    fine_fs => function_space_collection%get_fs(fine_mesh, 0, 0, W2)
+
+    ! Dummy spaces required by the PSy layer:
+    !   Higher order coarse space
+    call dummy_coarse%initialise(vector_space=coarse_fs)
+    !   Lowest order fine space
+    call dummy_fine%initialise(vector_space=fine_fs)
+
+    call invoke( setval_c(dummy_coarse, 0.0_r_def),                            &
+                 setval_c(dummy_fine, 0.0_r_def)                               &
+    )
+
+    call w2_inter_element_order_weights_inventory%add_field(                   &
+           weights_high_low, fs, coarse_mesh, fine_mesh                        &
+    )
+    call w2_inter_element_order_weights_inventory%add_field(                   &
+           weights_low_high, fs, fine_mesh, coarse_mesh                        &
+    )
+
+    call invoke_weights_w2_inter_element_order_kernel_type(                    &
+           dummy_fine, dummy_coarse, weights_high_low, weights_low_high, qr    &
+    )
+
+    if ( subroutine_timers ) call timer('runtime_constants.mapping')
+
+  end subroutine create_w2_inter_element_order_weights
+
 
   ! ========================================================================== !
   ! GETTERS FOR INTER-MESH CONSTANTS
@@ -1038,6 +1233,170 @@ contains
 
   end function get_w3_to_w2_displacement
 
+  !> @brief Returns the weights for mapping from a higher order scalar space
+  !!        on a coarse mesh to a lowest order scalar space on a fine mesh
+  !> @param[in] coarse_mesh_id The ID of the coarse mesh to get the object for
+  !> @param[in] fine_mesh_id   The ID of the fine mesh to get the object for
+  !> @return    weights        The weights for the mapping
+  function get_weights_scalar_fe_to_fv(coarse_mesh, fine_mesh) result(weights)
+
+    implicit none
+
+    type(mesh_type),  pointer, intent(in) :: coarse_mesh
+    type(mesh_type),  pointer, intent(in) :: fine_mesh
+    integer(kind=i_def)                   :: intermesh_id
+    logical(kind=l_def)                   :: constant_exists
+    type(field_type), pointer             :: weights
+
+    ! Check inventory is initialised
+    if (.not. scalar_inter_element_order_weights_inventory%is_initialised()) then
+      call scalar_inter_element_order_weights_inventory%initialise(            &
+              name='scalar_inter_element_order_weights'                        &
+      )
+    end if
+
+    intermesh_id =                                                             &
+      scalar_inter_element_order_weights_inventory%compute_intermesh_id(       &
+            coarse_mesh, fine_mesh                                             &
+    )
+    constant_exists =                                                          &
+      scalar_inter_element_order_weights_inventory%paired_object_exists(       &
+            intermesh_id                                                       &
+    )
+
+    if (.not. constant_exists) call create_scalar_inter_element_order_weights( &
+            coarse_mesh, fine_mesh                                             &
+    )
+
+    call scalar_inter_element_order_weights_inventory%get_field(               &
+            coarse_mesh, fine_mesh, weights                                    &
+    )
+
+  end function get_weights_scalar_fe_to_fv
+
+  !> @brief Returns the weights for mapping from a lowest order scalar space
+  !!        on a fine mesh to a higher order scalar space on a coarse mesh
+  !> @param[in] coarse_mesh_id The ID of the coarse mesh to get the object for
+  !> @param[in] fine_mesh_id   The ID of the fine mesh to get the object for
+  !> @return    weights        The weights for the mapping
+  function get_weights_scalar_fv_to_fe(fine_mesh, coarse_mesh) result(weights)
+
+    implicit none
+
+    type(mesh_type),  pointer, intent(in) :: fine_mesh
+    type(mesh_type),  pointer, intent(in) :: coarse_mesh
+    integer(kind=i_def)                   :: intermesh_id
+    logical(kind=l_def)                   :: constant_exists
+    type(field_type), pointer             :: weights
+
+    ! Check inventory is initialised
+    if (.not. scalar_inter_element_order_weights_inventory%is_initialised()) then
+      call scalar_inter_element_order_weights_inventory%initialise(            &
+              name='scalar_inter_element_order_weights'                        &
+      )
+    end if
+
+    intermesh_id =                                                             &
+      scalar_inter_element_order_weights_inventory%compute_intermesh_id(       &
+            fine_mesh, coarse_mesh                                             &
+    )
+    constant_exists =                                                          &
+      scalar_inter_element_order_weights_inventory%paired_object_exists(       &
+            intermesh_id                                                       &
+    )
+
+    if (.not. constant_exists) call create_scalar_inter_element_order_weights( &
+            coarse_mesh, fine_mesh                                             &
+    )
+
+    call scalar_inter_element_order_weights_inventory%get_field(               &
+            fine_mesh, coarse_mesh, weights                                    &
+    )
+
+  end function get_weights_scalar_fv_to_fe
+
+  !> @brief Returns the weights for mapping from a higher order W2 space
+  !!        on a coarse mesh to a lowest order W2 space on a fine mesh
+  !> @param[in] coarse_mesh_id The ID of the coarse mesh to get the object for
+  !> @param[in] fine_mesh_id   The ID of the fine mesh to get the object for
+  !> @return    weights        The weights for the mapping
+  function get_weights_w2_fe_to_fv(coarse_mesh, fine_mesh) result(weights)
+
+    implicit none
+
+    type(mesh_type),  pointer, intent(in) :: coarse_mesh
+    type(mesh_type),  pointer, intent(in) :: fine_mesh
+    integer(kind=i_def)                   :: intermesh_id
+    logical(kind=l_def)                   :: constant_exists
+    type(field_type), pointer             :: weights
+
+    ! Check inventory is initialised
+    if (.not. w2_inter_element_order_weights_inventory%is_initialised()) then
+      call w2_inter_element_order_weights_inventory%initialise(                &
+              name='w2_inter_element_order_weights'                            &
+      )
+    end if
+
+    intermesh_id =                                                             &
+      w2_inter_element_order_weights_inventory%compute_intermesh_id(           &
+            coarse_mesh, fine_mesh                                             &
+    )
+    constant_exists =                                                          &
+      w2_inter_element_order_weights_inventory%paired_object_exists(           &
+            intermesh_id                                                       &
+    )
+
+    if (.not. constant_exists) call create_w2_inter_element_order_weights(     &
+            coarse_mesh, fine_mesh                                             &
+    )
+
+    call w2_inter_element_order_weights_inventory%get_field(                   &
+            coarse_mesh, fine_mesh, weights                                    &
+    )
+
+  end function get_weights_w2_fe_to_fv
+
+  !> @brief Returns the weights for mapping from a lowest order W2 space
+  !!        on a fine mesh to a higher order W2 space on a coarse mesh
+  !> @param[in] coarse_mesh_id The ID of the coarse mesh to get the object for
+  !> @param[in] fine_mesh_id   The ID of the fine mesh to get the object for
+  !> @return    weights        The weights for the mapping
+  function get_weights_w2_fv_to_fe(fine_mesh, coarse_mesh) result(weights)
+
+    implicit none
+
+    type(mesh_type),  pointer, intent(in) :: fine_mesh
+    type(mesh_type),  pointer, intent(in) :: coarse_mesh
+    integer(kind=i_def)                   :: intermesh_id
+    logical(kind=l_def)                   :: constant_exists
+    type(field_type), pointer             :: weights
+
+    ! Check inventory is initialised
+    if (.not. w2_inter_element_order_weights_inventory%is_initialised()) then
+      call w2_inter_element_order_weights_inventory%initialise(                &
+              name='w2_inter_element_order_weights'                            &
+      )
+    end if
+
+    intermesh_id =                                                             &
+      w2_inter_element_order_weights_inventory%compute_intermesh_id(           &
+            fine_mesh, coarse_mesh                                             &
+    )
+    constant_exists =                                                          &
+      w2_inter_element_order_weights_inventory%paired_object_exists(           &
+            intermesh_id                                                       &
+    )
+
+    if (.not. constant_exists) call create_w2_inter_element_order_weights(     &
+            coarse_mesh, fine_mesh                                             &
+    )
+
+    call w2_inter_element_order_weights_inventory%get_field(                   &
+            fine_mesh, coarse_mesh, weights                                    &
+    )
+
+  end function get_weights_w2_fv_to_fe
+
   ! ========================================================================== !
   ! FINALISE
   ! ========================================================================== !
@@ -1063,6 +1422,8 @@ contains
     call project_xdot_to_w2_inventory%clear()
     call project_ydot_to_w2_inventory%clear()
     call project_zdot_to_w2_inventory%clear()
+    call scalar_inter_element_order_weights_inventory%clear()
+    call w2_inter_element_order_weights_inventory%clear()
 
   end subroutine final_mapping_constants
 

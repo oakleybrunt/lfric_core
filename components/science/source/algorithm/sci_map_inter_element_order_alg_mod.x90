@@ -1,0 +1,239 @@
+!-----------------------------------------------------------------------------
+! (C) Crown copyright 2025 Met Office. All rights reserved.
+! The file LICENCE, distributed with this code, contains details of the terms
+! under which the code may be used.
+!-----------------------------------------------------------------------------
+!> @brief Contains the algorithms to map fields between element-orders
+!> @details This module contains the algorithms to map fields on the same
+!!          function space between different horizontal element-orders, given
+!!          both vertical element-orders are 0, and one of the spaces is
+!!          lowest-order in the horizontal direction.
+
+module sci_map_inter_element_order_alg_mod
+
+  use constants_mod,               only: i_def
+  use field_mod,                   only: field_type
+  use integer_field_mod,           only: integer_field_type
+  use fs_continuity_mod,           only: W3, Wtheta, W2
+  use log_mod,                     only: log_event, log_scratch_space, &
+                                         LOG_LEVEL_ERROR
+  use mesh_mod,                    only: mesh_type
+  use sci_psykal_light_mod,        only: invoke_map_scalar_fe_to_fv_kernel_type, &
+                                         invoke_map_scalar_fv_to_fe_kernel_type, &
+                                         invoke_map_w2_fe_to_fv_kernel_type,     &
+                                         invoke_map_w2_fv_to_fe_kernel_type
+  use sci_mapping_constants_mod,   only: get_weights_scalar_fe_to_fv, &
+                                         get_weights_scalar_fv_to_fe, &
+                                         get_weights_w2_fe_to_fv,     &
+                                         get_weights_w2_fv_to_fe
+  use sci_geometric_constants_mod, only: get_face_selector_ew, &
+                                         get_face_selector_ns
+
+  implicit none
+
+  private
+
+  ! Public routines
+  public :: map_field_inter_element_order_alg
+  public :: map_field_array_inter_element_order_alg
+
+  ! Private routines called in public routines
+  private :: map_scalar_inter_element_order_alg
+  private :: map_w2_inter_element_order_alg
+
+contains
+
+  !> @brief Maps arrays of fields between different horizontal element-orders
+  !> @param[in,out] target_fields  The field array to map to
+  !> @param[in]    source_fields  The field array to map from
+  !> @param[in]    bundle_size    The size of the field arrays
+  subroutine map_field_array_inter_element_order_alg(target_fields, source_fields, bundle_size)
+
+    implicit none
+
+    ! Parameters
+    type(field_type),    intent(inout) :: target_fields(bundle_size)
+    type(field_type),    intent(in)    :: source_fields(bundle_size)
+    integer(kind=i_def), intent(in)    :: bundle_size
+
+    ! Local variables
+    integer(kind=i_def) :: i
+
+    do i = 1, bundle_size
+      call map_field_inter_element_order_alg(target_fields(i), source_fields(i))
+    end do
+
+  end subroutine map_field_array_inter_element_order_alg
+
+  !> @brief Maps a field between different horizontal element-orders
+  !> @param[in,out] target_field  The field to map to
+  !> @param[in]    source_field  The field to map from
+  subroutine map_field_inter_element_order_alg(target_field, source_field)
+
+    implicit none
+
+    ! Parameters
+    type(field_type), intent(inout) :: target_field
+    type(field_type), intent(in)    :: source_field
+
+    ! Local variables
+    integer(kind=i_def)      :: target_fs
+    integer(kind=i_def)      :: source_fs
+    type(mesh_type), pointer :: target_mesh
+    type(mesh_type), pointer :: source_mesh
+
+    !---------------------------------------------------------------------------
+    ! Check that the mapping is valid
+    !---------------------------------------------------------------------------
+    ! Check function spaces
+    target_fs = target_field%which_function_space()
+    source_fs = source_field%which_function_space()
+    if (target_fs /= source_fs) then
+      call log_event('Mapping requires matching function spaces', &
+                      LOG_LEVEL_ERROR)
+
+    else if (target_field%get_element_order_v() /= 0 .or. &
+             source_field%get_element_order_v() /= 0) then
+      call log_event('Mapping requires lowest order in the vertical direction', &
+                      LOG_LEVEL_ERROR)
+    end if
+
+    ! Check meshes
+    target_mesh => target_field%get_mesh()
+    source_mesh => source_field%get_mesh()
+
+    if (target_mesh%get_nlayers() /= source_mesh%get_nlayers()) then
+      call log_event('Mapping requires matching number of layers', &
+                      LOG_LEVEL_ERROR)
+    else if (target_mesh%get_extrusion_id() /= source_mesh%get_extrusion_id()) then
+      call log_event('Mapping requires matching extrusion id', &
+                      LOG_LEVEL_ERROR)
+    end if
+
+    !---------------------------------------------------------------------------
+    ! Call relevant mapping algorithm for the function space
+    !---------------------------------------------------------------------------
+    call invoke( setval_c(target_field, 0.0_r_def) )
+
+    select case(source_fs)
+      case(W3, Wtheta)
+        call map_scalar_inter_element_order_alg(target_field, source_field)
+      case(W2)
+        call map_w2_inter_element_order_alg(target_field, source_field)
+      case default
+        call log_event('Mapping not supported for function space', &
+                      LOG_LEVEL_ERROR)
+    end select
+
+  end subroutine map_field_inter_element_order_alg
+
+
+  !> @brief Maps a scalar field between different horizontal element-orders
+  !> @param[in,out] target_field  The field to map to
+  !> @param[in]    source_field  The field to map from
+  subroutine map_scalar_inter_element_order_alg(target_field, source_field)
+
+    implicit none
+
+    ! Parameters
+    type(field_type), intent(inout) :: target_field
+    type(field_type), intent(in)    :: source_field
+
+    ! Local variables
+    type(mesh_type),  pointer :: coarse_mesh
+    type(mesh_type),  pointer :: fine_mesh
+    type(field_type), pointer :: weights
+
+    ! Check that horizontal element-orders are compatible and call mapping
+    ! kernels
+    if (target_field%get_element_order_h() > 0 .and. &
+        source_field%get_element_order_h() == 0) then
+      coarse_mesh => target_field%get_mesh()
+      fine_mesh => source_field%get_mesh()
+
+      weights => get_weights_scalar_fv_to_fe(fine_mesh, coarse_mesh)
+      call invoke_map_scalar_fv_to_fe_kernel_type(target_field, source_field, weights)
+
+    else if (target_field%get_element_order_h() == 0 .and. &
+             source_field%get_element_order_h() > 0) then
+      coarse_mesh => source_field%get_mesh()
+      fine_mesh => target_field%get_mesh()
+
+      weights => get_weights_scalar_fe_to_fv(coarse_mesh, fine_mesh)
+      call invoke_map_scalar_fe_to_fv_kernel_type(target_field, source_field, weights)
+
+    else
+      write( log_scratch_space, '(A,I3,A,I3,A)' ) &
+        'GungHo: Mapping between source element_order_h (', &
+        source_field%get_element_order_h(), &
+        ') and target element_order_h (', &
+        target_field%get_element_order_h(), &
+        ') not supported'
+      call log_event( log_scratch_space, LOG_LEVEL_ERROR )
+    end if
+
+  end subroutine map_scalar_inter_element_order_alg
+
+  !> @brief Maps a W2 field between different horizontal element-orders
+  !> @param[in,out] target_field  The field to map to
+  !> @param[in]    source_field  The field to map from
+  subroutine map_w2_inter_element_order_alg(target_field, source_field)
+
+    implicit none
+
+    ! Parameters
+    type(field_type), intent(inout) :: target_field
+    type(field_type), intent(in)    :: source_field
+
+    ! Local variables
+    type(mesh_type),          pointer :: coarse_mesh
+    type(mesh_type),          pointer :: fine_mesh
+    type(field_type),         pointer :: weights
+    type(integer_field_type), pointer :: face_selector_ew
+    type(integer_field_type), pointer :: face_selector_ns
+
+    integer(kind=i_def) :: coarse_mesh_id
+
+    ! Check that horizontal element-orders are compatible and call mapping
+    ! kernels
+    if (target_field%get_element_order_h() > 0 .and. &
+        source_field%get_element_order_h() == 0) then
+      coarse_mesh => target_field%get_mesh()
+      fine_mesh => source_field%get_mesh()
+
+      coarse_mesh_id = target_field%get_mesh_id()
+
+      face_selector_ew => get_face_selector_ew(coarse_mesh_id)
+      face_selector_ns => get_face_selector_ns(coarse_mesh_id)
+
+      weights => get_weights_w2_fv_to_fe(fine_mesh, coarse_mesh)
+      call invoke_map_w2_fv_to_fe_kernel_type(target_field, source_field, weights,  &
+                                         face_selector_ew, face_selector_ns)
+
+    else if (target_field%get_element_order_h() == 0 .and. &
+             source_field%get_element_order_h() > 0) then
+      coarse_mesh => source_field%get_mesh()
+      fine_mesh => target_field%get_mesh()
+
+      coarse_mesh_id = source_field%get_mesh_id()
+
+      face_selector_ew => get_face_selector_ew(coarse_mesh_id)
+      face_selector_ns => get_face_selector_ns(coarse_mesh_id)
+
+      weights => get_weights_w2_fe_to_fv(coarse_mesh, fine_mesh)
+      call invoke_map_w2_fe_to_fv_kernel_type(target_field, source_field, weights,  &
+                                         face_selector_ew, face_selector_ns)
+
+    else
+      write( log_scratch_space, '(A,I3,A,I3,A)' ) &
+        'GungHo: Mapping between source element_order_h (', &
+        source_field%get_element_order_h(), &
+        ') and target element_order_h (', &
+        target_field%get_element_order_h(), &
+        ') not supported'
+      call log_event( log_scratch_space, LOG_LEVEL_ERROR )
+    end if
+
+  end subroutine map_w2_inter_element_order_alg
+
+end module sci_map_inter_element_order_alg_mod

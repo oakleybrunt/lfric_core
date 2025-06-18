@@ -8,6 +8,7 @@ module sci_psykal_light_mod
 
   use constants_mod,      only : i_def, r_def, r_double, r_solver
   use field_mod,          only : field_type, field_proxy_type
+  use integer_field_mod,  only : integer_field_type, integer_field_proxy_type
   use r_solver_field_mod, only : r_solver_field_type, r_solver_field_proxy_type
 
   implicit none
@@ -233,5 +234,687 @@ contains
       !
       !
     end subroutine invoke_inc_rdefX_plus_rsolverY
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Passes in ndf_coarse of the dummy_coarse field of the intermesh kernel
+  ! alongside that of that of the fine field. Inter-grid kernels are not
+  ! currently allowed GH_SCALAR arguments or this would not be necessary
+  ! See PSyclone issues #2504 and #868
+  SUBROUTINE invoke_weights_scalar_inter_element_order_kernel_type(dummy_fine, dummy_coarse, weights_high_low, &
+&weights_low_high, qr)
+      USE sci_weights_scalar_inter_element_order_kernel_mod, ONLY: weights_scalar_inter_element_order_code
+      USE quadrature_xyoz_mod, ONLY: quadrature_xyoz_type, quadrature_xyoz_proxy_type
+      USE function_space_mod, ONLY: BASIS, DIFF_BASIS
+      USE mesh_map_mod, ONLY: mesh_map_type
+      USE mesh_mod, ONLY: mesh_type
+      TYPE(field_type), intent(in) :: dummy_fine, dummy_coarse, weights_high_low, weights_low_high
+      TYPE(quadrature_xyoz_type), intent(in) :: qr
+      INTEGER(KIND=i_def) cell
+      INTEGER(KIND=i_def) loop0_start, loop0_stop
+      REAL(KIND=r_def), allocatable :: basis_adspc2_dummy_coarse_qr(:,:,:,:)
+      INTEGER(KIND=i_def) dim_adspc2_dummy_coarse
+      REAL(KIND=r_def), pointer :: weights_xy_qr(:) => null(), weights_z_qr(:) => null()
+      INTEGER(KIND=i_def) np_xy_qr, np_z_qr
+      INTEGER(KIND=i_def) nlayers_dummy_fine
+      REAL(KIND=r_def), pointer, dimension(:) :: weights_low_high_data => null()
+      REAL(KIND=r_def), pointer, dimension(:) :: weights_high_low_data => null()
+      REAL(KIND=r_def), pointer, dimension(:) :: dummy_coarse_data => null()
+      REAL(KIND=r_def), pointer, dimension(:) :: dummy_fine_data => null()
+      TYPE(field_proxy_type) dummy_fine_proxy, dummy_coarse_proxy, weights_high_low_proxy, weights_low_high_proxy
+      TYPE(quadrature_xyoz_proxy_type) qr_proxy
+      INTEGER(KIND=i_def), pointer :: map_adspc1_dummy_fine(:,:) => null(), map_adspc2_dummy_coarse(:,:) => null(), &
+&map_adspc3_weights_high_low(:,:) => null()
+      INTEGER(KIND=i_def) ndf_adspc1_dummy_fine, undf_adspc1_dummy_fine, ndf_adspc2_dummy_coarse, undf_adspc2_dummy_coarse, &
+&ndf_adspc3_weights_high_low, undf_adspc3_weights_high_low
+      INTEGER(KIND=i_def) ncell_dummy_fine, ncpc_dummy_fine_dummy_coarse_x, ncpc_dummy_fine_dummy_coarse_y
+      INTEGER(KIND=i_def), pointer :: cell_map_dummy_coarse(:,:,:) => null()
+      TYPE(mesh_map_type), pointer :: mmap_dummy_fine_dummy_coarse => null()
+      INTEGER(KIND=i_def) max_halo_depth_mesh_dummy_fine
+      TYPE(mesh_type), pointer :: mesh_dummy_fine => null()
+      INTEGER(KIND=i_def) max_halo_depth_mesh_dummy_coarse
+      TYPE(mesh_type), pointer :: mesh_dummy_coarse => null()
+      !
+      ! Initialise field and/or operator proxies
+      !
+      dummy_fine_proxy = dummy_fine%get_proxy()
+      dummy_fine_data => dummy_fine_proxy%data
+      dummy_coarse_proxy = dummy_coarse%get_proxy()
+      dummy_coarse_data => dummy_coarse_proxy%data
+      weights_high_low_proxy = weights_high_low%get_proxy()
+      weights_high_low_data => weights_high_low_proxy%data
+      weights_low_high_proxy = weights_low_high%get_proxy()
+      weights_low_high_data => weights_low_high_proxy%data
+      !
+      ! Initialise number of layers
+      !
+      nlayers_dummy_fine = dummy_fine_proxy%vspace%get_nlayers()
+      !
+      ! Look-up mesh objects and loop limits for inter-grid kernels
+      !
+      mesh_dummy_fine => dummy_fine_proxy%vspace%get_mesh()
+      max_halo_depth_mesh_dummy_fine = mesh_dummy_fine%get_halo_depth()
+      mesh_dummy_coarse => dummy_coarse_proxy%vspace%get_mesh()
+      max_halo_depth_mesh_dummy_coarse = mesh_dummy_coarse%get_halo_depth()
+      mmap_dummy_fine_dummy_coarse => mesh_dummy_coarse%get_mesh_map(mesh_dummy_fine)
+      cell_map_dummy_coarse => mmap_dummy_fine_dummy_coarse%get_whole_cell_map()
+      ncell_dummy_fine = mesh_dummy_fine%get_last_halo_cell(depth=2)
+      ncpc_dummy_fine_dummy_coarse_x = mmap_dummy_fine_dummy_coarse%get_ntarget_cells_per_source_x()
+      ncpc_dummy_fine_dummy_coarse_y = mmap_dummy_fine_dummy_coarse%get_ntarget_cells_per_source_y()
+      !
+      ! Look-up dofmaps for each function space
+      !
+      map_adspc1_dummy_fine => dummy_fine_proxy%vspace%get_whole_dofmap()
+      map_adspc2_dummy_coarse => dummy_coarse_proxy%vspace%get_whole_dofmap()
+      map_adspc3_weights_high_low => weights_high_low_proxy%vspace%get_whole_dofmap()
+      !
+      ! Initialise number of DoFs for adspc1_dummy_fine
+      !
+      ndf_adspc1_dummy_fine = dummy_fine_proxy%vspace%get_ndf()
+      undf_adspc1_dummy_fine = dummy_fine_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc2_dummy_coarse
+      !
+      ndf_adspc2_dummy_coarse = dummy_coarse_proxy%vspace%get_ndf()
+      undf_adspc2_dummy_coarse = dummy_coarse_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc3_weights_high_low
+      !
+      ndf_adspc3_weights_high_low = weights_high_low_proxy%vspace%get_ndf()
+      undf_adspc3_weights_high_low = weights_high_low_proxy%vspace%get_undf()
+      !
+      ! Look-up quadrature variables
+      !
+      qr_proxy = qr%get_quadrature_proxy()
+      np_xy_qr = qr_proxy%np_xy
+      np_z_qr = qr_proxy%np_z
+      weights_xy_qr => qr_proxy%weights_xy
+      weights_z_qr => qr_proxy%weights_z
+      !
+      ! Allocate basis/diff-basis arrays
+      !
+      dim_adspc2_dummy_coarse = dummy_coarse_proxy%vspace%get_dim_space()
+      ALLOCATE (basis_adspc2_dummy_coarse_qr(dim_adspc2_dummy_coarse, ndf_adspc2_dummy_coarse, np_xy_qr, np_z_qr))
+      !
+      ! Compute basis/diff-basis arrays
+      !
+      CALL qr%compute_function(BASIS, dummy_coarse_proxy%vspace, dim_adspc2_dummy_coarse, ndf_adspc2_dummy_coarse, &
+&basis_adspc2_dummy_coarse_qr)
+      !
+      ! Set-up all of the loop bounds
+      !
+      loop0_start = 1
+      loop0_stop = mesh_dummy_coarse%get_last_edge_cell()
+      !
+      ! Call kernels and communication routines
+      !
+      DO cell = loop0_start, loop0_stop, 1
+        CALL weights_scalar_inter_element_order_code(nlayers_dummy_fine, cell_map_dummy_coarse(:,:,cell), &
+&ncpc_dummy_fine_dummy_coarse_x, ncpc_dummy_fine_dummy_coarse_y, ncell_dummy_fine, dummy_fine_data, dummy_coarse_data, &
+&weights_high_low_data, weights_low_high_data, ndf_adspc1_dummy_fine, undf_adspc1_dummy_fine, map_adspc1_dummy_fine, &
+&ndf_adspc2_dummy_coarse, undf_adspc2_dummy_coarse, map_adspc2_dummy_coarse(:,cell), basis_adspc2_dummy_coarse_qr, &
+&undf_adspc3_weights_high_low, map_adspc3_weights_high_low(:,cell), np_xy_qr, np_z_qr, weights_xy_qr, weights_z_qr)
+      END DO
+      !
+      ! Set halos dirty/clean for fields modified in the above loop
+      !
+      CALL weights_high_low_proxy%set_dirty()
+      CALL weights_low_high_proxy%set_dirty()
+      !
+      !
+      ! Deallocate basis arrays
+      !
+      DEALLOCATE (basis_adspc2_dummy_coarse_qr)
+      !
+    END SUBROUTINE invoke_weights_scalar_inter_element_order_kernel_type
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Passes in ndf_source of the source field of the intermesh kernel
+  ! alongside that of that of the target field. Inter-grid kernels are not
+  ! currently allowed GH_SCALAR arguments or this would not be necessary
+  ! See PSyclone issues #2504 and #868
+  SUBROUTINE invoke_map_scalar_fe_to_fv_kernel_type(fine_field, coarse_field, weights_high_to_low)
+      USE sci_map_scalar_fe_to_fv_kernel_mod, ONLY: map_scalar_fe_to_fv_code
+      USE mesh_map_mod, ONLY: mesh_map_type
+      USE mesh_mod, ONLY: mesh_type
+      TYPE(field_type), intent(in) :: fine_field, coarse_field, weights_high_to_low
+      INTEGER(KIND=i_def) cell
+      INTEGER(KIND=i_def) loop0_start, loop0_stop
+      INTEGER(KIND=i_def) nlayers_fine_field
+      REAL(KIND=r_def), pointer, dimension(:) :: weights_high_to_low_data => null()
+      REAL(KIND=r_def), pointer, dimension(:) :: coarse_field_data => null()
+      REAL(KIND=r_def), pointer, dimension(:) :: fine_field_data => null()
+      TYPE(field_proxy_type) fine_field_proxy, coarse_field_proxy, weights_high_to_low_proxy
+      INTEGER(KIND=i_def), pointer :: map_adspc1_fine_field(:,:) => null(), map_adspc2_coarse_field(:,:) => null(), &
+&map_adspc3_weights_high_to_low(:,:) => null()
+      INTEGER(KIND=i_def) ndf_adspc1_fine_field, undf_adspc1_fine_field, ndf_adspc2_coarse_field, undf_adspc2_coarse_field, &
+&ndf_adspc3_weights_high_to_low, undf_adspc3_weights_high_to_low
+      INTEGER(KIND=i_def) ncell_fine_field, ncpc_fine_field_coarse_field_x, ncpc_fine_field_coarse_field_y
+      INTEGER(KIND=i_def), pointer :: cell_map_coarse_field(:,:,:) => null()
+      TYPE(mesh_map_type), pointer :: mmap_fine_field_coarse_field => null()
+      INTEGER(KIND=i_def) max_halo_depth_mesh_fine_field
+      TYPE(mesh_type), pointer :: mesh_fine_field => null()
+      INTEGER(KIND=i_def) max_halo_depth_mesh_coarse_field
+      TYPE(mesh_type), pointer :: mesh_coarse_field => null()
+      !
+      ! Initialise field and/or operator proxies
+      !
+      fine_field_proxy = fine_field%get_proxy()
+      fine_field_data => fine_field_proxy%data
+      coarse_field_proxy = coarse_field%get_proxy()
+      coarse_field_data => coarse_field_proxy%data
+      weights_high_to_low_proxy = weights_high_to_low%get_proxy()
+      weights_high_to_low_data => weights_high_to_low_proxy%data
+      !
+      ! Initialise number of layers
+      !
+      nlayers_fine_field = fine_field_proxy%vspace%get_nlayers()
+      !
+      ! Look-up mesh objects and loop limits for inter-grid kernels
+      !
+      mesh_fine_field => fine_field_proxy%vspace%get_mesh()
+      max_halo_depth_mesh_fine_field = mesh_fine_field%get_halo_depth()
+      mesh_coarse_field => coarse_field_proxy%vspace%get_mesh()
+      max_halo_depth_mesh_coarse_field = mesh_coarse_field%get_halo_depth()
+      mmap_fine_field_coarse_field => mesh_coarse_field%get_mesh_map(mesh_fine_field)
+      cell_map_coarse_field => mmap_fine_field_coarse_field%get_whole_cell_map()
+      ncell_fine_field = mesh_fine_field%get_last_halo_cell(depth=2)
+      ncpc_fine_field_coarse_field_x = mmap_fine_field_coarse_field%get_ntarget_cells_per_source_x()
+      ncpc_fine_field_coarse_field_y = mmap_fine_field_coarse_field%get_ntarget_cells_per_source_y()
+      !
+      ! Look-up dofmaps for each function space
+      !
+      map_adspc1_fine_field => fine_field_proxy%vspace%get_whole_dofmap()
+      map_adspc2_coarse_field => coarse_field_proxy%vspace%get_whole_dofmap()
+      map_adspc3_weights_high_to_low => weights_high_to_low_proxy%vspace%get_whole_dofmap()
+      !
+      ! Initialise number of DoFs for adspc1_fine_field
+      !
+      ndf_adspc1_fine_field = fine_field_proxy%vspace%get_ndf()
+      undf_adspc1_fine_field = fine_field_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc2_coarse_field
+      !
+      ndf_adspc2_coarse_field = coarse_field_proxy%vspace%get_ndf()
+      undf_adspc2_coarse_field = coarse_field_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc3_weights_high_to_low
+      !
+      ndf_adspc3_weights_high_to_low = weights_high_to_low_proxy%vspace%get_ndf()
+      undf_adspc3_weights_high_to_low = weights_high_to_low_proxy%vspace%get_undf()
+      !
+      ! Set-up all of the loop bounds
+      !
+      loop0_start = 1
+      loop0_stop = mesh_coarse_field%get_last_edge_cell()
+      !
+      ! Call kernels and communication routines
+      !
+      DO cell = loop0_start, loop0_stop, 1
+        CALL map_scalar_fe_to_fv_code(nlayers_fine_field, cell_map_coarse_field(:,:,cell), &
+&ncpc_fine_field_coarse_field_x, ncpc_fine_field_coarse_field_y, ncell_fine_field, &
+&fine_field_data, coarse_field_data, weights_high_to_low_data, ndf_adspc1_fine_field, &
+&undf_adspc1_fine_field, map_adspc1_fine_field,ndf_adspc2_coarse_field, &
+&undf_adspc2_coarse_field, map_adspc2_coarse_field(:,cell), undf_adspc3_weights_high_to_low, &
+&map_adspc3_weights_high_to_low(:,cell))
+      END DO
+      !
+      ! Set halos dirty/clean for fields modified in the above loop
+      !
+      CALL fine_field_proxy%set_dirty()
+      !
+      !
+  END SUBROUTINE invoke_map_scalar_fe_to_fv_kernel_type
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Passes in ndf_source of the source field of the intermesh kernel
+  ! alongside that of that of the target field. Inter-grid kernels are not
+  ! currently allowed GH_SCALAR arguments or this would not be necessary
+  ! See PSyclone issues #2504 and #868
+  SUBROUTINE invoke_map_scalar_fv_to_fe_kernel_type(coarse_field, fine_field, weights_low_to_high)
+      USE sci_map_scalar_fv_to_fe_kernel_mod, ONLY: map_scalar_fv_to_fe_code
+      USE mesh_map_mod, ONLY: mesh_map_type
+      USE mesh_mod, ONLY: mesh_type
+      TYPE(field_type), intent(in) :: coarse_field, fine_field, weights_low_to_high
+      INTEGER(KIND=i_def) cell
+      INTEGER(KIND=i_def) loop0_start, loop0_stop
+      INTEGER(KIND=i_def) nlayers_coarse_field
+      REAL(KIND=r_def), pointer, dimension(:) :: weights_low_to_high_data => null()
+      REAL(KIND=r_def), pointer, dimension(:) :: fine_field_data => null()
+      REAL(KIND=r_def), pointer, dimension(:) :: coarse_field_data => null()
+      TYPE(field_proxy_type) coarse_field_proxy, fine_field_proxy, weights_low_to_high_proxy
+      INTEGER(KIND=i_def), pointer :: map_adspc1_coarse_field(:,:) => null(), map_adspc2_fine_field(:,:) => null(), &
+&map_adspc3_weights_low_to_high(:,:) => null()
+      INTEGER(KIND=i_def) ndf_adspc1_coarse_field, undf_adspc1_coarse_field, ndf_adspc2_fine_field, undf_adspc2_fine_field, &
+&ndf_adspc3_weights_low_to_high, undf_adspc3_weights_low_to_high
+      INTEGER(KIND=i_def) ncell_fine_field, ncpc_fine_field_coarse_field_x, ncpc_fine_field_coarse_field_y
+      INTEGER(KIND=i_def), pointer :: cell_map_coarse_field(:,:,:) => null()
+      TYPE(mesh_map_type), pointer :: mmap_fine_field_coarse_field => null()
+      INTEGER(KIND=i_def) max_halo_depth_mesh_fine_field
+      TYPE(mesh_type), pointer :: mesh_fine_field => null()
+      INTEGER(KIND=i_def) max_halo_depth_mesh_coarse_field
+      TYPE(mesh_type), pointer :: mesh_coarse_field => null()
+      !
+      ! Initialise field and/or operator proxies
+      !
+      coarse_field_proxy = coarse_field%get_proxy()
+      coarse_field_data => coarse_field_proxy%data
+      fine_field_proxy = fine_field%get_proxy()
+      fine_field_data => fine_field_proxy%data
+      weights_low_to_high_proxy = weights_low_to_high%get_proxy()
+      weights_low_to_high_data => weights_low_to_high_proxy%data
+      !
+      ! Initialise number of layers
+      !
+      nlayers_coarse_field = coarse_field_proxy%vspace%get_nlayers()
+      !
+      ! Look-up mesh objects and loop limits for inter-grid kernels
+      !
+      mesh_fine_field => fine_field_proxy%vspace%get_mesh()
+      max_halo_depth_mesh_fine_field = mesh_fine_field%get_halo_depth()
+      mesh_coarse_field => coarse_field_proxy%vspace%get_mesh()
+      max_halo_depth_mesh_coarse_field = mesh_coarse_field%get_halo_depth()
+      mmap_fine_field_coarse_field => mesh_coarse_field%get_mesh_map(mesh_fine_field)
+      cell_map_coarse_field => mmap_fine_field_coarse_field%get_whole_cell_map()
+      ncell_fine_field = mesh_fine_field%get_last_halo_cell(depth=2)
+      ncpc_fine_field_coarse_field_x = mmap_fine_field_coarse_field%get_ntarget_cells_per_source_x()
+      ncpc_fine_field_coarse_field_y = mmap_fine_field_coarse_field%get_ntarget_cells_per_source_y()
+      !
+      ! Look-up dofmaps for each function space
+      !
+      map_adspc1_coarse_field => coarse_field_proxy%vspace%get_whole_dofmap()
+      map_adspc2_fine_field => fine_field_proxy%vspace%get_whole_dofmap()
+      map_adspc3_weights_low_to_high => weights_low_to_high_proxy%vspace%get_whole_dofmap()
+      !
+      ! Initialise number of DoFs for adspc1_coarse_field
+      !
+      ndf_adspc1_coarse_field = coarse_field_proxy%vspace%get_ndf()
+      undf_adspc1_coarse_field = coarse_field_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc2_fine_field
+      !
+      ndf_adspc2_fine_field = fine_field_proxy%vspace%get_ndf()
+      undf_adspc2_fine_field = fine_field_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc3_weights_low_to_high
+      !
+      ndf_adspc3_weights_low_to_high = weights_low_to_high_proxy%vspace%get_ndf()
+      undf_adspc3_weights_low_to_high = weights_low_to_high_proxy%vspace%get_undf()
+      !
+      ! Set-up all of the loop bounds
+      !
+      loop0_start = 1
+      loop0_stop = mesh_coarse_field%get_last_edge_cell()
+      !
+      ! Call kernels and communication routines
+      !
+      DO cell = loop0_start, loop0_stop, 1
+        CALL map_scalar_fv_to_fe_code(nlayers_coarse_field, cell_map_coarse_field(:,:,cell), &
+&ncpc_fine_field_coarse_field_x, ncpc_fine_field_coarse_field_y, ncell_fine_field, &
+&coarse_field_data, fine_field_data, weights_low_to_high_data, ndf_adspc1_coarse_field, &
+&undf_adspc1_coarse_field, map_adspc1_coarse_field(:,cell), ndf_adspc2_fine_field, &
+&undf_adspc2_fine_field, map_adspc2_fine_field, undf_adspc3_weights_low_to_high, &
+&map_adspc3_weights_low_to_high(:,cell))
+      END DO
+      !
+      ! Set halos dirty/clean for fields modified in the above loop
+      !
+      CALL coarse_field_proxy%set_dirty()
+      !
+      !
+  END SUBROUTINE invoke_map_scalar_fv_to_fe_kernel_type
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Passes in ndf_source of the source field of the intermesh kernel
+  ! alongside that of that of the target field. Inter-grid kernels are not
+  ! currently allowed GH_SCALAR arguments or this would not be necessary
+  ! See PSyclone issues #2504 and #868
+  SUBROUTINE invoke_weights_w2_inter_element_order_kernel_type(dummy_fine, dummy_coarse, weights_high_low, weights_low_high, qr)
+    USE sci_weights_w2_inter_element_order_kernel_mod, ONLY: weights_w2_inter_element_order_code
+    USE quadrature_xyoz_mod, ONLY: quadrature_xyoz_type, quadrature_xyoz_proxy_type
+    USE function_space_mod, ONLY: BASIS, DIFF_BASIS
+    USE mesh_map_mod, ONLY: mesh_map_type
+    USE mesh_mod, ONLY: mesh_type
+    TYPE(field_type), intent(in) :: dummy_fine, dummy_coarse, weights_high_low, weights_low_high
+    TYPE(quadrature_xyoz_type), intent(in) :: qr
+    INTEGER(KIND=i_def) cell
+    INTEGER(KIND=i_def) loop0_start, loop0_stop
+    REAL(KIND=r_def), allocatable :: basis_adspc2_dummy_coarse_qr(:,:,:,:)
+    INTEGER(KIND=i_def) dim_adspc2_dummy_coarse
+    REAL(KIND=r_def), pointer :: weights_xy_qr(:) => null(), weights_z_qr(:) => null()
+    INTEGER(KIND=i_def) np_xy_qr, np_z_qr
+    INTEGER(KIND=i_def) nlayers_dummy_fine
+    REAL(KIND=r_def), pointer, dimension(:) :: weights_low_high_data => null()
+    REAL(KIND=r_def), pointer, dimension(:) :: weights_high_low_data => null()
+    REAL(KIND=r_def), pointer, dimension(:) :: dummy_coarse_data => null()
+    REAL(KIND=r_def), pointer, dimension(:) :: dummy_fine_data => null()
+    TYPE(field_proxy_type) dummy_fine_proxy, dummy_coarse_proxy, weights_high_low_proxy, weights_low_high_proxy
+    TYPE(quadrature_xyoz_proxy_type) qr_proxy
+    INTEGER(KIND=i_def), pointer :: map_adspc1_dummy_fine(:,:) => null(), map_adspc2_dummy_coarse(:,:) => null(), &
+&map_adspc3_weights_high_low(:,:) => null()
+    INTEGER(KIND=i_def) ndf_adspc1_dummy_fine, undf_adspc1_dummy_fine, ndf_adspc2_dummy_coarse, undf_adspc2_dummy_coarse, &
+&ndf_adspc3_weights_high_low, undf_adspc3_weights_high_low
+    INTEGER(KIND=i_def) ncell_dummy_fine, ncpc_dummy_fine_dummy_coarse_x, ncpc_dummy_fine_dummy_coarse_y
+    INTEGER(KIND=i_def), pointer :: cell_map_dummy_coarse(:,:,:) => null()
+    TYPE(mesh_map_type), pointer :: mmap_dummy_fine_dummy_coarse => null()
+    INTEGER(KIND=i_def) max_halo_depth_mesh_dummy_fine
+    TYPE(mesh_type), pointer :: mesh_dummy_fine => null()
+    INTEGER(KIND=i_def) max_halo_depth_mesh_dummy_coarse
+    TYPE(mesh_type), pointer :: mesh_dummy_coarse => null()
+    !
+    ! Initialise field and/or operator proxies
+    !
+    dummy_fine_proxy = dummy_fine%get_proxy()
+    dummy_fine_data => dummy_fine_proxy%data
+    dummy_coarse_proxy = dummy_coarse%get_proxy()
+    dummy_coarse_data => dummy_coarse_proxy%data
+    weights_high_low_proxy = weights_high_low%get_proxy()
+    weights_high_low_data => weights_high_low_proxy%data
+    weights_low_high_proxy = weights_low_high%get_proxy()
+    weights_low_high_data => weights_low_high_proxy%data
+    !
+    ! Initialise number of layers
+    !
+    nlayers_dummy_fine = dummy_fine_proxy%vspace%get_nlayers()
+    !
+    ! Look-up mesh objects and loop limits for inter-grid kernels
+    !
+    mesh_dummy_fine => dummy_fine_proxy%vspace%get_mesh()
+    max_halo_depth_mesh_dummy_fine = mesh_dummy_fine%get_halo_depth()
+    mesh_dummy_coarse => dummy_coarse_proxy%vspace%get_mesh()
+    max_halo_depth_mesh_dummy_coarse = mesh_dummy_coarse%get_halo_depth()
+    mmap_dummy_fine_dummy_coarse => mesh_dummy_coarse%get_mesh_map(mesh_dummy_fine)
+    cell_map_dummy_coarse => mmap_dummy_fine_dummy_coarse%get_whole_cell_map()
+    ncell_dummy_fine = mesh_dummy_fine%get_last_halo_cell(depth=2)
+    ncpc_dummy_fine_dummy_coarse_x = mmap_dummy_fine_dummy_coarse%get_ntarget_cells_per_source_x()
+    ncpc_dummy_fine_dummy_coarse_y = mmap_dummy_fine_dummy_coarse%get_ntarget_cells_per_source_y()
+    !
+    ! Look-up dofmaps for each function space
+    !
+    map_adspc1_dummy_fine => dummy_fine_proxy%vspace%get_whole_dofmap()
+    map_adspc2_dummy_coarse => dummy_coarse_proxy%vspace%get_whole_dofmap()
+    map_adspc3_weights_high_low => weights_high_low_proxy%vspace%get_whole_dofmap()
+    !
+    ! Initialise number of DoFs for adspc1_dummy_fine
+    !
+    ndf_adspc1_dummy_fine = dummy_fine_proxy%vspace%get_ndf()
+    undf_adspc1_dummy_fine = dummy_fine_proxy%vspace%get_undf()
+    !
+    ! Initialise number of DoFs for adspc2_dummy_coarse
+    !
+    ndf_adspc2_dummy_coarse = dummy_coarse_proxy%vspace%get_ndf()
+    undf_adspc2_dummy_coarse = dummy_coarse_proxy%vspace%get_undf()
+    !
+    ! Initialise number of DoFs for adspc3_weights_high_low
+    !
+    ndf_adspc3_weights_high_low = weights_high_low_proxy%vspace%get_ndf()
+    undf_adspc3_weights_high_low = weights_high_low_proxy%vspace%get_undf()
+    !
+    ! Look-up quadrature variables
+    !
+    qr_proxy = qr%get_quadrature_proxy()
+    np_xy_qr = qr_proxy%np_xy
+    np_z_qr = qr_proxy%np_z
+    weights_xy_qr => qr_proxy%weights_xy
+    weights_z_qr => qr_proxy%weights_z
+    !
+    ! Allocate basis/diff-basis arrays
+    !
+    dim_adspc2_dummy_coarse = dummy_coarse_proxy%vspace%get_dim_space()
+    ALLOCATE (basis_adspc2_dummy_coarse_qr(dim_adspc2_dummy_coarse, ndf_adspc2_dummy_coarse, np_xy_qr, np_z_qr))
+    !
+    ! Compute basis/diff-basis arrays
+    !
+    CALL qr%compute_function(BASIS, dummy_coarse_proxy%vspace, dim_adspc2_dummy_coarse, ndf_adspc2_dummy_coarse, &
+&basis_adspc2_dummy_coarse_qr)
+    !
+    ! Set-up all of the loop bounds
+    !
+    loop0_start = 1
+    loop0_stop = mesh_dummy_coarse%get_last_edge_cell()
+    !
+    ! Call kernels and communication routines
+    !
+    DO cell = loop0_start, loop0_stop, 1
+      CALL weights_w2_inter_element_order_code(nlayers_dummy_fine, cell_map_dummy_coarse(:,:,cell), &
+&ncpc_dummy_fine_dummy_coarse_x, ncpc_dummy_fine_dummy_coarse_y, ncell_dummy_fine, dummy_fine_data, &
+&dummy_coarse_data, weights_high_low_data, weights_low_high_data, ndf_adspc1_dummy_fine, &
+&undf_adspc1_dummy_fine, map_adspc1_dummy_fine, ndf_adspc2_dummy_coarse, undf_adspc2_dummy_coarse, &
+&map_adspc2_dummy_coarse(:,cell), basis_adspc2_dummy_coarse_qr, undf_adspc3_weights_high_low, &
+&map_adspc3_weights_high_low(:,cell), np_xy_qr, np_z_qr, weights_xy_qr, weights_z_qr)
+    END DO
+    !
+    ! Set halos dirty/clean for fields modified in the above loop
+    !
+    CALL weights_high_low_proxy%set_dirty()
+    CALL weights_low_high_proxy%set_dirty()
+    !
+    !
+    ! Deallocate basis arrays
+    !
+    DEALLOCATE (basis_adspc2_dummy_coarse_qr)
+    !
+  END SUBROUTINE invoke_weights_w2_inter_element_order_kernel_type
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Passes in ndf_target of the target field of the intermesh kernel
+  ! alongside that of that of the target field. Inter-grid kernels are not
+  ! currently allowed GH_SCALAR arguments or this would not be necessary
+  ! See PSyclone issues #2504 and #868
+  SUBROUTINE invoke_map_w2_fv_to_fe_kernel_type(target_field, source_field, weights, face_selector_ew, face_selector_ns)
+      USE sci_map_w2_fv_to_fe_kernel_mod, ONLY: map_w2_fv_to_fe_code
+      USE mesh_map_mod, ONLY: mesh_map_type
+      USE mesh_mod, ONLY: mesh_type
+      TYPE(field_type), intent(in) :: target_field, source_field, weights
+      TYPE(integer_field_type), intent(in) :: face_selector_ew, face_selector_ns
+      INTEGER(KIND=i_def) cell
+      INTEGER(KIND=i_def) loop0_start, loop0_stop
+      INTEGER(KIND=i_def) nlayers_target_field
+      INTEGER(KIND=i_def), pointer, dimension(:) :: face_selector_ns_data => null()
+      INTEGER(KIND=i_def), pointer, dimension(:) :: face_selector_ew_data => null()
+      TYPE(integer_field_proxy_type) face_selector_ew_proxy, face_selector_ns_proxy
+      REAL(KIND=r_def), pointer, dimension(:) :: weights_data => null()
+      REAL(KIND=r_def), pointer, dimension(:) :: source_field_data => null()
+      REAL(KIND=r_def), pointer, dimension(:) :: target_field_data => null()
+      TYPE(field_proxy_type) target_field_proxy, source_field_proxy, weights_proxy
+      INTEGER(KIND=i_def), pointer :: map_adspc1_target_field(:,:) => null(), map_adspc2_source_field(:,:) => null(), &
+&map_adspc3_weights(:,:) => null(), map_adspc4_face_selector_ew(:,:) => null()
+      INTEGER(KIND=i_def) ndf_adspc1_target_field, undf_adspc1_target_field, ndf_adspc2_source_field, undf_adspc2_source_field, &
+&ndf_adspc3_weights, undf_adspc3_weights, ndf_adspc4_face_selector_ew, undf_adspc4_face_selector_ew
+      INTEGER(KIND=i_def) ncell_source_field, ncpc_source_field_target_field_x, ncpc_source_field_target_field_y
+      INTEGER(KIND=i_def), pointer :: cell_map_target_field(:,:,:) => null()
+      TYPE(mesh_map_type), pointer :: mmap_source_field_target_field => null()
+      INTEGER(KIND=i_def) max_halo_depth_mesh_target_field
+      TYPE(mesh_type), pointer :: mesh_target_field => null()
+      INTEGER(KIND=i_def) max_halo_depth_mesh_source_field
+      TYPE(mesh_type), pointer :: mesh_source_field => null()
+      !
+      ! Initialise field and/or operator proxies
+      !
+      target_field_proxy = target_field%get_proxy()
+      target_field_data => target_field_proxy%data
+      source_field_proxy = source_field%get_proxy()
+      source_field_data => source_field_proxy%data
+      weights_proxy = weights%get_proxy()
+      weights_data => weights_proxy%data
+      face_selector_ew_proxy = face_selector_ew%get_proxy()
+      face_selector_ew_data => face_selector_ew_proxy%data
+      face_selector_ns_proxy = face_selector_ns%get_proxy()
+      face_selector_ns_data => face_selector_ns_proxy%data
+      !
+      ! Initialise number of layers
+      !
+      nlayers_target_field = target_field_proxy%vspace%get_nlayers()
+      !
+      ! Look-up mesh objects and loop limits for inter-grid kernels
+      !
+      mesh_source_field => source_field_proxy%vspace%get_mesh()
+      max_halo_depth_mesh_source_field = mesh_source_field%get_halo_depth()
+      mesh_target_field => target_field_proxy%vspace%get_mesh()
+      max_halo_depth_mesh_target_field = mesh_target_field%get_halo_depth()
+      mmap_source_field_target_field => mesh_target_field%get_mesh_map(mesh_source_field)
+      cell_map_target_field => mmap_source_field_target_field%get_whole_cell_map()
+      ncell_source_field = mesh_source_field%get_last_halo_cell(depth=2)
+      ncpc_source_field_target_field_x = mmap_source_field_target_field%get_ntarget_cells_per_source_x()
+      ncpc_source_field_target_field_y = mmap_source_field_target_field%get_ntarget_cells_per_source_y()
+      !
+      ! Look-up dofmaps for each function space
+      !
+      map_adspc1_target_field => target_field_proxy%vspace%get_whole_dofmap()
+      map_adspc2_source_field => source_field_proxy%vspace%get_whole_dofmap()
+      map_adspc3_weights => weights_proxy%vspace%get_whole_dofmap()
+      map_adspc4_face_selector_ew => face_selector_ew_proxy%vspace%get_whole_dofmap()
+      !
+      ! Initialise number of DoFs for adspc1_target_field
+      !
+      ndf_adspc1_target_field = target_field_proxy%vspace%get_ndf()
+      undf_adspc1_target_field = target_field_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc2_source_field
+      !
+      ndf_adspc2_source_field = source_field_proxy%vspace%get_ndf()
+      undf_adspc2_source_field = source_field_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc3_weights
+      !
+      ndf_adspc3_weights = weights_proxy%vspace%get_ndf()
+      undf_adspc3_weights = weights_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc4_face_selector_ew
+      !
+      ndf_adspc4_face_selector_ew = face_selector_ew_proxy%vspace%get_ndf()
+      undf_adspc4_face_selector_ew = face_selector_ew_proxy%vspace%get_undf()
+      !
+      ! Set-up all of the loop bounds
+      !
+      loop0_start = 1
+      loop0_stop = mesh_target_field%get_last_edge_cell()
+      !
+      ! Call kernels and communication routines
+      !
+      DO cell = loop0_start, loop0_stop, 1
+        CALL map_w2_fv_to_fe_code(nlayers_target_field, cell_map_target_field(:,:,cell), ncpc_source_field_target_field_x, &
+&ncpc_source_field_target_field_y, ncell_source_field, target_field_data, source_field_data, weights_data, face_selector_ew_data, &
+&face_selector_ns_data, ndf_adspc1_target_field, undf_adspc1_target_field, map_adspc1_target_field(:,cell), &
+&ndf_adspc2_source_field, undf_adspc2_source_field, map_adspc2_source_field, undf_adspc3_weights, map_adspc3_weights(:,cell), &
+&undf_adspc4_face_selector_ew, map_adspc4_face_selector_ew(:,cell))
+      END DO
+      !
+      ! Set halos dirty/clean for fields modified in the above loop
+      !
+      CALL target_field_proxy%set_dirty()
+      !
+      !
+    END SUBROUTINE invoke_map_w2_fv_to_fe_kernel_type
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Passes in ndf_source of the source field of the intermesh kernel
+  ! alongside that of that of the target field. Inter-grid kernels are not
+  ! currently allowed GH_SCALAR arguments or this would not be necessary
+  ! See PSyclone issues #2504 and #868
+  SUBROUTINE invoke_map_w2_fe_to_fv_kernel_type(target_field, source_field, weights, face_selector_ew, face_selector_ns)
+      USE sci_map_w2_fe_to_fv_kernel_mod, ONLY: map_w2_fe_to_fv_code
+      USE mesh_map_mod, ONLY: mesh_map_type
+      USE mesh_mod, ONLY: mesh_type
+      TYPE(field_type), intent(in) :: target_field, source_field, weights
+      TYPE(integer_field_type), intent(in) :: face_selector_ew, face_selector_ns
+      INTEGER(KIND=i_def) cell
+      INTEGER(KIND=i_def) loop0_start, loop0_stop
+      INTEGER(KIND=i_def) nlayers_target_field
+      INTEGER(KIND=i_def), pointer, dimension(:) :: face_selector_ns_data => null()
+      INTEGER(KIND=i_def), pointer, dimension(:) :: face_selector_ew_data => null()
+      TYPE(integer_field_proxy_type) face_selector_ew_proxy, face_selector_ns_proxy
+      REAL(KIND=r_def), pointer, dimension(:) :: weights_data => null()
+      REAL(KIND=r_def), pointer, dimension(:) :: source_field_data => null()
+      REAL(KIND=r_def), pointer, dimension(:) :: target_field_data => null()
+      TYPE(field_proxy_type) target_field_proxy, source_field_proxy, weights_proxy
+      INTEGER(KIND=i_def), pointer :: map_adspc1_target_field(:,:) => null(), map_adspc2_source_field(:,:) => null(), &
+&map_adspc3_weights(:,:) => null(), map_adspc4_face_selector_ew(:,:) => null()
+      INTEGER(KIND=i_def) ndf_adspc1_target_field, undf_adspc1_target_field, ndf_adspc2_source_field, undf_adspc2_source_field, &
+&ndf_adspc3_weights, undf_adspc3_weights, ndf_adspc4_face_selector_ew, undf_adspc4_face_selector_ew
+      INTEGER(KIND=i_def) ncell_target_field, ncpc_target_field_source_field_x, ncpc_target_field_source_field_y
+      INTEGER(KIND=i_def), pointer :: cell_map_source_field(:,:,:) => null()
+      TYPE(mesh_map_type), pointer :: mmap_target_field_source_field => null()
+      INTEGER(KIND=i_def) max_halo_depth_mesh_target_field
+      TYPE(mesh_type), pointer :: mesh_target_field => null()
+      INTEGER(KIND=i_def) max_halo_depth_mesh_source_field
+      TYPE(mesh_type), pointer :: mesh_source_field => null()
+      !
+      ! Initialise field and/or operator proxies
+      !
+      target_field_proxy = target_field%get_proxy()
+      target_field_data => target_field_proxy%data
+      source_field_proxy = source_field%get_proxy()
+      source_field_data => source_field_proxy%data
+      weights_proxy = weights%get_proxy()
+      weights_data => weights_proxy%data
+      face_selector_ew_proxy = face_selector_ew%get_proxy()
+      face_selector_ew_data => face_selector_ew_proxy%data
+      face_selector_ns_proxy = face_selector_ns%get_proxy()
+      face_selector_ns_data => face_selector_ns_proxy%data
+      !
+      ! Initialise number of layers
+      !
+      nlayers_target_field = target_field_proxy%vspace%get_nlayers()
+      !
+      ! Look-up mesh objects and loop limits for inter-grid kernels
+      !
+      mesh_target_field => target_field_proxy%vspace%get_mesh()
+      max_halo_depth_mesh_target_field = mesh_target_field%get_halo_depth()
+      mesh_source_field => source_field_proxy%vspace%get_mesh()
+      max_halo_depth_mesh_source_field = mesh_source_field%get_halo_depth()
+      mmap_target_field_source_field => mesh_source_field%get_mesh_map(mesh_target_field)
+      cell_map_source_field => mmap_target_field_source_field%get_whole_cell_map()
+      ncell_target_field = mesh_target_field%get_last_halo_cell(depth=2)
+      ncpc_target_field_source_field_x = mmap_target_field_source_field%get_ntarget_cells_per_source_x()
+      ncpc_target_field_source_field_y = mmap_target_field_source_field%get_ntarget_cells_per_source_y()
+      !
+      ! Look-up dofmaps for each function space
+      !
+      map_adspc1_target_field => target_field_proxy%vspace%get_whole_dofmap()
+      map_adspc2_source_field => source_field_proxy%vspace%get_whole_dofmap()
+      map_adspc3_weights => weights_proxy%vspace%get_whole_dofmap()
+      map_adspc4_face_selector_ew => face_selector_ew_proxy%vspace%get_whole_dofmap()
+      !
+      ! Initialise number of DoFs for adspc1_target_field
+      !
+      ndf_adspc1_target_field = target_field_proxy%vspace%get_ndf()
+      undf_adspc1_target_field = target_field_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc2_source_field
+      !
+      ndf_adspc2_source_field = source_field_proxy%vspace%get_ndf()
+      undf_adspc2_source_field = source_field_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc3_weights
+      !
+      ndf_adspc3_weights = weights_proxy%vspace%get_ndf()
+      undf_adspc3_weights = weights_proxy%vspace%get_undf()
+      !
+      ! Initialise number of DoFs for adspc4_face_selector_ew
+      !
+      ndf_adspc4_face_selector_ew = face_selector_ew_proxy%vspace%get_ndf()
+      undf_adspc4_face_selector_ew = face_selector_ew_proxy%vspace%get_undf()
+      !
+      ! Set-up all of the loop bounds
+      !
+      loop0_start = 1
+      loop0_stop = mesh_source_field%get_last_edge_cell()
+      !
+      ! Call kernels and communication routines
+      !
+      DO cell = loop0_start, loop0_stop, 1
+        CALL map_w2_fe_to_fv_code(nlayers_target_field, cell_map_source_field(:,:,cell), ncpc_target_field_source_field_x, &
+&ncpc_target_field_source_field_y, ncell_target_field, target_field_data, source_field_data, weights_data, face_selector_ew_data, &
+&face_selector_ns_data, ndf_adspc1_target_field, undf_adspc1_target_field, map_adspc1_target_field, ndf_adspc2_source_field, &
+&undf_adspc2_source_field, map_adspc2_source_field(:,cell), undf_adspc3_weights, map_adspc3_weights(:,cell), &
+&undf_adspc4_face_selector_ew, map_adspc4_face_selector_ew(:,cell))
+      END DO
+      !
+      ! Set halos dirty/clean for fields modified in the above loop
+      !
+      CALL target_field_proxy%set_dirty()
+      !
+      !
+    END SUBROUTINE invoke_map_w2_fe_to_fv_kernel_type
 
   end module sci_psykal_light_mod

@@ -833,7 +833,7 @@ contains
 #elif (RDEF_PRECISION == 32)
     tol = 1.0e-6_real32
 #else
-    @assertFail("Unsupported default precission")
+    @assertFail("Unsupported default precision")
 #endif
 
     do i=1, SQ20%get_n_unique_vertices()
@@ -847,7 +847,7 @@ contains
 #elif (RDEF_PRECISION == 32)
     tol = 2.0e-6_real32
 #else
-    @assertFail("Unsupported default precission")
+    @assertFail("Unsupported default precision")
 #endif
 
     do i=1, SQ20%get_num_cells_in_layer()
