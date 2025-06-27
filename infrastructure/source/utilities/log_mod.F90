@@ -117,6 +117,14 @@ contains
     ! default behaviour: log to all ranks
     emit_log_message = .true.
 
+    if (present(log_to_rank_zero_only)) then
+      log_to_rank_0_only = log_to_rank_zero_only
+    else
+      log_to_rank_0_only = .false.
+    end if
+
+    ! Check the number of ranks in the incomming communicator, as this
+    ! determines whether logging goes to a file, or the terminal
     call mpi_comm_size( communicator, total_ranks, ierror=status )
     if (status /= 0) then
       write( error_unit, &
@@ -124,15 +132,15 @@ contains
       call abort_model()
     end if
 
-    if (present(log_to_rank_zero_only)) then
-      log_to_rank_0_only = log_to_rank_zero_only
-    else
-      log_to_rank_0_only = .false.
-    end if
-
     if (total_ranks /= 1) then
       allocate( mpi_communicator )
-      mpi_communicator = communicator
+      ! Duplicate the communicator  - so we can't do any damage to the original
+      call mpi_comm_dup(communicator, mpi_communicator, status)
+      if (status /= 0) then
+        write( error_unit, &
+               "('Cannot duplicate the communicator. (',i0,')')" ) status
+        call abort_model()
+      end if
       call mpi_comm_rank( mpi_communicator, this_rank, ierror=status )
       if (status /= 0) then
         write( error_unit, "('Cannot determine rank. iostat = ',i0)" ) status

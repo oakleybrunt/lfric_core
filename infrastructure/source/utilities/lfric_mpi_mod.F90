@@ -284,15 +284,24 @@ contains
     type(lfric_comm_type), intent(in)    :: in_comm
     integer :: ierr
 
-    self%comm = in_comm%comm
 #ifdef NO_MPI
+    ! Store incoming dummy communicator
+    self%comm = in_comm%comm
     ! Set default values for number of ranks and local rank in non-mpi build
     self%comm_size = 1
     self%comm_rank = 0
     ierr=0 ! Set local variable to avoid unused variable errors
 #else
-    call mpi_comm_size(self%comm,self%comm_size,ierr)
-    call mpi_comm_rank(self%comm,self%comm_rank,ierr)
+    ! Duplicate the communicator  - so we can't do any damage to the original
+    call mpi_comm_dup(in_comm%comm, self%comm, ierr)
+    if (ierr /= 0) &
+      call log_event('Cannot duplicate the communicator.', LOG_LEVEL_ERROR )
+    ! Get the values for number of ranks and local rank
+    call mpi_comm_size(self%comm, self%comm_size, ierr)
+    if (ierr /= 0) &
+      call log_event('Cannot determine number of ranks.', LOG_LEVEL_ERROR )
+    call mpi_comm_rank(self%comm, self%comm_rank, ierr)
+    if (ierr /= 0) call log_event('Cannot determine rank.', LOG_LEVEL_ERROR )
 #endif
     self%comm_set = .true.
   end subroutine initialise
