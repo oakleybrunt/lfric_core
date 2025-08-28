@@ -16,8 +16,6 @@ jobs:
       - id: extract
         name: Extract
         uses: actions/checkout@v4
-        with:
-          ref: main
       - id: setup_environment
         name: Setup Python environment
         uses: actions/setup-python@v5
@@ -31,7 +29,9 @@ jobs:
       - id: sphinx
         name: Build Sphinx HTML docs
         working-directory: ./documentation
-        run: make html
+        # Run Sphinx to build the HTML documentation with warnings treated as errors and continue on warnings.
+        # The '-n' option runs in nit-picky mode to warn about all references where the target cannot be found.
+        run: make html SPHINXOPTS="-W --keep-going -n"
       - id: permissions
         name: Set permissions
         run: |
