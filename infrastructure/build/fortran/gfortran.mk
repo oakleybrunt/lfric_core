@@ -36,7 +36,7 @@ FFLAGS_UNIT_WARNINGS      = -Wall -Wconversion -Wunused-variable \
                             -Werror=tabs
 FFLAGS_INIT               = -finit-integer=31173 -finit-real=snan \
                             -finit-logical=true -finit-character=85
-FFLAGS_RUNTIME            = -fcheck=all -ffpe-trap=invalid,zero,overflow
+FFLAGS_RUNTIME            = -fcheck=all -ffpe-trap=invalid,zero,overflow -fsanitize=address
 # fast-debug flags set separately as Intel compiler needs platform-specific control on them
 FFLAGS_FASTD_INIT         = $(FFLAGS_INIT)
 FFLAGS_FASTD_RUNTIME      = $(FFLAGS_RUNTIME)

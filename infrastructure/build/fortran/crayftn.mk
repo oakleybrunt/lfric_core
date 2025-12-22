@@ -58,7 +58,7 @@ else
 endif
 
 FFLAGS_UNIT_WARNINGS      = -m 0
-FFLAGS_RUNTIME            = -R bcdps
+FFLAGS_RUNTIME            = -R bcdps -fsanitize=address
 # fast-debug flags set separately as Intel compiler needs platform-specific control on them.
 # Though, Cray will not set them to anything
 FFLAGS_FASTD_RUNTIME      =
