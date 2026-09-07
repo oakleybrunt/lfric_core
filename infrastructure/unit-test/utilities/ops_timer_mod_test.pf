@@ -10,15 +10,16 @@
 module ops_timer_mod_test
 
   use pfunit
+  use constants_mod, only : i_def
   use lfric_mpi_mod, only : global_mpi, &
                             lfric_comm_type
+  use log_mod,       only : finalise_logging,     &
+                            initialise_logging
   use sleep_mod,     only : c_sleep
 
   implicit none
 
   private
-
-  public set_up, tear_down
   public test_ops_timer_pause_and_resume
   public test_ops_timer_pause_and_stop
   !
@@ -26,36 +27,9 @@ module ops_timer_mod_test
   !
   public MPITestMethod
 
+  integer(i_def), parameter :: log_unit   = 11
+
 contains
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  @before
-  subroutine set_up( this )
-
-    implicit none
-
-    class(MPITestMethod), intent(inout) :: this
-    type(lfric_comm_type) :: lfric_comm
-
-    call lfric_comm%set_comm_mpi_val(this%getMpiCommunicator())
-
-    ! Store the MPI communicator for later use
-    call global_mpi%initialise(lfric_comm)
-
-  end subroutine set_up
-
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  @after
-  subroutine tear_down( this )
-
-    implicit none
-
-    class(MPITestMethod), intent(inout) :: this
-
-    ! Clear the stored MPI communicator
-    call global_mpi%finalise()
-
-  end subroutine tear_down
-
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   @Test( npes=[1] )
   subroutine test_ops_timer_pause_and_resume(this)
@@ -67,6 +41,12 @@ contains
     class(MPITestMethod), intent(inout) :: this
 
     type(ops_timer_type) :: ops_timer
+
+    integer(i_def)          :: condition
+    character(40)           :: filename
+    character(*), parameter :: name = 'ops_timer_mod_test'
+
+    call initialise_logging( this%getMpiCommunicator(), name )
 
     ! Timer is paused but not resumed before timeris stopped
     call ops_timer%start_timer(name='pause_and_resume')
@@ -82,6 +62,13 @@ contains
     ! Call stop_timer
     ! Have been timing for ~4s but paused for 2. Elapsed time should be ~2s
     call ops_timer%stop_timer()
+
+    call finalise_logging()
+
+    write( filename, &
+           '("PET", I0, ".", A, ".Log")') this%getProcessRank(), name
+    open( log_unit, file=filename, action='read', iostat=condition )
+    close( log_unit, status='delete' )
 
     @assertTrue(ops_timer%elapsed() .lt. 2.01)
 
@@ -99,6 +86,12 @@ contains
 
     type(ops_timer_type) :: ops_timer
 
+    integer(i_def)          :: condition
+    character(40)           :: filename
+    character(*), parameter :: name = 'ops_timer_mod_test'
+
+    call initialise_logging( this%getMpiCommunicator(), name )
+
     ! Timer is paused but not resumed before timeris stopped
     call ops_timer%start_timer(name='pause_and_stop')
     ! before pausing, sleep for 2 seconds.
@@ -111,6 +104,13 @@ contains
     ! Have been timing for ~4s but paused for 2. Elapsed time should be ~2s
     ! Call stop_timer before calling resume_timer
     call ops_timer%stop_timer()
+
+    call finalise_logging()
+
+    write( filename, &
+           '("PET", I0, ".", A, ".Log")') this%getProcessRank(), name
+    open( log_unit, file=filename, action='read', iostat=condition )
+    close( log_unit, status='delete' )
 
     @assertTrue(ops_timer%elapsed() .lt. 2.01)
 
