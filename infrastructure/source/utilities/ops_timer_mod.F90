@@ -18,9 +18,7 @@ module ops_timer_mod
   implicit none
   private
 
-#ifdef NO_MPI
   integer(int64), save :: crate = -1_int64
-#endif
 
   type, public :: ops_timer_type
      private

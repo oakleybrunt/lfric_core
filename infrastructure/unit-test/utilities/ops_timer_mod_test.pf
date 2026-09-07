@@ -65,9 +65,7 @@ contains
 
     call finalise_logging()
 
-    write( filename, &
-           '("PET", I0, ".", A, ".Log")') this%getProcessRank(), name
-    open( log_unit, file=filename, action='read', iostat=condition )
+    open( log_unit, file=name, action='read', iostat=condition )
     close( log_unit, status='delete' )
 
     @assertTrue(ops_timer%elapsed() .lt. 2.01)
@@ -107,9 +105,7 @@ contains
 
     call finalise_logging()
 
-    write( filename, &
-           '("PET", I0, ".", A, ".Log")') this%getProcessRank(), name
-    open( log_unit, file=filename, action='read', iostat=condition )
+    open( log_unit, file=name, action='read', iostat=condition )
     close( log_unit, status='delete' )
 
     @assertTrue(ops_timer%elapsed() .lt. 2.01)
