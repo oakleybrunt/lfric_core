@@ -11,9 +11,9 @@
 !>
 module ops_timer_mod
 
-  use iso_fortran_env, only: real64, int64
+  use, intrinsic :: iso_fortran_env, only: real64, int64
 
-  use log_mod,         only: log_scratch_space, log_level_info, log_event
+  use log_mod, only: log_scratch_space, log_level_info, log_event
 
   implicit none
   private
@@ -64,7 +64,7 @@ contains
   function elapsed(this) result(time_taken)
 
     class(ops_timer_type), intent(inout) :: this
-    real(real64) :: time_taken
+    real(real64)   :: time_taken
     integer(int64) :: now
 
     ! Close off any outstanding pause before calculating the elapsed time,
@@ -131,6 +131,7 @@ contains
     '(OPS TIMER) Time taken for ', this%name, ' : ', this%elapsed(), ' (s)'
     call log_event(log_scratch_space, log_level_info)
 
+    this%paused  = .false.
     this%running = .false.
 
   end subroutine stop_timer
