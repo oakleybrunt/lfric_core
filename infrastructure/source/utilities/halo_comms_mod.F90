@@ -827,9 +827,9 @@ function generate_redistribution_map(src_indices, tgt_indices, datatype, xmap) &
   type(lfric_datatype_type), intent(in) :: datatype
 #ifdef NO_MPI
   !  xmaps are meaningless in a non-mpi build, create an integer for tests
-  integer(i_def) :: xmap
+  integer(i_def), intent(in) :: xmap
 #else
-  type(xt_xmap) :: xmap
+  type(xt_xmap),  intent(in) :: xmap
 #endif
 #ifdef NO_MPI
   !  Redistribution maps are meaningless in a non-mpi build, so just return 0
