@@ -4,7 +4,7 @@
 ! received as part of this distribution.
 !-----------------------------------------------------------------------------
 !> @brief A Simple timer based upon calls to cpu time or mpi_wtime that outputs
-!>        results to stdout as soon as the instance calls stop_timer or is
+!>        results to stdout as soon as the instance calls stop or is
 !>        destroyed.
 !>
 !> Usage: The ops_timer type requires one instance per timing calliper.
@@ -29,10 +29,10 @@ module ops_timer_mod
      logical                   :: running     = .false.
      logical                   :: paused      = .false.
    contains
-     procedure :: start_timer
-     procedure :: stop_timer
-     procedure :: pause_timer
-     procedure :: resume_timer
+     procedure :: start
+     procedure :: stop
+     procedure :: pause
+     procedure :: resume
      procedure :: elapsed
      final     :: destructor
   end type ops_timer_type
@@ -43,7 +43,7 @@ contains
 !> @brief initialize an ops_timer instance and start timing
 !> @param[in] name   The timing calliper's name, as will be logged when time
 !>                   is output.
-  subroutine start_timer(this, name)
+  subroutine start(this, name)
     class(ops_timer_type), intent(inout) :: this
     character(*),          intent(in)    :: name
 
@@ -56,7 +56,7 @@ contains
     call system_clock(count=count)
     this%start_time = real(count, real64)
 
-  end subroutine start_timer
+  end subroutine start
 
 !=============================================================================!
 !> @brief Calculates the total time taken between ops_timer start and finish
@@ -69,7 +69,7 @@ contains
 
     ! Close off any outstanding pause before calculating the elapsed time,
     ! otherwise the timer will not be using an accurate paused_time.
-    if (this%paused) call this%resume_timer()
+    if (this%paused) call this%resume()
 
     call system_clock(count=now)
     time_taken = (real(now, real64) - this%start_time) / real(crate, real64)
@@ -80,7 +80,7 @@ contains
 !=============================================================================!
 !> @brief Instruct the ops_timer instance to start timing a new section to be
 !>        subtracted from the total elapsed time when the timer is stopped.
-  subroutine pause_timer(this)
+  subroutine pause(this)
 
     class(ops_timer_type), intent(inout) :: this
 
@@ -95,11 +95,11 @@ contains
     call system_clock(count=count)
     this%pause_start = real(count, real64)
 
-  end subroutine pause_timer
+  end subroutine pause
 
 !=============================================================================!
 !> @brief Instruct the ops_timer instance to finish timing the paused section.
-  subroutine resume_timer(this)
+  subroutine resume(this)
 
     class(ops_timer_type), intent(inout) :: this
     real(real64)   :: time_taken
@@ -114,12 +114,12 @@ contains
 
     this%paused_time = this%paused_time + time_taken
 
-  end subroutine resume_timer
+  end subroutine resume
 
 !=============================================================================!
 !> @brief Instruct the ops_timer instance to stop timing and return the total
 !>        time measured.
-  subroutine stop_timer(this)
+  subroutine stop(this)
 
     class(ops_timer_type), intent(inout) :: this
 
@@ -134,15 +134,15 @@ contains
     this%paused  = .false.
     this%running = .false.
 
-  end subroutine stop_timer
+  end subroutine stop
 
 !=============================================================================!
-!> @brief Calls the stop_timer subroutine to output the total time measured
+!> @brief Calls the stop subroutine to output the total time measured
 !>        when going out of scope or being destroyed manually.
   subroutine destructor(this)
     type(ops_timer_type), intent(inout) :: this
 
-    call stop_timer(this)
+    call stop(this)
 
   end subroutine destructor
 
