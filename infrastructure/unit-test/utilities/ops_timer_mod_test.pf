@@ -7,7 +7,7 @@
 !>
 !> @details A pFUnit test module to exercise the timer facilities.
 !>
-module ops_timer_mod_test
+module stopwatch_mod_test
 
   use pfunit
   use constants_mod, only : i_def
@@ -20,8 +20,8 @@ module ops_timer_mod_test
   implicit none
 
   private
-  public test_ops_timer_pause_and_resume
-  public test_ops_timer_pause_and_stop
+  public test_stopwatch_pause_and_resume
+  public test_stopwatch_pause_and_stop
   !
   ! pFUnit depends on symbol spill
   !
@@ -32,84 +32,84 @@ module ops_timer_mod_test
 contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   @Test( npes=[1] )
-  subroutine test_ops_timer_pause_and_resume(this)
+  subroutine test_stopwatch_pause_and_resume(this)
 
-    use ops_timer_mod, only: ops_timer_type
+    use stopwatch_mod, only: stopwatch_type
 
     implicit none
 
     class(MPITestMethod), intent(inout) :: this
 
-    type(ops_timer_type) :: ops_timer
+    type(stopwatch_type) :: stopwatch
 
     integer(i_def)          :: condition
     character(40)           :: filename
-    character(*), parameter :: name = 'ops_timer_mod_test'
+    character(*), parameter :: name = 'stopwatch_mod_test'
 
     call initialise_logging( this%getMpiCommunicator(), name )
 
     ! Timer is paused but not resumed before timeris stopped
-    call ops_timer%start_timer(name='pause_and_resume')
+    call stopwatch%start(name='pause_and_resume')
     ! before pausing, sleep for 2 seconds - the elapsed time should be near to
     ! this since there is no other work happening in this timed region.
     call c_sleep(2)
 
     ! Pause for 2 seconds, not timing during this
-    call ops_timer%pause_timer()
+    call stopwatch%pause()
     call c_sleep(1)
-    call ops_timer%resume_timer()
+    call stopwatch%resume()
 
-    ! Call stop_timer
+    ! Call stop
     ! Have been timing for ~4s but paused for 2. Elapsed time should be ~2s
-    call ops_timer%stop_timer()
+    call stopwatch%stop()
 
     call finalise_logging()
 
     open( log_unit, file=name, action='read', iostat=condition )
     close( log_unit, status='delete' )
 
-    @assertTrue(ops_timer%elapsed() .lt. 2.01)
+    @assertTrue(stopwatch%elapsed() .lt. 2.01)
 
-  end subroutine test_ops_timer_pause_and_resume
+  end subroutine test_stopwatch_pause_and_resume
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   @Test( npes=[1] )
-  subroutine test_ops_timer_pause_and_stop(this)
+  subroutine test_stopwatch_pause_and_stop(this)
 
-    use ops_timer_mod, only: ops_timer_type
+    use stopwatch_mod, only: stopwatch_type
 
     implicit none
 
     class(MPITestMethod), intent(inout) :: this
 
-    type(ops_timer_type) :: ops_timer
+    type(stopwatch_type) :: stopwatch
 
     integer(i_def)          :: condition
     character(40)           :: filename
-    character(*), parameter :: name = 'ops_timer_mod_test'
+    character(*), parameter :: name = 'stopwatch_mod_test'
 
     call initialise_logging( this%getMpiCommunicator(), name )
 
     ! Timer is paused but not resumed before timeris stopped
-    call ops_timer%start_timer(name='pause_and_stop')
+    call stopwatch%start(name='pause_and_stop')
     ! before pausing, sleep for 2 seconds.
     call c_sleep(2)
 
     ! Pause for 2 seconds, not timing during this
-    call ops_timer%pause_timer()
+    call stopwatch%pause()
     call c_sleep(1)
 
     ! Have been timing for ~4s but paused for 2. Elapsed time should be ~2s
-    ! Call stop_timer before calling resume_timer
-    call ops_timer%stop_timer()
+    ! Call stop before calling resume
+    call stopwatch%stop()
 
     call finalise_logging()
 
     open( log_unit, file=name, action='read', iostat=condition )
     close( log_unit, status='delete' )
 
-    @assertTrue(ops_timer%elapsed() .lt. 2.01)
+    @assertTrue(stopwatch%elapsed() .lt. 2.01)
 
-  end subroutine test_ops_timer_pause_and_stop
+  end subroutine test_stopwatch_pause_and_stop
 
-end module ops_timer_mod_test
+end module stopwatch_mod_test

@@ -7,9 +7,9 @@
 !>        results to stdout as soon as the instance calls stop or is
 !>        destroyed.
 !>
-!> Usage: The ops_timer type requires one instance per timing calliper.
+!> Usage: The stopwatch type requires one instance per timing calliper.
 !>
-module ops_timer_mod
+module stopwatch_mod
 
   use, intrinsic :: iso_fortran_env, only: real64, int64
 
@@ -20,7 +20,7 @@ module ops_timer_mod
 
   integer(int64), save :: crate = -1_int64
 
-  type, public :: ops_timer_type
+  type, public :: stopwatch_type
      private
      character(:), allocatable :: name
      real(real64)              :: start_time  = 0.0_real64
@@ -35,16 +35,16 @@ module ops_timer_mod
      procedure :: resume
      procedure :: elapsed
      final     :: destructor
-  end type ops_timer_type
+  end type stopwatch_type
 
 contains
 
 !=============================================================================!
-!> @brief initialize an ops_timer instance and start timing
+!> @brief initialize a stopwatch instance and start timing
 !> @param[in] name   The timing calliper's name, as will be logged when time
 !>                   is output.
   subroutine start(this, name)
-    class(ops_timer_type), intent(inout) :: this
+    class(stopwatch_type), intent(inout) :: this
     character(*),          intent(in)    :: name
 
     integer(int64) :: count
@@ -59,11 +59,11 @@ contains
   end subroutine start
 
 !=============================================================================!
-!> @brief Calculates the total time taken between ops_timer start and finish
-!> @result  time_taken   The time measured by the ops_timer instance
+!> @brief Calculates the total time taken between stopwatch start and finish
+!> @result  time_taken   The time measured by the stopwatch instance
   function elapsed(this) result(time_taken)
 
-    class(ops_timer_type), intent(inout) :: this
+    class(stopwatch_type), intent(inout) :: this
     real(real64)   :: time_taken
     integer(int64) :: now
 
@@ -78,11 +78,11 @@ contains
   end function elapsed
 
 !=============================================================================!
-!> @brief Instruct the ops_timer instance to start timing a new section to be
+!> @brief Instruct the stopwatch instance to start timing a new section to be
 !>        subtracted from the total elapsed time when the timer is stopped.
   subroutine pause(this)
 
-    class(ops_timer_type), intent(inout) :: this
+    class(stopwatch_type), intent(inout) :: this
 
     integer(int64) :: count
 
@@ -98,10 +98,10 @@ contains
   end subroutine pause
 
 !=============================================================================!
-!> @brief Instruct the ops_timer instance to finish timing the paused section.
+!> @brief Instruct the stopwatch instance to finish timing the paused section.
   subroutine resume(this)
 
-    class(ops_timer_type), intent(inout) :: this
+    class(stopwatch_type), intent(inout) :: this
     real(real64)   :: time_taken
     integer(int64) :: now
 
@@ -117,18 +117,18 @@ contains
   end subroutine resume
 
 !=============================================================================!
-!> @brief Instruct the ops_timer instance to stop timing and return the total
+!> @brief Instruct the stopwatch instance to stop timing and return the total
 !>        time measured.
   subroutine stop(this)
 
-    class(ops_timer_type), intent(inout) :: this
+    class(stopwatch_type), intent(inout) :: this
 
     if (.not. this%running) return
 
-    ! All ops_timer output is marked by the (OPS TIMER) identifier so it can
+    ! All stopwatch output is marked by the (STOPWATCH) identifier so it can
     ! be found easily
     write(log_scratch_space,'(3A,F21.4,A)') &
-    '(OPS TIMER) Time taken for ', this%name, ' : ', this%elapsed(), ' (s)'
+    '(STOPWATCH) Total time for ', this%name, ' : ', this%elapsed(), ' (s)'
     call log_event(log_scratch_space, log_level_info)
 
     this%paused  = .false.
@@ -140,10 +140,10 @@ contains
 !> @brief Calls the stop subroutine to output the total time measured
 !>        when going out of scope or being destroyed manually.
   subroutine destructor(this)
-    type(ops_timer_type), intent(inout) :: this
+    type(stopwatch_type), intent(inout) :: this
 
     call stop(this)
 
   end subroutine destructor
 
-end module ops_timer_mod
+end module stopwatch_mod
