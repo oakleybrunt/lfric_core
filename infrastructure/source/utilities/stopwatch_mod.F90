@@ -2,6 +2,9 @@
 ! (C) Crown copyright 2026 Met Office. All rights reserved.
 ! For further details please refer to the file LICENCE which you should have
 ! received as part of this distribution.
+!
+! Some of the content of this file has been produced with the assistance of
+! Met Office GitHub Copilot Enterprise
 !-----------------------------------------------------------------------------
 !> @brief A Simple timer based upon calls to cpu time or mpi_wtime that outputs
 !>        results to stdout as soon as the instance calls stop or is
