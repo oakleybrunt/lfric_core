@@ -867,6 +867,8 @@ function generate_redistribution_map(src_indices, tgt_indices, datatype, xmap) &
   end if
 #endif
 
+  return
+
 end function generate_redistribution_map
 
 !> Private function to generate an exchange map between
