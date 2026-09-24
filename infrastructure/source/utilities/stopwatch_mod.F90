@@ -53,6 +53,9 @@ contains
 
     integer(int64) :: count
 
+    ! Safety in case of instance re-use
+    call this%reset()
+
     this%name    = trim(name)
     this%running = .true.
 
@@ -153,6 +156,8 @@ contains
     this%start_time  = 0.0_real64
     this%pause_start = 0.0_real64
     this%paused_time = 0.0_real64
+    this%paused      = .false.
+    this%running     = .false.
 
   end subroutine reset
 
