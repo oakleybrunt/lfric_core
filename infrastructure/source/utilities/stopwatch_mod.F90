@@ -36,6 +36,7 @@ module stopwatch_mod
      procedure :: stop
      procedure :: pause
      procedure :: resume
+     procedure :: reset
      procedure :: elapsed
      final     :: destructor
   end type stopwatch_type
@@ -134,14 +135,26 @@ contains
     '(STOPWATCH) Total time for ', this%name, ' : ', this%elapsed(), ' (s)'
     call log_event(log_scratch_space, log_level_info)
 
-    ! Reset everything to defaults in case of re-use
-    this%start_time  = 0.0_real64
-    this%pause_start = 0.0_real64
-    this%paused_time = 0.0_real64
+    ! Return logicals to defaults since the timer is not paused and not running
     this%paused      = .false.
     this%running     = .false.
 
   end subroutine stop
+
+!=============================================================================!
+!> @brief Resets the watch to the default state of zeroed values.
+  subroutine reset(this)
+
+    class(stopwatch_type), intent(inout) :: this
+
+    if (this%running) call this%stop()
+
+    ! Reset values to defaults in case of re-use
+    this%start_time  = 0.0_real64
+    this%pause_start = 0.0_real64
+    this%paused_time = 0.0_real64
+
+  end subroutine reset
 
 !=============================================================================!
 !> @brief Calls the stop subroutine to output the total time measured
@@ -150,6 +163,7 @@ contains
     type(stopwatch_type), intent(inout) :: this
 
     call stop(this)
+    call reset(this)
 
   end subroutine destructor
 
