@@ -134,8 +134,12 @@ contains
     '(STOPWATCH) Total time for ', this%name, ' : ', this%elapsed(), ' (s)'
     call log_event(log_scratch_space, log_level_info)
 
-    this%paused  = .false.
-    this%running = .false.
+    ! Reset everything to defaults in case of re-use
+    this%start_time  = 0.0_real64
+    this%pause_start = 0.0_real64
+    this%paused_time = 0.0_real64
+    this%paused      = .false.
+    this%running     = .false.
 
   end subroutine stop
 
